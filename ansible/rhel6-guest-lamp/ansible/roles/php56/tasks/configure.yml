@@ -1,0 +1,5 @@
+# file: roles/php56/tasks/configure.yml
+
+- name: Install Composer globally
+  shell:  curl -sS https://getcomposer.org/installer | /usr/bin/php && /bin/mv -f composer.phar {{ composer_path }} creates={{ composer_path }}
+

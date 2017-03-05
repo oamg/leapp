@@ -1,0 +1,25 @@
+# file: roles/phpmyadmin/tasks/main.yml
+---
+
+- name: Finding out if phpmyadmin is already cloned
+  shell: test -d /var/www/phpmyadmin && echo 'exist' || echo ''
+  register: p
+
+- name: Downloading phpmyadmin stable if isn't downloaded yet
+  shell: cd /var/www && git clone --depth 1 -b STABLE --single-branch https://github.com/phpmyadmin/phpmyadmin.git
+  when: p.stdout!='exist'
+
+    # echo "Copy parameters.yml and create database"
+    # cp -f /vagrant/config/symfony/parameters.yml /var/www/symfony/app/config/parameters.yml
+
+- name: Copy conf for apache
+  template: src=phpmyadmin.tpl dest=/etc/httpd/conf.d/phpmyadmin.conf owner=root group=root mode=0644
+
+- name: Setting firewall rules for phpmyadmin
+  firewalld: zone=public port=9000/tcp permanent=true state=enabled
+
+- name: Flush iptables
+  shell: iptables -F
+
+- name: Restarting httpd
+  shell: systemctl restart httpd

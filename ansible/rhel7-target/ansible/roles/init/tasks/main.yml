@@ -1,0 +1,5 @@
+# file: roles/init/tasks/main.yml
+---
+
+- name: Update Yum
+  yum: name=* state=latest

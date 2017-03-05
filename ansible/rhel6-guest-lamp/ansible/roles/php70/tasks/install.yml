@@ -1,0 +1,31 @@
+# file: roles/php70/tasks/install.yml
+
+- name: Install epel from remote repo
+  yum: name=https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm state=present
+
+- name: Install remi from remote repo
+  yum: name=http://rpms.remirepo.net/enterprise/remi-release-7.rpm state=present
+
+- name: upgrade all packages
+  yum: name=* state=latest
+
+- name: Install php
+  yum: pkg={{ item }} enablerepo=remi,remi-php70 state=present
+  with_items:
+    - php
+
+- name: Install php modules
+  yum: pkg={{ item }} enablerepo=remi,remi-php70 state=present
+  with_items:
+    - php-mbstring
+    - php-devel
+    - php-opcache
+    - php-soap
+    - php-pdo
+    - php-mcrypt
+    - php-pecl-xdebug
+    - php-xml
+    - php-mysql
+    - php-gd
+  notify:
+  - restart httpd

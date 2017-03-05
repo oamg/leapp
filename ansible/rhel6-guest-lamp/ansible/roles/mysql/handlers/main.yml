@@ -1,0 +1,6 @@
+# file: roles/mysql/handlers/main.yml
+---
+
+- name: Restart the MySQL service
+  service: name=mariadb state=restarted enabled=true
+

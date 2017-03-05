@@ -1,0 +1,6 @@
+# file: roles/httpd/tasks/install.yml
+
+- name: Install Apache web server
+  yum: pkg={{ item }} state=installed
+  with_items:
+     - httpd

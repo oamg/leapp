@@ -1,0 +1,5 @@
+# file: roles/php70/tasks/main.yml
+---
+
+- include: install.yml
+- include: configure.yml

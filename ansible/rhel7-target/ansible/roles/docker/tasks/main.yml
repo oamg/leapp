@@ -1,0 +1,9 @@
+# file: roles/docker/tasks/install.yml
+
+- name: Install Docker
+  yum: pkg={{ item }} state=present
+  with_items:
+    - docker
+
+- name: Ensure Docker is enabled & running
+  service: name=docker state=started enabled=yes
