@@ -1,5 +1,5 @@
 import libvirt
-from leappto import AbstractMachineProvider, MachineType, Machine, Disk, Package
+from leappto import AbstractMachineProvider, MachineType, Machine, Disk, Package, OperatingSystem, Installation
 from xml.etree import ElementTree as ET
 from subprocess import check_output
 
@@ -113,10 +113,10 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 version = __get_value(package.find('version'))
                 arch = __get_value(package.find('arch'))
                 release = __get_value(package.find('release'))
-                package = Package(name, '{e}-{v}-{r}-{a}'.format(e=epoch, v=version, a=arch, r=release))
+                package = Package(name, '{e}:{v}-{r}-{a}'.format(e=epoch or 0, v=version, a=arch, r=release))
                 packages.append(package)
 
-            return (distro, major, minor, hostname, packages)
+            return (hostname, Installation(OperatingSystem(distro, '{}.{}'.format(major, minor)), packages))
 
         def __domain_info(domain):
             """
@@ -148,14 +148,14 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 hostname = None
             '''
 
-            hostname = __inspect_os(domain.name())[3]
+            hostname, inst = __inspect_os(domain.name())
 
             storage = __get_storage(root.findall("devices/disk[@device='disk']"))
 
             return Machine(domain.UUIDString(), hostname,
                            list(__get_ip_addresses(domain)),
                            os_type.get('arch'), vt, storage,
-                           next(root.find('name').itertext()), self)
+                           next(root.find('name').itertext()), inst, self)
 
         domains = self.connection.listAllDomains(0)
         return [__domain_info(dom) for dom in domains if dom.isActive()]

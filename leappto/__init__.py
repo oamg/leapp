@@ -37,8 +37,12 @@ class NameVersion:
     def version(self):
         return self._version
 
+    def _to_dict(self):
+        return {'name': self.name, 'version': self.version}
+
     def __repr__(self):
         return '<{_name} name={name}, version={version}>'.format(_name=self._NAME, name=self.name, version=self.version)
+
 
 class OperatingSystem(NameVersion):
     _NAME = 'OperatingSystem'
@@ -46,6 +50,26 @@ class OperatingSystem(NameVersion):
 
 class Package(NameVersion):
     _NAME = 'Package'
+
+
+class Installation:
+    def __init__(self, os, packages):
+        self._os = os
+        self._packages = packages
+
+    @property
+    def os(self):
+        return self._os
+
+    @property
+    def packages(self):
+        return self._packages
+
+    def _to_dict(self):
+        return {'os': self.os._to_dict(), 'packages': [pkg._to_dict() for pkg in self.packages]}
+
+    def __repr__(self):
+        return '<Installation os={os}, packages={packages}>'.format(**self._to_dict())
 
 
 class Disk:
@@ -86,7 +110,7 @@ class Machine:
 
     _NAME='Machine'
 
-    def __init__(self, id_, hostname, ip, arch, type_, disks, name, provider):
+    def __init__(self, id_, hostname, ip, arch, type_, disks, name, installation, provider):
         self._id = id_
         self._hostname = hostname
         self._ip = ip
@@ -95,6 +119,7 @@ class Machine:
         self._disks = disks
         self._provider = provider
         self._name = name
+        self._installation = installation
 
     @property
     def id(self):
@@ -128,10 +153,15 @@ class Machine:
     def disks(self):
         return self._disks
 
+    @property
+    def installation(self):
+        return self._installation
+
     def _to_dict(self):
         return {'id': self.id, 'hostname': self.hostname, 'ip': self.ip,
                'arch': self.arch, 'type': self.type,
-               'disks': [d._to_dict() for d in self.disks], 'name': self.name}
+               'disks': [d._to_dict() for d in self.disks], 'name': self.name,
+               'os': self.installation._to_dict()}
 
     def __repr__(self):
         arg = {'id': self.id, 'hostname': self.hostname, 'ip': self.ip,

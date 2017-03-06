@@ -13,12 +13,12 @@ def _get_ssh_config():
     for typ, path in ssh_kludge.iteritems():
         try:
             # bleak ugly code to convert SSH configuration file into bunch of `-o` flags for ssh
-            out[typ] = ['-o {}={}'.format(*x.strip().split(' ')) for x in check_output(['vagrant', 'ssh-config'], cwd=path).decode('utf-8').splitlines()[1:-1]]
+            out[typ] = ['-o {}={}'.format(*x.strip().split(' '))
+                        for x in check_output(['vagrant', 'ssh-config'], cwd=path).decode('utf-8').splitlines()[1:-1]]
         except CalledProcessError:
             # domain probably not running
             pass
     return out
-
 
 
 if getuid() != 0:
@@ -46,48 +46,58 @@ def _find_machine(ms, name):
     return None
 
 
-def _get_tar_stream(disk):
-    return Popen(['virt-tar-out', '-a', disk, '/', '-'], stdout=PIPE)
+class MigrationContext:
+    def __init__(self, target, target_cfg, disk):
+        self.target = target
+        self.target_cfg = target_cfg
+        self.disk = disk
 
+    @property
+    def _ssh_base(self):
+        return ['ssh'] + self.target_cfg + ['-4', self.target]
 
-def _copy_over(proc, target, target_cfg):
-    return Popen(['ssh'] + target_cfg + ['-4', target, 'cat > /opt/leapp-to/container.tar.gz'], stdin=proc.stdout)
+    def _ssh(self, cmd, **kwargs):
+        arg = self._ssh_base + [cmd]
+        return Popen(arg, **kwargs).wait()
 
+    def _ssh_sudo(self, cmd, **kwargs):
+        return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
 
-def _process_in_target_el6(target, target_cfg):
-    # I'm so sorry
-    extract = 'mkdir -p /opt/leapp-to/container && tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && '
-    cleanup = 'export PREFIX=/opt/leapp-to/container ; '
-    docker_run = 'docker rm -f container 2>/dev/null 1>/dev/null ; docker run -tid'
-    docker_run += ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro' # CGroups
-    good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
-    for mount in good_mounts:
-        docker_run += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
-    docker_run += ' -p 9000:9000 --name container centos:6 /sbin/init'
-    return Popen(['ssh'] + target_cfg + ['-4', target, 'sudo bash -c ' + "'" + extract + cleanup + docker_run + "'"])
+    def copy(self):
+        proc = Popen(['virt-tar-out', '-a', self.disk, '/', '-'], stdout=PIPE)
+        return self._ssh('cat > /opt/leapp-to/container.tar.gz', stdin=proc.stdout)
 
+    def start_container(self, img, init):
+        command = 'mkdir -p /opt/leapp-to/container && ' + \
+                  'tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && ' + \
+                  'docker rm -f container 2>/dev/null 1>/dev/null ; docker run -tid' + \
+                  ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
+        good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
+        for mount in good_mounts:
+            command += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
+        command += ' -p 9000:9000 --name container ' + img + ' ' + init
+        return self._ssh_sudo(command)
 
-def _process_in_target_el7(target, target_cfg):
-    # I'm so sorry
-    extract = 'mkdir -p /opt/leapp-to/container && tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && '
-    cleanup = 'export PREFIX=/opt/leapp-to/container ; '
-    docker_run = 'docker rm -f container 2>/dev/null 1>/dev/null ; docker run -tid'
-    docker_run += ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro' # CGroups
-    good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
-    for mount in good_mounts:
-        docker_run += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
-    docker_run += ' -p 9000:9000 --name container centos:7 /usr/lib/systemd/systemd --system 1>/dev/null 2>/dev/null'
-    return Popen(['ssh'] + target_cfg + ['-4', target, 'sudo bash -c ' + "'" + extract + cleanup + docker_run + "'"])
+    def _fix_container(self, fix_str):
+        return self._ssh_sudo('docker exec -t container {}'.format(fix_str))
 
+    def fix_upstart(self):
+        fixer = 'bash -c "echo ! waiting ; ' + \
+                'sleep 2 ; ' + \
+                'mkdir -p /var/log/httpd && ' + \
+                'service mysqld start && ' + \
+                'service httpd start"'
+        return self._fix_container(fixer)
 
-def _fix_upstart(target, target_cfg):
-    fixer = 'bash -c "echo ! waiting ; sleep 10 ; mkdir -p /var/log/httpd && service mysqld start && service httpd start"'
-    return Popen(['ssh'] + target_cfg + ['-4', target, 'sudo bash -c ' + "'docker exec -t container " + fixer + "'"])
-
-def _fix_systemd(target, target_cfg):
-    # systemd cleans /var/log/ and mariadb & httpd can't handle that, might be a systemd bug
-    fixer = 'bash -c "echo ! waiting ; sleep 10 ; mkdir -p /var/log/{httpd,mariadb} && chown mysql:mysql /var/log/mariadb && systemctl enable httpd mariadb ; systemctl start httpd mariadb"'
-    return Popen(['ssh'] + target_cfg + ['-4', target, 'sudo bash -c ' + "'docker exec -t container " + fixer + "'"])
+    def fix_systemd(self):
+        # systemd cleans /var/log/ and mariadb & httpd can't handle that, might be a systemd bug
+        fixer = 'bash -c "echo ! waiting ; ' + \
+                'sleep 2 ; ' + \
+                'mkdir -p /var/log/{httpd,mariadb} && ' + \
+                'chown mysql:mysql /var/log/mariadb && ' + \
+                'systemctl enable httpd mariadb ; ' + \
+                'systemctl start httpd mariadb"'
+        return self._fix_container(fixer)
 
 
 parsed = ap.parse_args()
@@ -97,7 +107,7 @@ if parsed.action == 'list-machines':
 
 elif parsed.action == 'migrate-machine':
     if not parsed.target:
-        print('no target specified, creating leappto container package in current directory')
+        print('! no target specified, creating leappto container package in current directory')
         # TODO: not really for now
     else:
         source = parsed.machine
@@ -119,19 +129,20 @@ elif parsed.action == 'migrate-machine':
 
         print('! obtaining SSH keys')
         ssh = _get_ssh_config()
-        print('! launching serializer')
-        cpp = _get_tar_stream(machine_src.disks[0].host_path)
-        #print('! ssh config:', ssh)
+        ip, config = machine_dst.ip[0], ssh['target']
+
+        mc = MigrationContext(ip, ssh['target'], machine_src.disks[0].host_path)
         print('! copying over')
-        _copy_over(cpp, machine_dst.ip[0], ssh['target']).wait()
+        mc.copy()
         print('! provisioning ...')
-        if False:
-            _process_in_target_el7(machine_dst.ip[0], ssh['target']).wait()
+        # if el7 then use systemd
+        if machine_src.installation.os.version.startswith('7'):
+            mc.start_container('centos:7', '/usr/lib/systemd/systemd --system')
             print('! starting services')
-            _fix_systemd(machine_dst.ip[0], ssh['target']).wait()
+            mc.fix_systemd()
             print('! done')
         else:
-            _process_in_target_el6(machine_dst.ip[0], ssh['target']).wait()
+            mc.start_container('centos:6', '/sbin/init')
             print('! starting services')
-            _fix_upstart(machine_dst.ip[0], ssh['target']).wait()
+            mc.fix_upstart()
             print('! done')
