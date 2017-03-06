@@ -8,7 +8,8 @@ from subprocess import Popen, PIPE, check_output, CalledProcessError
 
 
 def _get_ssh_config():
-    ssh_kludge = {'target': '/root/leapp-to/rhel7-target', 'source': '/root/leapp-to/rhel6-guest-lamp'}
+    # use vagrant ssh-config to obtain SSH configuration for the desired box
+    ssh_kludge = {'target': 'ansible/rhel7-target', 'source': 'ansible/rhel6-guest-lamp'}
     out = {}
     for typ, path in ssh_kludge.iteritems():
         try:
