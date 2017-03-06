@@ -1,0 +1,118 @@
+<head>
+    <title>Kernel Flexibility</title>
+    <meta charset="utf-8">
+    <link href="../base1/patternfly.css" type="text/css" rel="stylesheet">
+    <script src="../base1/jquery.js"></script>
+    <script src="../base1/cockpit.js"></script>
+</head>
+<body>
+    <div class="container-fluid" style='max-width: 800px'>
+        <div class="panel panel-default">
+        <div class="panel-heading">
+            <span translatable="yes">Local Virtual Machines</span>
+            <div class="pull-right">
+            <button translatable="yes"class="btn btn-default btn-primary" id="list-vms">Refresh</button>
+            <button translatable="yes"class="btn btn-default btn-primary" id="migrate-app">Migrate</button>
+            </div>
+        </div>
+        <table class="table table-hover">
+            <thead>
+            <tr>
+                <th translatable="yes">Name</th>
+                <th translatable="yes">Hostname</th>
+                <th translatable="yes">Application</th>
+            </tr>
+            </thead>
+            <tbody id="machine-table-body">
+            </tbody>
+        </table>
+    </div>
+        <p>
+        <pre id="output"></pre>
+        </p>
+    </div>
+
+    <script>
+        var output = $("#output");
+
+        $("#list-vms").on("click", list_local_vms);
+        $("#migrate-app").on("click", migrate_to_host);
+
+        // Automatically load the VM list when the page opens
+        $(document).ready(function() {
+            list_local_vms();
+        });
+
+        function call_leapp(cmd_args) {
+            return cockpit.spawn(
+                ["/opt/leapp/leapp-tool.py"].concat(cmd_args),
+                {
+                    "superuser": "required",
+                    "err": "out"
+                }
+            );
+        }
+
+        function list_local_vms() {
+            var proc = call_leapp(["list-machines"]);
+            // TODO: Add activity spinner
+            proc.done(refresh_vm_table);
+            proc.fail(list_local_vms_fail);
+
+            output.empty();
+            output.append(document.createTextNode("Refreshing VM list"));
+        }
+
+        function refresh_vm_table(data) {
+            var vm_data = JSON.parse(data);
+            var machine_table = $("#machine-table-body")
+            $("#machine-table-body tr").remove()
+            for (var idx in vm_data.machines) {
+                var machine = vm_data.machines[idx];
+                var raw_ip = machine.ip[0];
+                var parsed_ip = raw_ip;
+                if (raw_ip.startsWith("ipv4-")) {
+                    parsed_ip = raw_ip.substr(5)
+                }
+                var app_url = `http://${parsed_ip}/`;
+                machine_table.append(`<tr>
+                    <td>${machine.name}</td>
+                    <td>${machine.hostname}</td>
+                    <td><a href="${app_url}">${app_url}</a></td>
+                </tr>`);
+            }
+            output.empty();
+        }
+
+        function list_local_vms_fail() {
+            output.empty();
+            output.append(document.createTextNode("Command failed!\n"));
+            output.append(document.createTextNode(data));
+        }
+
+        function migrate_to_host() {
+            var source = "rhel6-app-vm";
+            var target = "rhel7-target";
+            var proc = call_leapp(["migrate-machine", "-t", target, source]);
+            proc.done(migrate_success);
+            proc.fail(migrate_fail);
+
+            output.empty();
+            output.append(document.createTextNode(`Migrating ${source} to ${target}`));
+        }
+
+        function migrate_success(data) {
+            output.empty();
+            output.append(document.createTextNode(data));
+        }
+
+        function migrate_fail(exc, data) {
+            output.empty();
+            output.append(document.createTextNode("Command failed!\n"));
+            output.append(document.createTextNode(data));
+        }
+
+    </script>
+</body>
+</html>
+
