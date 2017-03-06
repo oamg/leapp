@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from argparse import ArgumentParser
 from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from json import dumps
@@ -36,31 +37,41 @@ list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines m
 migrate_cmd.add_argument('machine', help='source machine to migrate')
 migrate_cmd.add_argument('-t', '--target', default=None, help='target VM name ')
 
+
 def _find_machine(ms, name):
     for machine in ms:
         if machine.hostname == name:
             return machine
     return None
 
+
 def _get_tar_stream(disk):
     return Popen(['virt-tar-out', '-a', disk, '/', '-'], stdout=PIPE)
+
 
 def _copy_over(proc, target, target_cfg):
     return Popen(['ssh'] + target_cfg + ['-4', target, 'cat > /opt/leapp-to/container.tar.gz'], stdin=proc.stdout)
 
+
 def _process_in_target(target, target_cfg):
     # I'm so sorry
-    _systemd_cleanup = '(cd $PREFIX/lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == systemd-tmpfiles-setup.service ] || rm -f $i; done);(rm -f $PREFIX/lib/systemd/system/multi-user.target.wants/*;rm -f $PREFIX/etc/systemd/system/*.wants/*;rm -f $PREFIX/lib/systemd/system/local-fs.target.wants/*;rm -f $PREFIX/lib/systemd/system/sockets.target.wants/*udev*;rm -f $PREFIX/lib/systemd/system/sockets.target.wants/*initctl*;rm -f $PREFIX/lib/systemd/system/basic.target.wants/*;rm -f $PREFIX/lib/systemd/system/anaconda.target.wants/*)'
     extract = 'mkdir -p /opt/leapp-to/container && tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && '
-    cleanup = 'export PREFIX=/opt/leapp-to/container && ' + _systemd_cleanup + ' && '
-    docker_run = 'docker run -d'
+    cleanup = 'export PREFIX=/opt/leapp-to/container ; '
+    docker_run = 'docker rm -f container 2>/dev/null 1>/dev/null ; docker run -tid'
     docker_run += ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro' # CGroups
     good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
     #bad_mounts = ['boot', 'dev', 'proc', 'sys'] # pseudo file systems
     for mount in good_mounts:
         docker_run += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
-    docker_run += ' -p 9000:9000 centos:7 /usr/lib/systemd/systemd --system'
-    return Popen(['ssh'] + target_cfg + ['-4', target, '"sudo bash -c ' + "'" + extract + cleanup + docker_run + "'\""])
+    docker_run += ' -p 9000:9000 --name container centos:7 /usr/lib/systemd/systemd --system 1>/dev/null 2>/dev/null'
+    return Popen(['ssh'] + target_cfg + ['-4', target, 'sudo bash -c ' + "'" + extract + cleanup + docker_run + "'"])
+
+
+def _fix_systemd(target, target_cfg):
+    # systemd cleans /var/log/ and mariadb & httpd can't handle that, might be a systemd bug
+    fixer = 'bash -c "echo ! waiting ; sleep 10 ; mkdir -p /var/log/{httpd,mariadb} && chown mysql:mysql /var/log/mariadb && systemctl enable httpd mariadb ; systemctl start httpd mariadb"'
+    return Popen(['ssh'] + target_cfg + ['-4', target, 'sudo bash -c ' + "'docker exec -t container " + fixer + "'"])
+
 
 parsed = ap.parse_args()
 if parsed.action == 'list-machines':
@@ -96,5 +107,8 @@ elif parsed.action == 'migrate-machine':
         #print('! ssh config:', ssh)
         print('! copying over')
         _copy_over(cpp, machine_dst.ip[0], ssh['target']).wait()
-        print('! all done and well, provisioning ...')
+        print('! provisioning ...')
         _process_in_target(machine_dst.ip[0], ssh['target']).wait()
+        print('! starting services')
+        _fix_systemd(machine_dst.ip[0], ssh['target']).wait()
+        print('! done')
