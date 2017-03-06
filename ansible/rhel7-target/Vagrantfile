@@ -4,6 +4,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.box = "centos/7"
     config.vm.hostname = "rhel7-target"
 
+    config.vm.network :forwarded_port, guest: 9000, host: 9000, auto_correct: true
+    config.vm.network :private_network, ip: "10.0.0.11"
+
     config.vm.provider :libvirt do |libvirt|
         libvirt.memory = 1024
         libvirt.cpus = 1
