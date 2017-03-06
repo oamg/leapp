@@ -6,7 +6,7 @@
   register: p
 
 - name: Downloading phpmyadmin stable if isn't downloaded yet
-  shell: cd /var/www && git clone --depth 1 -b STABLE https://github.com/phpmyadmin/phpmyadmin.git
+  shell: cd /var/www && git clone --depth 1 -b STABLE https://github.com/phpmyadmin/phpmyadmin.git && cd phpmyadmin && git checkout RELEASE_4_0_10_17
   when: p.stdout!='exist'
 
     # echo "Copy parameters.yml and create database"

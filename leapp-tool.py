@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/python
+
 from argparse import ArgumentParser
 from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from json import dumps
@@ -53,19 +54,35 @@ def _copy_over(proc, target, target_cfg):
     return Popen(['ssh'] + target_cfg + ['-4', target, 'cat > /opt/leapp-to/container.tar.gz'], stdin=proc.stdout)
 
 
-def _process_in_target(target, target_cfg):
+def _process_in_target_el6(target, target_cfg):
     # I'm so sorry
     extract = 'mkdir -p /opt/leapp-to/container && tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && '
     cleanup = 'export PREFIX=/opt/leapp-to/container ; '
     docker_run = 'docker rm -f container 2>/dev/null 1>/dev/null ; docker run -tid'
     docker_run += ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro' # CGroups
     good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
-    #bad_mounts = ['boot', 'dev', 'proc', 'sys'] # pseudo file systems
+    for mount in good_mounts:
+        docker_run += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
+    docker_run += ' -p 9000:9000 --name container centos:6 /sbin/init'
+    return Popen(['ssh'] + target_cfg + ['-4', target, 'sudo bash -c ' + "'" + extract + cleanup + docker_run + "'"])
+
+
+def _process_in_target_el7(target, target_cfg):
+    # I'm so sorry
+    extract = 'mkdir -p /opt/leapp-to/container && tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && '
+    cleanup = 'export PREFIX=/opt/leapp-to/container ; '
+    docker_run = 'docker rm -f container 2>/dev/null 1>/dev/null ; docker run -tid'
+    docker_run += ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro' # CGroups
+    good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
     for mount in good_mounts:
         docker_run += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
     docker_run += ' -p 9000:9000 --name container centos:7 /usr/lib/systemd/systemd --system 1>/dev/null 2>/dev/null'
     return Popen(['ssh'] + target_cfg + ['-4', target, 'sudo bash -c ' + "'" + extract + cleanup + docker_run + "'"])
 
+
+def _fix_upstart(target, target_cfg):
+    fixer = 'bash -c "echo ! waiting ; sleep 10 ; mkdir -p /var/log/httpd && service mysqld start && service httpd start"'
+    return Popen(['ssh'] + target_cfg + ['-4', target, 'sudo bash -c ' + "'docker exec -t container " + fixer + "'"])
 
 def _fix_systemd(target, target_cfg):
     # systemd cleans /var/log/ and mariadb & httpd can't handle that, might be a systemd bug
@@ -108,7 +125,13 @@ elif parsed.action == 'migrate-machine':
         print('! copying over')
         _copy_over(cpp, machine_dst.ip[0], ssh['target']).wait()
         print('! provisioning ...')
-        _process_in_target(machine_dst.ip[0], ssh['target']).wait()
-        print('! starting services')
-        _fix_systemd(machine_dst.ip[0], ssh['target']).wait()
-        print('! done')
+        if False:
+            _process_in_target_el7(machine_dst.ip[0], ssh['target']).wait()
+            print('! starting services')
+            _fix_systemd(machine_dst.ip[0], ssh['target']).wait()
+            print('! done')
+        else:
+            _process_in_target_el6(machine_dst.ip[0], ssh['target']).wait()
+            print('! starting services')
+            _fix_upstart(machine_dst.ip[0], ssh['target']).wait()
+            print('! done')
