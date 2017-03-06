@@ -7,7 +7,7 @@
   lineinfile: dest=/etc/httpd/conf/httpd.conf line="ServerName localhost"
 
 - name: SELinux to enforcing
-  command: setenforce 0
+  command: /sbin/setenforce 0
   notify:
     - restart httpd
 

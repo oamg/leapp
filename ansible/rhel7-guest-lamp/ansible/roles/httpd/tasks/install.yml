@@ -4,4 +4,3 @@
   yum: pkg={{ item }} state=installed
   with_items:
      - httpd
-     - libselinux-python

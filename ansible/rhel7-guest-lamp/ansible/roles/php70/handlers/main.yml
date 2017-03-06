@@ -1,0 +1,8 @@
+# file: roles/php70/handlers/main.yml
+---
+
+- name: restart iptables
+  service: name=iptables state=restarted
+
+- name: restart httpd
+  service: name=httpd state=restarted

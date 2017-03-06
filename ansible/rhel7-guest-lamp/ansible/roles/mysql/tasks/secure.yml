@@ -1,0 +1,21 @@
+# file: roles/mysql/tasks/secure.yml
+
+- name: Set the root password for all root accounts
+  mysql_user: name=root host={{ item }} password={{ mysql_root_password }} priv=*.*:ALL,GRANT
+  with_items:
+    - "{{ ansible_hostname }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
+  when: ansible_hostname != 'localhost'
+
+- name: Configure MySql for easy access as root user
+  template: src=.my.cnf.j2 dest=~/.my.cnf owner=root group=root mode=0644
+
+- name: ensure anonymous users are not in the database
+  mysql_user: name='' host=* state=absent
+
+- name: remove the test database
+  mysql_db: name=test state=absent
+  notify:
+    - Restart the MySQL service

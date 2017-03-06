@@ -1,6 +1,12 @@
 # file: roles/init/tasks/main.yml
 ---
 
+- name: Set up firewall
+  shell: systemctl enable firewalld
+
+- name: Start the firewall
+  shell: systemctl start firewalld
+
 - name: Update Yum
   yum: name=* state=latest
 
