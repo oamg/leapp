@@ -27,6 +27,7 @@
             </tbody>
         </table>
     </div>
+        <div class="spinner spinner-lg" id="loader"></div>
         <p>
         <pre id="output"></pre>
         </p>
@@ -34,6 +35,7 @@
 
     <script>
         var output = $("#output");
+        var loader = $("#loader");
 
         $("#list-vms").on("click", list_local_vms);
         $("#migrate-app").on("click", migrate_to_host);
@@ -56,12 +58,11 @@
 
         function list_local_vms() {
             var proc = call_leapp(["list-machines"]);
-            // TODO: Add activity spinner
             proc.done(refresh_vm_table);
             proc.fail(list_local_vms_fail);
 
             output.empty();
-            output.append(document.createTextNode("Refreshing VM list"));
+            out("Refreshing VM list");
         }
 
         function refresh_vm_table(data) {
@@ -83,37 +84,58 @@
                 </tr>`);
             }
             output.empty();
+            loader.hide();
         }
 
         function list_local_vms_fail() {
             output.empty();
             output.append(document.createTextNode("Command failed!\n"));
             output.append(document.createTextNode(data));
+            loader.hide();
+        }
+
+        function out(line) {
+            output.append(`<div style="padding: 2px">${line}</div>`)
         }
 
         function migrate_to_host() {
             var source = "centos6-app-vm";
             var target = "centos7-target";
             var proc = call_leapp(["migrate-machine", "-t", target, source]);
+            output.empty();
             proc.done(migrate_success);
             proc.fail(migrate_fail);
+            proc.stream(migrate_stdout);
 
-            output.empty();
-            output.append(document.createTextNode(`Migrating ${source} to ${target}`));
+            out(`Migrating ${source} to ${target}`);
+            loader.show();
+        }
+
+        function migrate_stdout(data) {
+            let split = data.split(/\r?\n/);
+            for (let line of split) {
+                if (line.length < 1 || line[0] != "!") {
+                    continue;
+                }
+                out("> " + line.substring(2));
+            }
         }
 
         function migrate_success(data) {
-            output.empty();
-            output.append(document.createTextNode(data));
+            //output.empty();
+            out(data);
+            loader.hide();
         }
 
         function migrate_fail(exc, data) {
-            output.empty();
+            //output.empty();
             output.append(document.createTextNode("Command failed!\n"));
             output.append(document.createTextNode(data));
+            loader.hide();
         }
 
     </script>
 </body>
 </html>
+
 
