@@ -9,7 +9,7 @@ from subprocess import Popen, PIPE, check_output, CalledProcessError
 
 def _get_ssh_config():
     # use vagrant ssh-config to obtain SSH configuration for the desired box
-    ssh_kludge = {'target': 'ansible/rhel7-target', 'source': 'ansible/rhel6-guest-lamp'}
+    ssh_kludge = {'target': 'ansible/centos7-target', 'source': 'ansible/centos6-guest-lamp'}
     out = {}
     for typ, path in ssh_kludge.iteritems():
         try:
@@ -69,14 +69,14 @@ class MigrationContext:
         return self._ssh('cat > /opt/leapp-to/container.tar.gz', stdin=proc.stdout)
 
     def start_container(self, img, init):
-        command = 'mkdir -p /opt/leapp-to/container && ' + \
+        command = 'docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container ; mkdir -p /opt/leapp-to/container && ' + \
                   'tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && ' + \
-                  'docker rm -f container 2>/dev/null 1>/dev/null ; docker run -tid' + \
+                  'docker run -tid' + \
                   ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
         good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
         for mount in good_mounts:
             command += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
-        command += ' -p 9000:9000 --name container ' + img + ' ' + init
+        command += ' -p 9000:9000 -p 9022:22 --name container ' + img + ' ' + init
         return self._ssh_sudo(command)
 
     def _fix_container(self, fix_str):

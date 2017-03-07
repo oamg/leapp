@@ -2,7 +2,7 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.box = "centos/6"
-    config.vm.hostname = "rhel6-app-vm"
+    config.vm.hostname = "centos6-app-vm"
 
     config.vm.network :forwarded_port, host: 80, guest: 80, auto_correct: true # website
     config.vm.network :forwarded_port, guest: 443, host: 443, auto_correct: true # ssl

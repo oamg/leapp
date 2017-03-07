@@ -27,20 +27,20 @@ It also requires the virt-inspector tool:
 
 Start the source application server VM:
 
-    $ pushd ansible/rhel6-guest-lamp
+    $ pushd ansible/centos6-guest-lamp
     $ sudo vagrant up
     $ popd
 
 Start the target container host VM:
 
-    $ pushd ansible/rhel7-target
+    $ pushd ansible/centos7-target
     $ sudo vagrant up
     $ popd
 
 The `start_vms.sh` helper script encapsulates these steps.
 
 Use `sudo vagrant destroy` and `sudo vagrant up` in the
-`ansible/rhel7-target` directory to reset the VM state
+`ansible/centos7-target` directory to reset the VM state
 before running the demonstration again.
 
 ### Running the demonstration via the CLI
@@ -56,7 +56,7 @@ The demo admin login credentials are:
 
 Then, from the base of the local clone, run:
 
-    $ sudo ./leapp-tool.py migrate-machine -t rhel7-target rhel6-app-vm
+    $ sudo ./leapp-tool.py migrate-machine -t centos7-target centos6-app-vm
 
 The target VM should now be showing the PHP admin page,
 with the same information as the source VM.
@@ -89,7 +89,7 @@ show the PHP info page, while the target VM isn't
 running a HTTP server.
 
 Click the "Migrate" button (this is currently
-hardcoded to migrate `rhel6-app-vm` to `rhel7-target`)
+hardcoded to migrate `centos6-app-vm` to `centos7-target`)
 
 The target VM should now be showing the PHP info page,
 with the same information as the source VM.
