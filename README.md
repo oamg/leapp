@@ -27,31 +27,38 @@ It also requires the virt-inspector tool:
 
 Start the source application server VM:
 
-    $ pushd ansible/centos7-guest-lamp
+    $ pushd ansible/rhel6-guest-lamp
     $ sudo vagrant up
     $ popd
 
 Start the target container host VM:
 
-    $ pushd ansible/centos7-target
+    $ pushd ansible/rhel7-target
     $ sudo vagrant up
     $ popd
 
+The `start_vms.sh` helper script encapsulates these steps.
+
 Use `sudo vagrant destroy` and `sudo vagrant up` in the
-`ansible/centos7-target` directory to reset the VM state
+`ansible/rhel7-target` directory to reset the VM state
 before running the demonstration again.
 
 ### Running the demonstration via the CLI
 
 First, check that the source VM is showing the
-PHP info page, while the target VM isn't running
-a HTTP server.
+PHP admin login page, while the target VM isn't
+running a HTTP server.
+
+The demo admin login credentials are:
+
+* Username: `root`
+* Password: `toor`
 
 Then, from the base of the local clone, run:
 
     $ sudo ./leapp-tool.py migrate-machine -t rhel7-target rhel6-app-vm
 
-The target VM should now be showing the PHP info page,
+The target VM should now be showing the PHP admin page,
 with the same information as the source VM.
 
 
@@ -60,7 +67,11 @@ with the same information as the source VM.
 Link the Cockpit plugin (if not already linked):
 
     $ mkdir -p ~/.local/share/cockpit
-    $ ln -snf cockpit ~/.local/share/cockpit/leapp
+    $ ln -snf $PWD/cockpit ~/.local/share/cockpit/leapp
+
+Link the `leapp` project directory (if not already linked):
+
+    $ sudo ln -snf $PWD /opt/leapp
 
 Open Cockpit in your browser:
 

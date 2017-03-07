@@ -75,7 +75,7 @@
                 if (raw_ip.startsWith("ipv4-")) {
                     parsed_ip = raw_ip.substr(5)
                 }
-                var app_url = `http://${parsed_ip}/`;
+                var app_url = `http://${parsed_ip}:9000/`;
                 machine_table.append(`<tr>
                     <td>${machine.name}</td>
                     <td>${machine.hostname}</td>
