@@ -92,8 +92,8 @@
         }
 
         function migrate_to_host() {
-            var source = "rhel6-app-vm";
-            var target = "rhel7-target";
+            var source = "centos6-app-vm";
+            var target = "centos7-target";
             var proc = call_leapp(["migrate-machine", "-t", target, source]);
             proc.done(migrate_success);
             proc.fail(migrate_fail);
