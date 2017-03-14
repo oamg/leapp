@@ -34,6 +34,7 @@ parser = ap.add_subparsers(help='sub-command', dest='action')
 list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
 migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
 
+list_cmd.add_argument('--shallow', action='store_true', help='target VM name ')
 list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
 
 migrate_cmd.add_argument('machine', help='source machine to migrate')
@@ -103,7 +104,7 @@ class MigrationContext:
 
 parsed = ap.parse_args()
 if parsed.action == 'list-machines':
-    lmp = LibvirtMachineProvider()
+    lmp = LibvirtMachineProvider(parsed.shallow)
     print(dumps({'machines': [m._to_dict() for m in lmp.get_machines()]}, indent=3))
 
 elif parsed.action == 'migrate-machine':

@@ -57,7 +57,8 @@
         }
 
         function list_local_vms() {
-            var proc = call_leapp(["list-machines"]);
+            var proc = call_leapp(["list-machines", "--shallow"]);
+            // TODO: Add activity spinner
             proc.done(refresh_vm_table);
             proc.fail(list_local_vms_fail);
 
