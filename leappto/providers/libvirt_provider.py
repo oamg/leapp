@@ -5,8 +5,9 @@ from subprocess import check_output
 
 
 class LibvirtMachineProvider(AbstractMachineProvider):
-    def __init__(self):
+    def __init__(self, shallow_scan=True):
         self._connection = libvirt.open('qemu:///system')
+        self._shallow_scan = shallow_scan
         # Stupid `libvirt` cannot carry out certain *read only* operations while
         # being in read-only mode so just use `open` and fix this later by enumerating
         # networks, checking the MAC of the domain and correlating this against DHCP leases
@@ -98,7 +99,10 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             :param domain_name: str, which domain to inspect
             :return:
             """
-            os_data = check_output(['virt-inspector', '-d', domain_name])
+            cmd = ['virt-inspector', '-d', domain_name, '--no-icon']
+            if self._shallow_scan:
+                cmd.append('--no-applications')
+            os_data = check_output(cmd)
             root = ET.fromstring(os_data)
             packages = []
 
