@@ -13,6 +13,10 @@ of kernel modernization attempts given different starting scenarios.
 
 ## Setting up
 
+Install `vagrant` and `vagrant-libvirt`:
+
+    $ sudo dnf install vagrant vagrant-libvirt
+
 Install `pipenv` and the `pew` environment management tool:
 
     $ pip install --user pipsi
@@ -27,17 +31,31 @@ so `pipenv` sees only the command line interface instead of the Python API)
 Once `pipenv` is installed, run the following to install the
 integration testing environment:
 
-    $ pipenv install
+    $ pipenv --three && pipenv install
+
+Note that while `leapp` itself will run under Python 2.7, the integration
+tests require Python 3.
 
 ## Running the tests
-
-Once the environment is set up, the tests can be run via:
-
-    $ pipenv run behave
 
 To get a local shell with the testing environment active, run:
 
     $ pipenv shell
 
-Once in the testing environment, the tests can be run just by
-invoking `behave` directly.
+Once in the testing environment, the tests can be run by invoking
+`behave` test runner directly:
+
+    $ behave
+
+The tests require passwordless `sudo` access to both `vagrant`
+and `leapp-tool` (alternatively, they will require interactive
+password entry during the test).
+
+## Writing new tests
+
+New feature definitions go in the ["features"](./features) subdirectory.
+
+New step definitions go in the ["features/steps"](./features.steps)
+subdirectory, and use the
+["hamcrest"](https://pyhamcrest.readthedocs.io/en/latest/tutorial/)
+library to define behavioural expectations.

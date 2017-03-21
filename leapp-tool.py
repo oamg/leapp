@@ -9,7 +9,10 @@ from subprocess import Popen, PIPE, check_output, CalledProcessError
 
 def _get_ssh_config():
     # use vagrant ssh-config to obtain SSH configuration for the desired box
-    ssh_kludge = {'target': 'ansible/centos7-target', 'source': 'ansible/centos6-guest-lamp'}
+    ssh_kludge = {
+        'target': 'integration-tests/vmdefs/centos7-target',
+        'source': 'integration-tests/vmdefs/centos6-guest-httpd'
+    }
     out = {}
     for typ, path in ssh_kludge.iteritems():
         try:

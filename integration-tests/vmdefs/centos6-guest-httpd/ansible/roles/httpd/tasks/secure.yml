@@ -1,0 +1,4 @@
+# file: roles/httpd/tasks/secure.yml
+
+- name: Flush iptables
+  shell: iptables -F
