@@ -3,10 +3,10 @@ url = "https://pypi.python.org/simple"
 verify_ssl = true
 
 [dev-packages]
-pylint = "*"
-
-[packages]
 behave = "*"
-ansible = ">= 2.0"
+pylint = "*"
 requests = "*"
 PyHamcrest = "*"
+
+[packages]
+ansible = ">= 2.0"

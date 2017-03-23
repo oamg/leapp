@@ -1,3 +1,5 @@
 .vagrant/
 __pycache__/
 *.pyc
+# Symlink to virtualenv
+.venv
