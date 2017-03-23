@@ -1,5 +1,5 @@
 from behave import given, when, then
-from hamcrest import assert_that, equal_to, not_none
+from hamcrest import assert_that, equal_to, not_none, greater_than
 
 import json
 import pathlib
@@ -14,6 +14,7 @@ _LEAPP_TOOL = str(_REPO_DIR / "leapp-tool.py")
 
 # Command execution helper
 def _run_command(cmd, work_dir, ignore_errors):
+    print("  Running {} in {}".format(cmd, work_dir))
     output = None
     try:
         output = subprocess.check_output(
@@ -43,8 +44,8 @@ def _vm_up(vm_def):
     print("Started {} VM instance".format(vm_def))
     return result
 
-def _vm_down(vm_def):
-    result = _run_vagrant(vm_def, "down", ignore_errors=True)
+def _vm_halt(vm_def):
+    result = _run_vagrant(vm_def, "halt", ignore_errors=True)
     print("Suspended {} VM instance".format(vm_def))
     return result
 
@@ -64,12 +65,14 @@ def create_local_machines(context):
             raise ValueError("Unknown VM image: {}".format(vm_def))
         ensure_fresh = (row["ensure_fresh"].lower() == "yes")
         if ensure_fresh:
+            # TODO: Look at using "provision" for fresh VMs
+            #       Rather than a full destroy/recreate cycle
             _vm_destroy(vm_def)
         _vm_up(vm_def)
         if ensure_fresh:
             context.resource_manager.callback(_vm_destroy, vm_def)
         else:
-            context.resource_manager.callback(_vm_down, vm_def)
+            context.resource_manager.callback(_vm_halt, vm_def)
         machines[vm_name] = vm_def
 
 
@@ -102,14 +105,17 @@ def _get_ip_addresses(source_def, target_def):
     leapp_output = _run_leapp("list-machines", "--shallow")
     machine_info = json.loads(leapp_output)
     source_ip = target_ip = None
-    for machine in machine_info["machines"]:
-        if machine["name"] == source_def:
+    machines = machine_info["machines"]
+    vm_count = len(machines)
+    for machine in machines:
+        # HACK: Require Vagrant config name to be used as hostname
+        if machine["hostname"] == source_def:
             source_ip = _get_leapp_ip(machine)
-        if machine["name"] == target_def:
+        if machine["hostname"] == target_def:
             target_ip = _get_leapp_ip(machine)
         if source_ip is not None and target_ip is not None:
             break
-    return source_ip, target_ip
+    return vm_count, source_ip, target_ip
 
 @when("{source_vm} is redeployed to {target_vm} as a macrocontainer")
 def redeploy_vm_as_macrocontainer(context, source_vm, target_vm):
@@ -119,7 +125,10 @@ def redeploy_vm_as_macrocontainer(context, source_vm, target_vm):
     source_def = machines[source_vm]
     target_def = machines[target_vm]
     _convert_vm_to_macrocontainer(source_def, target_def)
-    source_ip, target_ip = _get_ip_addresses(source_def, target_def)
+    vm_count, source_ip, target_ip = _get_ip_addresses(source_def, target_def)
+    assert_that(vm_count, greater_than(1), "At least 2 local VMs")
+    assert_that(source_ip, not_none(), "Valid source IP")
+    assert_that(target_ip, not_none(), "Valid target IP")
     context.redeployment_source_ip = source_ip
     context.redeployment_target_ip = target_ip
 
@@ -130,18 +139,20 @@ def redeploy_vm_as_macrocontainer(context, source_vm, target_vm):
 def _compare_responses(original_ip, redeployed_ip, *, tcp_port, status):
     original_url = "http://{}:{}".format(original_ip, tcp_port)
     original_response = requests.get(original_url)
-    assert_that(original_response.status, status, "Original status")
+    print("Response received from {}".format(original_url))
+    assert_that(original_response.status_code, status, "Original status")
     redeployed_url = "http://{}:{}".format(redeployed_ip, tcp_port)
-    redeployed_response = requests.get(redeployed_response)
-    assert_that(redeployed_response.status, status, "Redeployed status")
+    redeployed_response = requests.get(redeployed_url)
+    print("Response received from {}".format(redeployed_url))
+    assert_that(redeployed_response.status_code, status, "Redeployed status")
     original_data = original_response.body
     redeployed_data = redeployed_response.body
-    assert_that(redeployed_data, equal_to(original_body), "Same response")
+    assert_that(redeployed_data, equal_to(original_data), "Same response")
 
 @then("the HTTP responses on port {tcp_port} should match")
 def check_http_responses_match(context, tcp_port):
     original_ip = context.redeployment_source_ip
-    assert_that(original_ip, not_none(), "Valid original IP")
     redeployed_ip = context.redeployment_target_ip
+    assert_that(original_ip, not_none(), "Valid original IP")
     assert_that(redeployed_ip, not_none(), "Valid redeployment IP")
     _compare_responses(original_ip, redeployed_ip, tcp_port=80, status=200)
