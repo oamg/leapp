@@ -6,7 +6,7 @@
 - name: Set global ServerName for apache config
   lineinfile: dest=/etc/httpd/conf/httpd.conf line="ServerName localhost"
 
-- name: SELinux to enforcing
+- name: SELinux to permissive
   command: setenforce 0
   notify:
     - restart httpd
