@@ -1,16 +1,21 @@
-from behave import given, when, then
+from behave import given, when, then, step
 from hamcrest import assert_that, equal_to, not_none, greater_than
 
 import json
 import pathlib
-import subprocess
 import requests
+import subprocess
+import time
 
 _TEST_DIR = pathlib.Path(__file__).parent.parent.parent
 _REPO_DIR = _TEST_DIR.parent
 _VM_DEFS = {path.name: str(path) for path in (_TEST_DIR / "vmdefs").iterdir()}
 _LEAPP_TOOL = str(_REPO_DIR / "leapp-tool.py")
 
+
+##############################
+# General utilities
+##############################
 
 # Command execution helper
 def _run_command(cmd, work_dir, ignore_errors):
@@ -136,23 +141,50 @@ def redeploy_vm_as_macrocontainer(context, source_vm, target_vm):
 ##############################
 # Service status checking
 ##############################
-def _compare_responses(original_ip, redeployed_ip, *, tcp_port, status):
+
+def _get_target_response(redeployed_url, wait_for_target):
+    deadline = time.monotonic()
+    if wait_for_target is None:
+        fail_msg = "No response from target"
+    else:
+        fail_msg = "No response from target within {} seconds".format(wait_for_target)
+        deadline += wait_for_target
+    while True:
+        try:
+            return requests.get(redeployed_url)
+        except Exception:
+            pass
+        if time.monotonic() >= deadline:
+            break
+    raise AssertionError(fail_msg)
+
+def _compare_responses(original_ip, redeployed_ip, *,
+                       tcp_port, status=None, wait_for_target=None):
+    # Get response from source VM
     original_url = "http://{}:{}".format(original_ip, tcp_port)
     original_response = requests.get(original_url)
     print("Response received from {}".format(original_url))
-    assert_that(original_response.status_code, status, "Original status")
+    original_status = original_response.status_code
+    if status is not None:
+        assert_that(original_status, equal_to(status), "Original status")
+    # Get response from target VM
     redeployed_url = "http://{}:{}".format(redeployed_ip, tcp_port)
-    redeployed_response = requests.get(redeployed_url)
+    redeployed_response = _get_target_response(redeployed_url, wait_for_target)
     print("Response received from {}".format(redeployed_url))
-    assert_that(redeployed_response.status_code, status, "Redeployed status")
-    original_data = original_response.body
-    redeployed_data = redeployed_response.body
+    # Compare the responses
+    assert_that(redeployed_response.status_code, equal_to(original_status), "Redeployed status")
+    original_data = original_response.text
+    redeployed_data = redeployed_response.text
     assert_that(redeployed_data, equal_to(original_data), "Same response")
 
-@then("the HTTP responses on port {tcp_port} should match")
-def check_http_responses_match(context, tcp_port):
+@then("the HTTP responses on port {tcp_port} should match within {wait_duration:g} seconds")
+def check_http_responses_match(context, tcp_port, wait_duration=None):
     original_ip = context.redeployment_source_ip
     redeployed_ip = context.redeployment_target_ip
     assert_that(original_ip, not_none(), "Valid original IP")
     assert_that(redeployed_ip, not_none(), "Valid redeployment IP")
-    _compare_responses(original_ip, redeployed_ip, tcp_port=80, status=200)
+    _compare_responses(
+        original_ip, redeployed_ip,
+        tcp_port=tcp_port,
+        wait_for_target=wait_duration
+    )
