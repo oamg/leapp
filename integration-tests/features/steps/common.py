@@ -161,14 +161,13 @@ def _get_target_response(redeployed_url, wait_for_target):
     raise AssertionError(fail_msg)
 
 def _compare_responses(original_ip, redeployed_ip, *,
-                       tcp_port, status=None, wait_for_target=None):
+                       tcp_port, status, wait_for_target):
     # Get response from source VM
     original_url = "http://{}:{}".format(original_ip, tcp_port)
     original_response = requests.get(original_url)
     print("Response received from {}".format(original_url))
     original_status = original_response.status_code
-    if status is not None:
-        assert_that(original_status, equal_to(status), "Original status")
+    assert_that(original_status, equal_to(status), "Original status")
     # Get response from target VM
     redeployed_url = "http://{}:{}".format(redeployed_ip, tcp_port)
     redeployed_response = _get_target_response(redeployed_url, wait_for_target)
@@ -179,8 +178,8 @@ def _compare_responses(original_ip, redeployed_ip, *,
     redeployed_data = redeployed_response.text
     assert_that(redeployed_data, equal_to(original_data), "Same response")
 
-@then("the HTTP response on port {tcp_port} should match within {wait_duration:g} seconds")
-def check_http_responses_match(context, tcp_port, wait_duration=None):
+@then("the HTTP {status:d} response on port {tcp_port} should match within {wait_duration:g} seconds")
+def check_http_responses_match(context, tcp_port, status, wait_duration):
     original_ip = context.redeployment_source_ip
     redeployed_ip = context.redeployment_target_ip
     assert_that(original_ip, not_none(), "Valid original IP")
@@ -188,5 +187,6 @@ def check_http_responses_match(context, tcp_port, wait_duration=None):
     _compare_responses(
         original_ip, redeployed_ip,
         tcp_port=tcp_port,
+        status=status,
         wait_for_target=wait_duration
     )
