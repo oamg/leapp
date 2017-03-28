@@ -26,10 +26,13 @@ def _run_command(cmd, work_dir, ignore_errors):
             cmd, cwd=work_dir, stderr=subprocess.PIPE
         ).decode()
     except subprocess.CalledProcessError as exc:
+        output = exc.output.decode()
         if not ignore_errors:
+            print("=== stdout for failed command ===")
+            print(output)
+            print("=== stderr for failed command ===")
             print(exc.stderr.decode())
             raise
-        output = exc.output.decode()
     return output
 
 ##############################
@@ -40,7 +43,7 @@ def _run_vagrant(vm_def, *args, ignore_errors=False):
     # TODO: explore https://pypi.python.org/pypi/python-vagrant
     #       That may require sudo-less access to vagrant
     vm_dir = _VM_DEFS[vm_def]
-    cmd = ["sudo", "vagrant"]
+    cmd = ["vagrant"]
     cmd.extend(args)
     return _run_command(cmd, vm_dir, ignore_errors)
 
