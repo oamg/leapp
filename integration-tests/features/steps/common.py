@@ -70,8 +70,10 @@ def create_local_machines(context):
             raise ValueError("Unknown VM image: {}".format(vm_def))
         ensure_fresh = (row["ensure_fresh"].lower() == "yes")
         if ensure_fresh:
-            # TODO: Look at using "provision" for fresh VMs
+            # TODO: Look at using "--provision" for fresh VMs
             #       Rather than a full destroy/recreate cycle
+            #       Alternatively: add "reprovision" as a
+            #       third state for the field
             _vm_destroy(vm_def)
         _vm_up(vm_def)
         if ensure_fresh:
@@ -177,7 +179,7 @@ def _compare_responses(original_ip, redeployed_ip, *,
     redeployed_data = redeployed_response.text
     assert_that(redeployed_data, equal_to(original_data), "Same response")
 
-@then("the HTTP responses on port {tcp_port} should match within {wait_duration:g} seconds")
+@then("the HTTP response on port {tcp_port} should match within {wait_duration:g} seconds")
 def check_http_responses_match(context, tcp_port, wait_duration=None):
     original_ip = context.redeployment_source_ip
     redeployed_ip = context.redeployment_target_ip

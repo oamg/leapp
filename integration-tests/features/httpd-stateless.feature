@@ -6,4 +6,4 @@ Scenario: HTTP default server page
          | app-source | centos6-guest-httpd | no           |
          | target     | centos7-target      | no           |
     When app-source is redeployed to target as a macrocontainer
-    Then the HTTP responses on port 80 should match within 90 seconds
+    Then the HTTP response on port 80 should match within 90 seconds
