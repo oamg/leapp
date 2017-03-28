@@ -43,7 +43,8 @@ To get a local shell with the testing environment active, run:
     $ pipenv shell
 
 Once in the testing environment, the tests can be run by invoking
-`behave` test runner directly:
+`behave` test runner directly from the `integration-tests`
+directory:
 
     $ behave
 
