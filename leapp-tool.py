@@ -5,11 +5,15 @@ from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from json import dumps
 from os import getuid
 from subprocess import Popen, PIPE, check_output, CalledProcessError
+import sys
 
 
 def _get_ssh_config():
     # use vagrant ssh-config to obtain SSH configuration for the desired box
-    ssh_kludge = {'target': 'ansible/centos7-target', 'source': 'ansible/centos6-guest-lamp'}
+    ssh_kludge = {
+        'target': 'integration-tests/vmdefs/centos7-target',
+        'source': 'integration-tests/vmdefs/centos6-guest-httpd'
+    }
     out = {}
     for typ, path in ssh_kludge.iteritems():
         try:
@@ -77,7 +81,7 @@ class MigrationContext:
         good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
         for mount in good_mounts:
             command += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
-        command += ' -p 9000:9000 -p 9022:22 --name container ' + img + ' ' + init
+        command += ' -p 80:80 -p 9022:22 --name container ' + img + ' ' + init
         return self._ssh_sudo(command)
 
     def _fix_container(self, fix_str):
@@ -111,6 +115,7 @@ elif parsed.action == 'migrate-machine':
     if not parsed.target:
         print('! no target specified, creating leappto container package in current directory')
         # TODO: not really for now
+        raise NotImplementedError
     else:
         source = parsed.machine
         target = parsed.target
@@ -139,12 +144,12 @@ elif parsed.action == 'migrate-machine':
         print('! provisioning ...')
         # if el7 then use systemd
         if machine_src.installation.os.version.startswith('7'):
-            mc.start_container('centos:7', '/usr/lib/systemd/systemd --system')
+            result = mc.start_container('centos:7', '/usr/lib/systemd/systemd --system')
             print('! starting services')
             mc.fix_systemd()
-            print('! done')
         else:
-            mc.start_container('centos:6', '/sbin/init')
+            result = mc.start_container('centos:6', '/sbin/init')
             print('! starting services')
             mc.fix_upstart()
-            print('! done')
+        print('! done')
+        sys.exit(result)

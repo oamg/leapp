@@ -1,0 +1,12 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+
+[dev-packages]
+behave = "*"
+pylint = "*"
+requests = "*"
+PyHamcrest = "*"
+
+[packages]
+ansible = ">= 2.0"
