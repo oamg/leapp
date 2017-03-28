@@ -11,9 +11,12 @@ their own.
 
 ## Migration prototype
 
-The migration prototype currently handles exactly one case:
-migrating from a CentOS 7 VM to a macrocontainer running on
-a CentOS 7 container host.
+The migration prototype currently handles exactly two cases:
+
+* migrating from a CentOS 6 VM to a macrocontainer running on
+  a CentOS 7 container host.
+* migrating from a CentOS 7 VM to a macrocontainer running on
+  a CentOS 7 container host.
 
 ### Setting up to run the prototype demonstration
 
@@ -100,7 +103,11 @@ Known Constraints
 
 Currently known constraints on this approach:
 
-* Migration currently only works for source VMs using
-  systemd as their init system
 * SELinux process separation is not available inside
   the resulting macrocontainer
+
+
+Key limitations in the current implementation:
+
+* Remote access to systems requires known Vagrant
+  managed VMs running locally under libvirt
