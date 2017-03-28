@@ -22,3 +22,12 @@
      - vim
      - man
      - unzip
+
+- name: Install SELinux bindings for Ansible
+  yum: pkg=libselinux-python state=installed
+
+- name: Add current user's default RSA SSH key
+  authorized_key:
+    user: vagrant
+    state: present
+    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
