@@ -11,7 +11,6 @@
   <Directory {{ doc_root }}>
     Options Indexes FollowSymLinks Includes ExecCGI
     AllowOverride All
-    Require all granted
   </Directory>
 
   ErrorLog "/var/log/httpd/html-error_log"
