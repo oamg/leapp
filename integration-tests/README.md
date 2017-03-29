@@ -17,6 +17,14 @@ Install `vagrant` and `vagrant-libvirt`:
 
     $ sudo dnf install vagrant vagrant-libvirt
 
+And allow yourself passwordless access to VM management operations:
+
+    $ sudo usermod -aG vagrant,libvirt $USER
+
+You will need to log out and back in again, or start a new user
+session with `su $USER`, to get the new group memberships to take
+effect.
+
 Install `pipenv` and the `pew` environment management tool:
 
     $ pip install --user pipsi
@@ -48,8 +56,8 @@ directory:
 
     $ behave
 
-The tests require passwordless `sudo` access to both `vagrant`
-and `leapp-tool` (alternatively, they will require interactive
+The tests require passwordless access to `vagrant`, and passwordless `sudo`
+access to `leapp-tool` (alternatively, they will require interactive
 password entry during the test).
 
 ## Writing new tests
@@ -60,3 +68,6 @@ New step definitions go in the ["features/steps"](./features.steps)
 subdirectory, and use the
 ["hamcrest"](https://pyhamcrest.readthedocs.io/en/latest/tutorial/)
 library to define behavioural expectations.
+
+The available custom steps are not yet documented - look at the sexisting
+feature and step definitions for examples.

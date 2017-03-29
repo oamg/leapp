@@ -6,3 +6,12 @@
 
 - name: Ensure directories
   file: path=/opt/leapp-to state=directory owner=vagrant group=vagrant
+
+- name: Install SELinux bindings for Ansible
+  yum: pkg=libselinux-python state=installed
+
+- name: Add the predefined SSH key for test access
+  authorized_key:
+    user: vagrant
+    state: present
+    key: "{{ lookup('file', '../../../../../../config/leappto_testing_key.pub') }}"

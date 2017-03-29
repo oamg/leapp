@@ -16,3 +16,12 @@
      - vim
      - man
      - unzip
+
+- name: Install SELinux bindings for Ansible
+  yum: pkg=libselinux-python state=installed
+
+- name: Add the predefined SSH key for test access
+  authorized_key:
+    user: vagrant
+    state: present
+    key: "{{ lookup('file', '../../../../../../config/leappto_testing_key.pub') }}"
