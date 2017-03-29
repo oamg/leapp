@@ -56,8 +56,8 @@ directory:
 
     $ behave
 
-The tests require passwordless `sudo` access to both `vagrant`
-and `leapp-tool` (alternatively, they will require interactive
+The tests require passwordless access to `vagrant`, and passwordless `sudo`
+access to `leapp-tool` (alternatively, they will require interactive
 password entry during the test).
 
 ## Writing new tests
