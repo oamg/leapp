@@ -1,0 +1,39 @@
+---
+
+# Create a `ci` account with the following properties
+# - vagrant and libvirt group membership
+# - known ssh key in authorized_keys
+#
+# Also configure the `root` user to have a well known authorized_keys key
+
+- name: Create `ci` account
+  user:
+    name: ci
+    groups: vagrant,libvirt
+    comment: "Le-App CI Account"
+  become: true
+
+- name: Ensure proper chmod on /etc/sudoers*
+  file:
+    state: file
+    path: /etc/sudoers.d/vagrant
+    mode: 0440
+  become: true
+
+- name: Ensure passwordless sudo for the `ci` user
+  shell: 'echo "ci       ALL = (ALL) NOPASSWD: ALL" >> /etc/sudoers && visudo -c'
+  become: true
+
+- name: Set SSH access for CI Account
+  authorized_key:
+    user: ci
+    state: present
+    key: "{{ lookup('file', lookup('env','LE_APP_SECRETS_DIR') + 'ssh/ci/id_rsa.pub') }}"
+  become: true
+
+- name: Set SSH access for root Account
+  authorized_key:
+    user: root
+    state: present
+    key: "{{ lookup('file', lookup('env','LE_APP_SECRETS_DIR') + 'ssh/root/id_rsa.pub') }}"
+  become: true

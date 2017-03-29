@@ -1,0 +1,35 @@
+# file: ansible/roles/vagrant/install.yml
+---
+
+# For some reason this task gets always skipped :/
+#- name: "Install Vagrant from SCL"
+#  include_role:
+#    name: smbambling.scl
+#    tasks_from: packages
+#  vars:
+#    scl_packages:
+#      - {name: 'sclo-vagrant1'}
+
+- name: Install Vagrant & Python3.5 from SCL
+  shell: 'yum install -y centos-release-scl 
+       && yum-config-manager -y --add-repo=http://mirror.centos.org/centos-7/7/sclo/x86_64/sclo/ 
+       && yum install -y sclo-vagrant1 rh-python35 
+       && echo "source /opt/rh/{sclo-vagrant1,rh-python35}/enable" | tee -a /{home/vagrant,root}/.bashrc'
+  become: true
+
+- name: Install EPEL
+  yum: pkg=https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm state=present
+  become: true
+
+- name: Install Packages
+  yum: pkg={{ item }} state=present
+  become: true
+  with_items:
+    - libvirt
+    - ansible
+
+# TODO: Find a better place for this one
+- name: Chek Vagrant
+  shell: vagrant --version
+  become: true
+  become_flags: -i # SCL needs to be sourced via .bashrc
