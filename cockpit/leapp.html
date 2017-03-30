@@ -72,12 +72,7 @@
             $("#machine-table-body tr").remove()
             for (var idx in vm_data.machines) {
                 var machine = vm_data.machines[idx];
-                var raw_ip = machine.ip[0];
-                var parsed_ip = raw_ip;
-                if (raw_ip.startsWith("ipv4-")) {
-                    parsed_ip = raw_ip.substr(5)
-                }
-                var app_url = `http://${parsed_ip}:9000/`;
+                var app_url = `http://${machine.ip[0]}:9000/`;
                 machine_table.append(`<tr>
                     <td>${machine.name}</td>
                     <td>${machine.hostname}</td>

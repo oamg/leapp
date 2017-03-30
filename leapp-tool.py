@@ -120,8 +120,6 @@ elif parsed.action == 'migrate-machine':
 
         print('! configuring SSH keys')
         ip = machine_dst.ip[0]
-        if ip.startswith("ipv4-"):
-            ip = ip[5:]
         _key_path_template = "{}/integration-tests/config/leappto_testing_key"
         _this_dir = os.path.dirname(os.path.abspath(__file__))
         testing_key_path = _key_path_template.format(_this_dir)
