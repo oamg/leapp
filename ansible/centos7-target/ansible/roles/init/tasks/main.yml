@@ -10,8 +10,8 @@
 - name: Install SELinux bindings for Ansible
   yum: pkg=libselinux-python state=installed
 
-- name: Add current user's default RSA SSH key
+- name: Add the predefined SSH key for demo access
   authorized_key:
     user: vagrant
     state: present
-    key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+    key: "{{ lookup('file', '../../../../../../config/integration-tests/leappto_testing_key.pub') }}"
