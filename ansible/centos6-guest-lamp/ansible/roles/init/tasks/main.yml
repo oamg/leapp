@@ -24,4 +24,4 @@
   authorized_key:
     user: vagrant
     state: present
-    key: "{{ lookup('file', '../../../../../../config/integration-tests/leappto_testing_key.pub') }}"
+    key: "{{ lookup('file', '../../../../../../integration-tests/config/leappto_testing_key.pub') }}"
