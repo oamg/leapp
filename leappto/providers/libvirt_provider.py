@@ -50,10 +50,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                     for ipaddr in val['addrs']:
                         if not __good_ip(ipaddr['addr']):
                             continue
-                        if ipaddr['type'] == libvirt.VIR_IP_ADDR_TYPE_IPV4:
-                            yield 'ipv4-' + ipaddr['addr']
-                        elif ipaddr['type'] == libvirt.VIR_IP_ADDR_TYPE_IPV6:
-                            yield 'ipv6-' + ipaddr['addr']
+                        yield ipaddr['addr']
 
         def __get_attribute(elem, attr):
             """
