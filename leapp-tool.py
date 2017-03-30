@@ -4,26 +4,9 @@ from argparse import ArgumentParser
 from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from json import dumps
 from os import getuid
+import os.path
 from subprocess import Popen, PIPE, check_output, CalledProcessError
 import sys
-
-
-def _get_ssh_config():
-    # use vagrant ssh-config to obtain SSH configuration for the desired box
-    ssh_kludge = {
-        'target': 'integration-tests/vmdefs/centos7-target',
-        'source': 'integration-tests/vmdefs/centos6-guest-httpd'
-    }
-    out = {}
-    for typ, path in ssh_kludge.iteritems():
-        try:
-            # bleak ugly code to convert SSH configuration file into bunch of `-o` flags for ssh
-            out[typ] = ['-o {}={}'.format(*x.strip().split(' '))
-                        for x in check_output(['vagrant', 'ssh-config'], cwd=path).decode('utf-8').splitlines()[1:-1]]
-        except CalledProcessError:
-            # domain probably not running
-            pass
-    return out
 
 
 if getuid() != 0:
@@ -64,6 +47,7 @@ class MigrationContext:
 
     def _ssh(self, cmd, **kwargs):
         arg = self._ssh_base + [cmd]
+        print(arg)
         return Popen(arg, **kwargs).wait()
 
     def _ssh_sudo(self, cmd, **kwargs):
@@ -134,11 +118,21 @@ elif parsed.action == 'migrate-machine':
             print("Target: " + repr(machine_dst))
             exit(-1)
 
-        print('! obtaining SSH keys')
-        ssh = _get_ssh_config()
-        ip, config = machine_dst.ip[0], ssh['target']
+        print('! configuring SSH keys')
+        ip = machine_dst.ip[0]
+        if ip.startswith("ipv4-"):
+            ip = ip[5:]
+        _key_path_template = "{}/integration-tests/config/leappto_testing_key"
+        _this_dir = os.path.dirname(os.path.abspath(__file__))
+        testing_key_path = _key_path_template.format(_this_dir)
+        target_ssh_config = [
+            '-o User=vagrant',
+            '-o StrictHostKeyChecking=no',
+            '-o PasswordAuthentication=no',
+            '-o IdentityFile=' + testing_key_path,
+        ]
 
-        mc = MigrationContext(ip, ssh['target'], machine_src.disks[0].host_path)
+        mc = MigrationContext(ip, target_ssh_config, machine_src.disks[0].host_path)
         print('! copying over')
         mc.copy()
         print('! provisioning ...')
