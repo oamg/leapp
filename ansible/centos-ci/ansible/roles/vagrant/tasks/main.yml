@@ -38,7 +38,6 @@
   pip:
     executable: pip3.5
     name: 
-     - behave
      - pipsi
   become: true
   become_flags: -i
@@ -66,7 +65,7 @@
   become: true
 
 - name: Prepare `pipenv`
-  shell: pipenv --three && pipenv install --ignore-hashes
+  shell: pipenv --three && pipenv install --dev --ignore-hashes
   args:
     chdir: /srv/le-app
   become: true
