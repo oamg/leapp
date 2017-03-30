@@ -14,7 +14,9 @@
   shell: 'yum install -y centos-release-scl 
        && yum-config-manager -y --add-repo=http://mirror.centos.org/centos-7/7/sclo/x86_64/sclo/ 
        && yum install -y sclo-vagrant1 rh-python35 
-       && echo "source /opt/rh/{sclo-vagrant1,rh-python35}/enable" | tee -a /{home/vagrant,root}/.bashrc'
+       && echo "source /opt/rh/rh-python35/enable" | tee -a /root/.bashrc
+       && echo "source /opt/rh/sclo-vagrant1/enable" | tee -a /root/.bashrc
+       && echo "export PATH=\$PATH:/root/.local/bin/" >> /root/.bashrc'
   become: true
 
 - name: Install EPEL
@@ -27,9 +29,45 @@
   with_items:
     - libvirt
     - ansible
+    - git
+    - gcc
+    - libffi-devel
+    - openssl-devel
+
+- name: Install Behave and Pipsi
+  pip:
+    executable: pip3.5
+    name: 
+     - behave
+     - pipsi
+  become: true
+  become_flags: -i
+
+- name: Install Pew
+  shell: pipsi install pew
+  become: true
+  become_flags: -i
+
+- name: Install Pipenv
+  shell: pipsi install pipenv
+  become: true
+  become_flags: -i
 
 # TODO: Find a better place for this one
 - name: Chek Vagrant
   shell: vagrant --version
   become: true
-  become_flags: -i # SCL needs to be sourced via .bashrc
+  become_flags: -i
+
+- name: Checkout `le-app-to` code
+  git:
+    repo: 'https://github.com/leapp-to/prototype/'
+    dest: /srv/le-app
+  become: true
+
+- name: Prepare `pipenv`
+  shell: pipenv --three && pipenv install --ignore-hashes
+  args:
+    chdir: /srv/le-app
+  become: true
+  become_flags: -i
