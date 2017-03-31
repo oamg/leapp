@@ -1,0 +1,79 @@
+# file: ansible/roles/vagrant/install.yml
+---
+
+- name: Install Vagrant & Python3.5 from SCL
+  shell: 'yum install -y centos-release-scl 
+       && yum-config-manager -y --add-repo=http://mirror.centos.org/centos-7/7/sclo/x86_64/sclo/ 
+       && yum install -y sclo-vagrant1 rh-python35 
+       && echo "source /opt/rh/rh-python35/enable" >> /root/.bashrc
+       && echo "source /opt/rh/sclo-vagrant1/enable" >> /root/.bashrc
+       && echo "export PATH=\$PATH:/root/.local/bin/" >> /root/.bashrc'
+  become: true
+
+- name: Check Vagrant
+  shell: vagrant --version
+  become: true
+  become_flags: -i
+
+- name: Install Packages
+  yum: pkg={{ item }} state=present
+  become: true
+  with_items:
+    - libvirt
+    - git
+    - gcc
+    - libffi-devel
+    - openssl-devel
+    - patch
+
+- name: Install Pipsi
+  pip:
+    executable: pip3.5
+    name: 
+     - pipsi
+  become: true
+  become_flags: -i
+
+- name: Install Pew
+  shell: pipsi install pew
+  become: true
+  become_flags: -i
+
+- name: Install Pipenv
+  shell: pipsi install pipenv
+  become: true
+  become_flags: -i
+
+- name: Checkout `le-app-to` code
+  git:
+    repo: 'https://github.com/leapp-to/prototype/'
+    dest: /srv/le-app
+  become: true
+
+- name: Prepare `pipenv`
+  shell: pipenv --three
+  args:
+    chdir: /srv/le-app
+  become: true
+  become_flags: -i
+
+- name: Patch `pipenv` delegator to prevent deadlock
+  patch:
+    src: '../../../../patches/delegator.patch'
+    dest: /root/.local/venvs/pipenv/lib/python3.5/site-packages/pipenv/vendor/delegator.py
+    strip: 0
+  become: true
+
+- name: Patch `pipenv` cli to prevent deadlock
+  patch:
+    src: '../../../../patches/cli.patch'
+    dest: /root/.local/venvs/pipenv/lib/python3.5/site-packages/pipenv/cli.py
+    strip: 0
+  become: true
+
+- name: Install `pipenv`
+  shell: pipenv install --dev --ignore-hashes
+  args:
+    chdir: /srv/le-app
+  become: true
+  become_flags: -i
