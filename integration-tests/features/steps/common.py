@@ -9,7 +9,7 @@ import time
 
 _TEST_DIR = pathlib.Path(__file__).parent.parent.parent
 _REPO_DIR = _TEST_DIR.parent
-_VM_DEFS = {path.name: str(path) for path in (_TEST_DIR / "vmdefs").iterdir()}
+_VM_DEFS = {"leapp-tests-" + path.name: str(path) for path in (_TEST_DIR / "vmdefs").iterdir()}
 _LEAPP_TOOL = str(_REPO_DIR / "leapp-tool.py")
 
 
@@ -68,7 +68,7 @@ def create_local_machines(context):
     context.machines = machines = {}
     for row in context.table:
         vm_name = row["name"]
-        vm_def = row["definition"]
+        vm_def = "leapp-tests-" + row["definition"]
         if vm_def not in _VM_DEFS:
             raise ValueError("Unknown VM image: {}".format(vm_def))
         ensure_fresh = (row["ensure_fresh"].lower() == "yes")
@@ -118,7 +118,6 @@ def _get_ip_addresses(source_def, target_def):
     machines = machine_info["machines"]
     vm_count = len(machines)
     for machine in machines:
-        # HACK: Require Vagrant config name to be used as hostname
         if machine["hostname"] == source_def:
             source_ip = _get_leapp_ip(machine)
         if machine["hostname"] == target_def:

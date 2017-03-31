@@ -21,11 +21,33 @@ parser = ap.add_subparsers(help='sub-command', dest='action')
 list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
 migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
 
-list_cmd.add_argument('--shallow', action='store_true', help='target VM name ')
+list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
 list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
 
+def _port_spec(arg):
+    """Converts a port forwarding specifier to a (host_port, container_port) tuple
+
+    Specifiers can be either a simple integer, where the host and container port are
+    the same, or else a string in the form "host_port:container_port".
+    """
+    host_port, sep, container_port = arg.partition(":")
+    host_port = int(host_port)
+    if sep is None:
+        container_port = host_port
+    else:
+        container_port = int(container_port)
+    return host_port, container_port
+
 migrate_cmd.add_argument('machine', help='source machine to migrate')
-migrate_cmd.add_argument('-t', '--target', default=None, help='target VM name ')
+migrate_cmd.add_argument('-t', '--target', default=None, help='target VM name')
+migrate_cmd.add_argument(
+    '--tcp-port',
+    default=None,
+    dest="forwarded_ports",
+    nargs='*',
+    type=_port_spec,
+    help='Target ports to forward to macrocontainer (temporary!)'
+)
 
 
 def _find_machine(ms, name):
@@ -36,10 +58,16 @@ def _find_machine(ms, name):
 
 
 class MigrationContext:
-    def __init__(self, target, target_cfg, disk):
+    def __init__(self, target, target_cfg, disk, forwarded_ports=None):
         self.target = target
         self.target_cfg = target_cfg
         self.disk = disk
+        if forwarded_ports is None:
+            forwarded_ports = [(80, 80)] # Default to forwarding plain HTTP
+        else:
+            forwarded_ports = list(forwarded_ports)
+        forwarded_ports.append((9022, 22)) # Always forward SSH
+        self.forwarded_ports = forwarded_ports
 
     @property
     def _ssh_base(self):
@@ -65,7 +93,9 @@ class MigrationContext:
         good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
         for mount in good_mounts:
             command += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
-        command += ' -p 80:80 -p 9022:22 --name container ' + img + ' ' + init
+        for host_port, container_port in self.forwarded_ports:
+            command += ' -p {:d}:{:d}'.format(host_port, container_port)
+        command += ' --name container ' + img + ' ' + init
         return self._ssh_sudo(command)
 
     def _fix_container(self, fix_str):
@@ -103,6 +133,7 @@ elif parsed.action == 'migrate-machine':
     else:
         source = parsed.machine
         target = parsed.target
+        forwarded_ports = parsed.forwarded_ports
 
         print('! looking up "{}" as source and "{}" as target'.format(source, target))
 
@@ -130,7 +161,12 @@ elif parsed.action == 'migrate-machine':
             '-o IdentityFile=' + testing_key_path,
         ]
 
-        mc = MigrationContext(ip, target_ssh_config, machine_src.disks[0].host_path)
+        mc = MigrationContext(
+            ip,
+            target_ssh_config,
+            machine_src.disks[0].host_path,
+            forwarded_ports
+        )
         print('! copying over')
         mc.copy()
         print('! provisioning ...')
