@@ -98,7 +98,7 @@
             var source = "centos6-app-vm";
             var target = "centos7-target";
             var proc = call_leapp([
-                "migrate-machine", "--tcp-port","9000:80", "-t", target, source
+                "migrate-machine", "--tcp-port","9000:9000", "-t", target, source
             ]);
             output.empty();
             proc.done(migrate_success);
