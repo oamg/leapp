@@ -2,7 +2,8 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.box = "centos/6"
-    config.vm.hostname = "centos6-guest-httpd"
+    config.vm.define "leapp-tests"
+    config.vm.hostname = "leapp-tests-centos6-guest-httpd"
 
     config.vm.network :private_network, ip: "10.0.0.10"
 
