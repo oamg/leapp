@@ -7,3 +7,7 @@ if [[ $(id -u) != 0 ]]; then
 fi
 
 pip install ansible==2.2.0
+
+ansible-playbook ansible/playbook.yml
+
+cd /srv/le-app && pipenv shell 'behave'
