@@ -1,5 +1,0 @@
-# file: roles/php56/handlers/main.yml
----
-
-- name: restart iptables
-  service: name=iptables state=restarted
