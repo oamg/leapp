@@ -1,0 +1,13 @@
+- name: MySql packages are installed
+  yum: 
+    name: '{{ item }}'
+  with_items:
+    - '{{ package_name }}-server'
+    - '{{ package_name }}'
+    - MySQL-python
+
+- name: Start the MySQL service
+  service: 
+    name: '{{ service_name }}'
+    state: started 
+    enabled: yes
