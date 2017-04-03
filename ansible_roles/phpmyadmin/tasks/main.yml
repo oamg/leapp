@@ -1,0 +1,41 @@
+- name: Finding out if phpmyadmin is already cloned
+  shell: test -d /var/www/phpmyadmin && echo 'exist' || echo ''
+  register: phpmyadmin_installed
+
+- name: Downloading phpmyadmin stable if isn't downloaded yet (6)
+  shell: cd /var/www && git clone --depth 1 -b STABLE https://github.com/phpmyadmin/phpmyadmin.git
+  when: phpmyadmin_installed.stdout!='exist' and ansible_distribution_major_version == "6"
+
+- name: Downloading phpmyadmin stable if isn't downloaded yet (7)
+  shell: cd /var/www && git clone --depth 1 -b STABLE --single-branch https://github.com/phpmyadmin/phpmyadmin.git
+  when: phpmyadmin_installed.stdout!='exist' and ansible_distribution_major_version == "7"
+
+- name: Copy conf for apache
+  template: 
+    src: phpmyadmin.tpl 
+    dest: /etc/httpd/conf.d/phpmyadmin.conf 
+    owner: root 
+    group: root 
+    mode: 0644
+
+- name: Add allow rule for 9000/tcp to firewall (7)
+  firewalld: 
+    zone: public 
+    port: 9000/tcp 
+    permanent: true 
+    state: enabled
+  when: ansible_distribution_major_version == "7"
+
+- name: Add allow rule for 9000/tcp to firewall (6)
+  iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 9000
+    jump: ACCEPT
+  when: ansible_distribution_major_version == "6"
+
+- name: Update dependencies with Composer
+  command: /usr/local/bin/composer update --no-dev
+  args:
+    chdir: /var/www/phpmyadmin/
+  
