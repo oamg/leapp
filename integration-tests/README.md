@@ -64,10 +64,27 @@ password entry during the test).
 
 New feature definitions go in the ["features"](./features) subdirectory.
 
+To get a list of the available steps and their documentation, run:
+
+    $ behave --steps-catalog
+
 New step definitions go in the ["features/steps"](./features.steps)
 subdirectory, and use the
 ["hamcrest"](https://pyhamcrest.readthedocs.io/en/latest/tutorial/)
 library to define behavioural expectations.
 
-The available custom steps are not yet documented - look at the sexisting
-feature and step definitions for examples.
+All step definitions receive the current `behave` context as their first
+parameter, and the [environment file](./features/environment.py) adds a few
+useful attributes for use in step implementations:
+
+* `scenario_cleanup`: a `contextlib.ExitStack` instance that can be used to
+  register cleanup operations to run in the `@after_scenario` hook
+
+* `vm_helper`: a custom object for managing local VMs (see
+  `VirtualMachineHelper` in the environment file for details)
+
+* `migration_helper`: a custom object for working with the LeApp tool (see
+  `MigrationHelper` in the environment file for details)
+
+* `http_helper`: a custom object for checking HTTP(S) responses (see
+  `RequestsHelper` in the environment file for details)
