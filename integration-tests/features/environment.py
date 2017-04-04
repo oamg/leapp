@@ -2,8 +2,12 @@ import contextlib
 import json
 import pathlib
 import subprocess
+import time
 
 from attr import attributes, attrib
+from hamcrest import assert_that, equal_to
+
+import requests
 
 ##############################
 # General utilities
@@ -28,6 +32,7 @@ def _run_command(cmd, work_dir, ignore_errors):
             print(exc.stderr.decode())
             raise
     return output
+
 
 ##############################
 # Local VM management
@@ -106,6 +111,7 @@ class VirtualMachineHelper(object):
         print("Destroyed {} VM instance".format(hostname))
         return result
 
+
 ##############################
 # Leapp commands
 ##############################
@@ -178,6 +184,86 @@ class MigrationHelper(object):
 
 
 ##############################
+# Service status checking
+##############################
+
+class RequestsHelper(object):
+    """Test step helper to check HTTP responses"""
+
+    @classmethod
+    def get_response(cls, service_url, wait_for_connection=None):
+        """Get HTTP response from given service URL
+
+        Responses are returned as requests.Response objects
+
+        *service_url*: the service URL to query
+        *wait_for_connection*: number of seconds to wait for a HTTP connection
+                               to the service. `None` indicates that a response
+                               is expected immediately.
+        """
+        deadline = time.monotonic()
+        if wait_for_connection is None:
+            fail_msg = "No response from service"
+        else:
+            fail_msg = "No response from service within {} seconds".format(wait_for_connection)
+            deadline += wait_for_connection
+        while True:
+            try:
+                return requests.get(service_url)
+            except Exception:
+                pass
+            if time.monotonic() >= deadline:
+                break
+        raise AssertionError(fail_msg)
+
+    @classmethod
+    def get_responses(cls, urls_to_check):
+        """Check responses from multiple given URLs
+
+        Each URL can be either a string (which will be expected to return
+        a response immediately), or else a (service_url, wait_for_connection)
+        pair, which is interpreted as described for `get_response()`.
+
+        Response are returned as a dictionary mapping from the service URLs
+        to requests.Response objects.
+        """
+        # TODO: Use concurrent.futures to check the given URLs in parallel
+        responses = {}
+        for url_to_check in urls_to_check:
+            if isinstance(url_to_check, tuple):
+                url_to_check, wait_for_connection = url_to_check
+            else:
+                wait_for_connection = None
+            responses[url_to_check] = cls.get_response(url_to_check,
+                                                       wait_for_connection)
+        return responses
+
+    @classmethod
+    def compare_redeployed_response(cls, original_ip, redeployed_ip, *,
+                                    tcp_port, status, wait_for_target):
+        """Compare a pre-migration app response with a redeployed response
+
+        Expects an immediate response from the original IP, and allows for
+        a delay before the redeployment target starts returning responses
+        """
+        # Get response from source VM
+        original_url = "http://{}:{}".format(original_ip, tcp_port)
+        original_response = cls.get_response(original_url)
+        print("Response received from {}".format(original_url))
+        original_status = original_response.status_code
+        assert_that(original_status, equal_to(status), "Original status")
+        # Get response from target VM
+        redeployed_url = "http://{}:{}".format(redeployed_ip, tcp_port)
+        redeployed_response = cls.get_response(redeployed_url, wait_for_target)
+        print("Response received from {}".format(redeployed_url))
+        # Compare the responses
+        assert_that(redeployed_response.status_code, equal_to(original_status), "Redeployed status")
+        original_data = original_response.text
+        redeployed_data = redeployed_response.text
+        assert_that(redeployed_data, equal_to(original_data), "Same response")
+
+
+##############################
 # Test execution hooks
 ##############################
 
@@ -203,6 +289,9 @@ def before_scenario(context, scenario):
 
     # Each scenario gets a MigrationHelper instance
     context.migration_helper = MigrationHelper(context.vm_helper)
+
+    # Each scenario gets a RequestsHelper instance
+    context.http_helper = RequestsHelper()
 
 def after_scenario(context, scenario):
     context.scenario_cleanup.close()
