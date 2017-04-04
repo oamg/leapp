@@ -1,0 +1,2 @@
+python3_scl_exec: source scl_source enable rh-python35 &&
+vagrant_scl_exec: source scl_source enable sclo-vagrant1 &&

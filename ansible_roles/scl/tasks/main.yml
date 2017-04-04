@@ -1,0 +1,13 @@
+- name: Install SCL Release RPM
+  yum:
+    name: centos-release-scl
+    state: present
+  become: yes
+
+- name: Enable SCL Repository
+  yum_repository:
+    name: sclo
+    description: SCL Repo
+    baseurl: http://mirror.centos.org/centos-$releasever/$releasever/sclo/$basearch/sclo/ 
+    enabled: yes
+  become: yes
