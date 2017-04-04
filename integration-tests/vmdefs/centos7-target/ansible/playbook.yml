@@ -1,6 +1,5 @@
-# file: ansible/playbook.yml
----
  - hosts: all
    roles:
-    - init
+    - role: init
+      key_path: ../../../config/leappto_testing_key.pub
     - docker

@@ -1,0 +1,9 @@
+- hosts: all
+  roles:
+    - role: init
+      key_path: ../../../integration-tests/config/leappto_testing_key.pub
+    - httpd
+    - role: mysql
+    - role: php
+      repo_version: 6
+    - phpmyadmin

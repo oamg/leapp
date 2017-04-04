@@ -1,0 +1,7 @@
+package_name: mysql
+service_name: mysqld
+mysql_root_password: toor
+mysql_users:
+  - name: root
+    pass: toor
+    priv: "*.*:ALL,GRANT"

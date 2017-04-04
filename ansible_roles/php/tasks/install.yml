@@ -1,0 +1,42 @@
+- name: Install epel from remote repo
+  yum: 
+    name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ repo_version }}.noarch.rpm 
+    state: present
+
+- name: Install remi from remote repo
+  yum: 
+    name: http://rpms.famillecollet.com/enterprise/remi-release-{{ repo_version }}.rpm 
+    state: present
+
+- name: upgrade all packages
+  yum: 
+    name: '*'
+    state: latest
+
+- name: Install php
+  yum: 
+    name: '{{ item }}'
+    enablerepo: remi,remi-php{{ php_version }}
+    state: present
+  with_items:
+    - php
+    - php-common
+
+- name: Install php modules
+  yum: 
+    name: '{{ item }}'
+    enablerepo: remi,remi-php{{ php_version }} 
+    state: present
+  with_items:
+    - php-mbstring
+    - php-devel
+    - php-opcache
+    - php-soap
+    - php-pdo
+    - php-mcrypt
+    - php-pecl-xdebug
+    - php-xml
+    - php-mysql
+    - php-gd
+  notify:
+    - restart httpd
