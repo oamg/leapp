@@ -9,7 +9,6 @@ import time
 
 _TEST_DIR = pathlib.Path(__file__).parent.parent.parent
 _REPO_DIR = _TEST_DIR.parent
-_VM_DEFS = {"leapp-tests-" + path.name: str(path) for path in (_TEST_DIR / "vmdefs").iterdir()}
 _LEAPP_TOOL = str(_REPO_DIR / "leapp-tool.py")
 
 
@@ -39,51 +38,16 @@ def _run_command(cmd, work_dir, ignore_errors):
 # Local VM management
 ##############################
 
-def _run_vagrant(vm_def, *args, ignore_errors=False):
-    # TODO: explore https://pypi.python.org/pypi/python-vagrant
-    #       That may require sudo-less access to vagrant
-    vm_dir = _VM_DEFS[vm_def]
-    cmd = ["vagrant"]
-    cmd.extend(args)
-    return _run_command(cmd, vm_dir, ignore_errors)
-
-def _vm_up(vm_def):
-    result = _run_vagrant(vm_def, "up")
-    print("Started {} VM instance".format(vm_def))
-    return result
-
-def _vm_halt(vm_def):
-    result = _run_vagrant(vm_def, "halt", ignore_errors=True)
-    print("Suspended {} VM instance".format(vm_def))
-    return result
-
-def _vm_destroy(vm_def):
-    result = _run_vagrant(vm_def, "destroy", ignore_errors=True)
-    print("Destroyed {} VM instance".format(vm_def))
-    return result
-
-
 @given("the local virtual machines")
 def create_local_machines(context):
-    context.machines = machines = {}
+    vm_helper = context.vm_helper
     for row in context.table:
-        vm_name = row["name"]
-        vm_def = "leapp-tests-" + row["definition"]
-        if vm_def not in _VM_DEFS:
-            raise ValueError("Unknown VM image: {}".format(vm_def))
         ensure_fresh = (row["ensure_fresh"].lower() == "yes")
-        if ensure_fresh:
-            # TODO: Look at using "--provision" for fresh VMs
-            #       Rather than a full destroy/recreate cycle
-            #       Alternatively: add "reprovision" as a
-            #       third state for the field
-            _vm_destroy(vm_def)
-        _vm_up(vm_def)
-        if ensure_fresh:
-            context.resource_manager.callback(_vm_destroy, vm_def)
-        else:
-            context.resource_manager.callback(_vm_halt, vm_def)
-        machines[vm_name] = vm_def
+        vm_helper.ensure_local_vm(
+            row["name"],
+            row["definition"],
+            destroy=ensure_fresh
+        )
 
 
 ##############################
@@ -111,16 +75,16 @@ def _get_leapp_ip(machine):
         return raw_ip[5:]
     return raw_ip
 
-def _get_ip_addresses(source_def, target_def):
+def _get_ip_addresses(source_host, target_host):
     leapp_output = _run_leapp("list-machines", "--shallow")
     machine_info = json.loads(leapp_output)
     source_ip = target_ip = None
     machines = machine_info["machines"]
     vm_count = len(machines)
     for machine in machines:
-        if machine["hostname"] == source_def:
+        if machine["hostname"] == source_host:
             source_ip = _get_leapp_ip(machine)
-        if machine["hostname"] == target_def:
+        if machine["hostname"] == target_host:
             target_ip = _get_leapp_ip(machine)
         if source_ip is not None and target_ip is not None:
             break
@@ -130,11 +94,11 @@ def _get_ip_addresses(source_def, target_def):
 def redeploy_vm_as_macrocontainer(context, source_vm, target_vm):
     context.redeployment_source = source_vm
     context.redeployment_target = target_vm
-    machines = context.machines
-    source_def = machines[source_vm]
-    target_def = machines[target_vm]
-    _convert_vm_to_macrocontainer(source_def, target_def)
-    vm_count, source_ip, target_ip = _get_ip_addresses(source_def, target_def)
+    vm_helper = context.vm_helper
+    source_host = vm_helper.get_hostname(source_vm)
+    target_host = vm_helper.get_hostname(target_vm)
+    _convert_vm_to_macrocontainer(source_host, target_host)
+    vm_count, source_ip, target_ip = _get_ip_addresses(source_host, target_host)
     assert_that(vm_count, greater_than(1), "At least 2 local VMs")
     assert_that(source_ip, not_none(), "Valid source IP")
     assert_that(target_ip, not_none(), "Valid target IP")
