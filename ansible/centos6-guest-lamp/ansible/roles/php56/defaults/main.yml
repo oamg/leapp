@@ -1,4 +1,0 @@
-# file: roles/php56/defaults/main.yml
----
-
-composer_path: /usr/local/bin/composer

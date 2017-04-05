@@ -1,6 +1,0 @@
-# file: roles/mysql/handlers/main.yml
----
-
-- name: Restart the MySQL service
-  service: name=mysqld state=restarted enabled=true
-
