@@ -71,7 +71,15 @@ To get a list of the available steps and their documentation, run:
 New step definitions go in the ["features/steps"](./features.steps)
 subdirectory, and use the
 ["hamcrest"](https://pyhamcrest.readthedocs.io/en/latest/tutorial/)
-library to define behavioural expectations.
+library to define behavioural expectations. Two different step categories
+are currently defined:
+
+* `common.py`: Steps that are useful for testing LeApp's CLI behaviour,
+  regardless of whether or not the supporting DBus daemon is running
+* `dbus_service.py`: Steps that only make sense when testing LeApp's behaviour
+  with the supporting DBus service running. This includes any CLI performance
+  tests, as the persistent service is needed to provide asynchronous
+  notifications and subsecond response times to system status queries.
 
 All step definitions receive the current `behave` context as their first
 parameter, and the [environment file](./features/environment.py) adds a few
@@ -83,8 +91,8 @@ useful attributes for use in step implementations:
 * `vm_helper`: a custom object for managing local VMs (see
   `VirtualMachineHelper` in the environment file for details)
 
-* `migration_helper`: a custom object for working with the LeApp tool (see
-  `MigrationHelper` in the environment file for details)
+* `cli_helper`: a custom object for working with the LeApp tool (see
+  `ClientHelper` in the environment file for details)
 
 * `http_helper`: a custom object for checking HTTP(S) responses (see
   `RequestsHelper` in the environment file for details)

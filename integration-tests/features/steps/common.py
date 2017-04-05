@@ -1,3 +1,8 @@
+"""Common steps for macrocontainer redeployment testing
+
+All steps in this file should only assume access to the LeApp CLI client,
+to allow testing of behaviour without the DBus service running.
+"""
 from behave import given, when, then, step
 from hamcrest import assert_that, equal_to, not_none, greater_than
 
@@ -36,8 +41,7 @@ def redeploy_vm_as_macrocontainer(context, source_vm, target_vm):
     """
     context.redeployment_source = source_vm
     context.redeployment_target = target_vm
-    migration_helper = context.migration_helper
-    result = migration_helper.redeploy_as_macrocontainer(source_vm, target_vm)
+    result = context.cli_helper.redeploy_as_macrocontainer(source_vm, target_vm)
     assert_that(result.local_vm_count, greater_than(1), "At least 2 local VMs")
     assert_that(result.source_ip, not_none(), "Valid source IP")
     assert_that(result.target_ip, not_none(), "Valid target IP")
@@ -49,8 +53,8 @@ def redeploy_vm_as_macrocontainer(context, source_vm, target_vm):
 # Service status checking
 ##############################
 
-@then("the HTTP {status:d} response on port {tcp_port:d} should match within {wait_duration:g} seconds")
-def check_http_responses_match(context, tcp_port, status, wait_duration):
+@then("the HTTP {status:d} response on port {tcp_port:d} should match within {time_limit:g} seconds")
+def check_http_responses_match(context, tcp_port, status, time_limit):
     """Checks a macrocontainer response matches the original VM's response
 
     The source and target VM are inferred from the most recent preceding
@@ -65,5 +69,5 @@ def check_http_responses_match(context, tcp_port, status, wait_duration):
         redeployed_ip,
         tcp_port=tcp_port,
         status=status,
-        wait_for_target=wait_duration
+        wait_for_target=time_limit
     )

@@ -5,7 +5,7 @@ import subprocess
 import time
 
 from attr import attributes, attrib
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that, equal_to, less_than_or_equal_to
 
 import requests
 
@@ -51,7 +51,7 @@ class VirtualMachineHelper(object):
     """
 
     def __init__(self):
-        self._machines = {}
+        self.machines = {}
         self._resource_manager = contextlib.ExitStack()
 
     def ensure_local_vm(self, name, definition, destroy=False):
@@ -79,7 +79,7 @@ class VirtualMachineHelper(object):
 
     def get_hostname(self, name):
         """Return the expected hostname for the named machine"""
-        return self._machines[name]
+        return self.machines[name]
 
     def close(self):
         """Halt or destroy all created VMs"""
@@ -96,17 +96,17 @@ class VirtualMachineHelper(object):
     def _vm_up(self, name, hostname):
         result = self._run_vagrant(hostname, "up")
         print("Started {} VM instance".format(hostname))
-        self._machines[name] = hostname
+        self.machines[name] = hostname
         return result
 
     def _vm_halt(self, name):
-        hostname = self._machines.pop(name)
+        hostname = self.machines.pop(name)
         result = self._run_vagrant(hostname, "halt", ignore_errors=True)
         print("Suspended {} VM instance".format(hostname))
         return result
 
     def _vm_destroy(self, name):
-        hostname = self._machines.pop(name)
+        hostname = self.machines.pop(name)
         result = self._run_vagrant(hostname, "destroy", ignore_errors=True)
         print("Destroyed {} VM instance".format(hostname))
         return result
@@ -145,7 +145,7 @@ class MigrationInfo(object):
         return cls(vm_count, source_ip, target_ip)
 
 
-class MigrationHelper(object):
+class ClientHelper(object):
     """Test step helper to invoke the LeApp CLI
 
     Requires a VirtualMachineHelper instance
@@ -161,6 +161,17 @@ class MigrationHelper(object):
         target_host = vm_helper.get_hostname(target_vm)
         self._convert_vm_to_macrocontainer(source_host, target_host)
         return self._get_migration_host_info(source_host, target_host)
+
+    def check_response_time(self, cmd_args, time_limit):
+        """Check given command completes within the specified time limit
+
+        Returns the contents of stdout as a string.
+        """
+        start = time.monotonic()
+        cmd_output = self._run_leapp(*cmd_args)
+        response_time = time.monotonic() - start
+        assert_that(response_time, less_than_or_equal_to(time_limit))
+        return cmd_output
 
     @staticmethod
     def _run_leapp(*args):
@@ -287,8 +298,8 @@ def before_scenario(context, scenario):
     context.vm_helper = vm_helper = VirtualMachineHelper()
     context._global_cleanup.callback(vm_helper.close)
 
-    # Each scenario gets a MigrationHelper instance
-    context.migration_helper = MigrationHelper(context.vm_helper)
+    # Each scenario gets a ClientHelper instance
+    context.cli_helper = cli_helper = ClientHelper(context.vm_helper)
 
     # Each scenario gets a RequestsHelper instance
     context.http_helper = RequestsHelper()
