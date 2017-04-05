@@ -1,5 +1,0 @@
-# file: roles/php56/tasks/main.yml
----
-
-- include: install.yml
-- include: configure.yml
