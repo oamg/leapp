@@ -100,6 +100,19 @@ In addition to only running the appropriately tagged scenarios, this option
 runs behave in a mode that switches off the default stdout and logging capture,
 and stops immediately at the first failure.
 
+Not-yet-implemented scenario definitions can also be shared by marking them
+with the `@skip` tag:
+
+    @skip
+    Scenario: a not-yet-implemented scenario
+         Given ...
+         When ...
+         Then ...
+
+This allows an initial draft of the desired behaviour to be specified and
+merged prior to starting work on the implementation of the new behaviour and
+any new test steps required.
+
 ## Adding new steps to the steps catalog
 
 New step definitions go in the ["features/steps"](./features.steps)
