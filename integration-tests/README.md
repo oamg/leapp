@@ -60,26 +60,67 @@ The tests require passwordless access to `vagrant`, and passwordless `sudo`
 access to `leapp-tool` (alternatively, they will require interactive
 password entry during the test).
 
-## Writing new tests
+## Writing new test scenarios
 
-New feature definitions go in the ["features"](./features) subdirectory.
+New feature and scenario definitions go in the ["features"](./features)
+subdirectory.
+
+Refer to the
+[behave tutorial](https://pythonhosted.org/behave/tutorial.html#feature-files)
+for a description of the format of feature files, and the recommended structure
+to use when defining new test scenarios.
+
+Two features are currently defined:
+
+* `httpd-stateless.feature`: expected behaviour of the `migrate-machine`
+  subcommand when migrating stateless applications running under Apache `httpd`
+* `list-machines.feature`: expected behaviour of the `list-machines` subcommand
+
+If a new test scenario doesn't align with any of the existing features, then
+an appropriate new feature should also be defined.
 
 To get a list of the available steps and their documentation, run:
 
     $ behave --steps-catalog
 
+The `@wip` tag can be used to mark a work-in-progress scenario as follows:
+
+    @wip
+    Scenario: the scenario you are adding/changing
+         Given ...
+         When ...
+         Then ...
+
+The tagged scenarios can then be run with the
+[`--wip`](https://pythonhosted.org/behave/behave.html#cmdoption-w) option:
+
+    $ behave --wip
+
+In addition to only running the appropriately tagged scenarios, this option
+runs behave in a mode that switches off the default stdout and logging capture,
+and stops immediately at the first failure.
+
+## Adding new steps to the steps catalog
+
 New step definitions go in the ["features/steps"](./features.steps)
 subdirectory, and use the
 ["hamcrest"](https://pyhamcrest.readthedocs.io/en/latest/tutorial/)
-library to define behavioural expectations. Two different step categories
-are currently defined:
+library to define behavioural expectations.
 
-* `common.py`: Steps that are useful for testing LeApp's CLI behaviour,
-  regardless of whether or not the supporting DBus daemon is running
-* `dbus_service.py`: Steps that only make sense when testing LeApp's behaviour
-  with the supporting DBus service running. This includes any CLI performance
-  tests, as the persistent service is needed to provide asynchronous
-  notifications and subsecond response times to system status queries.
+Refer to the
+[behave tutorial](https://pythonhosted.org/behave/tutorial.html#python-step-implementations)
+for an introduction to the process of writing new steps, and the options
+available for passing data from test scenarios to the individual step functions.
+
+Three step categories are currently defined:
+
+* `list_machines.py`: Steps related specifically to the `list-machines`
+  subcommand
+* `dbus_service.py`: Steps to start, stop and otherwise interact directly with
+  the backend DBus service rather than treating it as a hidden implementation
+  detail
+* `common.py`: Steps that are generally useful and don't fit into one of the
+  more specific categories
 
 All step definitions receive the current `behave` context as their first
 parameter, and the [environment file](./features/environment.py) adds a few

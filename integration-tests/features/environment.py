@@ -278,6 +278,29 @@ class RequestsHelper(object):
 # Test execution hooks
 ##############################
 
+# The @skip support here is based on:
+# http://stackoverflow.com/questions/36482419/how-do-i-skip-a-test-in-the-behave-python-bdd-framework/42721605#42721605
+_AUTOSKIP_TAG = "skip"
+_WIP_TAG = "wip"
+def _skip_test_group(context, test_group):
+    """Decides whether or not to skip a test feature or test scenario
+
+    Test groups are skipped if they're tagged with `@skip` and the `skip` tag
+    is not explicitly requested through the command line options.
+
+    The `--wip` option currently overrides `--tags`, so groups tagged with both
+    `@skip` *and* `@wip` are also executed when the `wip` tag is requested.
+    """
+    autoskip_tag_set = _AUTOSKIP_TAG in test_group.tags
+    autoskip_tag_requested = context.config.tags.check([_AUTOSKIP_TAG])
+    wip_tag_set = _WIP_TAG in test_group.tags
+    wip_tag_requested = context.config.tags.check([_WIP_TAG])
+    override_autoskip = autoskip_tag_requested or (wip_tag_set and wip_tag_requested)
+    skip_group = autoskip_tag_set and not override_autoskip
+    if skip_group:
+        test_group.skip("Marked with @skip")
+    return skip_group
+
 def before_all(context):
     # Some steps require sudo, so for convenience in interactive use,
     # we ensure we prompt for elevated permissions immediately,
@@ -287,12 +310,23 @@ def before_all(context):
     # Use contextlib.ExitStack to manage global resources
     context._global_cleanup = contextlib.ExitStack()
 
+def before_feature(context, feature):
+    if _skip_test_group(context, feature):
+        return
+
+    # Use contextlib.ExitStack to manage per-feature resources
+    context._feature_cleanup = contextlib.ExitStack()
+
 def before_scenario(context, scenario):
+    if _skip_test_group(context, scenario):
+        return
+
     # Each scenario has a contextlib.ExitStack instance for resource cleanup
     context.scenario_cleanup = contextlib.ExitStack()
 
     # Each scenario gets a VirtualMachineHelper instance
-    # VMs are slow to start/stop, so by default, we defer halting them
+    # VMs are relatively slow to start/stop, so by default, we defer halting
+    # or destroying them to the end of the overall test run
     # Feature steps can still opt in to eagerly cleaning up a scenario's VMs
     # by doing `context.scenario_cleanup.callback(context.vm_helper.close)`
     context.vm_helper = vm_helper = VirtualMachineHelper()
@@ -305,7 +339,14 @@ def before_scenario(context, scenario):
     context.http_helper = RequestsHelper()
 
 def after_scenario(context, scenario):
+    if scenario.status == "skipped":
+        return
     context.scenario_cleanup.close()
+
+def after_feature(context, feature):
+    if feature.status == "skipped":
+        return
+    context._feature_cleanup.close()
 
 def after_all(context):
     context._global_cleanup.close()
