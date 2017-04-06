@@ -1,0 +1,6 @@
+- name: Ensure target directory is present
+  file:
+    path: /opt/leapp-to
+    state: directory
+    owner: vagrant
+    group: vagrant
