@@ -5,7 +5,7 @@ import subprocess
 import time
 
 from attr import attributes, attrib
-from hamcrest import assert_that, equal_to
+from hamcrest import assert_that, equal_to, less_than_or_equal_to
 
 import requests
 
@@ -51,7 +51,7 @@ class VirtualMachineHelper(object):
     """
 
     def __init__(self):
-        self._machines = {}
+        self.machines = {}
         self._resource_manager = contextlib.ExitStack()
 
     def ensure_local_vm(self, name, definition, destroy=False):
@@ -79,7 +79,7 @@ class VirtualMachineHelper(object):
 
     def get_hostname(self, name):
         """Return the expected hostname for the named machine"""
-        return self._machines[name]
+        return self.machines[name]
 
     def close(self):
         """Halt or destroy all created VMs"""
@@ -96,17 +96,17 @@ class VirtualMachineHelper(object):
     def _vm_up(self, name, hostname):
         result = self._run_vagrant(hostname, "up")
         print("Started {} VM instance".format(hostname))
-        self._machines[name] = hostname
+        self.machines[name] = hostname
         return result
 
     def _vm_halt(self, name):
-        hostname = self._machines.pop(name)
+        hostname = self.machines.pop(name)
         result = self._run_vagrant(hostname, "halt", ignore_errors=True)
         print("Suspended {} VM instance".format(hostname))
         return result
 
     def _vm_destroy(self, name):
-        hostname = self._machines.pop(name)
+        hostname = self.machines.pop(name)
         result = self._run_vagrant(hostname, "destroy", ignore_errors=True)
         print("Destroyed {} VM instance".format(hostname))
         return result
@@ -145,7 +145,7 @@ class MigrationInfo(object):
         return cls(vm_count, source_ip, target_ip)
 
 
-class MigrationHelper(object):
+class ClientHelper(object):
     """Test step helper to invoke the LeApp CLI
 
     Requires a VirtualMachineHelper instance
@@ -161,6 +161,17 @@ class MigrationHelper(object):
         target_host = vm_helper.get_hostname(target_vm)
         self._convert_vm_to_macrocontainer(source_host, target_host)
         return self._get_migration_host_info(source_host, target_host)
+
+    def check_response_time(self, cmd_args, time_limit):
+        """Check given command completes within the specified time limit
+
+        Returns the contents of stdout as a string.
+        """
+        start = time.monotonic()
+        cmd_output = self._run_leapp(*cmd_args)
+        response_time = time.monotonic() - start
+        assert_that(response_time, less_than_or_equal_to(time_limit))
+        return cmd_output
 
     @staticmethod
     def _run_leapp(*args):
@@ -267,6 +278,29 @@ class RequestsHelper(object):
 # Test execution hooks
 ##############################
 
+# The @skip support here is based on:
+# http://stackoverflow.com/questions/36482419/how-do-i-skip-a-test-in-the-behave-python-bdd-framework/42721605#42721605
+_AUTOSKIP_TAG = "skip"
+_WIP_TAG = "wip"
+def _skip_test_group(context, test_group):
+    """Decides whether or not to skip a test feature or test scenario
+
+    Test groups are skipped if they're tagged with `@skip` and the `skip` tag
+    is not explicitly requested through the command line options.
+
+    The `--wip` option currently overrides `--tags`, so groups tagged with both
+    `@skip` *and* `@wip` are also executed when the `wip` tag is requested.
+    """
+    autoskip_tag_set = _AUTOSKIP_TAG in test_group.tags
+    autoskip_tag_requested = context.config.tags.check([_AUTOSKIP_TAG])
+    wip_tag_set = _WIP_TAG in test_group.tags
+    wip_tag_requested = context.config.tags.check([_WIP_TAG])
+    override_autoskip = autoskip_tag_requested or (wip_tag_set and wip_tag_requested)
+    skip_group = autoskip_tag_set and not override_autoskip
+    if skip_group:
+        test_group.skip("Marked with @skip")
+    return skip_group
+
 def before_all(context):
     # Some steps require sudo, so for convenience in interactive use,
     # we ensure we prompt for elevated permissions immediately,
@@ -276,25 +310,43 @@ def before_all(context):
     # Use contextlib.ExitStack to manage global resources
     context._global_cleanup = contextlib.ExitStack()
 
+def before_feature(context, feature):
+    if _skip_test_group(context, feature):
+        return
+
+    # Use contextlib.ExitStack to manage per-feature resources
+    context._feature_cleanup = contextlib.ExitStack()
+
 def before_scenario(context, scenario):
+    if _skip_test_group(context, scenario):
+        return
+
     # Each scenario has a contextlib.ExitStack instance for resource cleanup
     context.scenario_cleanup = contextlib.ExitStack()
 
     # Each scenario gets a VirtualMachineHelper instance
-    # VMs are slow to start/stop, so by default, we defer halting them
+    # VMs are relatively slow to start/stop, so by default, we defer halting
+    # or destroying them to the end of the overall test run
     # Feature steps can still opt in to eagerly cleaning up a scenario's VMs
     # by doing `context.scenario_cleanup.callback(context.vm_helper.close)`
     context.vm_helper = vm_helper = VirtualMachineHelper()
     context._global_cleanup.callback(vm_helper.close)
 
-    # Each scenario gets a MigrationHelper instance
-    context.migration_helper = MigrationHelper(context.vm_helper)
+    # Each scenario gets a ClientHelper instance
+    context.cli_helper = cli_helper = ClientHelper(context.vm_helper)
 
     # Each scenario gets a RequestsHelper instance
     context.http_helper = RequestsHelper()
 
 def after_scenario(context, scenario):
+    if scenario.status == "skipped":
+        return
     context.scenario_cleanup.close()
+
+def after_feature(context, feature):
+    if feature.status == "skipped":
+        return
+    context._feature_cleanup.close()
 
 def after_all(context):
     context._global_cleanup.close()
