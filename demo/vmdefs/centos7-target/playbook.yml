@@ -3,3 +3,6 @@
     - role: init
       key_path: ../../../integration-tests/config/leappto_testing_key.pub
     - docker
+  tasks:
+    - name: Ensure directories
+      file: path=/opt/leapp-to state=directory owner=vagrant group=vagrant    
