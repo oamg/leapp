@@ -5,4 +5,4 @@ __pycache__/
 .venv
 playbook.retry
 dist/
-leappto.egg-info/
+*.egg-info/
