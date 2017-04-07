@@ -47,10 +47,10 @@
 
         function call_leapp(cmd_args) {
             return cockpit.spawn(
-                ["/opt/leapp/leapp-tool.py"].concat(cmd_args),
+                ["/opt/leapp/src/leapp-tool.py"].concat(cmd_args),
                 {
                     "superuser": "required",
-                    "directory": "/opt/leapp",
+                    "directory": "/opt/leapp/src/",
                     "err": "out"
                 }
             );
@@ -58,12 +58,12 @@
 
         function list_local_vms() {
             var proc = call_leapp(["list-machines", "--shallow"]);
-            // TODO: Add activity spinner
             proc.done(refresh_vm_table);
             proc.fail(list_local_vms_fail);
 
             output.empty();
             out("Refreshing VM list");
+            loader.show();
         }
 
         function refresh_vm_table(data) {
@@ -80,6 +80,9 @@
                 </tr>`);
             }
             output.empty();
+            if (vm_data.machines.length == 0) {
+                output.append(document.createTextNode("No running local VMs!\n"));
+            }
             loader.hide();
         }
 

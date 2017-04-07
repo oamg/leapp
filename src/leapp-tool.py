@@ -152,8 +152,9 @@ elif parsed.action == 'migrate-machine':
         print('! configuring SSH keys')
         ip = machine_dst.ip[0]
         _key_path_template = "{}/integration-tests/config/leappto_testing_key"
-        _this_dir = os.path.dirname(os.path.abspath(__file__))
-        testing_key_path = _key_path_template.format(_this_dir)
+        # TODO: Make this a config setting and/or command line option
+        _repo_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        testing_key_path = _key_path_template.format(_repo_dir)
         target_ssh_config = [
             '-o User=vagrant',
             '-o StrictHostKeyChecking=no',

@@ -116,7 +116,8 @@ class VirtualMachineHelper(object):
 # Leapp commands
 ##############################
 
-_LEAPP_TOOL = str(_REPO_DIR / "leapp-tool.py")
+_LEAPP_DIR = _REPO_DIR / "src"
+_LEAPP_TOOL = str(_LEAPP_DIR / "leapp-tool.py")
 
 @attributes
 class MigrationInfo(object):
@@ -178,7 +179,7 @@ class ClientHelper(object):
         cmd = ["sudo", "/usr/bin/python2", _LEAPP_TOOL]
         cmd.extend(args)
         # TODO: Ensure leapp-tool.py works independently of the working directory
-        return _run_command(cmd, work_dir=str(_REPO_DIR), ignore_errors=False)
+        return _run_command(cmd, work_dir=str(_LEAPP_DIR), ignore_errors=False)
 
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host):
