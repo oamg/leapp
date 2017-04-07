@@ -295,7 +295,7 @@ def _skip_test_group(context, test_group):
     autoskip_tag_set = _AUTOSKIP_TAG in test_group.tags
     autoskip_tag_requested = active_tags and active_tags.check([_AUTOSKIP_TAG])
     wip_tag_set = _WIP_TAG in test_group.tags
-    wip_tag_requested = active_tags and active_tags.tags.check([_WIP_TAG])
+    wip_tag_requested = active_tags and active_tags.check([_WIP_TAG])
     override_autoskip = autoskip_tag_requested or (wip_tag_set and wip_tag_requested)
     skip_group = autoskip_tag_set and not override_autoskip
     if skip_group:
