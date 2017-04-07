@@ -1,0 +1,22 @@
+- job:
+    name: Le-App Prototype Integration Test Job
+    description: Run integration test suite for the Le-App Prototype
+    project-type: freestyle
+    node: slave03.ci.centos.org
+    scm:
+      - git:
+        url: https://github.com/leapp-to/prototype
+        refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
+        branches:      
+          - '{ghprbActualCommit}'
+        basedir: /opt/le-app/
+    builders:
+      - shell: /opt/le-app/prototype/centos-ci/bootstrap.sh
+    triggers:
+      - github-pull-request:
+          admin-list:
+            - shaded-enmity
+            - ncoghlan
+          org-list:
+            - leapp-to
+          github-hooks: true
