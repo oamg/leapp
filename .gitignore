@@ -4,3 +4,4 @@ __pycache__/
 # Symlink to virtualenv
 .venv
 playbook.retry
+dist/

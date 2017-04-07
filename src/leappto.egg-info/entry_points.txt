@@ -1,0 +1,3 @@
+[console_scripts]
+leapp-tool = leappto.cli:main
+

@@ -1,0 +1,44 @@
+Metadata-Version: 1.1
+Name: leappto
+Version: 0.0.1
+Summary: Migrate legacy application VMs into macrocontainers
+Home-page: https://github.com/leapp-to/prototype
+Author: Red Hat
+Author-email: leapp-devel@redhat.com
+License: LGPLv2+
+Description: LeApp: Macrocontainers for Legacy Applications
+        ==============================================
+        
+        LeApp is a "Minimum Viable Migration" utility that aims to
+        decouple virtualized applications from the operating system
+        kernel included in their VM image by migrating them into
+        macrocontainers that include all of the traditional components
+        of a stateful VM (operating system user space, application
+        runtime, management tools, configuration files, etc), but
+        use the kernel of the container host rather than providing
+        their own.
+        
+        This approach to migration does *not* immediately take
+        advantage of all of the potential usability and
+        maintainability benefits offered by modern autoscaling
+        platforms, but may be sufficient to allow legacy
+        applications to be migrated and legacy hosting services
+        to be discontinued.
+        
+        Installation
+        ------------
+        
+        Installation is currently only supported as part of
+        the LeApp Cockpit plugin demo or the LeApp integration
+        tests.
+Keywords: Linux containers migration
+Platform: UNKNOWN
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Topic :: System :: Installation/Setup
+Classifier: Topic :: System :: Software Distribution
+Classifier: Topic :: System :: Operating System Kernels :: Linux

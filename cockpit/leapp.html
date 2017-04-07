@@ -47,10 +47,10 @@
 
         function call_leapp(cmd_args) {
             return cockpit.spawn(
-                ["/opt/leapp/src/leapp-tool.py"].concat(cmd_args),
+                ["/opt/leapp/bin/leapp-tool"].concat(cmd_args),
                 {
                     "superuser": "required",
-                    "directory": "/opt/leapp/src/",
+                    "directory": "/opt/leapp/bin/",
                     "err": "out"
                 }
             );
@@ -101,7 +101,11 @@
             var source = "centos6-app-vm";
             var target = "centos7-target";
             var proc = call_leapp([
-                "migrate-machine", "--tcp-port","9000:9000", "-t", target, source
+                "migrate-machine",
+                "--tcp-port", "9000:9000",
+                // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
+                "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
+                "-t", target, source
             ]);
             output.empty();
             proc.done(migrate_success);
