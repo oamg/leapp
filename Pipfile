@@ -2,12 +2,13 @@
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 
-[packages]
-ansible = ">= 2.0"
-
 [dev-packages]
 behave = "*"
 pylint = "*"
 requests = "*"
 attrs = "*"
 PyHamcrest = "*"
+
+[packages]
+ansible = ">= 2.0"
+pipsi = "*"

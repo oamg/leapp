@@ -20,6 +20,14 @@ The migration prototype currently handles exactly two cases:
 
 ### Setting up to run the prototype demonstration
 
+If the integration tests haven't been run, first install the testing
+instance of the CLI:
+
+    $ pipsi --bin-dir $PWD/bin install --python `which python2.7` $PWD/src
+
+The integration tests do this automatically, so this step can be skipped if
+those have already been run.
+
 The prototype requires Vagrant with some relevant plugins:
 
     $ sudo vagrant plugin install ansible hitimes nio4r
@@ -59,7 +67,9 @@ The demo admin login credentials are:
 
 Then, from the base of the local clone, run:
 
-    $ sudo ./leapp-tool.py migrate-machine -t centos7-target centos6-app-vm
+    $ sudo bin/leapp-tool migrate-machine \
+           --identity integration-tests/config/leappto_testing_key \
+           -t centos7-target centos6-app-vm
 
 The target VM should now be showing the PHP admin page,
 with the same information as the source VM.
@@ -109,5 +119,5 @@ Currently known constraints on this approach:
 
 Key limitations in the current implementation:
 
-* Remote access to systems requires known Vagrant
+* Remote access to systems requires Vagrant
   managed VMs running locally under libvirt

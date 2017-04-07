@@ -1,6 +1,7 @@
 import contextlib
 import json
 import pathlib
+import shutil
 import subprocess
 import time
 
@@ -116,7 +117,23 @@ class VirtualMachineHelper(object):
 # Leapp commands
 ##############################
 
-_LEAPP_TOOL = str(_REPO_DIR / "leapp-tool.py")
+_LEAPP_SRC_DIR = _REPO_DIR / "src"
+_LEAPP_BIN_DIR = _REPO_DIR / "bin"
+_LEAPP_TOOL = str(_LEAPP_BIN_DIR / "leapp-tool")
+
+_SSH_IDENTITY = str(_REPO_DIR / "integration-tests/config/leappto_testing_key")
+
+def _install_client():
+    """Install the CLI and its dependencies into a Python 2.7 environment"""
+    py27 = shutil.which("python2.7")
+    base_cmd = ["pipsi", "--bin-dir", str(_LEAPP_BIN_DIR)]
+    if pathlib.Path(_LEAPP_TOOL).exists():
+        # For some reason, `upgrade` returns 1 even though it appears to work
+        # so we instead do a full uninstall/reinstall before the test run
+        uninstall = base_cmd + ["uninstall", "--yes", "leappto"]
+        _run_command(uninstall, work_dir=str(_REPO_DIR), ignore_errors=False)
+    install = base_cmd + ["install", "--python", py27, str(_LEAPP_SRC_DIR)]
+    print(_run_command(install, work_dir=str(_REPO_DIR), ignore_errors=False))
 
 @attributes
 class MigrationInfo(object):
@@ -175,14 +192,17 @@ class ClientHelper(object):
 
     @staticmethod
     def _run_leapp(*args):
-        cmd = ["sudo", "/usr/bin/python2", _LEAPP_TOOL]
+        cmd = ["sudo", _LEAPP_TOOL]
         cmd.extend(args)
-        # TODO: Ensure leapp-tool.py works independently of the working directory
-        return _run_command(cmd, work_dir=str(_REPO_DIR), ignore_errors=False)
+        return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), ignore_errors=False)
 
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host):
-        result = cls._run_leapp("migrate-machine", "-t", target_host, source_host)
+        result = cls._run_leapp(
+            "migrate-machine",
+            "--identity", _SSH_IDENTITY,
+            "-t", target_host, source_host
+        )
         msg = "Redeployed {} as macrocontainer on {}"
         print(msg.format(source_host, target_host))
         return result
@@ -307,6 +327,9 @@ def before_all(context):
     # we ensure we prompt for elevated permissions immediately,
     # rather than potentially halting midway through a test
     subprocess.check_output(["sudo", "echo", "Elevated permissions needed"])
+
+    # Install the CLI for use in the tests
+    _install_client()
 
     # Use contextlib.ExitStack to manage global resources
     context._global_cleanup = contextlib.ExitStack()

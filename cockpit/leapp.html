@@ -47,10 +47,10 @@
 
         function call_leapp(cmd_args) {
             return cockpit.spawn(
-                ["/opt/leapp/leapp-tool.py"].concat(cmd_args),
+                ["/opt/leapp/bin/leapp-tool"].concat(cmd_args),
                 {
                     "superuser": "required",
-                    "directory": "/opt/leapp",
+                    "directory": "/opt/leapp/bin/",
                     "err": "out"
                 }
             );
@@ -58,12 +58,12 @@
 
         function list_local_vms() {
             var proc = call_leapp(["list-machines", "--shallow"]);
-            // TODO: Add activity spinner
             proc.done(refresh_vm_table);
             proc.fail(list_local_vms_fail);
 
             output.empty();
             out("Refreshing VM list");
+            loader.show();
         }
 
         function refresh_vm_table(data) {
@@ -80,6 +80,9 @@
                 </tr>`);
             }
             output.empty();
+            if (vm_data.machines.length == 0) {
+                output.append(document.createTextNode("No running local VMs!\n"));
+            }
             loader.hide();
         }
 
@@ -98,7 +101,11 @@
             var source = "centos6-app-vm";
             var target = "centos7-target";
             var proc = call_leapp([
-                "migrate-machine", "--tcp-port","9000:9000", "-t", target, source
+                "migrate-machine",
+                "--tcp-port", "9000:9000",
+                // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
+                "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
+                "-t", target, source
             ]);
             output.empty();
             proc.done(migrate_success);

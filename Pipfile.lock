@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "8dc64b10d88748084ec4f4c71fea6b4f053b972adc75643bea2e6a5f5a845e55"
+            "sha256": "4ec24e8642a736421e92ac5c5dc07aabe6990cbb5ed0edc72ed3f157263b3ba3"
         },
         "requires": {},
         "sources": [
@@ -40,6 +40,10 @@
             "hash": "sha256:4fc9c2ff7924b3a1fa326e1799e5dd58cac585d7fb25fe53ccaa1333b0453d65",
             "version": "==1.10.0"
         },
+        "click": {
+            "hash": "sha256:29f99fc6125fbc931b758dc053b3114e55c77a6e4c6c3a2674a2dc986016381d",
+            "version": "==6.7"
+        },
         "cryptography": {
             "hash": "sha256:323524312bb467565ebca7e50c8ae5e9674e544951d28a2904a50012a8828190",
             "version": "==1.8.1"
@@ -55,6 +59,10 @@
         "paramiko": {
             "hash": "sha256:bdf239647e18b9b9ddbc2894fd1de9786b7a9144b1d19e32a5be3bb4bb63ae5d",
             "version": "==2.1.2"
+        },
+        "pipsi": {
+            "hash": "sha256:688b688cc8a7a76612c0d4d1839aaef98ece8382d4382b9d8b6f0caa65f0ed34",
+            "version": "==0.9"
         },
         "pyasn1": {
             "hash": "sha256:0439b9bd518418260c2641a571f0e07fce4370cab13b68f19b5e023306c03cad",
@@ -79,6 +87,10 @@
         "six": {
             "hash": "sha256:0ff78c403d9bccf5a425a6d31a12aa6b47f1c21ca4dc2573a7e2f32a97335eb1",
             "version": "==1.10.0"
+        },
+        "virtualenv": {
+            "hash": "sha256:39d88b533b422825d644087a21e78c45cf5af0ef7a99a1fc9fbb7b481e5c85b0",
+            "version": "==15.1.0"
         }
     },
     "develop": {
