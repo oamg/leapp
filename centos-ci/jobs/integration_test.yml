@@ -1,0 +1,47 @@
+- job:
+    name: leapp-integration-tests
+    description: |
+      Run integration test suite for the Le-App Prototype
+      Managed by Jenkins Job Builder, do not edit manually!
+    project-type: freestyle
+    properties:
+      - github:
+          url: https://github.com/leapp-to/prototype
+    node: leapp
+    scm:
+      - git:
+          url: https://github.com/leapp-to/prototype.git
+          refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
+          branches:      
+            - '${{ghprbActualCommit}}'
+    builders:
+      shell: |
+        set +e
+        # Request a duffy node
+        export CICO_API_KEY=$(cat ~/duffy.key)
+        read CICO_hostname CICO_ssid <<< $(cico node get -f value -c ip_address -c comment)
+        sshopts="-t -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -l root"
+        ssh_cmd="ssh $sshopts $CICO_hostname"
+        # Capture the environment in case you need it from the job scripts. If
+        # needed, the script should source the jenkins-env file
+        env > jenkins-env
+        # Copy the test suite to the provisioned duffy node
+        $ssh_cmd yum -y install rsync
+        rsync -e "ssh $sshopts" -Ha $(pwd)/ $CICO_hostname:payload
+        # Change to the payload directory on the provisioned node and run the
+        # test script 
+        $ssh_cmd -t "cd payload && sh prototype/centos-ci/bootstrap.sh"
+        rtn=$?
+        # Return the duffy node back to the ready pool
+        cico node done $CICO_ssid
+        exit $rtn
+    triggers:
+      - github-pull-request:
+          admin-list:
+            - shaded-enmity
+            - ncoghlan
+          cron: '* * * * *'
+          permit-all: false
+          org-list:
+            - leapp-to
+          github-hooks: false
