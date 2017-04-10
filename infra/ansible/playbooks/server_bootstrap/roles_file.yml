@@ -1,0 +1,4 @@
+- src: https://github.com/vmindru/bootstrap-server.git
+  scm: git
+  version: v0.1
+
