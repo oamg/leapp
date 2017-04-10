@@ -66,11 +66,6 @@ class VirtualMachineHelper(object):
         if hostname not in _VM_DEFS:
             raise ValueError("Unknown VM image: {}".format(definition))
         if destroy:
-            # TODO: Look at using "--provision" for fresh VMs
-            #       rather than a full destroy/recreate cycle
-            #       Alternatively: add "reprovision" as a
-            #       separate option for machine creation or
-            #       even make it the default for `destroy=False`
             self._vm_destroy(hostname)
         self._vm_up(name, hostname)
         if destroy:
@@ -95,7 +90,7 @@ class VirtualMachineHelper(object):
         return _run_command(cmd, vm_dir, ignore_errors)
 
     def _vm_up(self, name, hostname):
-        result = self._run_vagrant(hostname, "up")
+        result = self._run_vagrant(hostname, "up", "--provision")
         print("Started {} VM instance".format(hostname))
         self.machines[name] = hostname
         return result

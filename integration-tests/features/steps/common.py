@@ -17,6 +17,11 @@ def create_local_machines(context):
     * name: the name to be used to refer to the VM in later test steps
     * definition: the definition directory to use in integration-tests/vmdefs
     * ensure_fresh: set to 'yes' to destroy an existing VM instead of reusing it
+
+    Note: Ansible VM provisioning playbooks are always executed by this step,
+    even when *ensure_fresh* is set to 'no'. For faster test execution, relying
+    on Ansible to restore the VM to a known state is recommended, rather than
+    requiring a full VM create/destroy cycle.
     """
     vm_helper = context.vm_helper
     for row in context.table:
