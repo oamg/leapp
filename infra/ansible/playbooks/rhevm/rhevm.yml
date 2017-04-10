@@ -1,0 +1,35 @@
+---
+
+# not fully working yet, this is rather for documentation purpose of RHEVM deployment 
+# prereq the system should be deployed an registerd to Satellite/RHN
+
+- hosts: all
+
+  vars_files: 
+  - ../../../../../le-app-housekeeping/ansible_secrets/le_app_rhevm.yml
+
+  tasks:
+#  - name: enable subscriptions 
+#    shell: "{{ item }}"
+#    with_items:
+#      - "subscription-manager repos --disable=*"
+#      - "subscription-manager repos --enable=rhel-7-server-rpms"
+#      - "subscription-manager repos --enable=rhel-7-server-supplementary-rpms"
+#      - "subscription-manager repos --enable=rhel-7-server-rhv-4.0-rpms"
+#      - "subscription-manager repos --enable=jb-eap-7-for-rhel-7-server-rpms"
+#
+  - name: install packages
+    package:
+      name: "{{ item }}"
+      state: "latest"
+    with_items:
+      - "rhevm"
+
+  - name: upload template file
+    template:
+      src: rhevm_answer.jnl
+      dest: /tmp/rhevm_template
+
+  - name: run setup
+    shell: "engine-setup --config-append=/tmp/answerfile.txt"
+
