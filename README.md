@@ -38,21 +38,17 @@ It also requires the virt-inspector tool:
 
 Start the source application server VM:
 
-    $ pushd ansible/centos6-guest-lamp
+    $ pushd demo/vmdefs/centos6-guest-lamp
     $ sudo vagrant up
     $ popd
 
 Start the target container host VM:
 
-    $ pushd ansible/centos7-target
+    $ pushd demo/vmdefs/centos7-target
     $ sudo vagrant up
     $ popd
 
-The `start_vms.sh` helper script encapsulates these steps.
-
-Use `sudo vagrant destroy` and `sudo vagrant up` in the
-`ansible/centos7-target` directory to reset the VM state
-before running the demonstration again.
+The `demo/start_vms.sh` helper script encapsulates these steps.
 
 ### Running the demonstration via the CLI
 
