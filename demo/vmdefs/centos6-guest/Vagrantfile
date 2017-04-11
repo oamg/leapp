@@ -1,5 +1,7 @@
 VAGRANTFILE_API_VERSION = "2"
 
+ipaddr = ENV.fetch('SRC_IP_ADDR', '10.0.0.10')
+
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.box = "centos/6"
     config.vm.hostname = "centos6-app-vm"
@@ -8,7 +10,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.network :forwarded_port, guest: 443, host: 443, auto_correct: true # ssl
     config.vm.network :forwarded_port, guest: 3306, host: 3306, auto_correct: true # mysql
     config.vm.network :forwarded_port, guest: 9000, host: 9000, auto_correct: true # phpmyadmin
-    config.vm.network :private_network, ip: "10.0.0.10"
+    config.vm.network :private_network, ip: ipaddr
     config.vm.synced_folder "./", "/var/www/html", type: "rsync", id: "vagrant", :nfs => false,
         :mount_options => ["dmode=777", "fmode=666"]
 
@@ -22,6 +24,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         ansible.sudo = true
     end
 
-    config.vm.provision :shell, inline: "echo Good job, now enjoy your new vbox: http://10.0.0.10"
+    config.vm.provision :shell, inline: "echo Good job, now enjoy your new vbox: http://#{ipaddr}"
 
 end
