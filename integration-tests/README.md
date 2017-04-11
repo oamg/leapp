@@ -150,3 +150,13 @@ useful attributes for use in step implementations:
 
 * `http_helper`: a custom object for checking HTTP(S) responses (see
   `RequestsHelper` in the environment file for details)
+
+## Debugging the test VMs
+
+From the `integration-tests` directory, an instance of each of the integration
+test VMs can be started by running:
+
+    $ start_vms.sh
+
+This script iterates over all the subdirectories of `integration-tests/vmdefs`
+and runs `vagrant up --provision`.

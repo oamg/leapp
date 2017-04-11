@@ -36,19 +36,20 @@ It also requires the virt-inspector tool:
 
     $ sudo yum install libguestfs-tools-c
 
-Start the source application server VM:
+And passwordless access to VM management operations:
 
-    $ pushd demo/vmdefs/centos6-guest-lamp
-    $ sudo vagrant up
-    $ popd
+    $ sudo usermod -aG vagrant,libvirt $USER
 
-Start the target container host VM:
+You will need to log out and back in again, or start a new user
+session with `su $USER`, to get the new group memberships to take
+effect.
 
-    $ pushd demo/vmdefs/centos7-target
-    $ sudo vagrant up
-    $ popd
+Finally, start all the demonstration VMs by running:
 
-The `demo/start_vms.sh` helper script encapsulates these steps.
+    $ demo/start_vms.sh
+
+This script iterates over all the subdirectories of `demo/vmdefs` and runs
+`vagrant up --provision`.
 
 ### Running the demonstration via the CLI
 
