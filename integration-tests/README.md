@@ -160,3 +160,10 @@ test VMs can be started by running:
 
 This script iterates over all the subdirectories of `integration-tests/vmdefs`
 and runs `vagrant up --provision`.
+
+To access a particular VM, switch to the corresponding directory and run:
+
+    $ vagrant ssh
+
+This will log you into the VM as the `vagrant` user, with `root` access
+available via `sudo` (no password required).
