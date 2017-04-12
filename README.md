@@ -36,23 +36,20 @@ It also requires the virt-inspector tool:
 
     $ sudo yum install libguestfs-tools-c
 
-Start the source application server VM:
+And passwordless access to VM management operations:
 
-    $ pushd ansible/centos6-guest-lamp
-    $ sudo vagrant up
-    $ popd
+    $ sudo usermod -aG vagrant,libvirt $USER
 
-Start the target container host VM:
+You will need to log out and back in again, or start a new user
+session with `su $USER`, to get the new group memberships to take
+effect.
 
-    $ pushd ansible/centos7-target
-    $ sudo vagrant up
-    $ popd
+Finally, start all the demonstration VMs by running:
 
-The `start_vms.sh` helper script encapsulates these steps.
+    $ demo/start_vms.sh
 
-Use `sudo vagrant destroy` and `sudo vagrant up` in the
-`ansible/centos7-target` directory to reset the VM state
-before running the demonstration again.
+This script iterates over all the subdirectories of `demo/vmdefs` and runs
+`vagrant up --provision`.
 
 ### Running the demonstration via the CLI
 
