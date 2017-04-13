@@ -6,30 +6,48 @@
     <script src="../base1/cockpit.js"></script>
 </head>
 <body>
-    <div class="container-fluid" style='max-width: 800px'>
+    <div class="container-fluid">
         <div class="panel panel-default">
-        <div class="panel-heading">
-            <span translatable="yes">Local Virtual Machines</span>
-            <div class="pull-right">
-            <button translatable="yes"class="btn btn-default btn-primary" id="list-vms">Refresh</button>
-            <button translatable="yes"class="btn btn-default btn-primary" id="migrate-app">Migrate</button>
+            <div class="panel-heading">
+                <span translatable="yes">Local Virtual Machines</span>
+                <div class="pull-right">
+                    <button translatable="yes"class="btn btn-default btn-primary" id="list-vms">Refresh</button>
+                </div>
+            </div>
+            <div class="source-machines" style="float: left">
+                <table class="table table-hover">
+                    <caption style="text-align: center">Source Virtual Machines</caption>
+                    <thead>
+                    <tr>
+                        <th translatable="yes">Name</th>
+                        <th translatable="yes">Hostname</th>
+                        <th translatable="yes">Application</th>
+                        <th translatable="yes">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="source-machine" class="machine-table-body">
+                    </tbody>
+                </table>
+            </div>
+            <div class="target-machines" style="float: right;">
+                <table class="table table-hover">
+                    <caption style="text-align: center">Target Virtual Machines</caption>
+                    <thead>
+                    <tr>
+                        <th></th>
+                        <th translatable="yes">Name</th>
+                        <th translatable="yes">Hostname</th>
+                        <th translatable="yes">Application</th>
+                    </tr>
+                    </thead>
+                    <tbody id="target-machine" class="machine-table-body">
+                    </tbody>
+                </table>
             </div>
         </div>
-        <table class="table table-hover">
-            <thead>
-            <tr>
-                <th translatable="yes">Name</th>
-                <th translatable="yes">Hostname</th>
-                <th translatable="yes">Application</th>
-            </tr>
-            </thead>
-            <tbody id="machine-table-body">
-            </tbody>
-        </table>
-    </div>
         <div class="spinner spinner-lg" id="loader"></div>
         <p>
-        <pre id="output"></pre>
+            <pre id="output" style="clear: both"></pre>
         </p>
     </div>
 
@@ -38,7 +56,6 @@
         var loader = $("#loader");
 
         $("#list-vms").on("click", list_local_vms);
-        $("#migrate-app").on("click", migrate_to_host);
 
         // Automatically load the VM list when the page opens
         $(document).ready(function() {
@@ -68,22 +85,32 @@
 
         function refresh_vm_table(data) {
             var vm_data = JSON.parse(data);
-            var machine_table = $("#machine-table-body")
-            $("#machine-table-body tr").remove()
+            $(".machine-table-body tr").remove()
             for (var idx in vm_data.machines) {
                 var machine = vm_data.machines[idx];
                 var app_url = `http://${machine.ip[0]}:9000/`;
-                machine_table.append(`<tr>
-                    <td>${machine.name}</td>
-                    <td>${machine.hostname}</td>
-                    <td><a href="${app_url}">${app_url}</a></td>
-                </tr>`);
+                if (machine.name.indexOf("target") > -1) {
+                    $("#target-machine").append(`<tr>
+                        <td><input type="radio" name="target-machine" checked="checked" class="test" value="${machine.hostname}"></td>
+                        <td>${machine.name}</td>
+                        <td>${machine.hostname}</td>
+                        <td><a href="${app_url}">${app_url}</a></td>
+                    </tr>`)
+                } else {
+                    $("#source-machine").append(`<tr>
+                        <td>${machine.name}</td>
+                        <td>${machine.hostname}</td>
+                        <td><a href="${app_url}">${app_url}</a></td>
+                        <td><button translatable="yes" class="btn btn-default btn-primary migrate-app" data-source="${machine.hostname}">Migrate</button</td>
+                    </tr>`)
+                }
             }
             output.empty();
             if (vm_data.machines.length == 0) {
                 output.append(document.createTextNode("No running local VMs!\n"));
             }
             loader.hide();
+            $(".migrate-app").on("click", migrate_to_host);
         }
 
         function list_local_vms_fail() {
@@ -97,9 +124,9 @@
             output.append(`<div style="padding: 2px">${line}</div>`)
         }
 
-        function migrate_to_host() {
-            var source = "centos6-app-vm";
-            var target = "centos7-target";
+        function migrate_to_host(event) {
+            var source = $(event.target).data('source');
+            var target = $("input[name=target-machine]:checked").val();
             var proc = call_leapp([
                 "migrate-machine",
                 "--tcp-port", "9000:9000",
@@ -144,5 +171,4 @@
     </script>
 </body>
 </html>
-
 
