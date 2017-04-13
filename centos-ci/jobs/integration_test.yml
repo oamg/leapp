@@ -46,7 +46,7 @@
     name: github-scm
     scm:
       - git:
-          url: "{{ git_url }}"
+          url: "{git_url}"
           skip-tag: True
           git-tool: ci-git
           refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
