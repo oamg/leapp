@@ -139,6 +139,12 @@ All step definitions receive the current `behave` context as their first
 parameter, and the [environment file](./features/environment.py) adds a few
 useful attributes for use in step implementations:
 
+* `BASE_REPO_DIR`: a `pathlib.Path` instance referring to the base of the
+  prototype repo
+
+* `BASE_TEST_DIR`: a `pathlib.Path` instance referring to the directory
+  containing the integration tests
+
 * `scenario_cleanup`: a `contextlib.ExitStack` instance that can be used to
   register cleanup operations to run in the `@after_scenario` hook
 
