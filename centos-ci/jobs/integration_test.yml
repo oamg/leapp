@@ -9,13 +9,8 @@
           url: https://github.com/leapp-to/prototype
     node: leapp
     scm:
-      - git:
-          url: https://github.com/leapp-to/prototype.git
-          refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
-          skip-tag: True
-          git-tool: ci-git
-          branches:      
-            - '${{ghprbActualCommit}}'
+      - github-scm:
+          git_url: https://github.com/leapp-to/prototype.git
     builders:
       shell: |
         set +e
@@ -47,5 +42,13 @@
           org-list:
             - leapp-to
           github-hooks: false
-          trigger-phrase: '.*\[test\].*'
-          allow-whitelist-orgs-as-admins: true
+- scm:
+    name: github-scm
+    scm:
+      - git:
+          url: "{git_url}"
+          skip-tag: True
+          git-tool: ci-git
+          refspec: '+refs/pull/*:refs/remotes/origin/pr/*'
+          branches:
+            - '${{ghprbActualCommit}}'
