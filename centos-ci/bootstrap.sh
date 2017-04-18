@@ -13,6 +13,6 @@ pip install ansible==2.2.0
 
 cd centos-ci/ansible/
 
-ansible-playbook playbook.yml
+ansible-playbook -i 'localhost,' -c local playbook.yml
 
 cd ../../integration-tests/ && scl enable rh-python35 "pipenv shell 'behave'"
