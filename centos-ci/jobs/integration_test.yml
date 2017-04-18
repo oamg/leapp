@@ -39,6 +39,7 @@
             - ncoghlan
           cron: '* * * * *'
           permit-all: false
+          trigger-phrase: '.*[jJ]enkins [Tt]est.*'
           org-list:
             - leapp-to
           github-hooks: false
