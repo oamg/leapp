@@ -20,6 +20,11 @@ The migration prototype currently handles exactly two cases:
 
 ### Setting up to run the prototype demonstration
 
+Install all the requirements of this demo via:
+
+    $ sudo dnf dnf-plugins-core
+    $ sudo dnf builddep ./demo/prototype-deps.spec
+
 If the integration tests haven't been run, first install the testing
 instance of the CLI:
 
@@ -27,11 +32,6 @@ instance of the CLI:
 
 The integration tests do this automatically, so this step can be skipped if
 those have already been run.
-
-GCC is needed to compile vagrant plugins 
-
-    $ sudo yum install qemu libguestfs-tools-c libvirt libvirt-devel ruby-devel gcc qemu-kvm nmap
-
 
 The prototype requires Vagrant with some relevant plugins:
 
