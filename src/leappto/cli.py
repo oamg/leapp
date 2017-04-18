@@ -91,7 +91,7 @@ def main():
 
         def destroy_container(self):
             command = 'docker rm -f container 2>/dev/null 1>/dev/null; rm -rf /opt/leapp-to/container'
-            self._ssh_sudo(command)
+            return self._ssh_sudo(command)
 
         def start_container(self, img, init):
             command = 'docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container ; mkdir -p /opt/leapp-to/container && ' + \
