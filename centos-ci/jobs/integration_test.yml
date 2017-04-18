@@ -27,7 +27,7 @@
           rsync -e "ssh $sshopts" -Ha $(pwd)/ $CICO_hostname:payload
           # Change to the payload directory on the provisioned node and run the
           # test script 
-          $ssh_cmd -t "cd payload && sh prototype/centos-ci/bootstrap.sh"
+          $ssh_cmd -t "cd payload && sh centos-ci/bootstrap.sh"
           rtn=$?
           # Return the duffy node back to the ready pool
           cico node done $CICO_ssid
