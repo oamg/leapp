@@ -11,6 +11,8 @@ yum install -y python2-pip gcc redhat-rpm-config openssl-devel python-devel
 
 pip install ansible==2.2.0
 
-ansible-playbook ansible/playbook.yml
+cd centos-ci/ansible/
 
-cd /srv/le-app && scl enable rh-python35 "pipenv shell 'behave'"
+ansible-playbook playbook.yml
+
+cd ../../integration-tests/ && scl enable rh-python35 "pipenv shell 'behave'"
