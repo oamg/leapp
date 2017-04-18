@@ -38,6 +38,7 @@
                         <th translatable="yes">Name</th>
                         <th translatable="yes">Hostname</th>
                         <th translatable="yes">Application</th>
+                        <th translatable="yes">Actions</th>
                     </tr>
                     </thead>
                     <tbody id="target-machine" class="machine-table-body">
@@ -95,13 +96,20 @@
                         <td>${machine.name}</td>
                         <td>${machine.hostname}</td>
                         <td><a href="${app_url}">${app_url}</a></td>
+                        <td>
+                            <button translatable="yes" class="btn btn-default btn-primary destroy-app"
+                            data-hostname="${machine.hostname}">Reprovision</button
+                        </td>
                     </tr>`)
                 } else {
                     $("#source-machine").append(`<tr>
                         <td>${machine.name}</td>
                         <td>${machine.hostname}</td>
                         <td><a href="${app_url}">${app_url}</a></td>
-                        <td><button translatable="yes" class="btn btn-default btn-primary migrate-app" data-source="${machine.hostname}">Migrate</button</td>
+                        <td>
+                            <button translatable="yes" class="btn btn-default btn-primary migrate-app"
+                            data-hostname="${machine.hostname}">Migrate</button
+                        </td>
                     </tr>`)
                 }
             }
@@ -112,6 +120,7 @@
             }
             loader.hide();
             $(".migrate-app").on("click", migrate_to_host);
+            $(".destroy-app").on("click", destroy_container);
         }
 
         function list_local_vms_fail() {
@@ -126,7 +135,7 @@
         }
 
         function migrate_to_host(event) {
-            var source = $(event.target).data('source');
+            var source = $(event.target).data('hostname');
             var target = $("input[name=target-machine]:checked").val();
             var proc = call_leapp([
                 "migrate-machine",
@@ -136,15 +145,31 @@
                 "-t", target, source
             ]);
             output.empty();
-            proc.done(migrate_success);
-            proc.fail(migrate_fail);
-            proc.stream(migrate_stdout);
+            proc.done(cmd_success);
+            proc.fail(cmd_fail);
+            proc.stream(cmd_stdout);
 
             out(`Migrating ${source} to ${target}`);
             loader.show();
         }
 
-        function migrate_stdout(data) {
+        function destroy_container(event) {
+            var target = $(event.target).data('hostname');
+            var proc = call_leapp([
+                "destroy-container",
+                "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
+                target
+            ]);
+            output.empty();
+            proc.done(cmd_success);
+            proc.fail(cmd_fail);
+            proc.stream(cmd_stdout);
+
+            out(`Destroying container on ${target}`);
+            loader.show();
+        }
+
+        function cmd_stdout(data) {
             let split = data.split(/\r?\n/);
             for (let line of split) {
                 if (line.length < 1 || line[0] != "!") {
@@ -154,16 +179,16 @@
             }
         }
 
-        function migrate_success(data) {
+        function cmd_success(data) {
             //output.empty();
-            migrate_stdout(data);
+            cmd_stdout(data);
             output.append(document.createTextNode("Command completed successfully"));
             loader.hide();
         }
 
-        function migrate_fail(exc, data) {
+        function cmd_fail(exc, data) {
             //output.empty();
-            migrate_stdout(data);
+            cmd_stdout(data);
             err_msg = `Command failed with status ${exc.exit_status}!\n`
             output.append(document.createTextNode(err_msg));
             loader.hide();

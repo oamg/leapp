@@ -20,6 +20,7 @@ def main():
 
     list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
+    destroy_cmd = parser.add_parser('destroy-container', help='destroy container on virtual machine')
 
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
     list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
@@ -50,6 +51,8 @@ def main():
         help='Target ports to forward to macrocontainer (temporary!)'
     )
 
+    destroy_cmd.add_argument('target', help='target VM name')
+    destroy_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
 
     def _find_machine(ms, name):
         for machine in ms:
@@ -186,3 +189,38 @@ def main():
                 mc.fix_upstart()
             print('! done')
             sys.exit(result)
+
+    elif parsed.action == 'destroy-container':
+        if not parsed.identity:
+            raise ValueError("Migration requires path to private SSH key to use (--identity)")
+        target = parsed.target
+
+        lmp = LibvirtMachineProvider()
+        machines = lmp.get_machines()
+        machine_dst = _find_machine(machines, target)
+
+        print('! looking up "{}" as target'.format(target))
+        if not machine_dst:
+            print("Machine is not ready:")
+            print("Target: " + repr(machine_dst))
+            exit(-1)
+
+        print('! configuring SSH keys')
+        ip = machine_dst.ip[0]
+        target_ssh_config = [
+            '-o User=vagrant',
+            '-o StrictHostKeyChecking=no',
+            '-o PasswordAuthentication=no',
+            '-o IdentityFile=' + parsed.identity,
+       ]
+
+        mc = MigrationContext(
+            ip,
+            target_ssh_config,
+            machine_dst.disks[0].host_path
+        )
+
+        print('! destroying container on "{}" VM'.format(target))
+        mc.destroy_container()
+        print('! done')
+

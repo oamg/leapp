@@ -39,7 +39,7 @@ so `pipenv` sees only the command line interface instead of the Python API)
 Once `pipenv` is installed, run the following to install the
 integration testing environment:
 
-    $ pipenv --three && pipenv install
+    $ pipenv --three && pipenv install -d
 
 Note that while `leapp` itself will run under Python 2.7, the integration
 tests require Python 3.
