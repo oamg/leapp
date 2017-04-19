@@ -17,11 +17,25 @@
   become: true
   with_items:
     - libvirt
+    - libvirt-devel
+    - kvm
+    - seabios
     - git
     - gcc
     - libffi-devel
     - openssl-devel
     - patch
+
+- name: Run VMs under root
+  lineinfile: 
+    dest: /etc/libvirt/qemu.conf
+    line: 'user = "root"'
+
+- name: Enable libvirtd service
+  service:
+    name: libvirtd
+    state: started 
+    enabled: yes
 
 - name: Install Pipsi
   shell: '{{ python3_scl_exec }} pip3.5 install pipsi'
