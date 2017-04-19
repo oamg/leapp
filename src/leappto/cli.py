@@ -20,7 +20,7 @@ def main():
 
     list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
-    destroy_cmd = parser.add_parser('destroy-container', help='destroy container on virtual machine')
+    destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
 
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
     list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
@@ -79,7 +79,6 @@ def main():
 
         def _ssh(self, cmd, **kwargs):
             arg = self._ssh_base + [cmd]
-            print(arg)
             return Popen(arg, **kwargs).wait()
 
         def _ssh_sudo(self, cmd, **kwargs):
@@ -89,8 +88,8 @@ def main():
             proc = Popen(['virt-tar-out', '-a', self.disk, '/', '-'], stdout=PIPE)
             return self._ssh('cat > /opt/leapp-to/container.tar.gz', stdin=proc.stdout)
 
-        def destroy_container(self):
-            command = 'docker rm -f container 2>/dev/null 1>/dev/null; rm -rf /opt/leapp-to/container'
+        def destroy_containers(self):
+            command = 'docker rm -f $(docker ps -q) 2>/dev/null 1>/dev/null; rm -rf /opt/leapp-to/container'
             return self._ssh_sudo(command)
 
         def start_container(self, img, init):
@@ -190,7 +189,7 @@ def main():
             print('! done')
             sys.exit(result)
 
-    elif parsed.action == 'destroy-container':
+    elif parsed.action == 'destroy-containers':
         if not parsed.identity:
             raise ValueError("Migration requires path to private SSH key to use (--identity)")
         target = parsed.target
@@ -220,7 +219,7 @@ def main():
             machine_dst.disks[0].host_path
         )
 
-        print('! destroying container on "{}" VM'.format(target))
-        mc.destroy_container()
+        print('! destroying containers on "{}" VM'.format(target))
+        mc.destroy_containers()
         print('! done')
 
