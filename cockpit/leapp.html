@@ -13,8 +13,9 @@
                 <div class="pull-right">
                     <button translatable="yes"class="btn btn-default btn-primary" id="list-vms">Refresh</button>
                 </div>
+                <div class="spinner spinner-lg" id="loader"></div>
             </div>
-            <div class="source-machines" style="float: left">
+            <div class="source-machines" style="float: left; width: 49%;">
                 <table class="table table-hover">
                     <caption style="text-align: center">Source Virtual Machines</caption>
                     <thead>
@@ -22,6 +23,7 @@
                         <th translatable="yes">Name</th>
                         <th translatable="yes">Hostname</th>
                         <th translatable="yes">Application</th>
+                        <th translatable="yes">Exposed ports</th>
                         <th translatable="yes">Actions</th>
                     </tr>
                     </thead>
@@ -29,7 +31,8 @@
                     </tbody>
                 </table>
             </div>
-            <div class="target-machines" style="float: right;">
+            <div style="float: left; font-size: 30px; width: 2%; text-align: center; margin-top: -8px;">&raquo;</div>
+            <div class="target-machines" style="float: right; width: 49%;">
                 <table class="table table-hover">
                     <caption style="text-align: center">Target Virtual Machines</caption>
                     <thead>
@@ -46,7 +49,6 @@
                 </table>
             </div>
         </div>
-        <div class="spinner spinner-lg" id="loader"></div>
         <p>
             <pre id="output" style="clear: both"></pre>
         </p>
@@ -106,6 +108,7 @@
                         <td>${machine.name}</td>
                         <td>${machine.hostname}</td>
                         <td><a href="${app_url}">${app_url}</a></td>
+                        <td><input type="text" value="9000:9000" name="exposed-ports" size="10" /></td>
                         <td>
                             <button translatable="yes" class="btn btn-default btn-primary migrate-app"
                             data-hostname="${machine.hostname}">Migrate</button
@@ -135,11 +138,13 @@
         }
 
         function migrate_to_host(event) {
-            var source = $(event.target).data('hostname');
+            var $btn = $(event.target);
+            var source = $btn.data('hostname');
             var target = $("input[name=target-machine]:checked").val();
+            var exposed_ports = $btn.parents(':eq(1)').find("input[name=exposed-ports]").val();
             var proc = call_leapp([
                 "migrate-machine",
-                "--tcp-port", "9000:9000",
+                "--tcp-port", exposed_ports,
                 // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
                 "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
                 "-t", target, source
