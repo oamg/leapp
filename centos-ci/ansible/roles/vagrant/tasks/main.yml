@@ -35,16 +35,10 @@
   shell: '{{ python3_scl_exec }} pipsi --bin-dir=/usr/bin install pipenv'
   become: true
 
-- name: Checkout `le-app-to` code
-  git:
-    repo: https://github.com/leapp-to/prototype/
-    dest: /srv/le-app
-  become: true
-
 - name: Prepare `pipenv`
   shell: '{{ python3_scl_exec }} pipenv --three'
   args:
-    chdir: /srv/le-app
+    chdir: /root/payload
   become: true
 
 - name: Patch `pipenv` delegator to prevent deadlock
@@ -64,5 +58,5 @@
 - name: Install `pipenv`
   shell: '{{ python3_scl_exec }} pipenv install --dev --ignore-hashes'
   args:
-    chdir: /srv/le-app
+    chdir: /root/payload
   become: true
