@@ -70,11 +70,12 @@ Refer to the
 for a description of the format of feature files, and the recommended structure
 to use when defining new test scenarios.
 
-Two features are currently defined:
+Three features are currently defined:
 
 * `httpd-stateless.feature`: expected behaviour of the `migrate-machine`
   subcommand when migrating stateless applications running under Apache `httpd`
 * `list-machines.feature`: expected behaviour of the `list-machines` subcommand
+  `destory-container.feature`: expected behaviour of the `destroy-container` subcommand
 
 If a new test scenario doesn't align with any of the existing features, then
 an appropriate new feature should also be defined.
@@ -125,9 +126,11 @@ Refer to the
 for an introduction to the process of writing new steps, and the options
 available for passing data from test scenarios to the individual step functions.
 
-Three step categories are currently defined:
+Four step categories are currently defined:
 
 * `list_machines.py`: Steps related specifically to the `list-machines`
+  subcommand
+  `destroy_containers.py`: Steps related specifically to the `destroy-container`
   subcommand
 * `dbus_service.py`: Steps to start, stop and otherwise interact directly with
   the backend DBus service rather than treating it as a hidden implementation
