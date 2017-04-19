@@ -6,4 +6,4 @@ Scenario: Destroying macrocontainers on target VM
          | app-source | centos6-guest-httpd | no           |
          | target     | centos7-target      | no           |
     When app-source is redeployed to target as a macrocontainer
-    Then destroying existing macrocontainers on target should take less than 15 seconds
+    Then destroying existing macrocontainers on target should take less than 60 seconds
