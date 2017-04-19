@@ -25,6 +25,7 @@
     - libffi-devel
     - openssl-devel
     - patch
+    - libguestfs-tools-c
 
 - name: Run VMs under root
   lineinfile: 

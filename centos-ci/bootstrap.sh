@@ -15,9 +15,4 @@ cd centos-ci/ansible/
 
 ansible-playbook -i 'localhost,' -c local playbook.yml
 
-source scl_source enable rh-python35
-source scl_source enable sclo-vagrant1
-
-cd ../../ && pipenv shell
-cd integration-tests && behave
-
+scl enable rh-python35 sclo-vagrant1 -- sh -xc "cd ../.. && pipenv shell 'cd integration-tests && behave ; exit \\\$?'"

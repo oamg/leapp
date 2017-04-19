@@ -96,9 +96,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             :param domain_name: str, which domain to inspect
             :return:
             """
-            cmd = ['virt-inspector', '-d', domain_name, '--no-icon']
-            if self._shallow_scan:
-                cmd.append('--no-applications')
+            cmd = ['virt-inspector', '-d', domain_name]
             os_data = check_output(cmd)
             root = ET.fromstring(os_data)
             packages = []
