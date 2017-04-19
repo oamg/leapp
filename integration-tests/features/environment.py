@@ -174,11 +174,13 @@ class ClientHelper(object):
         self._convert_vm_to_macrocontainer(source_host, target_host)
         return self._get_migration_host_info(source_host, target_host)
 
-    def check_response_time(self, cmd_args, time_limit):
+    def check_response_time(self, cmd_args, time_limit, complete_identity=False):
         """Check given command completes within the specified time limit
 
         Returns the contents of stdout as a string.
         """
+        if complete_identity:
+            cmd_args.extend(['--identity', _SSH_IDENTITY])
         start = time.monotonic()
         cmd_output = self._run_leapp(*cmd_args)
         response_time = time.monotonic() - start
