@@ -59,6 +59,16 @@ def main():
                 return machine
         return None
 
+    def _set_ssh_config(identity):
+        if not isinstance(identity, str):
+            raise TypeError("identity should be str")
+
+        return [
+            '-o User=vagrant',
+            '-o StrictHostKeyChecking=no',
+            '-o PasswordAuthentication=no',
+            '-o IdentityFile=' + identity
+        ]
 
     class MigrationContext:
         def __init__(self, target, target_cfg, disk, forwarded_ports=None):
@@ -161,16 +171,10 @@ def main():
 
             print('! configuring SSH keys')
             ip = machine_dst.ip[0]
-            target_ssh_config = [
-                '-o User=vagrant',
-                '-o StrictHostKeyChecking=no',
-                '-o PasswordAuthentication=no',
-                '-o IdentityFile=' + parsed.identity,
-            ]
 
             mc = MigrationContext(
                 ip,
-                target_ssh_config,
+                _set_ssh_config(parsed.identity),
                 machine_src.disks[0].host_path,
                 forwarded_ports
             )
@@ -206,16 +210,10 @@ def main():
 
         print('! configuring SSH keys')
         ip = machine_dst.ip[0]
-        target_ssh_config = [
-            '-o User=vagrant',
-            '-o StrictHostKeyChecking=no',
-            '-o PasswordAuthentication=no',
-            '-o IdentityFile=' + parsed.identity,
-        ]
 
         mc = MigrationContext(
             ip,
-            target_ssh_config,
+            _set_ssh_config(parsed.identity),
             machine_dst.disks[0].host_path
         )
 
