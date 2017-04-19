@@ -28,9 +28,14 @@ instance of the CLI:
 The integration tests do this automatically, so this step can be skipped if
 those have already been run.
 
+GCC is needed to compile vagrant plugins 
+
+    $ yum install qemu libvirt libvirt-devel ruby-devel gcc qemu-kvm
+
+
 The prototype requires Vagrant with some relevant plugins:
 
-    $ sudo vagrant plugin install ansible hitimes nio4r
+    $ sudo vagrant plugin install ansible hitimes nio4r vagrant-libvirt
 
 It also requires the virt-inspector tool:
 
