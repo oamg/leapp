@@ -4,15 +4,14 @@ from argparse import ArgumentParser
 from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from json import dumps
 from os import getuid
-import os.path
-from subprocess import Popen, PIPE, check_output, CalledProcessError
+from subprocess import Popen, PIPE
 import sys
+
 
 def main():
     if getuid() != 0:
         print("Please run me as root")
         exit(-1)
-
 
     ap = ArgumentParser()
     ap.add_argument('-v', '--version', action='store_true', help='display version information')
@@ -67,10 +66,10 @@ def main():
             self.target_cfg = target_cfg
             self.disk = disk
             if forwarded_ports is None:
-                forwarded_ports = [(80, 80)] # Default to forwarding plain HTTP
+                forwarded_ports = [(80, 80)]  # Default to forwarding plain HTTP
             else:
                 forwarded_ports = list(forwarded_ports)
-            forwarded_ports.append((9022, 22)) # Always forward SSH
+            forwarded_ports.append((9022, 22))  # Always forward SSH
             self.forwarded_ports = forwarded_ports
 
         @property
@@ -93,7 +92,8 @@ def main():
             return self._ssh_sudo(command)
 
         def start_container(self, img, init):
-            command = 'docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container ; mkdir -p /opt/leapp-to/container && ' + \
+            command = 'docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container ;' + \
+                    'mkdir -p /opt/leapp-to/container && ' + \
                     'tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && ' + \
                     'docker run -tid' + \
                     ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
@@ -211,7 +211,7 @@ def main():
             '-o StrictHostKeyChecking=no',
             '-o PasswordAuthentication=no',
             '-o IdentityFile=' + parsed.identity,
-       ]
+        ]
 
         mc = MigrationContext(
             ip,
@@ -222,4 +222,3 @@ def main():
         print('! destroying containers on "{}" VM'.format(target))
         mc.destroy_containers()
         print('! done')
-

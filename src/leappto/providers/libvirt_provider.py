@@ -11,7 +11,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
         # Stupid `libvirt` cannot carry out certain *read only* operations while
         # being in read-only mode so just use `open` and fix this later by enumerating
         # networks, checking the MAC of the domain and correlating this against DHCP leases
-        #self._connection = libvirt.openReadOnly('qemu:///system')
+        # self._connection = libvirt.openReadOnly('qemu:///system')
 
     @property
     def connection(self):
