@@ -3,7 +3,7 @@
 
     "tools": {
         "pinger": {
-            "label": "Kernel Flexibility",
+            "label": "Le-App",
             "path": "leapp.html"
         }
     },
