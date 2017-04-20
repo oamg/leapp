@@ -30,16 +30,12 @@ those have already been run.
 
 GCC is needed to compile vagrant plugins 
 
-    $ yum install qemu libvirt libvirt-devel ruby-devel gcc qemu-kvm
+    $ yum install qemu libguestfs-tools-c libvirt libvirt-devel ruby-devel gcc qemu-kvm
 
 
 The prototype requires Vagrant with some relevant plugins:
 
     $ sudo vagrant plugin install ansible hitimes nio4r vagrant-libvirt
-
-It also requires the virt-inspector tool:
-
-    $ sudo yum install libguestfs-tools-c
 
 And passwordless access to VM management operations:
 
