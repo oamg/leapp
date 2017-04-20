@@ -92,7 +92,7 @@ When authenticating, check the option to allow
 Cockpit to retain your password for later
 privilege escalation.
 
-Open "Tools->Kernel Flexibility" from the
+Open "Tools->Le-App" from the
 navigation menu.
 
 Check that the application link for the source VM
