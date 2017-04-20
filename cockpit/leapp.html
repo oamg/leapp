@@ -12,6 +12,7 @@
                 <span translatable="yes">Local Virtual Machines</span>
                 <div class="pull-right">
                     <button translatable="yes"class="btn btn-default btn-primary" id="list-vms">Refresh</button>
+                    <button translatable="yes" class="btn btn-default btn-primary migrate-app">Migrate</button>
                 </div>
                 <div class="spinner spinner-lg" id="loader"></div>
             </div>
@@ -23,8 +24,7 @@
                         <th translatable="yes">Name</th>
                         <th translatable="yes">Hostname</th>
                         <th translatable="yes">Application</th>
-                        <th translatable="yes">Exposed ports</th>
-                        <th translatable="yes">Actions</th>
+                        <th></th>
                     </tr>
                     </thead>
                     <tbody id="source-machine" class="machine-table-body">
@@ -58,6 +58,7 @@
         var loader = $("#loader");
 
         $("#list-vms").on("click", list_local_vms);
+        $(".migrate-app").on("click", migrate_to_host);
 
         // Automatically load the VM list when the page opens
         $(document).ready(function() {
@@ -103,21 +104,17 @@
                         <td>${machine.name}</td>
                         <td>${machine.hostname}</td>
                         <td><a href="${app_url}">${app_url}</a></td>
-                        <td><input type="text" value="9000:9000" name="exposed-ports" size="10" /></td>
-                        <td>
-                            <button translatable="yes" class="btn btn-default btn-primary migrate-app"
-                            data-hostname="${machine.hostname}">Migrate</button
-                        </td>
+                        <td><input type="radio" name="source-machine" value="${machine.hostname}"></td>
                     </tr>`)
                 }
             }
+            $("#source-machine tr").first().find("input[name=source-machine]").attr("checked", "checked");
             $("#target-machine tr").first().find("input[name=target-machine]").attr("checked", "checked");
             output.empty();
             if (vm_data.machines.length == 0) {
                 output.append(document.createTextNode("No running local VMs!\n"));
             }
             loader.hide();
-            $(".migrate-app").on("click", migrate_to_host);
         }
 
         function list_local_vms_fail(data) {
@@ -132,13 +129,11 @@
         }
 
         function migrate_to_host(event) {
-            var $btn = $(event.target);
-            var source = $btn.data('hostname');
+            var source = $("input[name=source-machine]:checked").val();
             var target = $("input[name=target-machine]:checked").val();
-            var exposed_ports = $btn.parents(':eq(1)').find("input[name=exposed-ports]").val();
             var proc = call_leapp([
                 "migrate-machine",
-                "--tcp-port", exposed_ports,
+                "--tcp-port", "9000:9000",
                 // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
                 "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
                 "-t", target, source
