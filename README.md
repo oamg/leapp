@@ -30,7 +30,7 @@ those have already been run.
 
 GCC is needed to compile vagrant plugins 
 
-    $ yum install qemu libguestfs-tools-c libvirt libvirt-devel ruby-devel gcc qemu-kvm
+    $ sudo yum install qemu libguestfs-tools-c libvirt libvirt-devel ruby-devel gcc qemu-kvm
 
 
 The prototype requires Vagrant with some relevant plugins:
