@@ -16,31 +16,29 @@
                 </div>
                 <div class="spinner spinner-lg" id="loader"></div>
             </div>
-            <div class="source-machines" style="float: left; width: 49%;">
+            <div class="source-machines" style="float: left; min-width: 45%;">
                 <table class="table table-hover">
                     <caption style="text-align: center">Source Virtual Machines</caption>
                     <thead>
                     <tr>
-                        <th translatable="yes">Name</th>
-                        <th translatable="yes">Hostname</th>
-                        <th translatable="yes">Application</th>
                         <th></th>
+                        <th translatable="yes">Hostname</th>
+                        <th translatable="yes">IP Address</th>
                     </tr>
                     </thead>
                     <tbody id="source-machine" class="machine-table-body">
                     </tbody>
                 </table>
             </div>
-            <div style="float: left; font-size: 30px; width: 2%; text-align: center; margin-top: -8px;">&raquo;</div>
-            <div class="target-machines" style="float: right; width: 49%;">
+            <div style="float: left; font-size: 30px; min-width: 10%; text-align: center; margin-top: -8px;">&raquo;</div>
+            <div class="target-machines" style="float: right; min-width: 45%;">
                 <table class="table table-hover">
                     <caption style="text-align: center">Target Virtual Machines</caption>
                     <thead>
                     <tr>
                         <th></th>
-                        <th translatable="yes">Name</th>
                         <th translatable="yes">Hostname</th>
-                        <th translatable="yes">Application</th>
+                        <th translatable="yes">IP Address</th>
                     </tr>
                     </thead>
                     <tbody id="target-machine" class="machine-table-body">
@@ -91,21 +89,18 @@
             $(".machine-table-body tr").remove()
             for (var idx in vm_data.machines) {
                 var machine = vm_data.machines[idx];
-                var app_url = `http://${machine.ip[0]}:9000/`;
+                var machine_html = `
+                    <tr>
+                        <td><input type="radio" name="[type]-machine" value="${machine.hostname}" /></td>
+                        <td>${machine.hostname}</td>
+                        <td>${machine.ip[0]}</td>
+                    </tr>
+                `;
+
                 if (machine.name.indexOf("target") > -1) {
-                    $("#target-machine").append(`<tr>
-                        <td><input type="radio" name="target-machine" value="${machine.hostname}"></td>
-                        <td>${machine.name}</td>
-                        <td>${machine.hostname}</td>
-                        <td><a href="${app_url}">${app_url}</a></td>
-                    </tr>`)
+                    $("#target-machine").append(machine_html.replace("[type]", "target"))
                 } else {
-                    $("#source-machine").append(`<tr>
-                        <td>${machine.name}</td>
-                        <td>${machine.hostname}</td>
-                        <td><a href="${app_url}">${app_url}</a></td>
-                        <td><input type="radio" name="source-machine" value="${machine.hostname}"></td>
-                    </tr>`)
+                    $("#source-machine").append(machine_html.replace("[type]", "source"))
                 }
             }
             $("#source-machine tr").first().find("input[name=source-machine]").attr("checked", "checked");
