@@ -55,7 +55,7 @@ This script iterates over all the subdirectories of `demo/vmdefs` and runs
 ### Running the demonstration via the CLI
 
 First, check that the source VM is showing the
-PHP admin login page, while the target VM isn't
+PHP admin login page at port 9000, while the target VM isn't
 running a HTTP server.
 
 The demo admin login credentials are:
@@ -67,7 +67,7 @@ Then, from the base of the local clone, run:
 
     $ sudo bin/leapp-tool migrate-machine \
            --identity integration-tests/config/leappto_testing_key \
-           -t centos7-target centos6-app-vm
+           --tcp-port 9000:9000 -t centos7-target centos6-app-vm
 
 The target VM should now be showing the PHP admin page,
 with the same information as the source VM.
