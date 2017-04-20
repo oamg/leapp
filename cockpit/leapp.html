@@ -41,7 +41,6 @@
                         <th translatable="yes">Name</th>
                         <th translatable="yes">Hostname</th>
                         <th translatable="yes">Application</th>
-                        <th translatable="yes">Actions</th>
                     </tr>
                     </thead>
                     <tbody id="target-machine" class="machine-table-body">
@@ -98,10 +97,6 @@
                         <td>${machine.name}</td>
                         <td>${machine.hostname}</td>
                         <td><a href="${app_url}">${app_url}</a></td>
-                        <td>
-                            <button translatable="yes" class="btn btn-default btn-primary destroy-apps"
-                            data-hostname="${machine.hostname}">Reprovision</button
-                        </td>
                     </tr>`)
                 } else {
                     $("#source-machine").append(`<tr>
@@ -123,7 +118,6 @@
             }
             loader.hide();
             $(".migrate-app").on("click", migrate_to_host);
-            $(".destroy-apps").on("click", destroy_containers);
         }
 
         function list_local_vms_fail(data) {
@@ -155,22 +149,6 @@
             proc.stream(cmd_stdout);
 
             out(`Migrating ${source} to ${target}`);
-            loader.show();
-        }
-
-        function destroy_containers(event) {
-            var target = $(event.target).data('hostname');
-            var proc = call_leapp([
-                "destroy-containers",
-                "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
-                target
-            ]);
-            output.empty();
-            proc.done(cmd_success);
-            proc.fail(cmd_fail);
-            proc.stream(cmd_stdout);
-
-            out(`Destroying containers on ${target}`);
             loader.show();
         }
 
