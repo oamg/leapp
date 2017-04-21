@@ -5,7 +5,9 @@ from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from json import dumps
 from os import getuid
 from subprocess import Popen, PIPE
+from collections import OrderedDict
 import sys
+import nmap
 
 
 def main():
@@ -20,6 +22,7 @@ def main():
     list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
     destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
+    scan_ports_cmd = parser.add_parser('scan-ports', help='scan ports on virtual machine')
 
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
     list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
@@ -52,6 +55,9 @@ def main():
 
     destroy_cmd.add_argument('target', help='target VM name')
     destroy_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
+
+    scan_ports_cmd.add_argument('ip', help='virtual machine ip address')
+    scan_ports_cmd.add_argument('range', help='port range, example of proper form:"-100,200-1024,T:3000-4000,U:60000-"')
 
     def _find_machine(ms, name):
         for machine in ms:
@@ -220,3 +226,28 @@ def main():
         print('! destroying containers on "{}" VM'.format(target))
         mc.destroy_containers()
         print('! done')
+
+    elif parsed.action == 'scan-ports':
+        ip = parsed.ip
+        port_range = parsed.range
+        port_scanner = nmap.PortScanner()
+        port_scanner.scan(ip, port_range)
+
+        scan_info = port_scanner.scaninfo()
+        if scan_info.get('error', False):
+            print(scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error'])
+            exit(-1)
+
+        if ip not in port_scanner.all_hosts():
+            print("Machine {} not found".format(ip))
+            exit(-1)
+
+        open_ports = OrderedDict()
+        for proto in port_scanner[ip].all_protocols():
+            open_ports[proto] = OrderedDict()
+            for port in sorted(port_scanner[ip][proto]):
+                if port_scanner[ip][proto][port]['state'] != 'open':
+                    continue
+                open_ports[proto][port] = port_scanner[ip][proto][port]
+
+        print(dumps(open_ports, indent=3))
