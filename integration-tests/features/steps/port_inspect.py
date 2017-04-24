@@ -13,5 +13,6 @@ def check_used_ports_by_vm(context, vm_ip, port_range, time_limit):
         time_limit
     )
     ports = loads(ports)
-    assert_that(ports.get('tcp', False))
-    assert_that(ports['tcp'].get('80', False))
+    assert_that(ports['status'], "success")
+    assert_that(ports['ports'].get('tcp', False))
+    assert_that(ports['ports']['tcp'].get('80', False))

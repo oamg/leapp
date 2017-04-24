@@ -228,26 +228,38 @@ def main():
         print('! done')
 
     elif parsed.action == 'port-inspect':
+        _ERR_STATE = "error"
+        _SUCCESS_STATE = "success"
+
         port_range = parsed.range
         ip = parsed.ip
         port_scanner = nmap.PortScanner()
         port_scanner.scan(ip, port_range)
 
+        result = {
+            "status": _SUCCESS_STATE,
+            "err_msg": "",
+            "ports": OrderedDict()
+        }
+
         scan_info = port_scanner.scaninfo()
         if scan_info.get('error', False):
-            print(scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error'])
+            result["status"] = _ERR_STATE
+            result["err_msg"] = scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error']
+            print(dumps(result, indent=3))
             exit(-1)
 
         if ip not in port_scanner.all_hosts():
-            print("Machine {} not found".format(ip))
+            result["status"] = _ERR_STATE
+            result["err_msg"] = "Machine {} not found".format(ip)
+            print(dumps(result, indent=3))
             exit(-1)
 
-        open_ports = OrderedDict()
         for proto in port_scanner[ip].all_protocols():
-            open_ports[proto] = OrderedDict()
+            result['ports'][proto] = OrderedDict()
             for port in sorted(port_scanner[ip][proto]):
                 if port_scanner[ip][proto][port]['state'] != 'open':
                     continue
-                open_ports[proto][port] = port_scanner[ip][proto][port]
+                result['ports'][proto][port] = port_scanner[ip][proto][port]
 
-        print(dumps(open_ports, indent=3))
+        print(dumps(result, indent=3))

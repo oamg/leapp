@@ -1,6 +1,5 @@
 Feature: Get information about used ports by virtual machine
 
-@wip
 Scenario: Return information about used ports by virtual machine
    Given the local virtual machines:
          | name       | definition          | ensure_fresh |
