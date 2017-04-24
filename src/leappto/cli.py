@@ -22,7 +22,7 @@ def main():
     list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
     destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
-    scan_ports_cmd = parser.add_parser('scan-ports', help='scan ports on virtual machine')
+    scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
 
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
     list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
@@ -56,8 +56,8 @@ def main():
     destroy_cmd.add_argument('target', help='target VM name')
     destroy_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
 
-    scan_ports_cmd.add_argument('ip', help='virtual machine ip address')
     scan_ports_cmd.add_argument('range', help='port range, example of proper form:"-100,200-1024,T:3000-4000,U:60000-"')
+    scan_ports_cmd.add_argument('ip', help='virtual machine ip address')
 
     def _find_machine(ms, name):
         for machine in ms:
@@ -227,9 +227,9 @@ def main():
         mc.destroy_containers()
         print('! done')
 
-    elif parsed.action == 'scan-ports':
-        ip = parsed.ip
+    elif parsed.action == 'port-inspect':
         port_range = parsed.range
+        ip = parsed.ip
         port_scanner = nmap.PortScanner()
         port_scanner.scan(ip, port_range)
 
