@@ -45,6 +45,10 @@
                     </tbody>
                 </table>
             </div>
+            <div style="clear: both">
+                <ul id="source-ports">
+                </ul>
+            </div>
         </div>
         <p>
             <pre id="output" style="clear: both"></pre>
@@ -91,25 +95,27 @@
                 var machine = vm_data.machines[idx];
                 var machine_html = `
                     <tr>
-                        <td><input type="radio" name="[type]-machine" value="${machine.hostname}" /></td>
+                        <td>
+                            <input class="radio-[type]-machine" type="radio" name="[type]-machine"
+                            value="${machine.hostname}" data-ip="${machine.ip[0]}" />
+                        </td>
                         <td>${machine.hostname}</td>
                         <td>${machine.ip[0]}</td>
                     </tr>
                 `;
 
                 if (machine.name.indexOf("target") > -1) {
-                    $("#target-machine").append(machine_html.replace("[type]", "target"))
+                    $("#target-machine").append(machine_html.replace(/\[type\]/g, "target"))
                 } else {
-                    $("#source-machine").append(machine_html.replace("[type]", "source"))
+                    $("#source-machine").append(machine_html.replace(/\[type\]/g, "source"))
                 }
             }
-            $("#source-machine tr").first().find("input[name=source-machine]").attr("checked", "checked");
-            $("#target-machine tr").first().find("input[name=target-machine]").attr("checked", "checked");
             output.empty();
             if (vm_data.machines.length == 0) {
                 output.append(document.createTextNode("No running local VMs!\n"));
             }
             loader.hide();
+            $(".radio-source-machine").on('click', scan_ports);
         }
 
         function list_local_vms_fail(data) {
@@ -140,6 +146,36 @@
 
             out(`Migrating ${source} to ${target}`);
             loader.show();
+        }
+
+        function scan_ports(event) {
+            var ip_addr = $(event.target).data('ip');
+
+            var proc = call_leapp([
+                "port-inspect", "1-1000", ip_addr
+            ]);
+
+            output.empty();
+            proc.done(show_ports);
+            proc.fail(cmd_fail);
+
+            out(`Scanning ports on ${ip_addr}`);
+            loader.show();
+        }
+
+        function show_ports(data) {
+            console.log(data);
+            var ports_data = JSON.parse(data);
+            if (typeof(ports_data.ports.tcp) !== undefined) {
+                for (port in ports_data.ports.tcp) {
+                    $("#source-ports").append(`
+                        <li>${port} - ${ports_data.ports.tcp[port].product}</li>
+                    `)
+                }
+            }
+            
+            output.empty();
+            loader.hide();
         }
 
         function cmd_stdout(data) {
