@@ -1,0 +1,25 @@
+- name: Install QEMU Guest Agent
+  yum:
+    name: qemu-guest-agent
+    state: latest
+
+- name: Check for systemd
+  stat:
+    path: /usr/bin/systemctl
+  register: systemctl
+
+- name: Ensure QEMU Guest Agent is enabled & running
+  service:
+    name: qemu-ga
+    state: started
+    enabled: yes
+  when:
+      - systemctl.stat.exists == False
+
+- name: Ensure QEMU Guest Agent is enabled & running
+  service:
+    name: qemu-guest-agent
+    state: started
+    enabled: yes
+  when:
+      - systemctl.stat.exists == True

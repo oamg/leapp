@@ -1,0 +1,14 @@
+- name: Install oVirt Guest Agent
+  yum:
+    name: epel-release
+
+- name: Install oVirt Guest Agent
+  yum:
+    name: ovirt-guest-agent
+    state: latest
+
+- name: Ensure oVirt Guest Agent is enabled & running
+  service:
+    name: ovirt-guest-agent
+    state: started
+    enabled: yes
