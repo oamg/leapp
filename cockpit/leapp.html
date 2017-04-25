@@ -239,7 +239,7 @@
                 for (port in ports_data.ports.tcp) {
                     $("#source-ports ul").append(`
                         <li>
-                            <input type="checkbox" name="source-ports" value="${port}" checked="checked" disabled />
+                            <input type="checkbox" name="source-ports" value="${port}" checked="checked" disabled style="display: none" />
                             Port: <strong>${port}</strong> - used by: ${ports_data.ports.tcp[port].product}
                         </li>
                     `)
