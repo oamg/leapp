@@ -1,9 +1,73 @@
 <head>
-    <title>Kernel Flexibility</title>
+    <title>Le-App</title>
     <meta charset="utf-8">
     <link href="../base1/patternfly.css" type="text/css" rel="stylesheet">
     <script src="../base1/jquery.js"></script>
     <script src="../base1/cockpit.js"></script>
+    <style>
+        #panel-body {
+            width: 100%;
+            height: auto;
+            float: left;
+            margin: 10px 0 10px 0;
+            border: 1px solid #ddd;
+        }
+
+        #panel-body #tables-head, #panel-body #machines-list, #panel-body #credentials,
+        #panel-body #ports {
+            width: 100%;
+            float: left;
+            display: flex;
+        }
+
+        #panel-body h2, #panel-body h3 {
+            float: left;
+            text-align: center;
+            display: block;
+            width: 100%;
+        }
+
+        #panel-body ul {
+            margin: 10px;
+            clear: both;
+        }
+
+        #panel-body li {
+            display: block;
+            list-style-type: none;
+        }
+
+        #panel-body li span {
+            margin-left: 30px;
+            font-size: 16px;
+        }
+
+        #panel-body .wd50-left {
+            width: 50%;
+            float: left;
+        }
+
+        #panel-body #ports ul li {
+            font-size: 15px;
+            margin-left: 50px;
+        }
+
+        #panel-body .border-top-dashed {
+            border-top: 2px dashed #ddd;
+        }
+
+        #panel-body .border-left-dashed {
+            border-left: 2px dashed #ddd;
+        }
+
+        #migrate-button {
+            margin: 5px 15px 15px 0;
+        }
+        
+        #panel-body input[name=target-ports] {
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
@@ -11,41 +75,50 @@
             <div class="panel-heading">
                 <span translatable="yes">Local Virtual Machines</span>
                 <div class="pull-right">
-                    <button translatable="yes"class="btn btn-default btn-primary" id="list-vms">Refresh</button>
-                    <button translatable="yes" class="btn btn-default btn-primary migrate-app">Migrate</button>
+                    <button translatable="yes" class="btn btn-default btn-primary" id="list-vms">Refresh</button>
                 </div>
-                <div class="spinner spinner-lg" id="loader"></div>
-            </div>
-            <div class="source-machines" style="float: left; min-width: 45%;">
-                <table class="table table-hover">
-                    <caption style="text-align: center">Source Virtual Machines</caption>
-                    <thead>
-                    <tr>
-                        <th></th>
-                        <th translatable="yes">Hostname</th>
-                        <th translatable="yes">IP Address</th>
-                    </tr>
-                    </thead>
-                    <tbody id="source-machine" class="machine-table-body">
-                    </tbody>
-                </table>
-            </div>
-            <div style="float: left; font-size: 30px; min-width: 10%; text-align: center; margin-top: 30px;">&raquo;</div>
-            <div class="target-machines" style="float: right; min-width: 45%;">
-                <table class="table table-hover">
-                    <caption style="text-align: center">Target Virtual Machines</caption>
-                    <thead>
-                    <tr>
-                        <th></th>
-                        <th translatable="yes">Hostname</th>
-                        <th translatable="yes">IP Address</th>
-                    </tr>
-                    </thead>
-                    <tbody id="target-machine" class="machine-table-body">
-                    </tbody>
-                </table>
             </div>
         </div>
+        <div style="height:30px;">
+            <div class="spinner spinner-lg" id="loader"></div>
+        </div>
+        <div id="panel-body">
+            <div id="tables-head">
+                <div class="wd50-left">
+                    <h2>Source</h2>
+                </div>
+                <div class="wd50-left border-left-dashed">
+                    <h2>Target</h2>
+                </div>
+            </div>
+            <div id="machines-list" class="border-top-dashed">
+                <div id="source-machines" class="wd50-left">
+                    <ul></ul>
+                </div>
+                <div id="target-machines" class="wd50-left border-left-dashed">
+                    <ul></ul>
+                </div>
+            </div>
+            <div id="credentials" style="min-height: 75px; display: none;" class="border-top-dashed">
+                <div id="source-credentials" class="wd50-left">
+                    <h3>Credentials to source host</h3>
+                </div>
+                <div id="target-credentials" class="wd50-left border-left-dashed">
+                    <h3>Credentials to target host</h3>
+                </div>
+            </div>
+            <div id="ports" class="border-top-dashed" style="display: none;">
+                <div id="source-ports" class="wd50-left">
+                    <h3>Source host discovered ports</h3>
+                    <ul></ul>
+                </div>
+                <div id="target-ports" class="wd50-left border-left-dashed">
+                    <h3>Target host mapped ports</h3>
+                    <ul></ul>
+                </div>
+            </div>
+        </div>
+        <button translatable="yes" id="migrate-button" class="btn btn-default btn-primary migrate-app pull-right" disabled>Migrate</button>
         <p>
             <pre id="output" style="clear: both"></pre>
         </p>
@@ -86,30 +159,32 @@
 
         function refresh_vm_table(data) {
             var vm_data = JSON.parse(data);
-            $(".machine-table-body tr").remove()
+            $("#credentials, #ports").fadeOut();
+            $("#machines-list ul li, #ports ul li").remove()
+            $("#migrate-button").attr("disabled", true);
             for (var idx in vm_data.machines) {
                 var machine = vm_data.machines[idx];
                 var machine_html = `
-                    <tr>
-                        <td><input type="radio" name="[type]-machine" value="${machine.hostname}" /></td>
-                        <td>${machine.hostname}</td>
-                        <td>${machine.ip[0]}</td>
-                    </tr>
+                    <li>
+                        <input class="radio-[type]-machine" type="radio" name="[type]-machine"
+                        value="${machine.hostname}" data-ip="${machine.ip[0]}" />
+                        <span>${machine.hostname}</span>
+                    </li>
                 `;
 
                 if (machine.name.indexOf("target") > -1) {
-                    $("#target-machine").append(machine_html.replace("[type]", "target"))
+                    $("#target-machines ul").append(machine_html.replace(/\[type\]/g, "target"))
                 } else {
-                    $("#source-machine").append(machine_html.replace("[type]", "source"))
+                    $("#source-machines ul").append(machine_html.replace(/\[type\]/g, "source"))
                 }
             }
-            $("#source-machine tr").first().find("input[name=source-machine]").attr("checked", "checked");
-            $("#target-machine tr").first().find("input[name=target-machine]").attr("checked", "checked");
             output.empty();
             if (vm_data.machines.length == 0) {
                 output.append(document.createTextNode("No running local VMs!\n"));
             }
             loader.hide();
+            $(".radio-source-machine").on('click', scan_ports);
+            $(".radio-target-machine").on('click', show_target_ports);
         }
 
         function list_local_vms_fail(data) {
@@ -140,6 +215,66 @@
 
             out(`Migrating ${source} to ${target}`);
             loader.show();
+        }
+
+        function scan_ports(event) {
+            var ip_addr = $(event.target).data('ip');
+
+            var proc = call_leapp([
+                "port-inspect", "22,80,9000", ip_addr
+            ]);
+
+            output.empty();
+            proc.done(show_source_ports);
+            proc.fail(cmd_fail);
+
+            out(`Scanning ports on ${ip_addr}`);
+            loader.show();
+        }
+
+        function show_source_ports(data) {
+            $("#ports ul li").remove();
+            var ports_data = JSON.parse(data);
+            if (typeof(ports_data.ports.tcp) !== undefined) {
+                for (port in ports_data.ports.tcp) {
+                    $("#source-ports ul").append(`
+                        <li>
+                            <input type="checkbox" name="source-ports" value="${port}" checked="checked" disabled style="display: none" />
+                            Port: <strong>${port}</strong> - used by: ${ports_data.ports.tcp[port].product}
+                        </li>
+                    `)
+                }
+            }
+
+            $("#credentials").fadeIn(); // this shouldn't be here, now it's only to show full page
+            $("#ports").fadeIn();
+
+            output.empty();
+            loader.hide();
+            
+            show_target_ports();
+        }
+
+        function show_target_ports() {
+            // maybe it is a good place to unlock migrate button?
+            if (! $("input[name=target-machine]:checked").length ||
+                ! $("input[name=source-machine]:checked").length) {
+                return;
+            }
+            $("#target-ports ul li").remove();
+            loader.show();
+            output.append(document.createTextNode("Mapping target ports"));
+            $("#panel-body input[name=source-ports]:checked").each(function() {
+                $("#target-ports ul").append(`
+                    <li>
+                        Port:
+                        <input type="text" size="5" name="target-ports" value="${$(this).val()}" disabled />
+                    </li>
+                `)
+            });
+            $("button#migrate-button").removeAttr("disabled");
+            loader.hide();
+            output.empty();
         }
 
         function cmd_stdout(data) {

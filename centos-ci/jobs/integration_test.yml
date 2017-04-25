@@ -37,6 +37,7 @@
           admin-list:
             - shaded-enmity
             - ncoghlan
+            - mfranczy
           cron: '* * * * *'
           permit-all: false
           trigger-phrase: '.*[jJ]enkins [Tt]est.*'
