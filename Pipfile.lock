@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "87787a0fbcad0d2b6ffe5aa0db583371ae35802747b6e4294c98b3a1a4a2d268"
+            "sha256": "bdb08da27691dd04e828993950e3f3e4a15c4bc5516b549acb31787ada7487b7"
         },
         "requires": {},
         "sources": [
@@ -81,8 +81,8 @@
             "version": "==2.2.0"
         },
         "selenium": {
-            "hash": "sha256:6a5f3564503e881bc889e4ad4454fb403353a73dfbdc929530f8598cd1b59e6a",
-            "version": "==3.4.0"
+            "hash": "sha256:5071f43daa2e698d60d5633ab0a6630cc68a852b360be99144f1c4c1ace2746c",
+            "version": "==2.53.6"
         },
         "setuptools": {
             "hash": "sha256:33a7b7910651bea57164c6c6dd66a2b1c5196c0f78ee2ff7319ce7bd031714c0",
