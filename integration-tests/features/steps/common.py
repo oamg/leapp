@@ -76,3 +76,22 @@ def check_http_responses_match(context, tcp_port, status, time_limit):
         status=status,
         wait_for_target=time_limit
     )
+
+@then("the HTTP {status:d} response against {path} on port {tcp_port:d} should match within {time_limit:g} seconds")
+def check_http_response_match_by_path(context, tcp_port, path, status, time_limit):
+    """Checks a macrocontainer response matches the original VM's response on specified URL
+
+    
+    """
+    original_ip = context.redeployment_source_ip
+    redeployed_ip = context.redeployment_target_ip
+    assert_that(original_ip, not_none(), "Valid original IP")
+    assert_that(redeployed_ip, not_none(), "Valid redeployment IP")
+    context.http_helper.compare_redeployed_response(
+        original_ip,
+        redeployed_ip,
+        tcp_port=tcp_port,
+        wait_for_target=time_limit,
+        status=status,
+        path=path
+    )
