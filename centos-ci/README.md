@@ -12,7 +12,7 @@ The lifetime (read, debuggability) of a failed test run is 12 hours.
 ## Configuration
 
 All configuration regarding the CI can be found in the `centos-ci` directory where this readme is located.
-Secrets and SSH keys can be found in the the housekeeping repository.
+Secrets and SSH keys can be found in the housekeeping repository.
 The directory structure of `centos-ci` is as follows:
 
 | File/Directory | Purpose |
@@ -33,5 +33,10 @@ Add your GitHub handle to the `admin-list` list under `jobs.triggers.github-pull
 
 ### The trigger phrase
 
-We're currently using `*Jenkins Test*` with asterisks being wildcards, when any user in the `admin-list` comments on a PR
+We're currently using `*Jenkins: ok to test*` with asterisks being wildcards, when any user in the `admin-list` comments on a PR
 with matching pattern a new test run will be scheduled.
+
+### Updating the Jenkins Job
+
+The job definition in Jenkins is updated periodically in 10 minutes intervals from **master** branch only. That means that for new
+settings to take effect it needs to be merged into master first.
