@@ -118,7 +118,8 @@
                 </div>
             </div>
         </div>
-        <button translatable="yes" id="migrate-button" class="btn btn-default btn-primary migrate-app pull-right" disabled>Migrate</button>
+        <button translatable="yes" id="migrate-button" class="btn btn-default btn-primary migrate-app pull-right"
+        disabled>Migrate</button>
         <p>
             <pre id="output" style="clear: both"></pre>
         </p>
@@ -136,7 +137,18 @@
             list_local_vms();
         });
 
+        function set_lock_cmd() {
+            $("input[name=source-machine], input[name=target-machine]").attr("disabled", true);
+            $("#migrate-button").attr("disabled", true);
+        }
+
+        function release_lock_cmd() {
+            $("input[name=source-machine], input[name=target-machine]").removeAttr("disabled");
+            $("#migrate-button").removeAttr("disabled");
+        }
+
         function call_leapp(cmd_args) {
+            set_lock_cmd();
             return cockpit.spawn(
                 ["/opt/leapp/bin/leapp-tool"].concat(cmd_args),
                 {
@@ -183,8 +195,14 @@
                 output.append(document.createTextNode("No running local VMs!\n"));
             }
             loader.hide();
-            $(".radio-source-machine").on('click', scan_ports);
-            $(".radio-target-machine").on('click', show_target_ports);
+
+            $(".radio-source-machine").click(function(event) {
+                var ip_addr = $(event.target).data('ip');
+                var ports = '22,80,8080,9000';
+                scan_ports(ports, ip_addr, show_source_ports);
+            });
+
+            $(".radio-target-machine").on('click', check_target_ports);
         }
 
         function list_local_vms_fail(data) {
@@ -201,9 +219,16 @@
         function migrate_to_host(event) {
             var source = $("input[name=source-machine]:checked").val();
             var target = $("input[name=target-machine]:checked").val();
+            var mapped_ports = $("#panel-body input.source-ports:checked").map(function() {
+                var target_port = $("#panel-body input[name=" + this.value + "]").val();
+                if (target_port) {
+                    return target_port + ':' + this.value;  // host:container
+                }
+            }).toArray();
+
             var proc = call_leapp([
                 "migrate-machine",
-                "--tcp-port", "9000:9000",
+                "--tcp-port", mapped_ports.join(','),
                 // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
                 "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
                 "-t", target, source
@@ -217,15 +242,13 @@
             loader.show();
         }
 
-        function scan_ports(event) {
-            var ip_addr = $(event.target).data('ip');
-
+        function scan_ports(ports, ip_addr, callback) {
             var proc = call_leapp([
-                "port-inspect", "22,80,9000", ip_addr
+                "port-inspect", ports, ip_addr
             ]);
 
             output.empty();
-            proc.done(show_source_ports);
+            proc.done(callback);
             proc.fail(cmd_fail);
 
             out(`Scanning ports on ${ip_addr}`);
@@ -235,11 +258,13 @@
         function show_source_ports(data) {
             $("#ports ul li").remove();
             var ports_data = JSON.parse(data);
+            // get all protocols not only tcp
             if (typeof(ports_data.ports.tcp) !== undefined) {
                 for (port in ports_data.ports.tcp) {
                     $("#source-ports ul").append(`
                         <li>
-                            <input type="checkbox" name="source-ports" value="${port}" checked="checked" disabled style="display: none" />
+                            <input type="checkbox" name="source-ports" value="${port}" 
+                            checked="checked" disabled style="display: none" class="source-ports" />
                             Port: <strong>${port}</strong> - used by: ${ports_data.ports.tcp[port].product}
                         </li>
                     `)
@@ -252,26 +277,58 @@
             output.empty();
             loader.hide();
             
-            show_target_ports();
+            check_target_ports();
+            release_lock_cmd();
         }
 
-        function show_target_ports() {
-            // maybe it is a good place to unlock migrate button?
+        function check_target_ports() {
             if (! $("input[name=target-machine]:checked").length ||
                 ! $("input[name=source-machine]:checked").length) {
                 return;
             }
-            $("#target-ports ul li").remove();
+
+            var ip_addr = $("input[name=target-machine]:checked").data('ip');
+            var selected_ports = [];
+
+            $("#panel-body input.source-ports:checked").each(function() {
+                selected_ports.push($(this).val());
+            });
+
+            if (selected_ports)
+                scan_ports(selected_ports.join(','), ip_addr, show_target_ports);
+            else
+                console.log("couldn not find selected ports");
+        }
+
+        function show_target_ports(data) {
+            data = JSON.parse(data);
             loader.show();
             output.append(document.createTextNode("Mapping target ports"));
-            $("#panel-body input[name=source-ports]:checked").each(function() {
+
+            if (typeof(data.ports.tcp) !== undefined && data.ports.tcp) {
+                busy_ports = data.ports.tcp  
+            } else {
+                busy_ports = {};
+            };
+
+            $("#target-ports ul li").remove();
+            $("#panel-body input.source-ports:checked").each(function() {
+                if ($(this).val() in busy_ports) {
+                    // this is really bad - i should take available port !!
+                    var mapped_port = (parseInt($(this).val()) + 1).toString();
+                } else {
+                    var mapped_port = $(this).val();
+                }
+
                 $("#target-ports ul").append(`
                     <li>
                         Port:
-                        <input type="text" size="5" name="target-ports" value="${$(this).val()}" disabled />
+                        <input type="text" size="5" name="${$(this).val()}" value="${mapped_port}"
+                        class="target-ports" disabled />
                     </li>
                 `)
             });
+
             $("button#migrate-button").removeAttr("disabled");
             loader.hide();
             output.empty();
@@ -292,6 +349,7 @@
             cmd_stdout(data);
             output.append(document.createTextNode("Command completed successfully"));
             loader.hide();
+            release_lock_cmd();
         }
 
         function cmd_fail(exc, data) {
@@ -300,6 +358,7 @@
             err_msg = `Command failed with status ${exc.exit_status}!\n`
             output.append(document.createTextNode(err_msg));
             loader.hide();
+            release_lock_cmd();
         }
 
     </script>
