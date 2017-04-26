@@ -12,3 +12,4 @@ PyHamcrest = "*"
 [packages]
 ansible = ">= 2.0"
 pipsi = "*"
+splinter = "*"

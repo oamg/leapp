@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "4ec24e8642a736421e92ac5c5dc07aabe6990cbb5ed0edc72ed3f157263b3ba3"
+            "sha256": "87787a0fbcad0d2b6ffe5aa0db583371ae35802747b6e4294c98b3a1a4a2d268"
         },
         "requires": {},
         "sources": [
@@ -25,8 +25,8 @@
             "version": "==3.12"
         },
         "ansible": {
-            "hash": "sha256:efd9c574168ac1916dd57f7c88d4dd2e13ef816af0ee49a8d34c77567886e4c2",
-            "version": "==2.2.2.0"
+            "hash": "sha256:299f3907cd566a20e163942fa82b6afc86ef89c2726ba503b90c1a651e82a458",
+            "version": "==2.3.0.0"
         },
         "appdirs": {
             "hash": "sha256:d8b24664561d0d34ddfaec54636d502d7cea6e29c3eaf68f3df6180863e2166e",
@@ -80,13 +80,21 @@
             "hash": "sha256:fee43f17a9c4087e7ed1605bd6df994c6173c1e977d7ade7b651292fab2bd010",
             "version": "==2.2.0"
         },
+        "selenium": {
+            "hash": "sha256:6a5f3564503e881bc889e4ad4454fb403353a73dfbdc929530f8598cd1b59e6a",
+            "version": "==3.4.0"
+        },
         "setuptools": {
-            "hash": "sha256:e436d8c9dcf67ea8902bfa7cce1ef698f36bf303f13b4f62a5668891ecd380dd",
-            "version": "==34.3.3"
+            "hash": "sha256:33a7b7910651bea57164c6c6dd66a2b1c5196c0f78ee2ff7319ce7bd031714c0",
+            "version": "==35.0.1"
         },
         "six": {
             "hash": "sha256:0ff78c403d9bccf5a425a6d31a12aa6b47f1c21ca4dc2573a7e2f32a97335eb1",
             "version": "==1.10.0"
+        },
+        "splinter": {
+            "hash": "sha256:81e62c54f872a7dba09a152efb103c26d45b05e28fadcb9bb4c4a9422e947795",
+            "version": "==0.7.5"
         },
         "virtualenv": {
             "hash": "sha256:39d88b533b422825d644087a21e78c45cf5af0ef7a99a1fc9fbb7b481e5c85b0",
@@ -103,8 +111,8 @@
             "version": "==1.4.3"
         },
         "astroid": {
-            "hash": "sha256:944400d94e45865af150fb98700b27b788ddee5ad17c77d0725f67ac271f7a10",
-            "version": "==1.4.9"
+            "hash": "sha256:9c19f72d865a539e91115cdb6a293b5c2fecb5f611fad38b21a961a925c2e3f1",
+            "version": "==1.5.2"
         },
         "attrs": {
             "hash": "sha256:c59426b15b45e39a7bc408eb6ba7e7188d9532764f873cc691199ddd975c97ef",
@@ -139,8 +147,8 @@
             "version": "==0.3.4"
         },
         "pylint": {
-            "hash": "sha256:c15405aa2a8b982c059ad7e76effe7c7531490af08890a2fcb0c64c9e25b70f9",
-            "version": "==1.6.5"
+            "hash": "sha256:402931e0b15ac2fa05387a125cb049aba4fcd841c362613c6ad1675e0e5135d8",
+            "version": "==1.7.1"
         },
         "pyparsing": {
             "hash": "sha256:fee43f17a9c4087e7ed1605bd6df994c6173c1e977d7ade7b651292fab2bd010",
@@ -151,8 +159,8 @@
             "version": "==2.13.0"
         },
         "setuptools": {
-            "hash": "sha256:e436d8c9dcf67ea8902bfa7cce1ef698f36bf303f13b4f62a5668891ecd380dd",
-            "version": "==34.3.3"
+            "hash": "sha256:33a7b7910651bea57164c6c6dd66a2b1c5196c0f78ee2ff7319ce7bd031714c0",
+            "version": "==35.0.1"
         },
         "six": {
             "hash": "sha256:0ff78c403d9bccf5a425a6d31a12aa6b47f1c21ca4dc2573a7e2f32a97335eb1",
