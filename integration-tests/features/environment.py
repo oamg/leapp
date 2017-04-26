@@ -231,9 +231,12 @@ class RequestsHelper(object):
         """
         deadline = time.monotonic()
         if wait_for_connection is None:
-            fail_msg = "No response from service"
+            fail_msg = "No response from {}".format(service_url)
         else:
-            fail_msg = "No response from service within {} seconds".format(wait_for_connection)
+            fail_msg = "No response from {} within {} seconds".format(
+                service_url,
+                wait_for_connection
+            )
             deadline += wait_for_connection
         while True:
             try:
