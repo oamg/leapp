@@ -66,6 +66,7 @@ def _run_command(*cmd):
 import binascii
 import os
 import tempfile
+from crypt import crypt
 
 def _token_hex(nbytes=32):
     return binascii.hexlify(os.urandom(nbytes)).decode('ascii')
@@ -85,6 +86,7 @@ class DemoCockpitUser(object):
         # and can run sudo without a password
         _run_command("sudo", "useradd",
                      "--groups", "libvirt,wheel",
+                     "--password", crypt(self.password),
                      "-M", "--base-dir", self.base_dir,
                      self.username)
         # Sanity check and adds info to test logs
