@@ -35,12 +35,15 @@ def ensure_demo_plugin_is_properly_linked(context):
 @when("the demonstration user visits the {menu_item} page")
 def visit_demo_page(context, menu_item):
     """Clicks on the named menu item in the top level Cockpit menu"""
-    raise NotImplementedError()
+    context.demo_session = session = DemoCockpitSession(context)
+    session.login()
+    session.open_plugin()
 
 @then("the local VMs should be listed within {time_limit:g} seconds")
 def check_demo_machine_listing(context, time_limit):
     """Checks contents and response time for the demo plugin"""
-    raise NotImplementedError
+    expected_hosts = [host for name, host in context.vm_helper.machines.items()]
+    assert_that(context.demo_session.lists_machines(expected_hosts. time_limit))
 
 # Helper functions and classes
 # Note: these are all candidates for moving to the `behave` context
@@ -73,6 +76,7 @@ def _token_hex(nbytes=32):
 
 class DemoCockpitUser(object):
     """Cockpit user that's set up to run the demo"""
+
     def __init__(self, context):
         self._app_plugin_dir = context.BASE_REPO_DIR / "cockpit"
         self.username = username = "leapp-" + _token_hex(8)
@@ -98,6 +102,8 @@ class DemoCockpitUser(object):
         plugin_dir = self.USER_DIR / ".local" / "share" / "cockpit"
         plugin_dir.mkdir(parents=True)
         plugin_link = plugin_dir / "leapp"
+        # Likely BUG: This may need to be a full copy rather than a symlink,
+        # otherwise Cockpit won't load it due to lack of read permissions
         plugin_link.symlink_to(self._app_plugin_dir)
         # Ensure all the user's files are owned by the user,
         # but can still be accessed via the gid running the test suite
@@ -113,3 +119,53 @@ class DemoCockpitUser(object):
 def _ensure_expected_link(symlink, expected_target):
     """Ensure a symlink resolves to the expected target"""
     assert_that(symlink.resolve(), equal_to(expected_target))
+
+import time
+import splinter
+
+class DemoCockpitSession(object):
+    """Splinter browser session to work with the Cockpit plugin"""
+    def __init__(self, context):
+        self._user = context.demo_user
+        self._browser = browser = splinter.Browser()
+        context.scenario_cleanup.enter_context(browser)
+        context.scenario_cleanup.callback(self.logout)
+
+    def login(self):
+        """Logs into Cockpit using the test user's credentials
+
+        Ensures password based privilege escalation is enabled when logging in
+        """
+        browser = self._browser
+        user = self._user
+        browser.visit("http://localhost:9090")
+        browser.find_by_id("login-user-input").fill(user.username)
+        browser.find_by_id("login-password-input").fill(user.password)
+        browser.find_by_id("authorized-input").check()
+        browser.find_by_id("login-button").click()
+        self._logged_in = True
+
+    def logout(self):
+        """Logs out of Cockpit, allowing the test user to be deleted"""
+        self._browser.find_by_id("navbar-dropdown").click()
+        self._browser.find_by_id("go-logout").click()
+
+    def open_plugin(self):
+        """Opens the plugin tab from the Cockpit navigation menu"""
+        if not self._logged_in:
+            raise RuntimeError("Must log in before accessing app plugin")
+        browser = self._browser
+        # Allow some time for Cockpit to render after initial login
+        found_plugin_name = browser.is_text_present("Le-App", wait_time=5)
+        assert_that(found_plugin_name, "Plugin name not found on page")
+        browser.click_link_by_partial_text("Le-App")
+
+    def lists_machines(self, expected_hostnames, time_limit):
+        """Checks the given machine hostnames are visible on the current page"""
+        text_missing = self._browser.is_text_not_present
+        deadline = time.monotonic() + time_limit
+        for hostname in expected_hostnames:
+            wait_time_remaining = max(0, deadline - time.monotonic())
+            if text_missing(hostname, wait_time=wait_time_remaining):
+                return False
+        return True
