@@ -108,7 +108,7 @@ class Disk:
 
 class Machine:
 
-    _NAME='Machine'
+    _NAME = 'Machine'
 
     def __init__(self, id_, hostname, ip, arch, type_, disks, name, installation, provider):
         self._id = id_
@@ -159,9 +159,9 @@ class Machine:
 
     def _to_dict(self):
         return {'id': self.id, 'hostname': self.hostname, 'ip': self.ip,
-               'arch': self.arch, 'type': self.type,
-               'disks': [d._to_dict() for d in self.disks], 'name': self.name,
-               'os': self.installation._to_dict()}
+                'arch': self.arch, 'type': self.type,
+                'disks': [d._to_dict() for d in self.disks], 'name': self.name,
+                'os': self.installation._to_dict()}
 
     def __repr__(self):
         arg = {'id': self.id, 'hostname': self.hostname, 'ip': self.ip,

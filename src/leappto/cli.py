@@ -4,15 +4,16 @@ from argparse import ArgumentParser
 from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from json import dumps
 from os import getuid
-import os.path
-from subprocess import Popen, PIPE, check_output, CalledProcessError
+from subprocess import Popen, PIPE
+from collections import OrderedDict
 import sys
+import nmap
+
 
 def main():
     if getuid() != 0:
         print("Please run me as root")
         exit(-1)
-
 
     ap = ArgumentParser()
     ap.add_argument('-v', '--version', action='store_true', help='display version information')
@@ -20,6 +21,8 @@ def main():
 
     list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
+    destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
+    scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
 
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
     list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
@@ -50,6 +53,11 @@ def main():
         help='Target ports to forward to macrocontainer (temporary!)'
     )
 
+    destroy_cmd.add_argument('target', help='target VM name')
+    destroy_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
+
+    scan_ports_cmd.add_argument('range', help='port range, example of proper form:"-100,200-1024,T:3000-4000,U:60000-"')
+    scan_ports_cmd.add_argument('ip', help='virtual machine ip address')
 
     def _find_machine(ms, name):
         for machine in ms:
@@ -57,6 +65,16 @@ def main():
                 return machine
         return None
 
+    def _set_ssh_config(identity):
+        if not isinstance(identity, str):
+            raise TypeError("identity should be str")
+
+        return [
+            '-o User=vagrant',
+            '-o StrictHostKeyChecking=no',
+            '-o PasswordAuthentication=no',
+            '-o IdentityFile=' + identity
+        ]
 
     class MigrationContext:
         def __init__(self, target, target_cfg, disk, forwarded_ports=None):
@@ -64,10 +82,10 @@ def main():
             self.target_cfg = target_cfg
             self.disk = disk
             if forwarded_ports is None:
-                forwarded_ports = [(80, 80)] # Default to forwarding plain HTTP
+                forwarded_ports = [(80, 80)]  # Default to forwarding plain HTTP
             else:
                 forwarded_ports = list(forwarded_ports)
-            forwarded_ports.append((9022, 22)) # Always forward SSH
+            forwarded_ports.append((9022, 22))  # Always forward SSH
             self.forwarded_ports = forwarded_ports
 
         @property
@@ -76,7 +94,6 @@ def main():
 
         def _ssh(self, cmd, **kwargs):
             arg = self._ssh_base + [cmd]
-            print(arg)
             return Popen(arg, **kwargs).wait()
 
         def _ssh_sudo(self, cmd, **kwargs):
@@ -86,8 +103,13 @@ def main():
             proc = Popen(['virt-tar-out', '-a', self.disk, '/', '-'], stdout=PIPE)
             return self._ssh('cat > /opt/leapp-to/container.tar.gz', stdin=proc.stdout)
 
+        def destroy_containers(self):
+            command = 'docker rm -f $(docker ps -q) 2>/dev/null 1>/dev/null; rm -rf /opt/leapp-to/container'
+            return self._ssh_sudo(command)
+
         def start_container(self, img, init):
-            command = 'docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container ; mkdir -p /opt/leapp-to/container && ' + \
+            command = 'docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container ;' + \
+                    'mkdir -p /opt/leapp-to/container && ' + \
                     'tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && ' + \
                     'docker run -tid' + \
                     ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
@@ -155,16 +177,10 @@ def main():
 
             print('! configuring SSH keys')
             ip = machine_dst.ip[0]
-            target_ssh_config = [
-                '-o User=vagrant',
-                '-o StrictHostKeyChecking=no',
-                '-o PasswordAuthentication=no',
-                '-o IdentityFile=' + parsed.identity,
-            ]
 
             mc = MigrationContext(
                 ip,
-                target_ssh_config,
+                _set_ssh_config(parsed.identity),
                 machine_src.disks[0].host_path,
                 forwarded_ports
             )
@@ -182,3 +198,68 @@ def main():
                 mc.fix_upstart()
             print('! done')
             sys.exit(result)
+
+    elif parsed.action == 'destroy-containers':
+        if not parsed.identity:
+            raise ValueError("Migration requires path to private SSH key to use (--identity)")
+        target = parsed.target
+
+        lmp = LibvirtMachineProvider()
+        machines = lmp.get_machines()
+        machine_dst = _find_machine(machines, target)
+
+        print('! looking up "{}" as target'.format(target))
+        if not machine_dst:
+            print("Machine is not ready:")
+            print("Target: " + repr(machine_dst))
+            exit(-1)
+
+        print('! configuring SSH keys')
+        ip = machine_dst.ip[0]
+
+        mc = MigrationContext(
+            ip,
+            _set_ssh_config(parsed.identity),
+            machine_dst.disks[0].host_path
+        )
+
+        print('! destroying containers on "{}" VM'.format(target))
+        mc.destroy_containers()
+        print('! done')
+
+    elif parsed.action == 'port-inspect':
+        _ERR_STATE = "error"
+        _SUCCESS_STATE = "success"
+
+        port_range = parsed.range
+        ip = parsed.ip
+        port_scanner = nmap.PortScanner()
+        port_scanner.scan(ip, port_range)
+
+        result = {
+            "status": _SUCCESS_STATE,
+            "err_msg": "",
+            "ports": OrderedDict()
+        }
+
+        scan_info = port_scanner.scaninfo()
+        if scan_info.get('error', False):
+            result["status"] = _ERR_STATE
+            result["err_msg"] = scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error']
+            print(dumps(result, indent=3))
+            exit(-1)
+
+        if ip not in port_scanner.all_hosts():
+            result["status"] = _ERR_STATE
+            result["err_msg"] = "Machine {} not found".format(ip)
+            print(dumps(result, indent=3))
+            exit(-1)
+
+        for proto in port_scanner[ip].all_protocols():
+            result['ports'][proto] = OrderedDict()
+            for port in sorted(port_scanner[ip][proto]):
+                if port_scanner[ip][proto][port]['state'] != 'open':
+                    continue
+                result['ports'][proto][port] = port_scanner[ip][proto][port]
+
+        print(dumps(result, indent=3))

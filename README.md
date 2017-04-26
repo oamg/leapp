@@ -28,13 +28,14 @@ instance of the CLI:
 The integration tests do this automatically, so this step can be skipped if
 those have already been run.
 
+GCC is needed to compile vagrant plugins 
+
+    $ sudo yum install qemu libguestfs-tools-c libvirt libvirt-devel ruby-devel gcc qemu-kvm nmap
+
+
 The prototype requires Vagrant with some relevant plugins:
 
-    $ sudo vagrant plugin install ansible hitimes nio4r
-
-It also requires the virt-inspector tool:
-
-    $ sudo yum install libguestfs-tools-c
+    $ sudo vagrant plugin install ansible hitimes nio4r vagrant-libvirt
 
 And passwordless access to VM management operations:
 
@@ -54,7 +55,7 @@ This script iterates over all the subdirectories of `demo/vmdefs` and runs
 ### Running the demonstration via the CLI
 
 First, check that the source VM is showing the
-PHP admin login page, while the target VM isn't
+PHP admin login page at port 9000, while the target VM isn't
 running a HTTP server.
 
 The demo admin login credentials are:
@@ -66,7 +67,7 @@ Then, from the base of the local clone, run:
 
     $ sudo bin/leapp-tool migrate-machine \
            --identity integration-tests/config/leappto_testing_key \
-           -t centos7-target centos6-app-vm
+           --tcp-port 9000:9000 -t centos7-target centos6-app-vm
 
 The target VM should now be showing the PHP admin page,
 with the same information as the source VM.
@@ -91,7 +92,7 @@ When authenticating, check the option to allow
 Cockpit to retain your password for later
 privilege escalation.
 
-Open "Tools->Kernel Flexibility" from the
+Open "Tools->Le-App" from the
 navigation menu.
 
 Check that the application link for the source VM

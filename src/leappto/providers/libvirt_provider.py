@@ -11,7 +11,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
         # Stupid `libvirt` cannot carry out certain *read only* operations while
         # being in read-only mode so just use `open` and fix this later by enumerating
         # networks, checking the MAC of the domain and correlating this against DHCP leases
-        #self._connection = libvirt.openReadOnly('qemu:///system')
+        # self._connection = libvirt.openReadOnly('qemu:///system')
 
     @property
     def connection(self):
@@ -96,9 +96,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             :param domain_name: str, which domain to inspect
             :return:
             """
-            cmd = ['virt-inspector', '-d', domain_name, '--no-icon']
-            if self._shallow_scan:
-                cmd.append('--no-applications')
+            cmd = ['virt-inspector', '-d', domain_name]
             os_data = check_output(cmd)
             root = ET.fromstring(os_data)
             packages = []

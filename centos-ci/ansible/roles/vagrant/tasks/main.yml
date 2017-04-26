@@ -17,11 +17,27 @@
   become: true
   with_items:
     - libvirt
+    - libvirt-devel
+    - kvm
+    - seabios
     - git
     - gcc
     - libffi-devel
     - openssl-devel
     - patch
+    - libguestfs-tools-c
+    - nmap
+
+- name: Run VMs under root
+  lineinfile: 
+    dest: /etc/libvirt/qemu.conf
+    line: 'user = "root"'
+
+- name: Enable libvirtd service
+  service:
+    name: libvirtd
+    state: started 
+    enabled: yes
 
 - name: Install Pipsi
   shell: '{{ python3_scl_exec }} pip3.5 install pipsi'
@@ -35,16 +51,10 @@
   shell: '{{ python3_scl_exec }} pipsi --bin-dir=/usr/bin install pipenv'
   become: true
 
-- name: Checkout `le-app-to` code
-  git:
-    repo: https://github.com/leapp-to/prototype/
-    dest: /srv/le-app
-  become: true
-
 - name: Prepare `pipenv`
   shell: '{{ python3_scl_exec }} pipenv --three'
   args:
-    chdir: /srv/le-app
+    chdir: /root/payload
   become: true
 
 - name: Patch `pipenv` delegator to prevent deadlock
@@ -64,5 +74,5 @@
 - name: Install `pipenv`
   shell: '{{ python3_scl_exec }} pipenv install --dev --ignore-hashes'
   args:
-    chdir: /srv/le-app
+    chdir: /root/payload
   become: true
