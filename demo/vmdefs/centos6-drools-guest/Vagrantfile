@@ -1,6 +1,6 @@
 VAGRANTFILE_API_VERSION = "2"
 
-ipaddr = ENV.fetch('SRC_IP_ADDR', '10.0.0.10')
+ipaddr = ENV.fetch('SRC_IP_ADDR', '10.0.0.20')
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.box = "centos/6"
