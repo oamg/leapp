@@ -4,3 +4,6 @@
       key_path: ../../../integration-tests/config/leappto_testing_key.pub
     - target
     - docker
+  tasks:
+    - name: Ensure directories
+      file: path=/opt/leapp-to state=directory owner=vagrant group=vagrant    
