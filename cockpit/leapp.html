@@ -164,10 +164,17 @@
             $("#migrate-button").attr("disabled", true);
             for (var idx in vm_data.machines) {
                 var machine = vm_data.machines[idx];
+
+                // ugly way to expose ports for jBPMS - must be removed after summit !
+                ports = "9000:9000";
+                if (machine.hostname == "centos6-drools") {
+                    ports = "8080:8080";
+                }
+
                 var machine_html = `
                     <li>
                         <input class="radio-[type]-machine" type="radio" name="[type]-machine"
-                        value="${machine.hostname}" data-ip="${machine.ip[0]}" />
+                        value="${machine.hostname}" data-ip="${machine.ip[0]}" data-ports="${ports}" />
                         <span>${machine.hostname}</span>
                     </li>
                 `;
@@ -183,6 +190,7 @@
                 output.append(document.createTextNode("No running local VMs!\n"));
             }
             loader.hide();
+
             $(".radio-source-machine").on('click', scan_ports);
             $(".radio-target-machine").on('click', show_target_ports);
         }
@@ -201,9 +209,11 @@
         function migrate_to_host(event) {
             var source = $("input[name=source-machine]:checked").val();
             var target = $("input[name=target-machine]:checked").val();
+            var ports = $("input[name=source-machine]:checked").data('ports');
+
             var proc = call_leapp([
                 "migrate-machine",
-                "--tcp-port", "9000:9000",
+                "--tcp-port", ports,
                 // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
                 "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
                 "-t", target, source
@@ -221,7 +231,7 @@
             var ip_addr = $(event.target).data('ip');
 
             var proc = call_leapp([
-                "port-inspect", "22,80,9000", ip_addr
+                "port-inspect", "22,80,8080,9000", ip_addr
             ]);
 
             output.empty();
