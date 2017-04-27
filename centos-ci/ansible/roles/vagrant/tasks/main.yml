@@ -10,6 +10,10 @@
   shell: '{{ vagrant_scl_exec }} vagrant --version'
   become: true
 
+- name: Install ruby-devel for SCL
+  shell: '{{ vagrant_scl_exec }} yum install -y rh-ruby22-ruby-devel'
+  become: true
+
 - name: Install Packages
   yum: 
     name: '{{ item }}' 
@@ -27,6 +31,13 @@
     - patch
     - libguestfs-tools-c
     - nmap
+    - make
+    - autoconf
+    - zlib devel
+
+- name: Install vagrant-libvirt from rubygems
+  shell: '{{ vagrant_scl_exec }} gem install vagrant-libvirt'
+  become: true
 
 - name: Run VMs under root
   lineinfile: 
