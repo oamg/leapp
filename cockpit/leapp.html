@@ -225,7 +225,8 @@
                     return target_port + ':' + this.value;  // host:container
                 }
             }).toArray();
-
+            
+            /*
             var proc = call_leapp([
                 "migrate-machine",
                 "--tcp-port", mapped_ports.join(','),
@@ -237,12 +238,14 @@
             proc.done(cmd_success);
             proc.fail(cmd_fail);
             proc.stream(cmd_stdout);
+            */
 
             out(`Migrating ${source} to ${target}`);
             loader.show();
         }
 
         function scan_ports(ports, ip_addr, callback) {
+
             var proc = call_leapp([
                 "port-inspect", ports, ip_addr
             ]);
@@ -277,8 +280,8 @@
             output.empty();
             loader.hide();
             
-            check_target_ports();
             release_lock_cmd();
+            check_target_ports();
         }
 
         function check_target_ports() {
@@ -329,9 +332,9 @@
                 `)
             });
 
-            $("button#migrate-button").removeAttr("disabled");
             loader.hide();
             output.empty();
+            release_lock_cmd();
         }
 
         function cmd_stdout(data) {
