@@ -10,5 +10,5 @@ Scenario: Initial page visit
          | name       | definition          | ensure_fresh |
          | vm1        | centos6-guest-httpd | no           |
          | vm2        | centos7-target      | no           |
-  When the demonstration user visits the Kernel Flexibility page
-  Then the local VMs should be listed within 15 seconds
+  When the demonstration user visits the Le-App page
+  Then the local VMs should be listed within 120 seconds
