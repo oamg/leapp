@@ -33,7 +33,7 @@
     - nmap
     - make
     - autoconf
-    - zlib devel
+    - zlib-devel
 
 - name: Install vagrant-libvirt from rubygems
   shell: '{{ vagrant_scl_exec }} gem install vagrant-libvirt'
