@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 # Symlink to virtualenv
 .venv
-playbook.retry
+*.retry
 dist/
 *.egg-info/
+**/roles/

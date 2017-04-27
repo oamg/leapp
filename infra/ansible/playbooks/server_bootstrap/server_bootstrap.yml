@@ -1,0 +1,8 @@
+---
+- hosts: all 
+
+  vars_files: 
+  - ../../../../../le-app-housekeeping/ansible_secrets/le_app_servers_FBC1_LAB2_bootstrap.yml
+
+  roles:
+  - { role: bootstrap-server } 

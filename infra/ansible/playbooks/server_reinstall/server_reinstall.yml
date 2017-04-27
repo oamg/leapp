@@ -1,0 +1,16 @@
+---
+- hosts: all 
+
+  vars_files: 
+  - ../../../../../le-app-housekeeping/ansible_secrets/le_app_servers_FBC1_LAB2.yml
+
+  vars_prompt:
+  - name: "server_reinstall"
+    prompt:  "Do you want to reinstalll this server ? this will wipe 
+              all your data on this server yes/no ?"
+    default: "no"
+    private: no 
+    confirm: yes   
+                   
+  roles:
+  - { role: reinstall-server } 
