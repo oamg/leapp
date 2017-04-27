@@ -1,5 +1,6 @@
 Feature: Demonstration Cockpit plugin
 
+# Currently still WIP due to dependency on Firefox for scenario execution
 @wip
 @skip
 Scenario: Initial page visit
