@@ -57,20 +57,6 @@
     chdir: /root/payload
   become: true
 
-- name: Patch `pipenv` delegator to prevent deadlock
-  patch:
-    src: ../../../../patches/delegator.patch
-    dest: /root/.local/venvs/pipenv/lib/python3.5/site-packages/pipenv/vendor/delegator.py
-    strip: 0
-  become: true
-
-- name: Patch `pipenv` cli to prevent deadlock
-  patch:
-    src: ../../../../patches/cli.patch
-    dest: /root/.local/venvs/pipenv/lib/python3.5/site-packages/pipenv/cli.py
-    strip: 0
-  become: true
-
 - name: Install `pipenv`
   shell: '{{ python3_scl_exec }} pipenv install --dev --ignore-hashes'
   args:
