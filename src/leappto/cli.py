@@ -6,9 +6,11 @@ from json import dumps
 from os import getuid
 from subprocess import Popen, PIPE
 from collections import OrderedDict
+from leappto.version import __version__
 import sys
 import nmap
 
+VERSION='leapp-tool {0}'.format(__version__)
 
 def main():
     if getuid() != 0:
@@ -16,7 +18,7 @@ def main():
         exit(-1)
 
     ap = ArgumentParser()
-    ap.add_argument('-v', '--version', action='store_true', help='display version information')
+    ap.add_argument('-v', '--version', action='version', version=VERSION, help='display version information')
     parser = ap.add_subparsers(help='sub-command', dest='action')
 
     list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')

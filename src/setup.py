@@ -2,19 +2,30 @@
 # Package setup based on the PyPA example project at
 # https://github.com/pypa/sampleproject/blob/master/setup.py
 
-from setuptools import setup, find_packages
 from codecs import open
+from distutils.util import convert_path
 from os import path
+from setuptools import setup, find_packages
 
 here = path.abspath(path.dirname(__file__))
+
+_VERSION=None
+_NAME=None
+
+# Extract the version and name from the new leappto module
+with open(convert_path('leappto/version.py')) as mod:
+    ns={}
+    exec(mod.read(), ns)
+    _VERSION=ns['__version__']
+    _NAME=ns['__pkg_name__']
 
 # Get the long description from the README file
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='leappto',
-    version='0.0.1',
+    name=_NAME,
+    version=_VERSION,
 
     description='Migrate legacy application VMs into macrocontainers',
     long_description=long_description,
