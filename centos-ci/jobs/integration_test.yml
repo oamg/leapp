@@ -38,6 +38,7 @@
             - shaded-enmity
             - ncoghlan
             - mfranczy
+            - vmindru
           cron: '* * * * *'
           permit-all: false
           trigger-phrase: '.*[jJ]enkins: ok to test.*'
