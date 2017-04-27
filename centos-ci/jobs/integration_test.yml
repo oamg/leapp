@@ -39,6 +39,7 @@
             - ncoghlan
             - mfranczy
             - vmindru
+            - vinzenz
           cron: '* * * * *'
           permit-all: false
           trigger-phrase: '.*[jJ]enkins: ok to test.*'
