@@ -12,5 +12,6 @@ PyHamcrest = "*"
 [packages]
 ansible = ">= 2.0"
 pipsi = "*"
+pipenv = ">= 3.6.0"
 splinter = "*"
 selenium = "< 3.0"

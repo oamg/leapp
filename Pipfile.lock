@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "bdb08da27691dd04e828993950e3f3e4a15c4bc5516b549acb31787ada7487b7"
+            "sha256": "b6d805d6505d0cc18d0ebab1f83dc83cf9ab6a2d485850c682413ce7d8df9531"
         },
         "requires": {},
         "sources": [
@@ -60,6 +60,18 @@
             "hash": "sha256:bdf239647e18b9b9ddbc2894fd1de9786b7a9144b1d19e32a5be3bb4bb63ae5d",
             "version": "==2.1.2"
         },
+        "pew": {
+            "hash": "sha256:259ac7a4603fe41b1fa950f30b2e4ccf4a23f7c89be2c34e0a4cec176c3ec581",
+            "version": "==0.1.26"
+        },
+        "pip": {
+            "hash": "sha256:690b762c0a8460c303c089d5d0be034fb15a5ea2b75bdf565f40421f542fefb0",
+            "version": "==9.0.1"
+        },
+        "pipenv": {
+            "hash": "sha256:b9120ad8052a7bf6cae21f0f3855ca2b3712ee79808f94806c92c089f71321d9",
+            "version": "==3.6.1"
+        },
         "pipsi": {
             "hash": "sha256:688b688cc8a7a76612c0d4d1839aaef98ece8382d4382b9d8b6f0caa65f0ed34",
             "version": "==0.9"
@@ -80,6 +92,18 @@
             "hash": "sha256:fee43f17a9c4087e7ed1605bd6df994c6173c1e977d7ade7b651292fab2bd010",
             "version": "==2.2.0"
         },
+        "pythonz-bd": {
+            "hash": "sha256:6dacd9aed6018014c75acfa9c994d755715c73bc786bdc6c6186d3cf184bacf0",
+            "version": "==1.11.4"
+        },
+        "requests": {
+            "hash": "sha256:1a720e8862a41aa22e339373b526f508ef0c8988baf48b84d3fc891a8e237efb",
+            "version": "==2.13.0"
+        },
+        "resumable-urlretrieve": {
+            "hash": "sha256:947ee07dd68cb5e2989377bdc8f2f4f1f327b6ea531b03da50c6b819b29bc7fb",
+            "version": "==0.1.5"
+        },
         "selenium": {
             "hash": "sha256:5071f43daa2e698d60d5633ab0a6630cc68a852b360be99144f1c4c1ace2746c",
             "version": "==2.53.6"
@@ -99,6 +123,10 @@
         "virtualenv": {
             "hash": "sha256:39d88b533b422825d644087a21e78c45cf5af0ef7a99a1fc9fbb7b481e5c85b0",
             "version": "==15.1.0"
+        },
+        "virtualenv-clone": {
+            "hash": "sha256:6b3be5cab59e455f08c9eda573d23006b7d6fb41fae974ddaa2b275c93cc4405",
+            "version": "==0.2.6"
         }
     },
     "develop": {
