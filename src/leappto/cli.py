@@ -8,12 +8,14 @@ from subprocess import Popen, PIPE
 from collections import OrderedDict
 from leappto.version import __version__
 import sys
+from getpass import getuser
 import nmap
 
 VERSION='leapp-tool {0}'.format(__version__)
 
 def _add_identity_options(cli_cmd):
     cli_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
+    cli_cmd.add_argument('--user', '-u', default=getuser(), help='Connect as this user')
 
 def _make_argument_parser():
     ap = ArgumentParser()
@@ -74,12 +76,12 @@ def main():
                 return machine
         return None
 
-    def _set_ssh_config(identity):
+    def _set_ssh_config(username, identity):
         if not isinstance(identity, str):
             raise TypeError("identity should be str")
 
         return [
-            '-o User=vagrant',
+            '-o User=' + username,
             '-o StrictHostKeyChecking=no',
             '-o PasswordAuthentication=no',
             '-o IdentityFile=' + identity
@@ -189,7 +191,7 @@ def main():
 
             mc = MigrationContext(
                 ip,
-                _set_ssh_config(parsed.identity),
+                _set_ssh_config(parsed.user, parsed.identity),
                 machine_src.disks[0].host_path,
                 forwarded_ports
             )
@@ -228,7 +230,7 @@ def main():
 
         mc = MigrationContext(
             ip,
-            _set_ssh_config(parsed.identity),
+            _set_ssh_config(parsed.user, parsed.identity),
             machine_dst.disks[0].host_path
         )
 

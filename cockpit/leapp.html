@@ -215,6 +215,7 @@
                 "migrate-machine",
                 "--tcp-port", ports,
                 // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
+                "--user", "vagrant",
                 "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
                 "-t", target, source
             ]);
