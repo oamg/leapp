@@ -98,9 +98,13 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             :param domain_name: str, which domain to inspect
             :return:
             """
-            cmd = ['virt-inspector', '-d', domain_name, '--no-icon']
-            if self._shallow_scan:
-                cmd.append('--no-applications')
+            inspector_version = check_output(['virt-inspector', '-V'])
+            major, minor, _ = inspector_version.split(' ')[1].split('.', 2)
+            cmd = ['virt-inspector', '-d', domain_name]
+            if int(minor) >= 34 or int(major) > 1:
+                cmd.append('--no-icon')
+                if self._shallow_scan:
+                    cmd.append('--no-applications')
             os_data = check_output(cmd)
             root = ET.fromstring(os_data)
             packages = []
