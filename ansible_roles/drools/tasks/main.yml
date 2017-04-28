@@ -61,8 +61,17 @@
     remote_src: yes
 
 
+- name: Check if {{ jboss_home }} is empty
+  find:
+    path: '{{ jboss_home  }}'
+    file_type: directory
+    patterns: '*'
+  register: jboss_home_files
+
+
 - name: Move WildFly checkout from version specific directory
   shell: 'mv /tmp/wildfly/wildfly-{{ wildfly_version }}/* {{ jboss_home }}'
+  when: jboss_home_files.matched|int == 0
 
 
 - name: Ensure we have {{ jboss_home }}/standalone/deployments/{{ kie_context_path }}.war directory
@@ -141,13 +150,9 @@
     owner: jboss
     group: jboss
 
-
-##- name: Start the drools service
-##  command: service drools start
-
-
 - name: Start the drools service
   service:
     name: drools
     state: started
     enabled: yes
+
