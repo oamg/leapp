@@ -4,3 +4,4 @@
     - role: init
       key_path: ../../../config/leappto_testing_key.pub
     - httpd
+    - ovirt-guest-agent
