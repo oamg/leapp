@@ -12,11 +12,10 @@ import nmap
 
 VERSION='leapp-tool {0}'.format(__version__)
 
-def main():
-    if getuid() != 0:
-        print("Please run me as root")
-        exit(-1)
+def _add_identity_options(cli_cmd):
+    cli_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
 
+def _make_argument_parser():
     ap = ArgumentParser()
     ap.add_argument('-v', '--version', action='version', version=VERSION, help='display version information')
     parser = ap.add_subparsers(help='sub-command', dest='action')
@@ -45,7 +44,6 @@ def main():
 
     migrate_cmd.add_argument('machine', help='source machine to migrate')
     migrate_cmd.add_argument('-t', '--target', default=None, help='target VM name')
-    migrate_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
     migrate_cmd.add_argument(
         '--tcp-port',
         default=None,
@@ -54,12 +52,21 @@ def main():
         type=_port_spec,
         help='Target ports to forward to macrocontainer (temporary!)'
     )
+    _add_identity_options(migrate_cmd)
 
     destroy_cmd.add_argument('target', help='target VM name')
-    destroy_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
+    _add_identity_options(destroy_cmd)
 
     scan_ports_cmd.add_argument('range', help='port range, example of proper form:"-100,200-1024,T:3000-4000,U:60000-"')
     scan_ports_cmd.add_argument('ip', help='virtual machine ip address')
+    return ap
+
+def main():
+    if getuid() != 0:
+        print("Please run me as root")
+        exit(-1)
+
+    ap = _make_argument_parser()
 
     def _find_machine(ms, name):
         for machine in ms:
