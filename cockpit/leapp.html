@@ -307,7 +307,7 @@
             cmd_stdout(data);
             output.append(document.createTextNode("Command completed successfully"));
             if (wait_for_result_msg) {
-                output.append(document.createTextNode("\n\nPlease wait about 2 minutes to see results.."));
+                output.append(document.createTextNodei("\n\nMigrated service is now starting, please wait about 2 minutes to see results.."));
             }
             loader.hide();
             wait_for_result_msg = false;
