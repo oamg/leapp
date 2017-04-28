@@ -28,9 +28,9 @@ instance of the CLI:
 The integration tests do this automatically, so this step can be skipped if
 those have already been run.
 
-GCC is needed to compile vagrant plugins 
+GCC is needed to compile vagrant plugins
 
-    $ sudo yum install qemu libguestfs-tools-c libvirt libvirt-devel ruby-devel gcc qemu-kvm nmap
+    $ sudo yum install qemu libguestfs-tools-c libvirt libvirt-devel ruby-devel gcc qemu-kvm nmap libffi-devel
 
 
 The prototype requires Vagrant with some relevant plugins:
