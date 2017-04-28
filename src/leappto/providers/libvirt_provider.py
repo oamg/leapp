@@ -6,6 +6,18 @@ import socket
 import errno
 import json
 
+
+class LibvirtMachine(Machine):
+    # TODO: Libvirt Python API doesn't seem to expose 
+    # virDomainSuspend and virDomainResume so use Virsh
+    # for the time being
+    def suspend(self):
+        return check_output(['virsh', 'suspend', self.id])
+
+    def resume(self):
+        return check_output(['virsh', 'resume', self.id])
+
+
 class LibvirtMachineProvider(AbstractMachineProvider):
     def __init__(self, shallow_scan=True):
         self._connection = libvirt.open('qemu:///system')
@@ -212,9 +224,9 @@ class LibvirtMachineProvider(AbstractMachineProvider):
 
             storage = __get_storage(root.findall("devices/disk[@device='disk']"))
 
-            return Machine(domain.UUIDString(), hostname,
-                           ips, os_type.get('arch'), vt, storage,
-                           next(root.find('name').itertext()), inst, self)
+            return LibvirtMachine(domain.UUIDString(), hostname,
+                                  ips, os_type.get('arch'), vt, storage,
+                                  next(root.find('name').itertext()), inst, self)
 
         domains = self.connection.listAllDomains(0)
         return [__domain_info(dom) for dom in domains if dom.isActive()]
