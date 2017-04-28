@@ -6,16 +6,16 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.box = "centos/6"
     config.vm.hostname = "centos6-drools"
 
-    config.vm.provider :libvirt do |libvirt|
-        libvirt.channel :type => 'unix', :target_name => 'com.redhat.rhevm.vdsm', :target_type => 'virtio'
-    end
     config.vm.network :private_network, ip: ipaddr
     config.vm.synced_folder "./", "/vagrant", type: "rsync", id: "vagrant", :nfs => false,
         :mount_options => ["dmode=777", "fmode=666"]
 
     config.vm.provider :libvirt do |libvirt|
-	libvirt.memory = 2048
-	libvirt.cpus = 2
+        libvirt.memory = 2048
+        libvirt.cpus = 2
+        if libvirt.respond_to? :channel
+            libvirt.channel :type => 'unix', :target_name => 'com.redhat.rhevm.vdsm', :target_type => 'virtio'
+        end
     end
 
     config.vm.provision "ansible" do |ansible|
