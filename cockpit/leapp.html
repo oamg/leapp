@@ -129,6 +129,9 @@
         var output = $("#output");
         var loader = $("#loader");
 
+        // flag to show "wait for result" message after command exc - must be removed after summit !
+        var wait_for_result_msg = false;
+
         $("#list-vms").on("click", list_local_vms);
         $(".migrate-app").on("click", migrate_to_host);
 
@@ -176,10 +179,17 @@
             $("#migrate-button").attr("disabled", true);
             for (var idx in vm_data.machines) {
                 var machine = vm_data.machines[idx];
+
+                // ugly way to expose ports for jBPMS - must be removed after summit !
+                ports = "9000:9000";
+                if (machine.hostname == "centos6-drools") {
+                    ports = "8080:8080";
+                }
+
                 var machine_html = `
                     <li>
                         <input class="radio-[type]-machine" type="radio" name="[type]-machine"
-                        value="${machine.hostname}" data-ip="${machine.ip[0]}" />
+                        value="${machine.hostname}" data-ip="${machine.ip[0]}" data-ports="${ports}" />
                         <span>${machine.hostname}</span>
                     </li>
                 `;
@@ -217,8 +227,11 @@
         }
 
         function migrate_to_host(event) {
+            wait_for_result_msg = true;
+
             var source = $("input[name=source-machine]:checked").val();
             var target = $("input[name=target-machine]:checked").val();
+
             var mapped_ports = $("#panel-body input.source-ports:checked").map(function() {
                 var target_port = $("#panel-body input[name=" + this.value + "]").val();
                 if (target_port) {
@@ -433,8 +446,13 @@
             //output.empty();
             cmd_stdout(data);
             output.append(document.createTextNode("Command completed successfully"));
+            if (wait_for_result_msg) {
+                output.append(document.createTextNode("\n\nMigrated service is now starting, please wait about 2 minutes to see results.."));
+            }
             loader.hide();
+
             release_lock_cmd();
+            wait_for_result_msg = false;
         }
 
         function cmd_fail(exc, data) {
