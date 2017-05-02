@@ -1,0 +1,158 @@
+---
+
+- name: Install packages
+  yum:
+    name: '{{ item }}'
+    state: installed
+  items:
+    - saxon
+    - augeas
+    - tar
+    - unzip
+    - java-1.8.0-openjdk-devel
+    - libselinux-python
+
+
+- name: Add JBoss group
+  group:
+    name: jboss
+    system: yes
+    gid: 2000
+
+
+- name: Add JBoss user
+  user:
+    name: jboss
+    uid: 2000
+    shell: /sbin/nologin
+    comment: JBoss User
+    home: /opt/jboss
+    system: yes
+    group: jboss
+
+
+- name: Ensure proper chmod on JBoss user home directory
+  file:
+    path: /opt/jboss
+    state: directory
+    mode: 0755
+
+
+- name: Download and Verify WildFly
+  get_url:
+    url: https://download.jboss.org/wildfly/{{ wildfly_version }}/wildfly-{{ wildfly_version }}.tar.gz
+    dest: /tmp/wildfly.tar.gz
+    checksum: '{{ wildfly_digest }}'
+
+
+- name: Ensure we have {{ jboss_home }} directory
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+    - '{{ jboss_home }}'
+    - /tmp/wildfly
+
+
+- name: Extract WildFly
+  unarchive:
+    src: /tmp/wildfly.tar.gz
+    dest: '/tmp/wildfly/'
+    remote_src: yes
+
+
+- name: Check if {{ jboss_home }} is empty
+  find:
+    path: '{{ jboss_home  }}'
+    file_type: directory
+    patterns: '*'
+  register: jboss_home_files
+
+
+- name: Move WildFly checkout from version specific directory
+  shell: 'mv /tmp/wildfly/wildfly-{{ wildfly_version }}/* {{ jboss_home }}'
+  when: jboss_home_files.matched|int == 0
+
+
+- name: Ensure we have {{ jboss_home }}/standalone/deployments/{{ kie_context_path }}.war directory
+  file:
+    path: '{{ jboss_home }}/standalone/deployments/{{ kie_context_path }}.war'
+    state: directory
+
+
+- name: Download and Extract KIE Server
+  unarchive:
+    src: '{{ kie_repo }}/org/kie/kie-drools-wb-distribution-wars/{{ kie_version }}/kie-drools-wb-distribution-wars-{{ kie_version }}-{{ kie_classifier }}.war'
+    dest: '{{ jboss_home }}/standalone/deployments/{{ kie_context_path }}.war'
+    remote_src: yes
+
+
+- name: Signal WildFly to deploy
+  file:
+    path: '{{ jboss_home }}/standalone/deployments/{{ kie_context_path }}.war.dodeploy'
+    state: touch
+
+
+- name: Ensure we have Guvnor path directory
+  file:
+    path: '/opt/jboss/.m2/repository/org/guvnor/guvnor-asset-mgmt-project/{{ kie_version }}/'
+    state: directory
+
+
+- name: Download and Extract Guvnor
+  get_url:
+    url: '{{ kie_repo }}/org/guvnor/guvnor-asset-mgmt-project/{{ kie_version }}/guvnor-asset-mgmt-project-{{ kie_version }}.jar'
+    dest: '/opt/jboss/.m2/repository/org/guvnor/guvnor-asset-mgmt-project/{{ kie_version }}/guvnor-asset-mgmt-project-{{ kie_version }}.jar'
+
+
+- name: Ensure Drools configuration directory
+  file:
+    path: '{{ jboss_home }}/standalone/configuration'
+    state: directory
+
+
+- name: Copy file drools XML
+  copy:
+    src: standalone-full-drools.xml
+    dest: '{{ jboss_home }}/standalone/configuration/standalone-full-drools.xml'
+
+
+- name: Copy file users list
+  copy:
+    src: drools-users.properties
+    dest: '{{ jboss_home }}/standalone/configuration/drools-users.properties'
+
+
+- name: Copy file roles list
+  copy:
+    src: drools-roles.properties
+    dest: '{{ jboss_home }}/standalone/configuration/drools-roles.properties'
+
+
+- name: Copy service init script
+  copy:
+    src: drools
+    dest: /etc/init.d/drools
+
+
+- name: Ensure the init script is executable
+  file:
+    path: '/etc/init.d/drools'
+    mode: '0755'
+
+
+- name: Ensure proper chmod and owner on /opt/jboss
+  file:
+    path: /opt/jboss
+    state: directory
+    recurse: yes
+    mode: 'g+rw'
+    owner: jboss
+    group: jboss
+
+- name: Start the drools service
+  service:
+    name: drools
+    state: started
+    enabled: yes
+

@@ -1,18 +1,18 @@
 VAGRANTFILE_API_VERSION = "2"
 
-ipaddr = ENV.fetch('DST_IP_ADDR', '10.0.0.11')
+ipaddr = ENV.fetch('SRC_IP_ADDR', '10.0.0.20')
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-    config.vm.box = "centos/7"
-    config.vm.hostname = "centos7-target"
+    config.vm.box = "centos/6"
+    config.vm.hostname = "centos6-drools"
 
-    config.vm.network :forwarded_port, guest: 9000, host: 9000, auto_correct: true
-    config.vm.network :forwarded_port, guest: 9022, host: 9022, auto_correct: true
     config.vm.network :private_network, ip: ipaddr
+    config.vm.synced_folder "./", "/vagrant", type: "rsync", id: "vagrant", :nfs => false,
+        :mount_options => ["dmode=777", "fmode=666"]
 
     config.vm.provider :libvirt do |libvirt|
-        libvirt.memory = 1024
-        libvirt.cpus = 1
+        libvirt.memory = 2048
+        libvirt.cpus = 2
         if libvirt.respond_to? :channel
             libvirt.channel :type => 'unix', :target_name => 'com.redhat.rhevm.vdsm', :target_type => 'virtio'
         end
@@ -22,6 +22,4 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         ansible.playbook = "playbook.yml"
         ansible.sudo = true
     end
-
-    config.vm.provision :shell, inline: "echo Good job! Now vagrant ssh"
 end

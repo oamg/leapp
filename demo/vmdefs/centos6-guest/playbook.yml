@@ -3,7 +3,9 @@
     - role: init
       key_path: ../../../integration-tests/config/leappto_testing_key.pub
     - httpd
-    - role: mysql
+    - role: scl
+    - { role: mysql,  package_name: "mysql55", service_name: "mysql55-mysqld"}
     - role: php
       repo_version: 6
     - phpmyadmin
+    - ovirt-guest-agent

@@ -4,3 +4,4 @@
       key_path: ../../../integration-tests/config/leappto_testing_key.pub
     - target
     - docker
+    - ovirt-guest-agent

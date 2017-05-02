@@ -2,7 +2,9 @@ import libvirt
 from leappto import AbstractMachineProvider, MachineType, Machine, Disk, Package, OperatingSystem, Installation
 from xml.etree import ElementTree as ET
 from subprocess import check_output
-
+import socket
+import errno
+import json
 
 class LibvirtMachineProvider(AbstractMachineProvider):
     def __init__(self, shallow_scan=True):
@@ -96,7 +98,13 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             :param domain_name: str, which domain to inspect
             :return:
             """
+            inspector_version = check_output(['virt-inspector', '-V'])
+            major, minor, _ = inspector_version.split(' ')[1].split('.', 2)
             cmd = ['virt-inspector', '-d', domain_name]
+            if int(minor) >= 34 or int(major) > 1:
+                cmd.append('--no-icon')
+                if self._shallow_scan:
+                    cmd.append('--no-applications')
             os_data = check_output(cmd)
             root = ET.fromstring(os_data)
             packages = []
@@ -116,6 +124,55 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 packages.append(package)
 
             return (hostname, Installation(OperatingSystem(distro, '{}.{}'.format(major, minor)), packages))
+
+        def __get_agent_info(domain):
+            domxml = ET.fromstring(domain.XMLDesc(0))
+            channel = domxml.find('devices/channel/source')
+            result = -1
+            if channel is not None:
+                path = channel.attrib['path']
+                sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                sock.setblocking(0)
+                result = sock.connect_ex(path)
+
+            def _consume(flush=False):
+                while True:
+                    try:
+                        data = sock.recv(2 ** 16)
+                        if not flush:
+                            yield data
+                    except socket.error as err:
+                        if err.errno not in (errno.EWOULDBLOCK, errno.EAGAIN):
+                            raise
+                        if flush and err.errno == errno.EWOULDBLOCK:
+                            break
+            needed = {'os-info': None, 'fqdn': None,
+                      'network-interfaces': None}
+            if result == 0:
+                _consume(flush=True)
+                sock.sendall('{"__name__": "refresh", "apiVersion": 3}\n'
+                             '{"__name__": "api-version", "apiVersion": 3}\n')
+                linebuffer = ""
+                for buf in _consume():
+                    linebuffer += buf
+                    try:
+                        line, linebuffer = linebuffer.split('\n', 1)
+                    except ValueError:
+                        break
+                    data = json.loads(line)
+                    msg = data.pop('__name__')
+                    if msg in needed:
+                        needed[msg] = data
+                    if all(needed.values()):
+                        break
+                intfs = needed['network-interfaces']
+                ips = [a for i in intfs['interfaces'] for a in i['inet']]
+                fqdn = needed['fqdn']['fqdn']
+                distro = needed['os-info']['distribution']
+                version = needed['os-info']['version']
+                return (ips, fqdn, Installation(OperatingSystem(distro, version), []))
+            return (list(__get_ip_addresses(domain)),) + __inspect_os(domain.name())
+
 
         def __domain_info(domain):
             """
@@ -147,13 +204,16 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 hostname = None
             '''
 
-            hostname, inst = __inspect_os(domain.name())
+            if self._shallow_scan:
+                ips, hostname, inst = __get_agent_info(domain)
+            else:
+                hostname, inst = __inspect_os(domain.name())
+                ips = list(__get_ip_addresses(domain))
 
             storage = __get_storage(root.findall("devices/disk[@device='disk']"))
 
             return Machine(domain.UUIDString(), hostname,
-                           list(__get_ip_addresses(domain)),
-                           os_type.get('arch'), vt, storage,
+                           ips, os_type.get('arch'), vt, storage,
                            next(root.find('name').itertext()), inst, self)
 
         domains = self.connection.listAllDomains(0)

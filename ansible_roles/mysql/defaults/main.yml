@@ -5,3 +5,6 @@ mysql_users:
   - name: root
     pass: toor
     priv: "*.*:ALL,GRANT"
+
+rhel6_package_name: "mysql55"
+rhel6_service_name: "mysql55-mysqld"

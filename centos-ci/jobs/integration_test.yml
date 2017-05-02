@@ -38,9 +38,11 @@
             - shaded-enmity
             - ncoghlan
             - mfranczy
+            - vmindru
+            - vinzenz
           cron: '* * * * *'
           permit-all: false
-          trigger-phrase: '.*[jJ]enkins [Tt]est.*'
+          trigger-phrase: '.*[jJ]enkins: ok to test.*'
           org-list:
             - leapp-to
           github-hooks: false

@@ -1,0 +1,4 @@
+- hosts: all
+  roles:
+    - drools
+    - ovirt-guest-agent
