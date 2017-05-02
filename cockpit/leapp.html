@@ -225,20 +225,21 @@
                     return target_port + ':' + this.value;  // host:container
                 }
             }).toArray();
-            
-            /*
+
             var proc = call_leapp([
-                "migrate-machine",
-                "--tcp-port", mapped_ports.join(','),
-                // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
-                "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
-                "-t", target, source
-            ]);
+                    "migrate-machine",
+                    "--tcp-port"
+                ].concat(mapped_ports, [
+                    // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
+                    "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
+                    "-t", target, source
+                ])
+            );
+
             output.empty();
             proc.done(cmd_success);
             proc.fail(cmd_fail);
             proc.stream(cmd_stdout);
-            */
 
             out(`Migrating ${source} to ${target}`);
             loader.show();
@@ -284,6 +285,52 @@
             check_target_ports();
         }
 
+        function map_ports(ports_range, busy_ports, selected_ports) {
+
+            ports = {};
+            mapped_ports = {};
+
+            for (i in ports_range) {
+                ports[ports_range[i]] = [];
+            }
+
+            function get_available_port(min, max, excluded) {
+                if (max - min - excluded.length == 0)
+                    // if null is returned then docker should automatically assign port
+                    return null;
+                for (var port = min; port <= max; port++) {
+                    port = port.toString();
+                    if (excluded.indexOf(port) > -1)
+                        continue;
+                    return port;
+                }
+            }
+
+            for (i in selected_ports) {
+                port = selected_ports[i];
+                for (range in ports) {
+                    let interval = range.split('-');
+                    let min_p = parseInt(interval[0]);
+                    let max_p = parseInt(interval[1]);
+
+                    if (! (min_p <= port && port <= max_p)) {
+                        continue;
+                    }
+
+                    ports[range].push(port);
+                    if (port in busy_ports) {
+                        h_port = get_available_port(min_p, max_p, ports[range]);
+                    } else {
+                        h_port = port;
+                    }
+                    mapped_ports[h_port] = port;
+                }
+            }
+
+            return mapped_ports;
+        }
+
+        var ports_scan_range = [];
         function check_target_ports() {
             if (! $("input[name=target-machine]:checked").length ||
                 ! $("input[name=source-machine]:checked").length) {
@@ -291,46 +338,81 @@
             }
 
             var ip_addr = $("input[name=target-machine]:checked").data('ip');
-            var selected_ports = [];
 
-            $("#panel-body input.source-ports:checked").each(function() {
-                selected_ports.push($(this).val());
+            var checked_ports_cnt = $("#panel-body input.source-ports:checked").length;
+            var min = null;
+            var max = null;
+            var ports_interval = 25;
+
+            function add_ports_range(min, max) {
+                ports_scan_range.push(min.toString() + '-' + max.toString());
+            }
+
+            $("#panel-body input.source-ports:checked").map(function(index) {
+                checked_ports_cnt--;
+
+                if (min === null) {
+                    min = parseInt(this.value);
+                    max = min;
+                }
+
+                if (parseInt(this.value) <= max) {
+                    max += ports_interval;
+
+                    if (checked_ports_cnt <= 0) {
+                        add_ports_range(min, max);
+                    }
+
+                } else {
+                    // get element from last loop
+                    add_ports_range(min, max);
+
+                    min = parseInt(this.value);
+                    max = parseInt(this.value) + ports_interval;
+
+                    if (checked_ports_cnt <= 0) {
+                        add_ports_range(min, max);
+                    }
+                }
+
             });
 
-            if (selected_ports)
-                scan_ports(selected_ports.join(','), ip_addr, show_target_ports);
-            else
+            if (ports_scan_range) {
+                scan_ports(ports_scan_range.join(','), ip_addr, show_target_ports);
+            } else {
                 console.log("couldn not find selected ports");
+            }
         }
 
         function show_target_ports(data) {
             data = JSON.parse(data);
+
             loader.show();
             output.append(document.createTextNode("Mapping target ports"));
 
+            var selected_ports = $("#panel-body input.source-ports:checked").map(function() {
+                return this.value;
+            }).toArray();
+
             if (typeof(data.ports.tcp) !== undefined && data.ports.tcp) {
-                busy_ports = data.ports.tcp  
+                var busy_ports = data.ports.tcp  
             } else {
-                busy_ports = {};
+                var busy_ports = {};
             };
 
-            $("#target-ports ul li").remove();
-            $("#panel-body input.source-ports:checked").each(function() {
-                if ($(this).val() in busy_ports) {
-                    // this is really bad - i should take available port !!
-                    var mapped_port = (parseInt($(this).val()) + 1).toString();
-                } else {
-                    var mapped_port = $(this).val();
-                }
+            var mapped_ports = map_ports(ports_scan_range, busy_ports, selected_ports);
 
+            $("#target-ports ul li").remove();
+            for (target_port in mapped_ports) {
                 $("#target-ports ul").append(`
                     <li>
                         Port:
-                        <input type="text" size="5" name="${$(this).val()}" value="${mapped_port}"
+                        <input type="text" size="5" name="${mapped_ports[target_port]}" value="${target_port}"
                         class="target-ports" disabled />
                     </li>
                 `)
-            });
+
+            }
 
             loader.hide();
             output.empty();

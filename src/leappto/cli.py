@@ -85,7 +85,6 @@ def main():
                 forwarded_ports = [(80, 80)]  # Default to forwarding plain HTTP
             else:
                 forwarded_ports = list(forwarded_ports)
-            forwarded_ports.append((9022, 22))  # Always forward SSH
             self.forwarded_ports = forwarded_ports
 
         @property
