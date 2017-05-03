@@ -1,10 +1,29 @@
-import libvirt
-from leappto import AbstractMachineProvider, MachineType, Machine, Disk, Package, OperatingSystem, Installation
-from xml.etree import ElementTree as ET
-from subprocess import check_output
-import socket
 import errno
 import json
+import libvirt
+import os
+import shlex
+import socket
+from io import BytesIO
+from subprocess import check_output
+from xml.etree import ElementTree as ET
+
+from paramiko import AutoAddPolicy, SSHClient, SSHConfig
+
+from leappto import AbstractMachineProvider, MachineType, Machine, Disk, \
+        Package, OperatingSystem, Installation
+
+
+class LibvirtMachine(Machine):
+    # TODO: Libvirt Python API doesn't seem to expose 
+    # virDomainSuspend and virDomainResume so use Virsh
+    # for the time being
+    def suspend(self):
+        return check_output(['virsh', 'suspend', self.id])
+
+    def resume(self):
+        return check_output(['virsh', 'resume', self.id])
+
 
 class LibvirtMachineProvider(AbstractMachineProvider):
     def __init__(self, shallow_scan=True):
@@ -92,16 +111,23 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             else:
                 return ''
 
+        def __virt_inspector_supports_shallow():
+            """
+            :return: True if virt-inspector supports --no-applications and --no-icon
+            """
+            inspector_version = check_output(['virt-inspector', '-V'])
+            major, minor, _ = inspector_version.split(' ')[1].split('.', 2)
+            return (major, minor) >= ('1', '34')
+
+
         def __inspect_os(domain_name):
             """
 
             :param domain_name: str, which domain to inspect
             :return:
             """
-            inspector_version = check_output(['virt-inspector', '-V'])
-            major, minor, _ = inspector_version.split(' ')[1].split('.', 2)
             cmd = ['virt-inspector', '-d', domain_name]
-            if int(minor) >= 34 or int(major) > 1:
+            if __virt_inspector_supports_shallow():
                 cmd.append('--no-icon')
                 if self._shallow_scan:
                     cmd.append('--no-applications')
@@ -125,9 +151,88 @@ class LibvirtMachineProvider(AbstractMachineProvider):
 
             return (hostname, Installation(OperatingSystem(distro, '{}.{}'.format(major, minor)), packages))
 
-        def __get_agent_info(domain):
-            domxml = ET.fromstring(domain.XMLDesc(0))
-            channel = domxml.find('devices/channel/source')
+        def __vagrant_ssh_checkoutput(domain_name, command):
+            with open(os.devnull, 'w') as devnull:
+                cmd = ["vagrant", "ssh", domain_name, "-c", command]
+                return check_output(cmd, stderr=devnull)
+
+        def __get_vagrant_data_path_from_domain(domain_name):
+            index_path = os.path.join(os.environ['HOME'], '.vagrant.d/data/machine-index/index')
+            index = json.load(open(index_path, 'r'))
+            for ident, machine in index['machines'].iteritems():
+                path_name = os.path.basename(machine['vagrantfile_path'])
+                vagrant_name = machine.get('name', 'default')
+                if domain_name == path_name + '_' + vagrant_name:
+                    return machine['local_data_path']
+            return None
+
+        def __get_vagrant_ssh_args_from_domain(domain_name):
+            path = __get_vagrant_data_path_from_domain(domain_name)
+            path = os.path.join(path, 'provisioners/ansible/inventory/vagrant_ansible_inventory')
+            with open(path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line or line[0] in (';', '#'):
+                        continue
+                    return __parse_ansible_inventory_data(line)
+            return None
+
+        def __parse_ansible_inventory_data(line):
+            parts = shlex.split(line)
+            if parts:
+                parts = parts[1:]
+            args = {}
+            mapping = {
+                    'ansible_ssh_port': ('port', int),
+                    'ansible_ssh_host': ('hostname', str),
+                    'ansible_ssh_private_key_file': ('key_filename', str),
+                    'ansible_ssh_user': ('username', str)}
+            for part in parts:
+                key, value = part.split('=', 1)
+                if key in mapping:
+                    args[mapping[key][0]] = mapping[key][1](value)
+            return args
+
+        def __get_vagrant_ssh_client_for_domain(domain_name):
+            args = __get_vagrant_ssh_args_from_domain(domain_name)
+            if args:
+                client = SSHClient()
+                client.load_system_host_keys()
+                client.set_missing_host_key_policy(AutoAddPolicy())
+                client.connect(args.pop('hostname'), **args)
+                return client
+            return None
+
+        def __get_ssh_info(domain_name):
+            client = __get_vagrant_ssh_client_for_domain(domain_name)
+            if not client:
+                return None
+            cmd = """python -c 'import platform; print chr(0xa).join(platform.linux_distribution()[:2])'"""
+            _, output, _ = client.exec_command(cmd)
+            distro, version = output.read().strip().replace('\r', '').split('\n', 1)
+            cmd = """python -c 'import socket; print socket.gethostname()'"""
+            _, output, _ = client.exec_command(cmd)
+            hostname = output.read().strip()
+            cmd = "/sbin/ip -4 -o addr list | grep -E 'e(th|ns)' | sed 's/.*inet \\([0-9\\.]\\+\\)\\/.*$/\\1/g'\n"
+            _, output, stderr = client.exec_command(cmd)
+            ips = [i.strip() for i in output.read().split('\n') if i.strip()]
+            return (ips, hostname, Installation(OperatingSystem(distro, version), []))
+
+
+        def __get_info_shallow(domain, force_ssh=False):
+            result = None
+            if not force_ssh:
+                domxml = ET.fromstring(domain.XMLDesc(0))
+                channel = domxml.find('devices/channel/source')
+                if channel is not None:
+                    result = __get_agent_info(channel)
+                if not result and __virt_inspector_supports_shallow():
+                    result = (list(__get_ip_addresses(domain)),) + __inspect_os(domain.name())
+            if not result:
+                result = __get_ssh_info(domain.name())
+            return result
+
+        def __get_agent_info(channel):
             result = -1
             if channel is not None:
                 path = channel.attrib['path']
@@ -171,7 +276,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 distro = needed['os-info']['distribution']
                 version = needed['os-info']['version']
                 return (ips, fqdn, Installation(OperatingSystem(distro, version), []))
-            return (list(__get_ip_addresses(domain)),) + __inspect_os(domain.name())
+            return None
 
 
         def __domain_info(domain):
@@ -205,16 +310,16 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             '''
 
             if self._shallow_scan:
-                ips, hostname, inst = __get_agent_info(domain)
+                ips, hostname, inst = __get_info_shallow(domain)
             else:
                 hostname, inst = __inspect_os(domain.name())
                 ips = list(__get_ip_addresses(domain))
 
             storage = __get_storage(root.findall("devices/disk[@device='disk']"))
 
-            return Machine(domain.UUIDString(), hostname,
-                           ips, os_type.get('arch'), vt, storage,
-                           next(root.find('name').itertext()), inst, self)
+            return LibvirtMachine(domain.UUIDString(), hostname,
+                                  ips, os_type.get('arch'), vt, storage,
+                                  next(root.find('name').itertext()), inst, self)
 
         domains = self.connection.listAllDomains(0)
         return [__domain_info(dom) for dom in domains if dom.isActive()]

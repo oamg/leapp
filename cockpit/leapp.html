@@ -37,7 +37,7 @@
             list-style-type: none;
         }
 
-        #panel-body li span {
+        #panel-body li label, #panel-body li span {
             margin-left: 30px;
             font-size: 16px;
         }
@@ -63,7 +63,7 @@
         #migrate-button {
             margin: 5px 15px 15px 0;
         }
-        
+
         #panel-body input[name=target-ports] {
             text-align: center;
         }
@@ -188,9 +188,10 @@
 
                 var machine_html = `
                     <li>
-                        <input class="radio-[type]-machine ui-lockable" type="radio" name="[type]-machine"
-                        value="${machine.hostname}" data-ip="${machine.ip[0]}" data-ports="${ports}"/>
-                        <span>${machine.hostname}</span>
+                        <input id="machine-radio-${machine.ip[0]}" class="radio-[type]-machine ui-lockable" 
+                        type="radio" name="[type]-machine" value="${machine.hostname}" data-ip="${machine.ip[0]}"
+                        data-ports="${ports}" />
+                        <label for="machine-radio-${machine.ip[0]}">${machine.hostname}</label>
                     </li>
                 `;
 
