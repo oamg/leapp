@@ -126,6 +126,8 @@
     </div>
 
     <script>
+        const DOCKER_RANDOM_PORT = "RANDOM";
+
         var output = $("#output");
         var loader = $("#loader");
 
@@ -233,7 +235,10 @@
             var mapped_ports = $("#panel-body input.source-ports:checked").map(function() {
                 var target_port = $("#panel-body input[name=" + this.value + "]").val();
                 if (target_port) {
-                    return target_port + ':' + this.value;  // host:container
+                    if (target_port === DOCKER_RANDOM_PORT)
+                        return this.value;
+                    else
+                        return target_port + ':' + this.value;  // host:container
                 }
             }).toArray();
 
@@ -307,8 +312,8 @@
 
             function get_available_port(min_port, max_port, excluded_ports) {
                 if (max_port - min_port - excluded_ports.length == 0)
-                    // if null is returned then docker should automatically assign port
-                    return null;
+                    // if DOKCER_RANDOM_PORT is returned then docker should automatically assign port
+                    return DOCKER_RANDOM_PORT;
                 for (var port = min_port; port <= max_port; port++) {
                     port = port.toString();
                     if (excluded_ports.indexOf(port) > -1)
@@ -334,7 +339,7 @@
                     } else {
                         target_port = source_port;
                     }
-                    mapped_ports[target_port] = source_port;
+                    mapped_ports[source_port] = target_port;
                 }
             }
 
@@ -414,12 +419,13 @@
             var mapped_ports = map_ports(ports_scan_range, busy_ports, selected_ports);
 
             $("#target-ports ul li").remove();
-            for (target_port in mapped_ports) {
+            for (source_port in mapped_ports) {
                 $("#target-ports ul").append(`
                     <li>
                         Port:
-                        <input type="text" size="5" name="${mapped_ports[target_port]}" value="${target_port}"
+                        <input type="text" size="6" name="${source_port}" value="${mapped_ports[source_port]}"
                         class="target-ports" disabled />
+                        &rarr; ${source_port}
                     </li>
                 `)
 

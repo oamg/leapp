@@ -37,8 +37,9 @@ def main():
         """
         host_port, sep, container_port = arg.partition(":")
         host_port = int(host_port)
-        if sep is None:
+        if not sep:
             container_port = host_port
+            host_port = None
         else:
             container_port = int(container_port)
         return host_port, container_port
@@ -118,7 +119,10 @@ def main():
             for mount in good_mounts:
                 command += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
             for host_port, container_port in self.forwarded_ports:
-                command += ' -p {:d}:{:d}'.format(host_port, container_port)
+                if host_port is None:
+                    command += ' -p {:d}'.format(container_port)  # docker will select random port for host
+                else:
+                    command += ' -p {:d}:{:d}'.format(host_port, container_port)
             command += ' --name container ' + img + ' ' + init
             return self._ssh_sudo(command)
 
