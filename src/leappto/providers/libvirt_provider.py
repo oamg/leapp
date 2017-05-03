@@ -100,7 +100,9 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             """
             inspector_version = check_output(['virt-inspector', '-V'])
             major, minor, _ = inspector_version.split(' ')[1].split('.', 2)
-            cmd = ['virt-inspector', '-d', domain_name]
+            # Vagrant always uses qemu:///system, so for now, we always run
+            # virt-inspector as root, rather than as the current user
+            cmd = ['sudo', 'virt-inspector', '-d', domain_name]
             if int(minor) >= 34 or int(major) > 1:
                 cmd.append('--no-icon')
                 if self._shallow_scan:

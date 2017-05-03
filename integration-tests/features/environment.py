@@ -189,7 +189,7 @@ class ClientHelper(object):
 
     @staticmethod
     def _run_leapp(*args):
-        cmd = ["sudo", _LEAPP_TOOL]
+        cmd = [_LEAPP_TOOL]
         cmd.extend(args)
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), ignore_errors=False)
 

@@ -13,9 +13,6 @@ import nmap
 VERSION='leapp-tool {0}'.format(__version__)
 
 def main():
-    if getuid() != 0:
-        print("Please run me as root")
-        exit(-1)
 
     ap = ArgumentParser()
     ap.add_argument('-v', '--version', action='version', version=VERSION, help='display version information')
@@ -102,7 +99,9 @@ def main():
             return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
 
         def copy(self):
-            proc = Popen(['virt-tar-out', '-a', self.disk, '/', '-'], stdout=PIPE)
+            # Vagrant always uses qemu:///system, so for now, we always run
+            # virt-tar-out as root, rather than as the current user
+            proc = Popen(['sudo', 'virt-tar-out', '-a', self.disk, '/', '-'], stdout=PIPE)
             return self._ssh('cat > /opt/leapp-to/container.tar.gz', stdin=proc.stdout)
 
         def destroy_containers(self):
