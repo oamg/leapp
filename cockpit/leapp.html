@@ -128,6 +128,9 @@
         var output = $("#output");
         var loader = $("#loader");
 
+        // flag to show "wait for result" message after command exc - must be removed after summit !
+        var wait_for_result_msg = false;
+
         $("#list-vms").on("click", list_local_vms);
         $(".migrate-app").on("click", migrate_to_host);
 
@@ -207,6 +210,8 @@
         }
 
         function migrate_to_host(event) {
+            wait_for_result_msg = true;
+
             var source = $("input[name=source-machine]:checked").val();
             var target = $("input[name=target-machine]:checked").val();
             var ports = $("input[name=source-machine]:checked").data('ports');
@@ -302,7 +307,11 @@
             //output.empty();
             cmd_stdout(data);
             output.append(document.createTextNode("Command completed successfully"));
+            if (wait_for_result_msg) {
+                output.append(document.createTextNode("\n\nMigrated service is now starting, please wait about 2 minutes to see results.."));
+            }
             loader.hide();
+            wait_for_result_msg = false;
         }
 
         function cmd_fail(exc, data) {

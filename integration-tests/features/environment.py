@@ -232,9 +232,12 @@ class RequestsHelper(object):
         """
         deadline = time.monotonic()
         if wait_for_connection is None:
-            fail_msg = "No response from service"
+            fail_msg = "No response from {}".format(service_url)
         else:
-            fail_msg = "No response from service within {} seconds".format(wait_for_connection)
+            fail_msg = "No response from {} within {} seconds".format(
+                service_url,
+                wait_for_connection
+            )
             deadline += wait_for_connection
         while True:
             try:
@@ -321,6 +324,10 @@ def _skip_test_group(context, test_group):
     return skip_group
 
 def before_all(context):
+    # Basic info about the test repository
+    context.BASE_REPO_DIR = _REPO_DIR
+    context.BASE_TEST_DIR = _TEST_DIR
+
     # Some steps require sudo, so for convenience in interactive use,
     # we ensure we prompt for elevated permissions immediately,
     # rather than potentially halting midway through a test

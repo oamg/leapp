@@ -142,8 +142,9 @@ def main():
             fixer = 'bash -c "echo ! waiting ; ' + \
                     'sleep 2 ; ' + \
                     'mkdir -p /var/log/httpd && ' + \
-                    'service mysqld start && ' + \
-                    'service httpd start"'
+                    '(service mysqld start && ' + \
+                    'service httpd start) 2>/dev/null ;' + \
+                    '(service drools stop ; service drools start) 2>/dev/null 1>&2"'
             return self._fix_container(fixer)
 
         def fix_systemd(self):

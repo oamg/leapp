@@ -13,6 +13,7 @@ dir="/opt/jboss/wildfly/bin"
 cmd="./standalone.sh -b 0.0.0.0 -c standalone-full-drools.xml -Dorg.kie.demo=true -Dorg.kie.example=true"
 user="jboss"
 
+
 name=`basename $0`
 pid_file="/var/run/$name.pid"
 stdout_log="/var/log/$name.log"
@@ -31,6 +32,10 @@ case "$1" in
     if is_running; then
         echo "Already started"
     else
+        rm -rf /opt/jboss/wildfly/standalone/deployments/drools-wb.war.*
+        sudo -u $user touch /opt/jboss/wildfly/standalone/deployments/drools-wb.war.dodeploy
+        pgrep -f 'standalone' | xargs kill -9
+
         echo "Starting $name"
         cd "$dir"
         if [ -z "$user" ]; then
