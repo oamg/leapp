@@ -19,10 +19,10 @@ class LibvirtMachine(Machine):
     # virDomainSuspend and virDomainResume so use Virsh
     # for the time being
     def suspend(self):
-        return check_output(['virsh', 'suspend', self.id])
+        return check_output(['sudo', 'virsh', 'suspend', self.id])
 
     def resume(self):
-        return check_output(['virsh', 'resume', self.id])
+        return check_output(['sudo', 'virsh', 'resume', self.id])
 
 
 class LibvirtMachineProvider(AbstractMachineProvider):
