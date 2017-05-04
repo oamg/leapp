@@ -187,7 +187,9 @@ def main():
                 forwarded_ports
             )
             print('! copying over')
+            print('! ' + machine_src.suspend())
             mc.copy()
+            print('! ' + machine_src.resume())
             print('! provisioning ...')
             # if el7 then use systemd
             if machine_src.installation.os.version.startswith('7'):
