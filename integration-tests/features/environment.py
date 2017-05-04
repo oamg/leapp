@@ -1,5 +1,6 @@
 import contextlib
 import json
+import os
 import pathlib
 import shutil
 import subprocess
@@ -129,6 +130,8 @@ def _install_client():
         _run_command(uninstall, work_dir=str(_REPO_DIR), ignore_errors=False)
     install = base_cmd + ["install", "--python", py27, str(_LEAPP_SRC_DIR)]
     print(_run_command(install, work_dir=str(_REPO_DIR), ignore_errors=False))
+    # Ensure private SSH key is only readable by the current user
+    os.chmod(_SSH_IDENTITY, 0o600)
 
 @attributes
 class MigrationInfo(object):
@@ -189,7 +192,7 @@ class ClientHelper(object):
 
     @staticmethod
     def _run_leapp(*args):
-        cmd = ["sudo", _LEAPP_TOOL]
+        cmd = [_LEAPP_TOOL]
         cmd.extend(args)
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), ignore_errors=False)
 

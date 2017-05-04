@@ -1,20 +1,40 @@
 """LeApp CLI implementation"""
 
 from argparse import ArgumentParser
-from leappto.providers.libvirt_provider import LibvirtMachineProvider
+from grp import getgrnam, getgrgid
 from json import dumps
 from os import getuid
+from pwd import getpwuid
 from subprocess import Popen, PIPE
 from collections import OrderedDict
+from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from leappto.version import __version__
 import sys
 import nmap
 
 VERSION='leapp-tool {0}'.format(__version__)
 
+_REQUIRED_GROUPS = ["vagrant", "libvirt"]
+def _user_has_required_permissions():
+    """Check user has necessary permissions to reliably run leapp-tool"""
+    uid = getuid()
+    if uid == 0:
+        # root has the necessary access regardless of group membership
+        return True
+    user_info = getpwuid(uid)
+    user_name = user_info.pw_name
+    user_group = getgrgid(user_info.pw_gid).gr_name
+    for group in _REQUIRED_GROUPS:
+        if group != user_group and user_name not in getgrnam(group).gr_mem:
+            return False
+    return True
+
+
 def main():
-    if getuid() != 0:
-        print("Please run me as root")
+
+    if not _user_has_required_permissions():
+        msg = "Run leapp-tool as root, or as a member of all these groups: "
+        print(msg + ",".join(_REQUIRED_GROUPS))
         exit(-1)
 
     ap = ArgumentParser()
@@ -102,7 +122,9 @@ def main():
             return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
 
         def copy(self):
-            proc = Popen(['virt-tar-out', '-a', self.disk, '/', '-'], stdout=PIPE)
+            # Vagrant always uses qemu:///system, so for now, we always run
+            # virt-tar-out as root, rather than as the current user
+            proc = Popen(['sudo', 'virt-tar-out', '-a', self.disk, '/', '-'], stdout=PIPE)
             return self._ssh('cat > /opt/leapp-to/container.tar.gz', stdin=proc.stdout)
 
         def destroy_containers(self):

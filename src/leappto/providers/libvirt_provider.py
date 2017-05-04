@@ -19,10 +19,10 @@ class LibvirtMachine(Machine):
     # virDomainSuspend and virDomainResume so use Virsh
     # for the time being
     def suspend(self):
-        return check_output(['virsh', 'suspend', self.id])
+        return check_output(['sudo', 'virsh', 'suspend', self.id])
 
     def resume(self):
-        return check_output(['virsh', 'resume', self.id])
+        return check_output(['sudo', 'virsh', 'resume', self.id])
 
 
 class LibvirtMachineProvider(AbstractMachineProvider):
@@ -126,7 +126,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             :param domain_name: str, which domain to inspect
             :return:
             """
-            cmd = ['virt-inspector', '-d', domain_name]
+            cmd = ['sudo', 'virt-inspector', '-d', domain_name]
             if __virt_inspector_supports_shallow():
                 cmd.append('--no-icon')
                 if self._shallow_scan:
