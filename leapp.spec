@@ -16,13 +16,6 @@ BuildRequires:   python-setuptools
 BuildRequires:   python2-setuptools
 %endif
 
-BuildRequires:   libvirt-python
-BuildRequires:   libvirt-devel
-BuildRequires:   python-enum34
-BuildRequires:   python2
-BuildRequires:   python2-nmap
-BuildRequires:   python2-paramiko
-
 %description
 LeApp is a "Minimum Viable Migration" utility that aims to decouple virtualized
 applications from the operating system kernel included in their VM image by
