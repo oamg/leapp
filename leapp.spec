@@ -4,7 +4,7 @@ Release:    3
 Summary:    leapp tool rpm
 
 Group:      Unspecified
-License:    GPLv2+
+License:    LGPLv2+
 URL:        https://github.com/leapp-to/prototype
 Source0:    https://github.com/leapp-to/prototype/archive/master.tar.gz
 BuildArch:  noarch
