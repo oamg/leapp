@@ -10,7 +10,12 @@ Source0:    https://github.com/leapp-to/prototype/archive/master.tar.gz
 BuildArch:  noarch
 
 BuildRequires:   python2-devel
+%if 0%{?el7}
+BuildRequires:   python-setuptools
+%else
 BuildRequires:   python2-setuptools
+%endif
+
 BuildRequires:   libvirt-python
 BuildRequires:   libvirt-devel
 BuildRequires:   python-enum34
