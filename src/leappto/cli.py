@@ -1,22 +1,41 @@
 """LeApp CLI implementation"""
 
 from argparse import ArgumentParser
-from leappto.providers.libvirt_provider import LibvirtMachineProvider
+from grp import getgrnam, getgrgid
 from json import dumps
 from os import getuid
+from pwd import getpwuid
 from subprocess import Popen, PIPE
 from collections import OrderedDict
+from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from leappto.version import __version__
 import sys
 import nmap
 
 VERSION='leapp-tool {0}'.format(__version__)
 
-def main():
-    if getuid() != 0:
-        print("Please run me as root")
-        exit(-1)
+# Checking for required permissions
+_REQUIRED_GROUPS = ["vagrant", "libvirt"]
+def _user_has_required_permissions():
+    """Check user has necessary permissions to reliably run leapp-tool"""
+    uid = getuid()
+    if uid == 0:
+        # root has the necessary access regardless of group membership
+        return True
+    user_info = getpwuid(uid)
+    user_name = user_info.pw_name
+    user_group = getgrgid(user_info.pw_gid).gr_name
+    for group in _REQUIRED_GROUPS:
+        if group != user_group and user_name not in getgrnam(group).gr_mem:
+            return False
+    return True
 
+# Parsing CLI arguments
+def _add_identity_options(cli_cmd):
+    cli_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
+    cli_cmd.add_argument('--user', '-u', default=None, help='Connect as this user')
+
+def _make_argument_parser():
     ap = ArgumentParser()
     ap.add_argument('-v', '--version', action='version', version=VERSION, help='display version information')
     parser = ap.add_subparsers(help='sub-command', dest='action')
@@ -46,7 +65,6 @@ def main():
 
     migrate_cmd.add_argument('machine', help='source machine to migrate')
     migrate_cmd.add_argument('-t', '--target', default=None, help='target VM name')
-    migrate_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
     migrate_cmd.add_argument(
         '--tcp-port',
         default=None,
@@ -55,12 +73,23 @@ def main():
         type=_port_spec,
         help='Target ports to forward to macrocontainer (temporary!)'
     )
+    _add_identity_options(migrate_cmd)
 
     destroy_cmd.add_argument('target', help='target VM name')
-    destroy_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
+    _add_identity_options(destroy_cmd)
 
     scan_ports_cmd.add_argument('range', help='port range, example of proper form:"-100,200-1024,T:3000-4000,U:60000-"')
     scan_ports_cmd.add_argument('ip', help='virtual machine ip address')
+    return ap
+
+# Run the CLI
+def main():
+    if not _user_has_required_permissions():
+        msg = "Run leapp-tool as root, or as a member of all these groups: "
+        print(msg + ",".join(_REQUIRED_GROUPS))
+        exit(-1)
+
+    ap = _make_argument_parser()
 
     def _find_machine(ms, name):
         for machine in ms:
@@ -68,16 +97,20 @@ def main():
                 return machine
         return None
 
-    def _set_ssh_config(identity):
+    def _set_ssh_config(username, identity):
         if not isinstance(identity, str):
             raise TypeError("identity should be str")
+        settings = {
+            'StrictHostKeyChecking': 'no',
+            'PasswordAuthentication': 'no',
+            'IdentityFile': identity,
+        }
+        if username is not None:
+            if not isinstance(username, str):
+                raise TypeError("username should be str")
+            settings['User'] = username
 
-        return [
-            '-o User=vagrant',
-            '-o StrictHostKeyChecking=no',
-            '-o PasswordAuthentication=no',
-            '-o IdentityFile=' + identity
-        ]
+        return ['-o {}={}'.format(k, v) for k, v in settings.items()]
 
     class MigrationContext:
         def __init__(self, target, target_cfg, disk, forwarded_ports=None):
@@ -102,7 +135,9 @@ def main():
             return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
 
         def copy(self):
-            proc = Popen(['virt-tar-out', '-a', self.disk, '/', '-'], stdout=PIPE)
+            # Vagrant always uses qemu:///system, so for now, we always run
+            # virt-tar-out as root, rather than as the current user
+            proc = Popen(['sudo', 'virt-tar-out', '-a', self.disk, '/', '-'], stdout=PIPE)
             return self._ssh('cat > /opt/leapp-to/container.tar.gz', stdin=proc.stdout)
 
         def destroy_containers(self):
@@ -186,7 +221,7 @@ def main():
 
             mc = MigrationContext(
                 ip,
-                _set_ssh_config(parsed.identity),
+                _set_ssh_config(parsed.user, parsed.identity),
                 machine_src.disks[0].host_path,
                 forwarded_ports
             )
@@ -227,7 +262,7 @@ def main():
 
         mc = MigrationContext(
             ip,
-            _set_ssh_config(parsed.identity),
+            _set_ssh_config(parsed.user, parsed.identity),
             machine_dst.disks[0].host_path
         )
 

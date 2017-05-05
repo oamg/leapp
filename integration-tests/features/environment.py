@@ -1,5 +1,6 @@
 import contextlib
 import json
+import os
 import pathlib
 import shutil
 import subprocess
@@ -116,7 +117,9 @@ _LEAPP_SRC_DIR = _REPO_DIR / "src"
 _LEAPP_BIN_DIR = _REPO_DIR / "bin"
 _LEAPP_TOOL = str(_LEAPP_BIN_DIR / "leapp-tool")
 
+_SSH_USER = "vagrant"
 _SSH_IDENTITY = str(_REPO_DIR / "integration-tests/config/leappto_testing_key")
+_DEFAULT_LEAPP_IDENTITY = ['--user', _SSH_USER, '--identity', _SSH_IDENTITY]
 
 def _install_client():
     """Install the CLI and its dependencies into a Python 2.7 environment"""
@@ -129,6 +132,8 @@ def _install_client():
         _run_command(uninstall, work_dir=str(_REPO_DIR), ignore_errors=False)
     install = base_cmd + ["install", "--python", py27, str(_LEAPP_SRC_DIR)]
     print(_run_command(install, work_dir=str(_REPO_DIR), ignore_errors=False))
+    # Ensure private SSH key is only readable by the current user
+    os.chmod(_SSH_IDENTITY, 0o600)
 
 @attributes
 class MigrationInfo(object):
@@ -180,33 +185,32 @@ class ClientHelper(object):
         Returns the contents of stdout as a string.
         """
         if complete_identity:
-            cmd_args.extend(['--identity', _SSH_IDENTITY])
+            cmd_args.extend(_DEFAULT_LEAPP_IDENTITY)
         start = time.monotonic()
-        cmd_output = self._run_leapp(*cmd_args)
+        cmd_output = self._run_leapp(cmd_args)
         response_time = time.monotonic() - start
         assert_that(response_time, less_than_or_equal_to(time_limit))
         return cmd_output
 
     @staticmethod
-    def _run_leapp(*args):
-        cmd = ["sudo", _LEAPP_TOOL]
-        cmd.extend(args)
+    def _run_leapp(cmd_args):
+        cmd = [_LEAPP_TOOL]
+        cmd.extend(cmd_args)
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), ignore_errors=False)
 
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host):
-        result = cls._run_leapp(
-            "migrate-machine",
-            "--identity", _SSH_IDENTITY,
-            "-t", target_host, source_host
-        )
+        cmd_args = ["migrate-machine"]
+        cmd_args.extend(_DEFAULT_LEAPP_IDENTITY)
+        cmd_args.extend(["-t", target_host, source_host])
+        result = cls._run_leapp(cmd_args)
         msg = "Redeployed {} as macrocontainer on {}"
         print(msg.format(source_host, target_host))
         return result
 
     @classmethod
     def _get_migration_host_info(cls, source_host, target_host):
-        leapp_output = cls._run_leapp("list-machines", "--shallow")
+        leapp_output = cls._run_leapp(["list-machines", "--shallow"])
         machines = json.loads(leapp_output)["machines"]
         return MigrationInfo.from_vm_list(machines, source_host, target_host)
 
