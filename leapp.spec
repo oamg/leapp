@@ -1,6 +1,6 @@
 Name:       leapp
 Version:    0.0.1
-Release:    2
+Release:    3
 Summary:    leapp tool rpm
 
 Group:      Unspecified
@@ -107,6 +107,9 @@ popd
 
 
 %changelog
+* Fri May 05 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.0.1-3
+- Fixed el 7 builds (vfeenstr@redhat.com)
+
 * Fri May 05 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.0.1-2
 - new package built with tito
 
