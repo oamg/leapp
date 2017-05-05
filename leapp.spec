@@ -1,6 +1,6 @@
 Name:       leapp
 Version:    0.0.1
-Release:    3
+Release:    4
 Summary:    leapp tool rpm
 
 Group:      Unspecified
@@ -102,6 +102,13 @@ popd
 
 
 %changelog
+* Fri May 05 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.0.1-4
+- We also need virsh (vfeenstr@redhat.com)
+- The license choosen for LeApp is now LGPLv2+ (vfeenstr@redhat.com)
+- Missing nmap dependency added (vfeenstr@redhat.com)
+- Drop obsolete __vagrant_ssh_checkoutput (vfeenstr@redhat.com)
+- Drop unnecessary build requires (vfeenstr@redhat.com)
+
 * Fri May 05 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.0.1-3
 - Fixed el 7 builds (vfeenstr@redhat.com)
 
