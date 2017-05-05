@@ -71,8 +71,6 @@ container host rather than providing their own.
 %prep
 %setup -qn prototype-master
 sed -i "s/install_requires=/install_requires=[],__fake=/g" src/setup.py
-[ -f AUTHORS ] || touch AUTHORS
-[ -f COPYING ] || touch COPYING
 
 %build
 pushd src
