@@ -104,10 +104,6 @@ popd
 - Touch non existing file workaround not necessary anymore files have been
   already added (vfeenstr@redhat.com)
 
-* Mon May 08 2017 Vinzenz Feenstra <vfeenstr@redhat.com>
-- Touch non existing file workaround not necessary anymore files have been
-  already added (vfeenstr@redhat.com)
-
 * Fri May 05 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.0.1-4
 - We also need virsh (vfeenstr@redhat.com)
 - The license choosen for LeApp is now LGPLv2+ (vfeenstr@redhat.com)
@@ -119,9 +115,6 @@ popd
 - Fixed el 7 builds (vfeenstr@redhat.com)
 
 * Fri May 05 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.0.1-2
-- new package built with tito
-
-* Fri May 05 2017 Vinzenz Feenstra <vfeenstr@redhat.com> - 0.0.1-2
 - new package built with tito
 
 * Thu May 04 2017 Vinzenz Feenstra <evilissimo@redhat.com> - 0.0.1-1
