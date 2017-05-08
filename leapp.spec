@@ -1,6 +1,6 @@
 Name:       leapp
 Version:    0.0.1
-Release:    4
+Release:    5
 Summary:    leapp tool rpm
 
 Group:      Unspecified
@@ -100,6 +100,14 @@ popd
 
 
 %changelog
+* Mon May 08 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.0.1-5
+- Touch non existing file workaround not necessary anymore files have been
+  already added (vfeenstr@redhat.com)
+
+* Mon May 08 2017 Vinzenz Feenstra <vfeenstr@redhat.com>
+- Touch non existing file workaround not necessary anymore files have been
+  already added (vfeenstr@redhat.com)
+
 * Fri May 05 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.0.1-4
 - We also need virsh (vfeenstr@redhat.com)
 - The license choosen for LeApp is now LGPLv2+ (vfeenstr@redhat.com)
