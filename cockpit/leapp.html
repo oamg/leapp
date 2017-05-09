@@ -153,10 +153,10 @@
         function call_leapp(cmd_args) {
             set_lock_cmd();
             return cockpit.spawn(
-                ["/opt/leapp/bin/leapp-tool"].concat(cmd_args),
+                ["/usr/bin/leapp-tool"].concat(cmd_args),
                 {
                     "superuser": "required",
-                    "directory": "/opt/leapp/bin/",
+                    "directory": "/usr/bin/",
                     "err": "out"
                 }
             );
