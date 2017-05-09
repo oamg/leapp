@@ -1,0 +1,14 @@
+- hosts: all
+  vars:
+      ovirt_engine_type: ovirt-engine
+      ovirt_engine_version: "4.1"
+      ovirt_rpm_repo: http://resources.ovirt.org/pub/yum-repo/ovirt-release41.rpm
+      ovirt_engine_organization: leapp.ovirt.engine.org
+      ovirt_engine_admin_password: secret
+  roles:
+    - role: init
+      key_path: ../../../integration-tests/config/leappto_testing_key.pub
+    - ovirt-common
+    - ovirt-engine-install-packages
+    - ovirt-engine-setup
+    - ovirt-guest-agent

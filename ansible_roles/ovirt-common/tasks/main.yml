@@ -1,0 +1,50 @@
+---
+# check variables setting ovirt source
+- name: complain if no ovirt source is specified
+  fail:
+    msg: "At least one of: 'ovirt_repo_file', 'ovirt_rpm_repo' or 'ovirt_repo'
+      must be specified. More information in the README"
+  when: not (ovirt_repo_file or ovirt_rpm_repo is defined or ovirt_repo)
+
+# install libselinux-python on machine - selinux policy
+- name: install libselinux-python for ansible
+  yum:
+    name: libselinux-python
+    state: "present"
+
+# backup repos
+- name: creating directory repo-backup in yum.repos.d
+  file:
+    path: /tmp/repo-backup
+    state: directory
+
+- name: create repository backup
+  shell: 'cp /etc/yum.repos.d/*.repo /tmp/repo-backup'
+  tags:
+    - skip_ansible_lint
+
+## OPTIONS
+# 1) get repository files
+- name: copy repository files
+  get_url:
+    url: "{{ item.url }}"
+    dest: "/etc/yum.repos.d/{{ item.name | default('') }}"
+    force_basic_auth: yes
+    force: "{{ item.force | default('no') }}"
+  with_items: "{{ ovirt_repo_file }}"
+
+# 2) install from rpm
+- name: install rpm repository package
+  yum:
+    name: "{{ ovirt_rpm_repo }}"
+    state: present
+  when: ovirt_rpm_repo is defined
+
+# 3) create repository files
+- name: create repository files
+  yum_repository:
+    name: "{{ item.name }}"
+    description: "{{ item.name }}"
+    baseurl: "{{ item.url }}"
+    enabled: "{{ item.enabled | default('yes') }}"
+  with_items: "{{ ovirt_repo }}"
