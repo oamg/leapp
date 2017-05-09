@@ -1,0 +1,121 @@
+---
+
+- name: Install EPEL
+  yum:
+    name: epel-release
+    state: present
+
+- name: Install packages
+  yum:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - python-pip
+    - postgresql-server
+    - python-psycopg2
+    - nginx
+    - memcached
+    - python-memcached
+
+- name: Install Mezzanine
+  pip:
+    name: mezzanine
+
+- name: Ensure /opt directory
+  file:
+    name: /opt
+    state: directory
+
+- name: Check whether /opt/blog already exists
+  stat:
+    path: /opt/blog
+  register: opt_blog
+
+- name: Create Mezzanine project
+  command: mezzanine-project blog
+  args:
+    chdir: /opt
+  when: not (opt_blog.stat.isdir is defined and opt_blog.stat.isdir)
+
+- name: Copy local_settings.py into the created project
+  copy:
+    src: local_settings.py
+    dest: /opt/blog/blog/local_settings.py
+
+- name: Check contents of default directory
+  shell: ls -l /var/lib/pgsql/data | wc -l
+  register: pgdata
+
+- name: Ensure Postgres is configured
+  command: postgresql-setup initdb postgresql
+  when: pgdata.rc != 0 or pgdata.stdout|int < 2
+
+- name: Copy client authentication configuration file
+  copy: 
+    src: pg_hba.conf 
+    dest: /var/lib/pgsql/data/pg_hba.conf
+    owner: postgres 
+    group: postgres 
+    mode: 0640
+
+- name: Start up PostgreSQL
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: Start up Memcached
+  service:
+    name: memcached
+    state: started
+    enabled: yes
+
+- name: Create a user
+  postgresql_user:
+    name: meza
+    password: meza007
+  become: yes
+  become_user: postgres
+
+- name: Create the database
+  postgresql_db:
+    name: db
+    owner: meza
+    encoding: UTF8
+    lc_ctype: en_US.UTF-8
+    lc_collate: en_US.UTF-8
+    template: template0
+  become: yes
+  become_user: postgres
+
+- name: Make sure manage.py is executable
+  file:
+    path: /opt/blog/manage.py
+    mode: 'ug+x'
+
+- name: Initialize the database
+  django_manage:
+    command: createdb --noinput
+    app_path: /opt/blog
+  #register: result
+  #changed_when: result.rc == 0 and "Creating tables" in result.out
+  #failed_when: result.rc != 0 and "Database already created" not in result.msg
+  become: yes
+
+- name: Create Django admin user 'admin:default'
+  shell: echo "from django.contrib.auth.models import User; User.objects.filter(email='admin@example.com').delete(); User.objects.create_superuser('admin@example.com', 'admin', 'default')" | python manage.py shell
+  args:
+    chdir: /opt/blog
+
+- name: Copy Mezzanine Unit file
+  copy:
+    src: mezzanine-blog.service
+    dest: /usr/lib/systemd/system/mezzanine-blog.service
+  become: yes
+
+- name: 
+  service:
+    name: mezzanine-blog
+    state: started
+    enabled: yes
+  become: yes
