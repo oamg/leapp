@@ -118,13 +118,16 @@
                 </div>
             </div>
         </div>
-        <button translatable="yes" id="migrate-button" class="btn btn-default btn-primary migrate-app pull-right" disabled>Migrate</button>
+        <button translatable="yes" class="btn btn-default btn-primary migrate-app pull-right ui-lockable"
+        id="migrate-button" disabled>Migrate</button>
         <p>
             <pre id="output" style="clear: both"></pre>
         </p>
     </div>
 
     <script>
+        const DOCKER_RANDOM_PORT = "RANDOM";
+
         var output = $("#output");
         var loader = $("#loader");
 
@@ -139,7 +142,16 @@
             list_local_vms();
         });
 
+        function set_lock_cmd() {
+            $(".ui-lockable").attr("disabled", true);
+        }
+
+        function release_lock_cmd() {
+            $(".ui-lockable").removeAttr("disabled");
+        }
+
         function call_leapp(cmd_args) {
+            set_lock_cmd();
             return cockpit.spawn(
                 ["/opt/leapp/bin/leapp-tool"].concat(cmd_args),
                 {
@@ -176,9 +188,10 @@
 
                 var machine_html = `
                     <li>
-                    <input id="machine-radio-${machine.ip[0]}" class="radio-[type]-machine" type="radio" name="[type]-machine"
-                        value="${machine.hostname}" data-ip="${machine.ip[0]}" data-ports="${ports}" />
-                    <label for="machine-radio-${machine.ip[0]}">${machine.hostname}</label>
+                        <input id="machine-radio-${machine.ip[0]}" class="radio-[type]-machine ui-lockable" 
+                        type="radio" name="[type]-machine" value="${machine.hostname}" data-ip="${machine.ip[0]}"
+                        data-ports="${ports}" />
+                        <label for="machine-radio-${machine.ip[0]}">${machine.hostname}</label>
                     </li>
                 `;
 
@@ -194,8 +207,13 @@
             }
             loader.hide();
 
-            $(".radio-source-machine").on('click', scan_ports);
-            $(".radio-target-machine").on('click', show_target_ports);
+            $(".radio-source-machine").click(function(event) {
+                var ip_addr = $(event.target).data('ip');
+                var ports = '22,80,8080,9000';
+                scan_ports(ports, ip_addr, show_source_ports);
+            });
+
+            $(".radio-target-machine").on('click', check_target_ports);
         }
 
         function list_local_vms_fail(data) {
@@ -214,16 +232,27 @@
 
             var source = $("input[name=source-machine]:checked").val();
             var target = $("input[name=target-machine]:checked").val();
-            var ports = $("input[name=source-machine]:checked").data('ports');
+
+            var mapped_ports = $("#panel-body input.source-ports:checked").map(function() {
+                var target_port = $("#panel-body input[name=" + this.value + "]").val();
+                if (target_port) {
+                    if (target_port === DOCKER_RANDOM_PORT)
+                        return this.value;
+                    else
+                        return target_port + ':' + this.value;  // host:container
+                }
+            }).toArray();
 
             var proc = call_leapp([
-                "migrate-machine",
-                "--tcp-port", ports,
-                // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
-                "--user", "vagrant",
-                "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
-                "-t", target, source
-            ]);
+                    "migrate-machine",
+                    "--tcp-port"
+                ].concat(mapped_ports, [
+                    // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
+                    "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
+                    "-t", target, source
+                ])
+            );
+
             output.empty();
             proc.done(cmd_success);
             proc.fail(cmd_fail);
@@ -233,15 +262,14 @@
             loader.show();
         }
 
-        function scan_ports(event) {
-            var ip_addr = $(event.target).data('ip');
+        function scan_ports(ports, ip_addr, callback) {
 
             var proc = call_leapp([
-                "port-inspect", "22,80,8080,9000", ip_addr
+                "port-inspect", ports, ip_addr
             ]);
 
             output.empty();
-            proc.done(show_source_ports);
+            proc.done(callback);
             proc.fail(cmd_fail);
 
             out(`Scanning ports on ${ip_addr}`);
@@ -251,11 +279,13 @@
         function show_source_ports(data) {
             $("#ports ul li").remove();
             var ports_data = JSON.parse(data);
+            // get all protocols not only tcp
             if (typeof(ports_data.ports.tcp) !== undefined) {
                 for (port in ports_data.ports.tcp) {
                     $("#source-ports ul").append(`
                         <li>
-                            <input type="checkbox" name="source-ports" value="${port}" checked="checked" disabled style="display: none" />
+                            <input type="checkbox" name="source-ports" value="${port}" 
+                            checked="checked" disabled style="display: none" class="source-ports" />
                             Port: <strong>${port}</strong> - used by: ${ports_data.ports.tcp[port].product}
                         </li>
                     `)
@@ -268,29 +298,143 @@
             output.empty();
             loader.hide();
             
-            show_target_ports();
+            release_lock_cmd();
+            check_target_ports();
         }
 
-        function show_target_ports() {
-            // maybe it is a good place to unlock migrate button?
+        function map_ports(ports_range, busy_ports, selected_ports) {
+
+            var used_ports = {};
+            var mapped_ports = {};
+
+            for (i in ports_range) {
+                used_ports[ports_range[i]] = [];
+            }
+
+            function get_available_port(min_port, max_port, excluded_ports) {
+                if (max_port - min_port - excluded_ports.length == 0)
+                    // if DOKCER_RANDOM_PORT is returned then docker should automatically assign port
+                    return DOCKER_RANDOM_PORT;
+                for (var port = min_port; port <= max_port; port++) {
+                    port = port.toString();
+                    if (excluded_ports.indexOf(port) > -1)
+                        continue;
+                    return port;
+                }
+            }
+
+            for (i in selected_ports) {
+                source_port = selected_ports[i];
+                for (range in used_ports) {
+                    let interval = range.split('-');
+                    let min_port = parseInt(interval[0]);
+                    let max_port = parseInt(interval[1]);
+
+                    if (! (min_port <= source_port && source_port <= max_port)) {
+                        continue;
+                    }
+
+                    used_ports[range].push(source_port);
+                    if (source_port in busy_ports) {
+                        target_port = get_available_port(min_port, max_port, used_ports[range]);
+                    } else {
+                        target_port = source_port;
+                    }
+                    mapped_ports[source_port] = target_port;
+                }
+            }
+
+            return mapped_ports;
+        }
+
+        var ports_scan_range = [];
+        function check_target_ports() {
             if (! $("input[name=target-machine]:checked").length ||
                 ! $("input[name=source-machine]:checked").length) {
                 return;
             }
-            $("#target-ports ul li").remove();
+
+            var ip_addr = $("input[name=target-machine]:checked").data('ip');
+
+            var selected_ports_cnt = $("#panel-body input.source-ports:checked").length;
+            var min_port = null;
+            var max_port = null;
+            var ports_interval = 25;
+
+            function add_ports_range(min_port, max_port) {
+                ports_scan_range.push(min_port.toString() + '-' + max_port.toString());
+            }
+
+            $("#panel-body input.source-ports:checked").map(function(index) {
+                selected_ports_cnt--;
+
+                if (min_port === null) {
+                    min_port = parseInt(this.value);
+                    max_port = min_port;
+                }
+
+                if (parseInt(this.value) <= max_port) {
+                    max_port += ports_interval;
+
+                    if (selected_ports_cnt <= 0) {
+                        add_ports_range(min_port, max_port);
+                    }
+
+                } else {
+                    // get element from last loop
+                    add_ports_range(min_port, max_port);
+
+                    min_port = parseInt(this.value);
+                    max_port = min_port + ports_interval;
+
+                    if (selected_ports_cnt <= 0) {
+                        add_ports_range(min_port, max_port);
+                    }
+                }
+
+            });
+
+            if (ports_scan_range) {
+                scan_ports(ports_scan_range.join(','), ip_addr, show_target_ports);
+            } else {
+                console.log("couldn not find selected ports");
+            }
+        }
+
+        function show_target_ports(data) {
+            data = JSON.parse(data);
+
             loader.show();
             output.append(document.createTextNode("Mapping target ports"));
-            $("#panel-body input[name=source-ports]:checked").each(function() {
+
+            var selected_ports = $("#panel-body input.source-ports:checked").map(function() {
+                return this.value;
+            }).toArray();
+
+            if (typeof(data.ports.tcp) !== undefined && data.ports.tcp) {
+                var busy_ports = data.ports.tcp  
+            } else {
+                var busy_ports = {};
+            };
+
+            var mapped_ports = map_ports(ports_scan_range, busy_ports, selected_ports);
+
+            $("#target-ports ul li").remove();
+            for (source_port in mapped_ports) {
                 $("#target-ports ul").append(`
                     <li>
                         Port:
-                        <input type="text" size="5" name="target-ports" value="${$(this).val()}" disabled />
+                        <input type="text" size="6" name="${source_port}" value="${mapped_ports[source_port]}"
+                        class="target-ports" disabled />
+                        &rarr; ${source_port}
                     </li>
                 `)
-            });
-            $("button#migrate-button").removeAttr("disabled");
+
+            }
+
             loader.hide();
             output.empty();
+            release_lock_cmd();
         }
 
         function cmd_stdout(data) {
@@ -311,6 +455,8 @@
                 output.append(document.createTextNode("\n\nMigrated service is now starting, please wait about 2 minutes to see results.."));
             }
             loader.hide();
+
+            release_lock_cmd();
             wait_for_result_msg = false;
         }
 
@@ -320,6 +466,7 @@
             err_msg = `Command failed with status ${exc.exit_status}!\n`
             output.append(document.createTextNode(err_msg));
             loader.hide();
+            release_lock_cmd();
         }
 
     </script>
