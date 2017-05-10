@@ -116,7 +116,7 @@ any new test steps required.
 
 ## Adding new steps to the steps catalog
 
-New step definitions go in the ["features/steps"](./features.steps)
+New step definitions go in the ["features/steps"](./features/steps)
 subdirectory, and use the
 ["hamcrest"](https://pyhamcrest.readthedocs.io/en/latest/tutorial/)
 library to define behavioural expectations.
@@ -159,6 +159,18 @@ useful attributes for use in step implementations:
 
 * `http_helper`: a custom object for checking HTTP(S) responses (see
   `RequestsHelper` in the environment file for details)
+
+
+## Adding new helpers to the test context
+
+Helper functions and classes for a single set of steps can be included
+directly in the Python file defining the steps.
+
+Helpers that are shared amongst multiple sets of steps should be defined in
+the ["features/leapp_testing"](./features/leapp_testing) package, and then
+added to the test context using one of the hooks in the
+[environment file](./features/environment.py).
+
 
 ## Debugging the test VMs
 
