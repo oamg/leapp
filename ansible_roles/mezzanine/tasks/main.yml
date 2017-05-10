@@ -97,9 +97,6 @@
   django_manage:
     command: createdb --noinput
     app_path: /opt/blog
-  #register: result
-  #changed_when: result.rc == 0 and "Creating tables" in result.out
-  #failed_when: result.rc != 0 and "Database already created" not in result.msg
   become: yes
 
 - name: Create Django admin user 'admin:default'
