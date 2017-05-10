@@ -70,12 +70,16 @@ Refer to the
 for a description of the format of feature files, and the recommended structure
 to use when defining new test scenarios.
 
-Three features are currently defined:
+The following features are currently defined:
 
+* `cockpit-demo.feature`: expected behaviour of the demonstration Cockpit
+  plugin
+* `destroy-containers.feature`: expected behaviour of the `destroy-container`
+  subcommand
 * `httpd-stateless.feature`: expected behaviour of the `migrate-machine`
   subcommand when migrating stateless applications running under Apache `httpd`
 * `list-machines.feature`: expected behaviour of the `list-machines` subcommand
-  `destory-container.feature`: expected behaviour of the `destroy-container` subcommand
+* `port-inspect.feature`: expected behaviour of the `port-inspect` subcommand
 
 If a new test scenario doesn't align with any of the existing features, then
 an appropriate new feature should also be defined.
@@ -126,17 +130,21 @@ Refer to the
 for an introduction to the process of writing new steps, and the options
 available for passing data from test scenarios to the individual step functions.
 
-Four step categories are currently defined:
+The following step categories are currently defined:
 
+* `cockpit_demo.py`: Steps related specifically to testing the demonstration
+  Cockpit plugin
+* `destroy_containers.py`: Steps related specifically to the `destroy-container`
+  subcommand
 * `list_machines.py`: Steps related specifically to the `list-machines`
   subcommand
-  `destroy_containers.py`: Steps related specifically to the `destroy-container`
+* `port_inspect.py`: Steps related specifically to the `port-inspect`
   subcommand
-* `dbus_service.py`: Steps to start, stop and otherwise interact directly with
-  the backend DBus service rather than treating it as a hidden implementation
-  detail
 * `common.py`: Steps that are generally useful and don't fit into one of the
-  more specific categories
+  more specific categories. This includes steps relating to the primary
+  `migrate-machine` subcommand.
+
+## Test context helpers for writing step definitions
 
 All step definitions receive the current `behave` context as their first
 parameter, and the [environment file](./features/environment.py) adds a few
