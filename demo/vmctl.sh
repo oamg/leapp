@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/bash 
 # Start all defined demo VMs
 # Based on:
 # http://stackoverflow.com/questions/6659689/referring-to-a-file-relative-to-executing-script
@@ -39,11 +39,11 @@ else
   action="provision"
 fi
 
-pushd "${BASH_SOURCE%/*}" || exit
-for vmdef in vmdefs/*
+pushd "${BASH_SOURCE%/*}" &>/dev/null || exit 
+for vmdef in vmdefs/enabled/*
 do
-  pushd ${vmdef}
+  pushd ${vmdef} &>/dev/null
     stop_start_action $action 
-  popd
+  popd >/dev/null 2>&1
 done
-popd
+popd &>/dev/null
