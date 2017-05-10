@@ -80,6 +80,8 @@ The following features are currently defined:
   subcommand when migrating stateless applications running under Apache `httpd`
 * `list-machines.feature`: expected behaviour of the `list-machines` subcommand
 * `port-inspect.feature`: expected behaviour of the `port-inspect` subcommand
+* `remote-authentication.feature`: end-to-end testing of available remote
+  authentication options
 
 If a new test scenario doesn't align with any of the existing features, then
 an appropriate new feature should also be defined.
@@ -140,6 +142,8 @@ The following step categories are currently defined:
   subcommand
 * `port_inspect.py`: Steps related specifically to the `port-inspect`
   subcommand
+* `remote_authentication.py`: Steps related specifically to testing the
+  available remote authentication options
 * `common.py`: Steps that are generally useful and don't fit into one of the
   more specific categories. This includes steps relating to the primary
   `migrate-machine` subcommand.
