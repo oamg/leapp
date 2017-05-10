@@ -97,6 +97,9 @@ That's it! Thank you for your contribution!
   `pipenv` (i.e. Python packages)
 * All test dependencies should be pinned to a specific version, so changes
   aren't unexpectedly introduced into the CI environment
+* When new feature files, step files, or context attributes are defined, add
+  a corresponding entry to the
+  [integration tests README](../integration-tests/README.md)
 * see the [integration tests README](../integration-tests/README.md) for more
   details
 
