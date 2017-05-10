@@ -119,7 +119,8 @@ _LEAPP_TOOL = str(_LEAPP_BIN_DIR / "leapp-tool")
 
 _SSH_USER = "vagrant"
 _SSH_IDENTITY = str(REPO_DIR / "integration-tests/config/leappto_testing_key")
-_DEFAULT_LEAPP_IDENTITY = ['--user', _SSH_USER, '--identity', _SSH_IDENTITY]
+_DEFAULT_LEAPP_USER = ['--user', _SSH_USER]
+_DEFAULT_LEAPP_IDENTITY = ['--identity', _SSH_IDENTITY]
 
 def install_client():
     """Install the CLI and its dependencies into a Python 2.7 environment"""
@@ -179,11 +180,15 @@ class ClientHelper(object):
         self._convert_vm_to_macrocontainer(source_host, target_host)
         return self._get_migration_host_info(source_host, target_host)
 
-    def check_response_time(self, cmd_args, time_limit, complete_identity=False):
+    def check_response_time(self, cmd_args, time_limit, *,
+                            complete_user=False,
+                            complete_identity=False):
         """Check given command completes within the specified time limit
 
         Returns the contents of stdout as a string.
         """
+        if complete_user or complete_identity:
+            cmd_args.extend(_DEFAULT_LEAPP_USER)
         if complete_identity:
             cmd_args.extend(_DEFAULT_LEAPP_IDENTITY)
         start = time.monotonic()
