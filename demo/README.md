@@ -1,6 +1,6 @@
 # VM Definitions for vagrant 
 
-## ading new box 
+## adding new box 
 
 to add a new demo add a new folder with following structure
 
@@ -18,6 +18,6 @@ to enable drools app one would do following, note the '../'
 ```
 [vmindru@vmutil vmdefs]$ ln -s ../available/centos6-drools-guest/ ./enabled/
 ```
-## controling boxes 
+## controlling boxes 
 
 
