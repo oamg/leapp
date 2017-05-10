@@ -151,11 +151,6 @@ class LibvirtMachineProvider(AbstractMachineProvider):
 
             return (hostname, Installation(OperatingSystem(distro, '{}.{}'.format(major, minor)), packages))
 
-        def __vagrant_ssh_checkoutput(domain_name, command):
-            with open(os.devnull, 'w') as devnull:
-                cmd = ["vagrant", "ssh", domain_name, "-c", command]
-                return check_output(cmd, stderr=devnull)
-
         def __get_vagrant_data_path_from_domain(domain_name):
             index_path = os.path.join(os.environ['HOME'], '.vagrant.d/data/machine-index/index')
             index = json.load(open(index_path, 'r'))
