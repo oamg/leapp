@@ -187,28 +187,34 @@ class ClientHelper(object):
 
         Returns the contents of stdout as a string.
         """
-        if complete_user or complete_identity:
-            cmd_args.extend(_DEFAULT_LEAPP_USER)
-        if complete_identity:
-            cmd_args.extend(_DEFAULT_LEAPP_IDENTITY)
         start = time.monotonic()
-        cmd_output = self._run_leapp(cmd_args)
+        add_default_user = complete_user or complete_identity
+        cmd_output = self._run_leapp(cmd_args,
+                                     add_default_user=add_default_user,
+                                     add_default_identity=complete_identity)
         response_time = time.monotonic() - start
         assert_that(response_time, less_than_or_equal_to(time_limit))
         return cmd_output
 
     @staticmethod
-    def _run_leapp(cmd_args):
+    def _run_leapp(cmd_args, *,
+                   add_default_user=False,
+                   add_default_identity=False):
         cmd = [_LEAPP_TOOL]
         cmd.extend(cmd_args)
+        if add_default_user:
+            cmd.extend(_DEFAULT_LEAPP_USER)
+        if add_default_identity:
+            cmd.extend(_DEFAULT_LEAPP_IDENTITY)
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), ignore_errors=False)
 
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host):
         cmd_args = ["migrate-machine"]
-        cmd_args.extend(_DEFAULT_LEAPP_IDENTITY)
         cmd_args.extend(["-t", target_host, source_host])
-        result = cls._run_leapp(cmd_args)
+        result = cls._run_leapp(cmd_args,
+                                add_default_user=True,
+                                add_default_identity=True)
         msg = "Redeployed {} as macrocontainer on {}"
         print(msg.format(source_host, target_host))
         return result
