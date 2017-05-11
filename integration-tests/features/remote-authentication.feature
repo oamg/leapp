@@ -7,7 +7,7 @@ Scenario: Remote access using the --identity option
     Then remote-system should be accessible using the default identity file
 
 Scenario: Remote access using ssh-agent
-   Given ssh-agent is running
+   Given the default identity file is registered with ssh-agent
      And the local virtual machines:
          | name           | definition          | ensure_fresh |
          | remote-system  | centos7-target      | no           |

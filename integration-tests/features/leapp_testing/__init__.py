@@ -18,8 +18,11 @@ TEST_DIR = pathlib.Path(__file__).parent.parent.parent
 REPO_DIR = TEST_DIR.parent
 
 # Command execution helper
-def _run_command(cmd, work_dir, ignore_errors):
-    print("  Running {} in {}".format(cmd, work_dir))
+def _run_command(cmd, work_dir=None, ignore_errors=False):
+    if work_dir is not None:
+        print("  Running {} in {}".format(cmd, work_dir))
+    else:
+        print("  Running ", cmd)
     output = None
     try:
         output = subprocess.check_output(
@@ -195,6 +198,18 @@ class ClientHelper(object):
         response_time = time.monotonic() - start
         assert_that(response_time, less_than_or_equal_to(time_limit))
         return cmd_output
+
+    @staticmethod
+    def add_default_ssh_key():
+        """Add default testing key to ssh-agent"""
+        cmd = ["ssh-add",  _SSH_IDENTITY]
+        return _run_command(cmd)
+
+    @staticmethod
+    def remove_default_ssh_key():
+        """Remove default testing key from ssh-agent"""
+        cmd = ["ssh-add", "-d", _SSH_IDENTITY + ".pub"]
+        return _run_command(cmd)
 
     @staticmethod
     def _run_leapp(cmd_args, *,
