@@ -260,8 +260,9 @@ def main():
         )
 
         print('! destroying containers on "{}" VM'.format(target))
-        mc.destroy_containers()
+        result = mc.destroy_containers()
         print('! done')
+        sys.exit(result)
 
     elif parsed.action == 'port-inspect':
         _ERR_STATE = "error"
