@@ -14,10 +14,15 @@ vmdefs/enabled/centos6-drools-guest/
 ## enabling boxes 
 
 create symlink of a box from ./available to ./enabled e.g.
-to enable drools app one would do following, note the '../'
+to enable drools app one would do following, note the '../'.
+Make sure you are inside ./prototype/vmdefs while creating symlink, 
+since symlink path is relative to the symlink location.
+
 ```
-[vmindru@vmutil vmdefs]$ ln -s ../available/centos6-drools-guest/ ./enabled/
+$ cd ./vmdefs/
+$ ln -s ../available/centos6-drools-guest/ ./enabled/
 ```
+
 ## controlling boxes 
 
 
