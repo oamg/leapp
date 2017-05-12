@@ -4,6 +4,9 @@
     <link href="../base1/patternfly.css" type="text/css" rel="stylesheet">
     <script src="../base1/jquery.js"></script>
     <script src="../base1/cockpit.js"></script>
+    <script>
+        var LEAPP_CONF = {};
+    </script>
     <style>
         #panel-body {
             width: 100%;
@@ -137,9 +140,18 @@
         $("#list-vms").on("click", list_local_vms);
         $(".migrate-app").on("click", migrate_to_host);
 
-        // Automatically load the VM list when the page opens
         $(document).ready(function() {
-            list_local_vms();
+            // First load the configuration and then start running all other tasks
+            $.ajax({
+                dataType: "json",
+                url: "./config.json",
+                success: function(data){
+                    LEAPP_CONF = data;
+                },
+            }).then(function() {
+                // Automatically load the VM list when the page opens
+                list_local_vms();
+            });
         });
 
         function set_lock_cmd() {
@@ -153,10 +165,10 @@
         function call_leapp(cmd_args) {
             set_lock_cmd();
             return cockpit.spawn(
-                ["/opt/leapp/bin/leapp-tool"].concat(cmd_args),
+                [LEAPP_CONF["tool-path"]].concat(cmd_args),
                 {
+                    "directory": LEAPP_CONF["tool-workdir"],
                     "superuser": "required",
-                    "directory": "/opt/leapp/bin/",
                     "err": "out"
                 }
             );

@@ -9,6 +9,7 @@ URL:        https://github.com/leapp-to/prototype
 Source0:    https://github.com/leapp-to/prototype/archive/master.tar.gz
 BuildArch:  noarch
 
+BuildRequires:   jq
 BuildRequires:   python2-devel
 %if 0%{?el7}
 BuildRequires:   python-setuptools
@@ -76,7 +77,8 @@ sed -i "s/install_requires=/install_requires=[],__fake=/g" src/setup.py
 pushd src
 %py2_build_egg
 popd
-sed -i 's/opt\/leapp/usr/g' cockpit/leapp.html
+jq -r '."tool-path" |= "/usr/bin/leapp-tool", ."tool-workdir" |= "/usr/bin", .version = "%{version}-%{release}"' cockpit/config.json > cockpit/config.json
+
 
 %install
 /bin/mkdir -p %{buildroot}/%{_datadir}/cockpit/leapp
