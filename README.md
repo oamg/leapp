@@ -20,10 +20,25 @@ The migration prototype currently handles exactly two cases:
 
 ### Setting up to run the prototype demonstration
 
+### Installation
+#### CentOS 7
+Install all the requirements of this demo via:
+	$ sudo yum-config-manager --add-repo https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/epel-7/evilissimo-leapp-epel-7.repo
+	$ sudo yum install epel-release centos-release-scl
+	$ sudo yum install sclo-vagrant1 ansible gcc git libguestfs-tools-c libvirt-client libvirt-devel nmap redhat-rpm-config python2-leapp leapp-cockpit leapp-tool
+	
+Enable vagrant software collection:
+	scl enable sclo-vagrant1 bash
+
+#### Fedora 25
 Install all the requirements of this demo via:
 
-    $ sudo dnf dnf-plugins-core
-    $ sudo dnf builddep ./demo/prototype-deps.spec
+	$ sudo dnf config-manager --add-repo https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/fedora-25/evilissimo-leapp-fedora-25.repo
+    $ sudo dnf install dnf-plugins-core
+    $ sudo dnf builddep ./demo/prototype-deps.spec  
+	$ sudo dnf install python2-leapp leapp-cockpit leapp-tool 
+    #$ sudo vagrant plugin install ansible hitimes nio4r vagrant-libvirt
+
 
 If the integration tests haven't been run, first install the testing
 instance of the CLI:
@@ -33,9 +48,9 @@ instance of the CLI:
 The integration tests do this automatically, so this step can be skipped if
 those have already been run.
 
-The prototype requires Vagrant with some relevant plugins:
-
-    $ sudo vagrant plugin install ansible hitimes nio4r vagrant-libvirt
+### Preparation & Running the demo
+Make sure the libvirt daemon is running and enabled:
+    $ for i in start enable; do sudo systemctl $i libvirtd; done
 
 And passwordless access to VM management operations:
 
