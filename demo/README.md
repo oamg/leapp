@@ -1,8 +1,8 @@
 # VM Definitions for vagrant 
 
-## adding new box 
+## Adding new box 
 
-to add a new demo add a new folder with following structure
+To add a new demo add a new folder with following structure.
 
 ```
 vmdefs/enabled/centos6-drools-guest/
@@ -11,9 +11,9 @@ vmdefs/enabled/centos6-drools-guest/
 └── Vagrantfile
 ```
 
-## enabling boxes 
+## Enabling boxes 
 
-create symlink of a box from ./available to ./enabled e.g.
+Create symlink of a box from ./available to ./enabled e.g.
 to enable drools app one would do following, note the '../'.
 Make sure you are inside ./prototype/vmdefs while creating symlink, 
 since symlink path is relative to the symlink location.
@@ -23,6 +23,27 @@ $ cd ./vmdefs/
 $ ln -s ../available/centos6-drools-guest/ ./enabled/
 ```
 
-## controlling boxes 
+## Controlling boxes 
+
+All the actions are done using vmctl.sh script
+
+USAGE: ./vmctl.sh [ stop|start|provision|destroy]
+
+*e.g.  starting new boxes*
+
+```
+$ cd demo
+$ ./vmctl.sh provision
+```
+
+*e.g. remove all boxes*
+
+```
+$ cd demo
+$ ./vmctl.sh destroy
+```
+
+
+
 
 
