@@ -10,7 +10,7 @@ function stop_start_action(){
         vagrant up
         ;;
       stop)
-        vagrant stop
+        vagrant halt
         ;;
       provision)
         vagrant up --provision
