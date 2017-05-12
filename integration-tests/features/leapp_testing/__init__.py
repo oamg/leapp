@@ -206,8 +206,8 @@ class ClientHelper(object):
     @staticmethod
     def _start_ssh_agent():
         agent_details = _run_command(["ssh-agent", "-c"]).splitlines()
-        agent_socket = agent_details[0].split()[2]
-        agent_pid = agent_details[1].split()[2]
+        agent_socket = agent_details[0].split()[2].rstrip(";")
+        agent_pid = agent_details[1].split()[2].rstrip(";")
         os.environ["SSH_AUTH_SOCK"] = agent_socket
         os.environ["SSH_AGENT_PID"] = agent_pid
         return agent_socket, agent_pid
