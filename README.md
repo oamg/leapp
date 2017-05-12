@@ -47,9 +47,9 @@ effect.
 
 Finally, start all the demonstration VMs by running:
 
-    $ demo/start_vms.sh
+    $ demo/vmctl.sh
 
-This script iterates over all the subdirectories of `demo/vmdefs` and runs
+This script iterates over all the subdirectories of `demo/enabled/vmdefs` and runs
 `vagrant up --provision`.
 
 ### Running the demonstration via the CLI
