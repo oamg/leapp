@@ -76,6 +76,10 @@
             color: #398fff;
             margin: 0 !important;
         }
+
+        .invalid {
+            background-color: #ff0000;
+        }
     </style>
 </head>
 <body>
@@ -307,7 +311,7 @@
                 for (port in ports_data.ports.tcp) {
                     $("#source-ports ul").append(`
                         <li>
-                            <input type="checkbox" name="source-ports" value="${port}" 
+                            <input type="checkbox" name="source-ports" value="${port}"
                             checked="checked" disabled style="display: none" class="source-ports" />
                             Port: <span class="source-port-font">${port}</span> - used by: ${ports_data.ports.tcp[port].name}
                         </li>
@@ -320,7 +324,7 @@
 
             output.empty();
             loader.hide();
-            
+
             release_lock_cmd();
             check_target_ports();
         }
@@ -335,12 +339,12 @@
                 }
                 attempt++;
 
-                if (busy_ports.indexOf(port) > -1) {
+                if (busy_ports.indexOf(parseInt(port)) > -1) {
                     port = parseInt(port) + 1;
                     return get_free_port(port.toString(), busy_ports, attempt)
                 }
 
-                busy_ports.push(port);
+                busy_ports.push(parseInt(port));
                 return port;
             }
 
@@ -362,15 +366,18 @@
         }
 
         function show_target_ports(data) {
+            const MAX_PORT = 65535;
+            const MIN_PORT = 1;
+
             var ports_data = JSON.parse(data);
             loader.show();
- 
+
             $("#target-ports ul li").remove();
             if (typeof(ports_data.ports.tcp) !== undefined) {
                 for (port in ports_data.ports.tcp) {
                     $("#target-ports ul.discovered-ports").append(`
                         <li>
-                            <input type="checkbox" name="target-ports" value="${port}" 
+                            <input type="checkbox" name="target-ports" value="${port}"
                             checked="checked" disabled style="display: none" class="target-ports" />
                             Port: <strong>${port}</strong> - used by: ${ports_data.ports.tcp[port].name}
                         </li>
@@ -381,13 +388,13 @@
             output.append(document.createTextNode("Mapping target ports"));
 
             var selected_ports = $("#panel-body input.source-ports:checked").map(function() {
-                return this.value;
+                return parseInt(this.value);
             }).toArray();
 
             var busy_ports = $("#panel-body input.target-ports:checked").map(function() {
-                return this.value;
+                return parseInt(this.value);
             }).toArray();
-
+            
             var mapped_ports = map_ports(selected_ports, busy_ports);
 
             for (source_port in mapped_ports) {
@@ -396,11 +403,43 @@
                         Source host port: <span class="source-port-font">${source_port}</span> &rarr;
                         target host port:
                         <input type="text" size="6" name="${source_port}" value="${mapped_ports[source_port]}"
-                        class="mapped-ports" disabled />
+                        class="mapped-ports ui-lockable" data-prev="${mapped_ports[source_port]}" />
                     </li>
                 `)
-
             }
+
+            function update_busy_ports(busy_ports, old_port, new_port) {
+                busy_ports.splice(busy_ports.indexOf(old_port), 1);
+                busy_ports.push(new_port);
+            }
+
+            $("input.mapped-ports").on('change', function() {
+                var new_port = parseInt($(this).val());
+                var old_port = $(this).data('prev');
+                $(this).data("prev", new_port);
+
+                if (busy_ports.indexOf(new_port) > -1 || new_port < MIN_PORT 
+                    || new_port > MAX_PORT) {
+                    $(this).addClass('invalid');
+                    $("#migrate-button").attr("disabled", true);
+                    update_busy_ports(busy_ports, old_port, new_port);
+                    return;
+                }
+ 
+                update_busy_ports(busy_ports, old_port, new_port);
+                $(this).removeClass('invalid');
+
+                let obj = $("input.mapped-ports").filter(function() {
+                    return parseInt($(this).val()) == old_port;
+                });
+
+                if (typeof obj.get(0) !== undefined)
+                    $(obj.get(0)).removeClass('invalid');
+  
+                if ($("input.mapped-ports").filter('.invalid').length < 1) {
+                    $("#migrate-button").removeAttr("disabled");
+                }
+            });
 
             loader.hide();
             output.empty();
@@ -422,7 +461,9 @@
             cmd_stdout(data);
             output.append(document.createTextNode("Command completed successfully"));
             if (wait_for_result_msg) {
-                output.append(document.createTextNode("\n\nMigrated service is now starting, please wait about 2 minutes to see results.."));
+                output.append(
+                    document.createTextNode("\n\nMigrated service is now starting, please wait about 2 minutes to see results..")
+                );
             }
             loader.hide();
 
