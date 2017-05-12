@@ -76,6 +76,7 @@ sed -i "s/install_requires=/install_requires=[],__fake=/g" src/setup.py
 pushd src
 %py2_build_egg
 popd
+sed -i 's/opt\/leapp/usr/g' cockpit/leapp.html
 
 %install
 /bin/mkdir -p %{buildroot}/%{_datadir}/cockpit/leapp
