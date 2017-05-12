@@ -1,0 +1,6 @@
+oc_sha256: sha256:e9bd3c92842acb17ab920b663dfb80f094707fbac8a92dde341631dbfdb13628
+oc_version: 1.5.0
+oc_release: 031cbe4-linux-64bit
+oc_url: https://github.com/openshift/origin/releases/download/v{{ oc_version  }}/openshift-origin-server-v{{ oc_version  }}-{{ oc_release  }}.tar.gz
+oc_path: /opt/openshift
+oc_bin: '{{ oc_path }}/openshift-origin-server-v{{ oc_version }}-{{ oc_release }}/oc'

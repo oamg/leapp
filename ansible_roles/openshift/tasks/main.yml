@@ -1,0 +1,40 @@
+- name: Allow OpenShift Docker registry
+  lineinfile:
+    name: /etc/sysconfig/docker
+    line: INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'
+  become: yes
+
+- name: Ensure Docker is restarted
+  service:
+    name: docker
+    state: restarted
+
+- name: Ensure {{ oc_path  }}
+  file:
+    path: '{{ oc_path }}'
+    state: directory
+
+- name: Check if {{ oc_path }} is empty
+  find:
+    path: '{{ oc_path }}'
+    file_type: directory
+    patterns: '*'
+  register: openshift_files
+
+- name: Download and Verify OpenShift
+  get_url:
+    url: '{{ oc_url }}'
+    dest: /tmp/oc.tar.gz
+    checksum: '{{ oc_sha256 }}'
+  when: openshift_files.matched|int == 0
+
+- name: Extract OpenShift
+  unarchive:
+    src: /tmp/oc.tar.gz
+    dest: '{{ oc_path }}'
+    remote_src: yes
+  when: openshift_files.matched|int == 0
+
+- name: Prepare OpenShift cluster
+  command: '{{ oc_bin }} cluster up'
+  become: yes 
