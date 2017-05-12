@@ -127,6 +127,9 @@
             <pre id="output" style="clear: both"></pre>
         </p>
     </div>
+    <div>
+        <center id="leapp-version"></center>
+    </div>
 
     <script>
         const DOCKER_RANDOM_PORT = "RANDOM";
@@ -149,6 +152,7 @@
                     LEAPP_CONF = data;
                 },
             }).then(function() {
+                $("#leapp-version").text("Le-App - " + LEAPP_CONF["version"]);
                 // Automatically load the VM list when the page opens
                 list_local_vms();
             });
