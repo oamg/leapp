@@ -7,10 +7,13 @@ def _make_auth_test_command(context, target):
     # that requires remote access, but also only needs a single target VM
     return ["destroy-containers", context.vm_helper.get_hostname(target)]
 
+@given("ssh-agent is running")
+def ensure_ssh_agent_is_running(context):
+    context.cli_helper.ensure_ssh_agent_is_running(context.scenario_cleanup)
+
 @given("the default identity file is registered with ssh-agent")
 def register_default_identity_with_ssh_agent(context):
-    context.cli_helper.add_default_ssh_key()
-    context.scenario_cleanup.callback(context.cli_helper.remove_default_ssh_key)
+    context.cli_helper.add_default_ssh_key(context.scenario_cleanup)
 
 @then("{target} should be accessible using the default identity file")
 def check_remote_access_with_identity_file(context, target):

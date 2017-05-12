@@ -200,13 +200,49 @@ class ClientHelper(object):
         return cmd_output
 
     @staticmethod
-    def add_default_ssh_key():
-        """Add default testing key to ssh-agent"""
-        cmd = ["ssh-add",  _SSH_IDENTITY]
-        return _run_command(cmd)
+    def _get_ssh_agent_details():
+        return os.environ["SSH_AUTH_SOCK"], os.environ["SSH_AGENT_PID"]
 
     @staticmethod
-    def remove_default_ssh_key():
+    def _start_ssh_agent():
+        agent_details = _run_command(["ssh-agent", "-c"]).splitlines()
+        agent_socket = agent_details[0].split()[2]
+        agent_pid = agent_details[1].split()[2]
+        os.environ["SSH_AUTH_SOCK"] = agent_socket
+        os.environ["SSH_AGENT_PID"] = agent_pid
+        return agent_socket, agent_pid
+
+    @staticmethod
+    def _stop_ssh_agent():
+        _run_command(["ssh-agent", "-k"])
+
+    @classmethod
+    def ensure_ssh_agent_is_running(cls, cleanup_stack):
+        """Start ssh-agent if it isn't already running
+
+        If the agent needed to be started, a shutdown callback is registered
+        with the given ExitStack instance
+        """
+        try:
+            agent_socket, agent_pid = cls._get_ssh_agent_details()
+        except KeyError:
+            agent_socket, agent_pid = cls._start_ssh_agent()
+            cleanup_stack.callback(cls._stop_ssh_agent)
+        return agent_socket, agent_pid
+
+    @classmethod
+    def add_default_ssh_key(cls, cleanup_stack):
+        """Add default testing key to ssh-agent
+
+        A key removal callback is registered with the given ExitStack instance
+        """
+        cmd = ["ssh-add",  _SSH_IDENTITY]
+        result = _run_command(cmd)
+        cleanup_stack.callback(cls._remove_default_ssh_key)
+        return result
+
+    @staticmethod
+    def _remove_default_ssh_key():
         """Remove default testing key from ssh-agent"""
         cmd = ["ssh-add", "-d", _SSH_IDENTITY + ".pub"]
         return _run_command(cmd)
