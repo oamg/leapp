@@ -247,7 +247,7 @@
                 if (target_port)
                     return target_port + ':' + this.value;  // host:container
             }).toArray();
-            console.log(mapped_ports);
+
             var proc = call_leapp([
                     "migrate-machine",
                     "--tcp-port"
