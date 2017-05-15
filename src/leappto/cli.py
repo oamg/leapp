@@ -313,4 +313,4 @@ def main():
                     continue
                 result['ports'][proto][port] = port_scanner[ip][proto][port]
 
-        print(dumps(result, indent=3))
+        sys.exit(dumps(result, indent=3))
