@@ -9,7 +9,7 @@ from json import loads
 def check_used_ports_by_vm(context, vm_ip, port_range, time_limit):
     """check if port 80 is open"""
     ports = context.cli_helper.check_response_time(
-        ["port-inspect",  port_range, vm_ip],
+        ["port-inspect", "--range", port_range, vm_ip],
         time_limit
     )
     ports = loads(ports)
