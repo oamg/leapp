@@ -449,14 +449,14 @@
                 var old_port = $(this).data('prev');
                 $(this).data("prev", new_port);
 
-                if (busy_ports.indexOf(new_port) > -1 || new_port < MIN_PORT 
+                if (busy_ports.indexOf(new_port) > -1 || new_port < MIN_PORT
                     || new_port > MAX_PORT) {
                     $(this).addClass('invalid');
                     $("#migrate-button").attr("disabled", true);
                     update_busy_ports(busy_ports, old_port, new_port);
                     return;
                 }
- 
+
                 update_busy_ports(busy_ports, old_port, new_port);
                 $(this).removeClass('invalid');
 
@@ -466,14 +466,14 @@
 
                 if (typeof obj.get(0) !== undefined)
                     $(obj.get(0)).removeClass('invalid');
-  
+
                 if ($("input.mapped-ports").filter('.invalid').length < 1) {
                     $("#migrate-button").removeAttr("disabled");
                 }
             });
 
             output.empty();
- 
+
             // deep scan target machine
             let target_ip = $("input[name=target-machine]:checked").data('ip');
             let target_ports = $("input.target-ports:checked").map(function() {
