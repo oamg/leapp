@@ -18,8 +18,11 @@ TEST_DIR = pathlib.Path(__file__).parent.parent.parent
 REPO_DIR = TEST_DIR.parent
 
 # Command execution helper
-def _run_command(cmd, work_dir, ignore_errors):
-    print("  Running {} in {}".format(cmd, work_dir))
+def _run_command(cmd, work_dir=None, ignore_errors=False):
+    if work_dir is not None:
+        print("  Running {} in {}".format(cmd, work_dir))
+    else:
+        print("  Running ", cmd)
     output = None
     try:
         output = subprocess.check_output(
@@ -119,7 +122,8 @@ _LEAPP_TOOL = str(_LEAPP_BIN_DIR / "leapp-tool")
 
 _SSH_USER = "vagrant"
 _SSH_IDENTITY = str(REPO_DIR / "integration-tests/config/leappto_testing_key")
-_DEFAULT_LEAPP_IDENTITY = ['--user', _SSH_USER, '--identity', _SSH_IDENTITY]
+_DEFAULT_LEAPP_USER = ['--user', _SSH_USER]
+_DEFAULT_LEAPP_IDENTITY = ['--identity', _SSH_IDENTITY]
 
 def install_client():
     """Install the CLI and its dependencies into a Python 2.7 environment"""
@@ -179,31 +183,89 @@ class ClientHelper(object):
         self._convert_vm_to_macrocontainer(source_host, target_host)
         return self._get_migration_host_info(source_host, target_host)
 
-    def check_response_time(self, cmd_args, time_limit, complete_identity=False):
+    def check_response_time(self, cmd_args, time_limit, *,
+                            complete_user=False,
+                            complete_identity=False):
         """Check given command completes within the specified time limit
 
         Returns the contents of stdout as a string.
         """
-        if complete_identity:
-            cmd_args.extend(_DEFAULT_LEAPP_IDENTITY)
         start = time.monotonic()
-        cmd_output = self._run_leapp(cmd_args)
+        add_default_user = complete_user or complete_identity
+        cmd_output = self._run_leapp(cmd_args,
+                                     add_default_user=add_default_user,
+                                     add_default_identity=complete_identity)
         response_time = time.monotonic() - start
         assert_that(response_time, less_than_or_equal_to(time_limit))
         return cmd_output
 
     @staticmethod
-    def _run_leapp(cmd_args):
+    def _get_ssh_agent_details():
+        return os.environ["SSH_AUTH_SOCK"], os.environ["SSH_AGENT_PID"]
+
+    @staticmethod
+    def _start_ssh_agent():
+        agent_details = _run_command(["ssh-agent", "-c"]).splitlines()
+        agent_socket = agent_details[0].split()[2].rstrip(";")
+        agent_pid = agent_details[1].split()[2].rstrip(";")
+        os.environ["SSH_AUTH_SOCK"] = agent_socket
+        os.environ["SSH_AGENT_PID"] = agent_pid
+        return agent_socket, agent_pid
+
+    @staticmethod
+    def _stop_ssh_agent():
+        _run_command(["ssh-agent", "-k"])
+
+    @classmethod
+    def ensure_ssh_agent_is_running(cls, cleanup_stack):
+        """Start ssh-agent if it isn't already running
+
+        If the agent needed to be started, a shutdown callback is registered
+        with the given ExitStack instance
+        """
+        try:
+            agent_socket, agent_pid = cls._get_ssh_agent_details()
+        except KeyError:
+            agent_socket, agent_pid = cls._start_ssh_agent()
+            cleanup_stack.callback(cls._stop_ssh_agent)
+        return agent_socket, agent_pid
+
+    @classmethod
+    def add_default_ssh_key(cls, cleanup_stack):
+        """Add default testing key to ssh-agent
+
+        A key removal callback is registered with the given ExitStack instance
+        """
+        cmd = ["ssh-add",  _SSH_IDENTITY]
+        result = _run_command(cmd)
+        cleanup_stack.callback(cls._remove_default_ssh_key)
+        return result
+
+    @staticmethod
+    def _remove_default_ssh_key():
+        """Remove default testing key from ssh-agent"""
+        cmd = ["ssh-add", "-d", _SSH_IDENTITY + ".pub"]
+        return _run_command(cmd)
+
+    @staticmethod
+    def _run_leapp(cmd_args, *,
+                   add_default_user=False,
+                   add_default_identity=False):
         cmd = [_LEAPP_TOOL]
         cmd.extend(cmd_args)
+        if add_default_user:
+            cmd.extend(_DEFAULT_LEAPP_USER)
+        if add_default_identity:
+            cmd.extend(_DEFAULT_LEAPP_IDENTITY)
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), ignore_errors=False)
 
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host):
         cmd_args = ["migrate-machine"]
-        cmd_args.extend(_DEFAULT_LEAPP_IDENTITY)
         cmd_args.extend(["-t", target_host, source_host])
-        result = cls._run_leapp(cmd_args)
+        result = cls._run_leapp(cmd_args,
+                                add_default_user=True,
+                                add_default_identity=True)
         msg = "Redeployed {} as macrocontainer on {}"
         print(msg.format(source_host, target_host))
         return result

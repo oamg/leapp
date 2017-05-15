@@ -98,17 +98,18 @@ def main():
         return None
 
     def _set_ssh_config(username, identity):
-        if not isinstance(identity, str):
-            raise TypeError("identity should be str")
         settings = {
             'StrictHostKeyChecking': 'no',
             'PasswordAuthentication': 'no',
-            'IdentityFile': identity,
         }
         if username is not None:
             if not isinstance(username, str):
                 raise TypeError("username should be str")
             settings['User'] = username
+        if identity is not None:
+            if not isinstance(identity, str):
+                raise TypeError("identity should be str")
+            settings['IdentityFile'] = identity
 
         return ['-o {}={}'.format(k, v) for k, v in settings.items()]
 
@@ -190,9 +191,6 @@ def main():
         print(dumps({'machines': [m._to_dict() for m in lmp.get_machines()]}, indent=3))
 
     elif parsed.action == 'migrate-machine':
-        if not parsed.identity:
-            raise ValueError("Migration requires path to private SSH key to use (--identity)")
-
         if not parsed.target:
             print('! no target specified, creating leappto container package in current directory')
             # TODO: not really for now
@@ -243,8 +241,6 @@ def main():
             sys.exit(result)
 
     elif parsed.action == 'destroy-containers':
-        if not parsed.identity:
-            raise ValueError("Migration requires path to private SSH key to use (--identity)")
         target = parsed.target
 
         lmp = LibvirtMachineProvider()
@@ -267,8 +263,9 @@ def main():
         )
 
         print('! destroying containers on "{}" VM'.format(target))
-        mc.destroy_containers()
+        result = mc.destroy_containers()
         print('! done')
+        sys.exit(result)
 
     elif parsed.action == 'port-inspect':
         _ERR_STATE = "error"
