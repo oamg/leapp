@@ -53,6 +53,7 @@
         #panel-body #ports ul li {
             font-size: 15px;
             margin-left: 50px;
+            margin-top: 5px;
         }
 
         #panel-body .border-top-dashed {
@@ -78,7 +79,11 @@
         }
 
         .invalid {
-            background-color: #ff0000;
+            background-color: #f66 !important;
+        }
+
+        .service-info {
+            margin: 0 !important;
         }
     </style>
 </head>
@@ -126,9 +131,9 @@
                     <ul></ul>
                 </div>
                 <div id="target-ports" class="wd50-left border-left-dashed">
-                    <h3 class="discovered-ports">Target host busy ports</h3>
+                    <h3 class="discovered-ports">Target host discovered ports</h3>
                     <ul class="discovered-ports"></ul>
-                    <h3 class="mapped_ports">Target host mapped ports</h3>
+                    <h3 class="mapped_ports">Mapped ports - Source &rarr; Target</h3>
                     <ul class="mapped-ports"></ul>
                 </div>
             </div>
@@ -144,8 +149,6 @@
     </div>
 
     <script>
-        const DOCKER_RANDOM_PORT = "RANDOM";
-
         var output = $("#output");
         var loader = $("#loader");
 
@@ -232,10 +235,10 @@
 
             $(".radio-source-machine").click(function(event) {
                 var ip_addr = $(event.target).data('ip');
-                scan_ports(ip_addr, show_source_ports, null, true);  // scan entire machine with shallow scan
+                scan_ports(ip_addr, get_source_ports, null, true);  // scan entire machine with shallow scan
             });
 
-            $(".radio-target-machine").on('click', check_target_ports);
+            $(".radio-target-machine").on('click', get_target_ports);
         }
 
         function list_local_vms_fail(data) {
@@ -256,15 +259,11 @@
             var target = $("input[name=target-machine]:checked").val();
 
             var mapped_ports = $("#panel-body input.source-ports:checked").map(function() {
-                var target_port = $("#panel-body input[name=" + this.value + "]").val();
-                if (target_port) {
-                    if (target_port === DOCKER_RANDOM_PORT)
-                        return this.value;
-                    else
-                        return target_port + ':' + this.value;  // host:container
-                }
+                var target_port = $("#panel-body #target-ports .mapped-ports input[name=" + this.value + "]").val();
+                if (target_port)
+                    return target_port + ':' + this.value;  // host:container
             }).toArray();
-
+            console.log(mapped_ports);
             var proc = call_leapp([
                     "migrate-machine",
                     "--tcp-port"
@@ -303,17 +302,18 @@
             loader.show();
         }
 
-        function show_source_ports(data) {
+        function get_source_ports(data) {
             $("#ports ul li").remove();
-            var ports_data = JSON.parse(data);
+            var data = JSON.parse(data);
             // get all protocols not only tcp
-            if (typeof(ports_data.ports.tcp) !== undefined) {
-                for (port in ports_data.ports.tcp) {
+            if (typeof(data.ports.tcp) !== undefined) {
+                for (port in data.ports.tcp) {
                     $("#source-ports ul").append(`
                         <li>
-                            <input type="checkbox" name="source-ports" value="${port}"
+                            <input type="checkbox" name="${port}" value="${port}"
                             checked="checked" disabled style="display: none" class="source-ports" />
-                            Port: <span class="source-port-font">${port}</span> - used by: ${ports_data.ports.tcp[port].name}
+                            Port: <span class="source-port-font">${port}</span> - used by: ${data.ports.tcp[port].name}
+                            <span class="service-info"></span>
                         </li>
                     `)
                 }
@@ -322,20 +322,46 @@
             $("#credentials").fadeIn(); // this shouldn't be here, now it's only to show full page
             $("#ports").fadeIn();
 
+            // deep scan source machine
+            let source_ip = $("input[name=source-machine]:checked").data('ip');
+            let source_ports = $("input.source-ports:checked").map(function() {
+                return this.valu;
+            }).toArray();
+            scan_ports(source_ip, show_source_products_info, source_ports);
+            output.append(document.createTextNode("Getting info about products which are listening on discovered ports"));
+        }
+
+        function add_ports_product_info(data, path) {
+            if (typeof(data.ports.tcp) !== undefined) {
+                for (port in data.ports.tcp) {
+                    let product = data.ports.tcp[port].product
+
+                    if (! product)
+                        continue;
+
+                    $(path + " input[name=" + port + "]").closest('li').find('span.service-info').text(
+                        "- " + product
+                    );
+                }
+            }
+        }
+
+        function show_source_products_info(data) {
+            add_ports_product_info(JSON.parse(data), "#source-ports");
             output.empty();
             loader.hide();
-
             release_lock_cmd();
-            check_target_ports();
+            get_target_ports();
         }
 
         function map_ports(selected_ports, busy_ports) {
+            const MAX_ATTEMPTS = 65535;
+
             var mapped_ports = {};
 
 	        function get_free_port(port, busy_ports, attempt) {
-                if (attempt > 1000) {
-                    // remove DOCKER_RANDOM_PORT, return random number from docker ports range
-                    return DOCKER_RANDOM_PORT;
+                if (attempt > MAX_ATTEMPTS) {
+                    throw 'Max attempts reached - could not find free port';
                 }
                 attempt++;
 
@@ -348,14 +374,18 @@
                 return port;
             }
 
-	        selected_ports.forEach(function(selected_port) {
-                mapped_ports[selected_port] = get_free_port(selected_port, busy_ports, 0);
-            });
+            try {
+	            selected_ports.forEach(function(selected_port) {
+                    mapped_ports[selected_port] = get_free_port(selected_port, busy_ports, 0);
+                });
+            } catch (e) {
+                console.log(e);
+            }
 
             return mapped_ports;
         }
 
-        function check_target_ports() {
+        function get_target_ports() {
             if (! $("input[name=target-machine]:checked").length ||
                 ! $("input[name=source-machine]:checked").length) {
                 return;
@@ -369,17 +399,18 @@
             const MAX_PORT = 65535;
             const MIN_PORT = 1;
 
-            var ports_data = JSON.parse(data);
+            var data = JSON.parse(data);
             loader.show();
 
             $("#target-ports ul li").remove();
-            if (typeof(ports_data.ports.tcp) !== undefined) {
-                for (port in ports_data.ports.tcp) {
+            if (typeof(data.ports.tcp) !== undefined) {
+                for (port in data.ports.tcp) {
                     $("#target-ports ul.discovered-ports").append(`
                         <li>
-                            <input type="checkbox" name="target-ports" value="${port}"
+                            <input type="checkbox" name="${port}" value="${port}"
                             checked="checked" disabled style="display: none" class="target-ports" />
-                            Port: <strong>${port}</strong> - used by: ${ports_data.ports.tcp[port].name}
+                            Port: <strong>${port}</strong> - used by: ${data.ports.tcp[port].name}
+                            <span class="service-info"></span>
                         </li>
                     `)
                 }
@@ -394,7 +425,7 @@
             var busy_ports = $("#panel-body input.target-ports:checked").map(function() {
                 return parseInt(this.value);
             }).toArray();
-            
+
             var mapped_ports = map_ports(selected_ports, busy_ports);
 
             for (source_port in mapped_ports) {
@@ -403,7 +434,7 @@
                         Source host port: <span class="source-port-font">${source_port}</span> &rarr;
                         target host port:
                         <input type="text" size="6" name="${source_port}" value="${mapped_ports[source_port]}"
-                        class="mapped-ports ui-lockable" data-prev="${mapped_ports[source_port]}" />
+                        class="mapped-ports ui-lockable" data-prev="${mapped_ports[source_port]}" disabled/>
                     </li>
                 `)
             }
@@ -441,8 +472,21 @@
                 }
             });
 
-            loader.hide();
             output.empty();
+ 
+            // deep scan target machine
+            let target_ip = $("input[name=target-machine]:checked").data('ip');
+            let target_ports = $("input.target-ports:checked").map(function() {
+                return this.value;
+            }).toArray();
+            scan_ports(target_ip, show_target_products_info, target_ports);
+            output.append(document.createTextNode("Getting info about products which are listening on discovered ports"));
+        }
+
+        function show_target_products_info(data) {
+            add_ports_product_info(JSON.parse(data), "#target-ports ul.discovered-ports");
+            output.empty();
+            loader.hide();
             release_lock_cmd();
         }
 
