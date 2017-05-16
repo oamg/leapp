@@ -1,8 +1,16 @@
 import functools
 
 
+_REGISTRY = set()
+
+
+def registry():
+    return _REGISTRY
+
+
 def _meta_receiver(cls):
     return cls.__leapp_actor_meta__
+
 
 def _meta_decorator(f):
     @functools.wraps(f)
@@ -11,6 +19,7 @@ def _meta_decorator(f):
         def decorator(cls):
             meta = getattr(cls, '__leapp_actor_meta__', None)
             if not meta:
+                _REGISTRY.add(cls)
                 meta = cls.__leapp_actor_meta__ = {}
                 cls.leapp_meta = classmethod(_meta_receiver)
             meta[f.__name__] = meta.get(f.__name__, []) + list(args)
@@ -48,7 +57,19 @@ def targets_services(*names, **kwargs):
 def address_links(*links, **kwargs):
     pass
 
-def addr_link(addr, target):
-    fully_qualified = '{}.{}'.format(target.__module__, target.__name__)}
-    return address_links({'address': addr, 'target': fully_qualified)
 
+def _fq(target):
+    return '{}.{}'.format(target.__module__, target.__name__)
+
+
+def addr_link(addr, target):
+    return address_links({'address': addr, 'target': _fq(target)})
+
+
+@_meta_decorator
+def require_links(*links, **kwargs):
+    pass
+
+
+def require_link(target):
+    return require_links({'target': _fq(target)})

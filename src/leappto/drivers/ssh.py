@@ -1,9 +1,19 @@
 from paramiko import AutoAddPolicy, SSHClient, SSHConfig
 
-class SSHVagrantDriver(Driver):
-    def __init__(self, domain_name):
-        self._domain_name = domain_name
-        self._client = self._get_vagrant_ssh_client()
+
+class Driver:
+    pass
+
+
+class SSHDriver(Driver):
+    def __init__(self, client=None):
+        self._client = client
+
+    def connect(self, hostname, **kwargs):
+        self._client = SSHClient()
+        self._client.load_system_host_keys()
+        self._client.set_missing_host_key_policy(AutoAddPolicy())
+        self._client.connect(hostname, **kwargs)
 
     @property
     def transport(self):
@@ -18,6 +28,15 @@ class SSHVagrantDriver(Driver):
     #        and not exposed
     def exec_command(self, command, *args, **kwargs):
         return self.transport.exec_command(command, *args, **kwargs)
+
+
+class SSHVagrantDriver(SSHDriver):
+    def __init__(self, domain_name):
+        super(SSHVagrantDriver, self).__init__(None)
+        self._domain_name = domain_name
+        args = self._get_vagrant_ssh_args()
+        if args:
+            self.connect(args.pop('hostname'), **args)
 
     def _get_vagrant_data_path(self):
         index_path = os.path.join(os.environ['HOME'], '.vagrant.d/data/machine-index/index')
@@ -56,13 +75,3 @@ class SSHVagrantDriver(Driver):
             if key in mapping:
                 args[mapping[key][0]] = mapping[key][1](value)
         return args
-
-    def _get_vagrant_ssh_client(self):
-        args = self._get_vagrant_ssh_args()
-        if args:
-            client = SSHClient()
-            client.load_system_host_keys()
-            client.set_missing_host_key_policy(AutoAddPolicy())
-            client.connect(args.pop('hostname'), **args)
-            return client
-        return None

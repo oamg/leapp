@@ -9,8 +9,12 @@ from subprocess import Popen, PIPE
 from collections import OrderedDict
 from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from leappto.version import __version__
+import leappto.actors.load
+from leappto.actors.meta import registry
+from leappto.drivers.ssh import SSHDriver
 import sys
 import nmap
+
 
 VERSION='leapp-tool {0}'.format(__version__)
 
@@ -64,6 +68,7 @@ def _make_argument_parser():
         return host_port, container_port
 
     migrate_cmd.add_argument('machine', help='source machine to migrate')
+    migrate_cmd.add_argument('-o', '--ovirt', default=False, help='Use ovirt spike mechanism')
     migrate_cmd.add_argument('-t', '--target', default=None, help='target VM name')
     migrate_cmd.add_argument(
         '--tcp-port',
@@ -114,15 +119,18 @@ def main():
         return ['-o {}={}'.format(k, v) for k, v in settings.items()]
 
     class MigrationContext:
-        def __init__(self, target, target_cfg, disk, forwarded_ports=None):
+        def __init__(self, target, user, identity_file, disk, forwarded_ports=None, machine_src=None):
             self.target = target
-            self.target_cfg = target_cfg
+            self.target_cfg = _set_ssh_config(user, identity_file)
             self.disk = disk
             if forwarded_ports is None:
                 forwarded_ports = [(80, 80)]  # Default to forwarding plain HTTP
             else:
                 forwarded_ports = list(forwarded_ports)
             self.forwarded_ports = forwarded_ports
+            self._src_drv = SSHVagrantDriver(machine_src.hostname)
+            self._dst_drv = SSHDriver(None)
+            self._dst_drv.connect(self.target, key_filename=identity_file, username=user)
 
         @property
         def _ssh_base(self):
@@ -145,8 +153,21 @@ def main():
             command = 'docker rm -f $(docker ps -q) 2>/dev/null 1>/dev/null; rm -rf /opt/leapp-to/container'
             return self._ssh_sudo(command)
 
-        def start_container(self, img, init):
-            command = 'docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container ;' + \
+        def analyze_services(self):
+            _, out, _ = self._src_drv.exec_command("systemctl list-unit-files | grep enabled | grep \\.service | cut -f1 -d\\ ")
+            enabled = []
+            service_mapping = {'{}.service'.format(service): cls for cls in registry() for service in cls.leapp_meta().get('services', [])}
+            for service in out.read().split():
+                cls = service_mapping.get(service)
+                if cls:
+                    enabled.append(cls)
+            return enabled
+
+        def create_containers(self, services):
+
+
+        def start_container(self, img, init, forwarded_ports=None, name='container'):
+            command = 'docker rm -f ' + name + ' 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container ;' + \
                     'mkdir -p /opt/leapp-to/container && ' + \
                     'tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && ' + \
                     'docker run -tid' + \
@@ -154,12 +175,12 @@ def main():
             good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
             for mount in good_mounts:
                 command += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
-            for host_port, container_port in self.forwarded_ports:
+            for host_port, container_port in forwarded_ports:
                 if host_port is None:
                     command += ' -p {:d}'.format(container_port)  # docker will select random port for host
                 else:
                     command += ' -p {:d}:{:d}'.format(host_port, container_port)
-            command += ' --name container ' + img + ' ' + init
+            command += ' --name ' + name + ' ' + img + ' ' + init
             return self._ssh_sudo(command)
 
         def _fix_container(self, fix_str):
@@ -198,6 +219,7 @@ def main():
         else:
             source = parsed.machine
             target = parsed.target
+            ovirt = parsed.ovirt
             forwarded_ports = parsed.forwarded_ports
 
             print('! looking up "{}" as source and "{}" as target'.format(source, target))
@@ -219,17 +241,25 @@ def main():
 
             mc = MigrationContext(
                 ip,
-                _set_ssh_config(parsed.user, parsed.identity),
+                parsed.user,
+                parsed.identity,
                 machine_src.disks[0].host_path,
-                forwarded_ports
+                forwarded_ports=forwarded_ports,
+                machine_src=machine_src
             )
             print('! copying over')
             print('! ' + machine_src.suspend())
             mc.copy()
             print('! ' + machine_src.resume())
             print('! provisioning ...')
+            # if ovirt use detection mechanism
+            if ovirt:
+                services = mc.analyze()
+                for svc in services:
+                    mc.create_container(svc)
+                    mc.start_container(svc)
             # if el7 then use systemd
-            if machine_src.installation.os.version.startswith('7'):
+            elif machine_src.installation.os.version.startswith('7'):
                 result = mc.start_container('centos:7', '/usr/lib/systemd/systemd --system')
                 print('! starting services')
                 mc.fix_systemd()

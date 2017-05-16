@@ -1,12 +1,13 @@
 import leappto.actors.meta as meta
 from leappto.actors import Actor
 from leappto.actors.apache import Apache
-
+from leappto.actors.postgres import Postgres
 
 @meta.services('ovirt-engine')
 @meta.rpms('ovirt-engine', 'ovirt-engine-webadmin-portal')
 @meta.targets_services('ovirt-engine')
 @meta.addr_link('localhost:8702', Apache)
+@meta.require_link(Postgres)
 class Engine(Actor):
     def __init__(self, *args, **kwargs):
         super(Engine, self).__init__(*args, **kwargs)
