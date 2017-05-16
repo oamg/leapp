@@ -19,10 +19,11 @@ REPO_DIR = TEST_DIR.parent
 
 # Command execution helper
 def _run_command(cmd, work_dir=None, ignore_errors=False):
+    """Run non-interactive command and return stdout"""
     if work_dir is not None:
         print("  Running {} in {}".format(cmd, work_dir))
     else:
-        print("  Running ", cmd)
+        print("  Running {}", cmd)
     output = None
     try:
         output = subprocess.check_output(
@@ -122,6 +123,7 @@ _LEAPP_TOOL = str(_LEAPP_BIN_DIR / "leapp-tool")
 
 _SSH_USER = "vagrant"
 _SSH_IDENTITY = str(REPO_DIR / "integration-tests/config/leappto_testing_key")
+_SSH_PASSWORD = "vagrant"
 _DEFAULT_LEAPP_USER = ['--user', _SSH_USER]
 _DEFAULT_LEAPP_IDENTITY = ['--identity', _SSH_IDENTITY]
 
@@ -184,17 +186,21 @@ class ClientHelper(object):
         return self._get_migration_host_info(source_host, target_host)
 
     def check_response_time(self, cmd_args, time_limit, *,
-                            complete_user=False,
-                            complete_identity=False):
+                            specify_default_user=False,
+                            use_default_identity=False,
+                            use_default_password=False):
         """Check given command completes within the specified time limit
 
         Returns the contents of stdout as a string.
         """
         start = time.monotonic()
-        add_default_user = complete_user or complete_identity
-        cmd_output = self._run_leapp(cmd_args,
-                                     add_default_user=add_default_user,
-                                     add_default_identity=complete_identity)
+        if use_default_password:
+            cmd_output = self._run_leapp_with_askpass(cmd_args)
+        else:
+            add_default_user = specify_default_user or use_default_identity
+            cmd_output = self._run_leapp(cmd_args,
+                                         add_default_user=add_default_user,
+                                         add_default_identity=use_default_identity)
         response_time = time.monotonic() - start
         assert_that(response_time, less_than_or_equal_to(time_limit))
         return cmd_output
@@ -257,7 +263,18 @@ class ClientHelper(object):
             cmd.extend(_DEFAULT_LEAPP_USER)
         if add_default_identity:
             cmd.extend(_DEFAULT_LEAPP_IDENTITY)
-        return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), ignore_errors=False)
+        return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR))
+
+    @staticmethod
+    def _run_leapp_with_askpass(cmd_args):
+        # Helper specifically for --ask-pass testing with default credentials
+        if os.getuid() != 0:
+            err = "sshpass TTY emulation is incompatible with sudo credential caching"
+            raise RuntimeError(err)
+        cmd = ["sshpass", "-p"+_SSH_PASSWORD, _LEAPP_TOOL]
+        cmd.extend(cmd_args)
+        cmd.extend(("--user", _SSH_USER, "--ask-pass"))
+        return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR))
 
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host):

@@ -1,24 +1,31 @@
 """LeApp CLI implementation"""
 
 from argparse import ArgumentParser
+from getpass import getpass
 from grp import getgrnam, getgrgid
 from json import dumps
-from os import getuid
 from pwd import getpwuid
 from subprocess import Popen, PIPE
 from collections import OrderedDict
 from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from leappto.version import __version__
+import os
 import sys
 import nmap
 
 VERSION='leapp-tool {0}'.format(__version__)
 
+# Python 2/3 compatibility
+try:
+    _set_inheritable = os.set_inheritable
+except AttributeError:
+    _set_inheritable = None
+
 # Checking for required permissions
 _REQUIRED_GROUPS = ["vagrant", "libvirt"]
 def _user_has_required_permissions():
     """Check user has necessary permissions to reliably run leapp-tool"""
-    uid = getuid()
+    uid = os.getuid()
     if uid == 0:
         # root has the necessary access regardless of group membership
         return True
@@ -33,6 +40,7 @@ def _user_has_required_permissions():
 # Parsing CLI arguments
 def _add_identity_options(cli_cmd):
     cli_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
+    cli_cmd.add_argument('--ask-pass', '-k', action='store_true', help='Ask for SSH password')
     cli_cmd.add_argument('--user', '-u', default=None, help='Connect as this user')
 
 def _make_argument_parser():
@@ -97,11 +105,14 @@ def main():
                 return machine
         return None
 
-    def _set_ssh_config(username, identity):
+    def _set_ssh_config(username, identity, use_sshpass=False):
         settings = {
             'StrictHostKeyChecking': 'no',
-            'PasswordAuthentication': 'no',
         }
+        if use_sshpass:
+            settings['PasswordAuthentication'] = 'yes'
+        else:
+            settings['PasswordAuthentication'] = 'no'
         if username is not None:
             if not isinstance(username, str):
                 raise TypeError("username should be str")
@@ -111,12 +122,14 @@ def main():
                 raise TypeError("identity should be str")
             settings['IdentityFile'] = identity
 
-        return ['-o {}={}'.format(k, v) for k, v in settings.items()]
+        ssh_options = ['-o {}={}'.format(k, v) for k, v in settings.items()]
+        return use_sshpass, ssh_options
 
     class MigrationContext:
-        def __init__(self, target, target_cfg, disk, forwarded_ports=None):
+        def __init__(self, target, ssh_settings, disk, forwarded_ports=None):
             self.target = target
-            self.target_cfg = target_cfg
+            self.use_sshpass, self.target_cfg = ssh_settings
+            self._cached_ssh_password = None
             self.disk = disk
             if forwarded_ports is None:
                 forwarded_ports = [(80, 80)]  # Default to forwarding plain HTTP
@@ -129,8 +142,26 @@ def main():
             return ['ssh'] + self.target_cfg + ['-4', self.target]
 
         def _ssh(self, cmd, **kwargs):
-            arg = self._ssh_base + [cmd]
-            return Popen(arg, **kwargs).wait()
+            ssh_cmd = self._ssh_base + [cmd]
+            if self.use_sshpass:
+                return self._sshpass(ssh_cmd, **kwargs)
+            return Popen(ssh_cmd, **kwargs).wait()
+
+        def _sshpass(self, ssh_cmd, **kwargs):
+            read_pwd, write_pwd = os.pipe()
+            if _set_inheritable is not None:
+                # To reduce risk of data leaks, Py3 FD inheritance is explicit
+                _set_inheritable(read_pwd)
+                kwargs = kwargs.copy()
+                kwargs['pass_fds'] = (read_pwd,)
+            sshpass_cmd = ['sshpass', '-d'+str(read_pwd)] + ssh_cmd
+            child = Popen(sshpass_cmd, **kwargs)
+            ssh_password = self._cached_ssh_password
+            if ssh_password is None:
+                ssh_password = self._cached_ssh_password = getpass("SSH password:").encode()
+            os.write(write_pwd, ssh_password  + b'\n')
+            print(sshpass_cmd)
+            return child.wait()
 
         def _ssh_sudo(self, cmd, **kwargs):
             return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
@@ -219,7 +250,7 @@ def main():
 
             mc = MigrationContext(
                 ip,
-                _set_ssh_config(parsed.user, parsed.identity),
+                _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
                 machine_src.disks[0].host_path,
                 forwarded_ports
             )
@@ -258,7 +289,7 @@ def main():
 
         mc = MigrationContext(
             ip,
-            _set_ssh_config(parsed.user, parsed.identity),
+            _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
             machine_dst.disks[0].host_path
         )
 
