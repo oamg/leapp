@@ -67,7 +67,10 @@ Then, from the base of the local clone, run:
 
     $ sudo bin/leapp-tool migrate-machine \
            --identity integration-tests/config/leappto_testing_key \
-           --tcp-port 9000:9000 -t centos7-target centos6-app-vm
+           --tcp-port 9000:9000 --user=vagrant -t centos7-target centos6-app-vm
+           
+*Due to a "bug", you have to specify the "vagrant" username manually, otherwise the tool won'
+t be able to ssh into the machines.*
 
 The target VM should now be showing the PHP admin page,
 with the same information as the source VM.
