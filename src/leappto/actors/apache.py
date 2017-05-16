@@ -21,7 +21,7 @@ class Apache(Actor):
                         "sed -i 's/{0}/{1}/' {2} ".format(
                             entry[1]['address'],
                             entry[1]['address'].replace('127.0.0.1', cname),
-                            '/opt/leapp-to/container' + entry[1]['arguments'][1])))
+                            '/opt/leapp-to/container' + entry[1]['arguments'][1]))
 
 if __name__ == '__main__':
     from pprint import pprint

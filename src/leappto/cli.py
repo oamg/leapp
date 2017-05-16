@@ -155,10 +155,6 @@ def main():
             command = 'docker rm -f $(docker ps -q) 2>/dev/null 1>/dev/null; rm -rf /opt/leapp-to/container'
             return self._ssh_sudo(command)
 
-        def get_service_info(self, svc):
-            self._src_drv.
-            svc.leapp_meta()
-
         def analyze_services(self):
             _, out, _ = self._src_drv.exec_command("systemctl list-unit-files | grep enabled | grep \\.service | cut -f1 -d\\ ")
             enabled = []
@@ -166,17 +162,17 @@ def main():
             for service in out.read().split():
                 cls = service_mapping.get(service)
                 if cls:
-                    enabled.append(self.get_service_info(cls))
+                    enabled.append(cls)
             return enabled
 
         @staticmethod
         def _get_run_systemd_service_cmd(service):
-            return "/bin/bash -c \""
-                   "function split "
-                   "{ cat `find /etc/systemd/system -name $1` | grep $2 | sed 's/[^=]\+=\(.*\)$/\1/'; }; "
-                   "function run_service "
-                   "{ source `split $1 EnvironmentFile`; eval `split $1 ExecStart`; }; "
-                   "run_service {}.service\"".format(service)
+            return "/bin/bash -c \"" + \
+                    "function split " + \
+                    "{ cat `find /etc/systemd/system -name $1` | grep $2 | sed 's/[^=]\+=\(.*\)$/\1/'; }; " + \
+                    "function run_service " + \
+                    "{ source `split $1 EnvironmentFile`; eval `split $1 ExecStart`; }; " + \
+                    "run_service {}.service\"".format(service)
 
         def create_systemd_containers(self, services):
             self._ssh_sudo(self._prep_container_command())
