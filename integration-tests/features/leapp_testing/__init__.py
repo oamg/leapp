@@ -23,7 +23,7 @@ def _run_command(cmd, work_dir=None, ignore_errors=False):
     if work_dir is not None:
         print("  Running {} in {}".format(cmd, work_dir))
     else:
-        print("  Running {}", cmd)
+        print("  Running", cmd)
     output = None
     try:
         output = subprocess.check_output(
