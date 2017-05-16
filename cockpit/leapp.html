@@ -204,7 +204,6 @@
         }
 
         function refresh_vm_table(data) {
-
             var vm_data = JSON.parse(data);
             $("#credentials, #ports").fadeOut();
             $("#machines-list ul li, #ports ul li").remove()
@@ -292,7 +291,6 @@
             if (shallow) {
                 scan_args.push('--shallow');
             }
-
             var proc = call_leapp(scan_args);
             output.empty();
             proc.done(callback);
@@ -325,7 +323,7 @@
             // deep scan source machine
             let source_ip = $("input[name=source-machine]:checked").data('ip');
             let source_ports = $("input.source-ports:checked").map(function() {
-                return this.valu;
+                return this.value;
             }).toArray();
             scan_ports(source_ip, show_source_products_info, source_ports);
             output.append(document.createTextNode("Getting info about products which are listening on discovered ports"));
