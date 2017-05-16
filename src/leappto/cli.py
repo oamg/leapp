@@ -11,6 +11,8 @@ from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from leappto.version import __version__
 import leappto.actors.load
 from leappto.actors.meta import registry
+from leappto.actors.meta import registry
+from leappto.actors.meta.resolver import resolve as meta_resolve
 from leappto.drivers.ssh import SSHDriver
 import sys
 import nmap
@@ -153,6 +155,10 @@ def main():
             command = 'docker rm -f $(docker ps -q) 2>/dev/null 1>/dev/null; rm -rf /opt/leapp-to/container'
             return self._ssh_sudo(command)
 
+        def get_service_info(self, svc):
+            self._src_drv.
+            svc.leapp_meta()
+
         def analyze_services(self):
             _, out, _ = self._src_drv.exec_command("systemctl list-unit-files | grep enabled | grep \\.service | cut -f1 -d\\ ")
             enabled = []
@@ -160,17 +166,43 @@ def main():
             for service in out.read().split():
                 cls = service_mapping.get(service)
                 if cls:
-                    enabled.append(cls)
+                    enabled.append(self.get_service_info(cls))
             return enabled
 
-        def create_containers(self, services):
+        @staticmethod
+        def _get_run_systemd_service_cmd(service):
+            return "/bin/bash -c \""
+                   "function split "
+                   "{ cat `find /etc/systemd/system -name $1` | grep $2 | sed 's/[^=]\+=\(.*\)$/\1/'; }; "
+                   "function run_service "
+                   "{ source `split $1 EnvironmentFile`; eval `split $1 ExecStart`; }; "
+                   "run_service {}.service\"".format(service)
 
+        def create_systemd_containers(self, services):
+            self._ssh_sudo(self._prep_container_command())
+            meta_resolve(services)
+            mapped = registry(mapped=True)
+            for svc in services:
+                svc(driver=self._dst_drv).fixup(services)
+                opts = []
+                for links in svc.get('require_links', ()):
+                    opts.append('container-' + mapped[links].leapp_meta()['services'][0])
+                self.start_container(
+                        'centos:7', _get_run_systemd_service_cmd(svc['services'][0]),
+                        forwarded_ports=['{0}:{0}'.format(port) for port in svc['ports'][0]],
+                        name='container-' + svc['services'][0], exec_prep=False)
 
-        def start_container(self, img, init, forwarded_ports=None, name='container'):
-            command = 'docker rm -f ' + name + ' 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container ;' + \
+        def _prep_container_command(self, name):
+            command = 'rm -rf /opt/leapp-to/container ;' + \
                     'mkdir -p /opt/leapp-to/container && ' + \
-                    'tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && ' + \
-                    'docker run -tid' + \
+                    'tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container'
+            return command
+
+        def start_container(self, img, init, forwarded_ports=None, name='container', opts='', exec_prep=True):
+            command = 'docker rm -f ' + name + ' 2>/dev/null 1>/dev/null ; '
+            if exec_prep:
+                command += self._prep_container_command() + '; '
+            command += 'docker run -tid' + \
                     ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
             good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
             for mount in good_mounts:
@@ -180,6 +212,8 @@ def main():
                     command += ' -p {:d}'.format(container_port)  # docker will select random port for host
                 else:
                     command += ' -p {:d}:{:d}'.format(host_port, container_port)
+            if opts:
+                command += ' ' + opts
             command += ' --name ' + name + ' ' + img + ' ' + init
             return self._ssh_sudo(command)
 

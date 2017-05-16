@@ -4,8 +4,8 @@ import functools
 _REGISTRY = set()
 
 
-def registry():
-    return _REGISTRY
+def registry(mapped=False):
+    return _REGISTRY if not mapped else {_fq(s): s for s in _REGISTRY}
 
 
 def _meta_receiver(cls):
@@ -62,8 +62,8 @@ def _fq(target):
     return '{}.{}'.format(target.__module__, target.__name__)
 
 
-def addr_link(addr, target):
-    return address_links({'address': addr, 'target': _fq(target)})
+def addr_link(addr, target, args=()):
+    return address_links({'address': addr, 'target': _fq(target), 'arguments': list(args)})
 
 
 @_meta_decorator
