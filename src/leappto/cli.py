@@ -86,8 +86,17 @@ def _make_argument_parser():
     destroy_cmd.add_argument('target', help='target VM name')
     _add_identity_options(destroy_cmd)
 
-    scan_ports_cmd.add_argument('range', help='port range, example of proper form:"-100,200-1024,T:3000-4000,U:60000-"')
     scan_ports_cmd.add_argument('ip', help='virtual machine ip address')
+    scan_ports_cmd.add_argument(
+        '--range',
+        default=None,
+        help='port range, example of proper form:"-100,200-1024,T:3000-4000,U:60000-"'
+    )
+    scan_ports_cmd.add_argument(
+        '--shallow',
+        action='store_true',
+        help='Skip detailed informations about used ports, this is quick SYN scan'
+    )
     return ap
 
 # Run the CLI
@@ -302,10 +311,12 @@ def main():
         _ERR_STATE = "error"
         _SUCCESS_STATE = "success"
 
+        scan_args = '-sS' if parsed.shallow else '-sV'
+
         port_range = parsed.range
         ip = parsed.ip
         port_scanner = nmap.PortScanner()
-        port_scanner.scan(ip, port_range)
+        port_scanner.scan(ip, port_range, arguments=scan_args)
 
         result = {
             "status": _SUCCESS_STATE,
