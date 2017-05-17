@@ -269,6 +269,8 @@
                 ].concat(mapped_ports, [
                     // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
                     "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
+                    // Vagrant user fix
+                    "--user", "vagrant",
                     "-t", target, source
                 ])
             );
