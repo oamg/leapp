@@ -2,7 +2,6 @@ Feature: Demonstration Cockpit plugin
 
 # Currently still WIP due to dependency on Firefox for scenario execution
 @wip
-@skip
 Scenario: Initial page visit
   Given Cockpit is installed on the testing host
     And the demonstration user exists
