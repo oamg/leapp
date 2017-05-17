@@ -18,7 +18,9 @@ TEST_DIR = pathlib.Path(__file__).parent.parent.parent
 REPO_DIR = TEST_DIR.parent
 
 # Command execution helper
-def _run_command(cmd, work_dir=None, ignore_errors=False):
+def _run_command(cmd, work_dir=None, ignore_errors=False, as_sudo=False):
+    if as_sudo and isinstance(cmd, list):
+        cmd.insert(0, 'sudo')
     if work_dir is not None:
         print("  Running {} in {}".format(cmd, work_dir))
     else:
@@ -185,7 +187,8 @@ class ClientHelper(object):
 
     def check_response_time(self, cmd_args, time_limit, *,
                             complete_user=False,
-                            complete_identity=False):
+                            complete_identity=False,
+                            as_sudo=False):
         """Check given command completes within the specified time limit
 
         Returns the contents of stdout as a string.
@@ -194,7 +197,8 @@ class ClientHelper(object):
         add_default_user = complete_user or complete_identity
         cmd_output = self._run_leapp(cmd_args,
                                      add_default_user=add_default_user,
-                                     add_default_identity=complete_identity)
+                                     add_default_identity=complete_identity,
+                                     as_sudo=as_sudo)
         response_time = time.monotonic() - start
         assert_that(response_time, less_than_or_equal_to(time_limit))
         return cmd_output
@@ -250,14 +254,15 @@ class ClientHelper(object):
     @staticmethod
     def _run_leapp(cmd_args, *,
                    add_default_user=False,
-                   add_default_identity=False):
+                   add_default_identity=False,
+                   as_sudo=False):
         cmd = [_LEAPP_TOOL]
         cmd.extend(cmd_args)
         if add_default_user:
             cmd.extend(_DEFAULT_LEAPP_USER)
         if add_default_identity:
             cmd.extend(_DEFAULT_LEAPP_IDENTITY)
-        return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), ignore_errors=False)
+        return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), ignore_errors=False, as_sudo=as_sudo)
 
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host):
