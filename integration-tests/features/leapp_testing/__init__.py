@@ -18,14 +18,10 @@ TEST_DIR = pathlib.Path(__file__).parent.parent.parent
 REPO_DIR = TEST_DIR.parent
 
 # Command execution helper
-<<<<<<< HEAD
-def _run_command(cmd, work_dir=None, ignore_errors=False):
-    """Run non-interactive command and return stdout"""
-=======
 def _run_command(cmd, work_dir=None, ignore_errors=False, as_sudo=False):
-    if as_sudo and isinstance(cmd, list):
+    """Run non-interactive command and return stdout"""
+    if as_sudo:
         cmd.insert(0, 'sudo')
->>>>>>> master
     if work_dir is not None:
         print("  Running {} in {}".format(cmd, work_dir))
     else:
@@ -272,8 +268,7 @@ class ClientHelper(object):
             cmd.extend(_DEFAULT_LEAPP_USER)
         if add_default_identity:
             cmd.extend(_DEFAULT_LEAPP_IDENTITY)
-<<<<<<< HEAD
-        return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR))
+        return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), as_sudo=as_sudo)
 
     @staticmethod
     def _run_leapp_with_askpass(cmd_args):
@@ -285,9 +280,6 @@ class ClientHelper(object):
         cmd.extend(cmd_args)
         cmd.extend(("--user", _SSH_USER, "--ask-pass"))
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR))
-=======
-        return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), ignore_errors=False, as_sudo=as_sudo)
->>>>>>> master
 
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host):
