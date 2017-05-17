@@ -8,5 +8,5 @@ def check_destroy_containers(context, target, time_limit):
     context.cli_helper.check_response_time(
         ["destroy-containers", context.vm_helper.get_hostname(target)],
         time_limit,
-        complete_identity=True
+        use_default_identity=True
     )
