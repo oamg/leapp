@@ -6,3 +6,5 @@ __pycache__/
 playbook.retry
 dist/
 *.egg-info/
+# PyCharm project meta folder
+.idea/

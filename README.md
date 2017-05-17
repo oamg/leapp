@@ -69,8 +69,7 @@ Then, from the base of the local clone, run:
            --identity integration-tests/config/leappto_testing_key \
            --tcp-port 9000:9000 --user=vagrant -t centos7-target centos6-app-vm
            
-*Due to a "bug", you have to specify the "vagrant" username manually, otherwise the tool won'
-t be able to ssh into the machines.*
+*When running with vagrant, it is necessary to manually specify the user with ```--user=vagrant```*
 
 The target VM should now be showing the PHP admin page,
 with the same information as the source VM.
