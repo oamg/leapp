@@ -73,3 +73,17 @@ def require_links(*links, **kwargs):
 
 def require_link(target):
     return require_links({'target': _fq(target)})
+
+
+@_meta_decorator
+def directories(*spec, **kwargs):
+    pass
+
+
+def directory(path, user='root', group='root', mode='0755', **kwargs):
+    return directories(dict(path=path, user=user, group=group, mode=mode), **kwargs)
+
+
+@_meta_decorator
+def users(*users, **kwargs):
+    pass
