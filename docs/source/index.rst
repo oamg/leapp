@@ -17,6 +17,8 @@ Welcome to Leapp's documentation!
 
    getstarted
    centosci
+   leapp-tool
+   ui
 
 
 
