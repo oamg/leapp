@@ -1,7 +1,10 @@
+import os
+import shlex
+import json
 from paramiko import AutoAddPolicy, SSHClient, SSHConfig
 
 
-class Driver:
+class Driver(object):
     pass
 
 
@@ -11,6 +14,7 @@ class SSHDriver(Driver):
 
     def connect(self, hostname, **kwargs):
         self._client = SSHClient()
+        print json.dumps([{'hostname': hostname}, kwargs])
         self._client.load_system_host_keys()
         self._client.set_missing_host_key_policy(AutoAddPolicy())
         self._client.connect(hostname, **kwargs)
@@ -33,6 +37,7 @@ class SSHDriver(Driver):
 class SSHVagrantDriver(SSHDriver):
     def __init__(self, domain_name):
         super(SSHVagrantDriver, self).__init__(None)
+        print "SSHVagrantDriver with domain name:", domain_name
         self._domain_name = domain_name
         args = self._get_vagrant_ssh_args()
         if args:
@@ -44,7 +49,7 @@ class SSHVagrantDriver(SSHDriver):
         for ident, machine in index['machines'].iteritems():
             path_name = os.path.basename(machine['vagrantfile_path'])
             vagrant_name = machine.get('name', 'default')
-            if self._domain_name == path_name + '_' + vagrant_name:
+            if self._domain_name == path_name + '_' + vagrant_name or self._domain_name == path_name:
                 return machine['local_data_path']
         return None
 
@@ -56,7 +61,7 @@ class SSHVagrantDriver(SSHDriver):
                 line = line.strip()
                 if not line or line[0] in (';', '#'):
                     continue
-                return _parse_ansible_inventory_data(line)
+                return self._parse_ansible_inventory_data(line)
         return None
 
     @staticmethod
