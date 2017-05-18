@@ -6,6 +6,13 @@ Scenario: Remote access using the --identity option
          | remote-system  | centos7-target      | no           |
     Then remote-system should be accessible using the default identity file
 
+Scenario: Remote access using the --ask-pass option
+   Given the tests are being run as root
+     And the local virtual machines:
+         | name           | definition          | ensure_fresh |
+         | remote-system  | centos7-target      | no           |
+    Then remote-system should be accessible using the default password
+
 Scenario: Remote access using ssh-agent
    Given ssh-agent is running
     And the default identity file is registered with ssh-agent

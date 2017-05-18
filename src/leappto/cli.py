@@ -1,9 +1,9 @@
 """LeApp CLI implementation"""
 
 from argparse import ArgumentParser
+from getpass import getpass
 from grp import getgrnam, getgrgid
 from json import dumps
-from os import getuid
 from pwd import getpwuid
 from subprocess import Popen, PIPE
 from collections import OrderedDict
@@ -15,17 +15,24 @@ from leappto.actors.meta import registry
 from leappto.actors.meta.resolver import resolve as meta_resolve
 from leappto.actors.meta.resolver import dependency_ordered as meta_dependency_ordered
 from leappto.drivers.ssh import SSHDriver, SSHVagrantDriver
+import os
 import sys
 import nmap
 
 
 VERSION='leapp-tool {0}'.format(__version__)
 
+# Python 2/3 compatibility
+try:
+    _set_inheritable = os.set_inheritable
+except AttributeError:
+    _set_inheritable = None
+
 # Checking for required permissions
 _REQUIRED_GROUPS = ["vagrant", "libvirt"]
 def _user_has_required_permissions():
     """Check user has necessary permissions to reliably run leapp-tool"""
-    uid = getuid()
+    uid = os.getuid()
     if uid == 0:
         # root has the necessary access regardless of group membership
         return True
@@ -40,6 +47,7 @@ def _user_has_required_permissions():
 # Parsing CLI arguments
 def _add_identity_options(cli_cmd):
     cli_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
+    cli_cmd.add_argument('--ask-pass', '-k', action='store_true', help='Ask for SSH password')
     cli_cmd.add_argument('--user', '-u', default=None, help='Connect as this user')
 
 def _make_argument_parser():
@@ -86,8 +94,17 @@ def _make_argument_parser():
     destroy_cmd.add_argument('target', help='target VM name')
     _add_identity_options(destroy_cmd)
 
-    scan_ports_cmd.add_argument('range', help='port range, example of proper form:"-100,200-1024,T:3000-4000,U:60000-"')
     scan_ports_cmd.add_argument('ip', help='virtual machine ip address')
+    scan_ports_cmd.add_argument(
+        '--range',
+        default=None,
+        help='port range, example of proper form:"-100,200-1024,T:3000-4000,U:60000-"'
+    )
+    scan_ports_cmd.add_argument(
+        '--shallow',
+        action='store_true',
+        help='Skip detailed informations about used ports, this is quick SYN scan'
+    )
     return ap
 
 # Run the CLI
@@ -105,11 +122,14 @@ def main():
                 return machine
         return None
 
-    def _set_ssh_config(username, identity):
+    def _set_ssh_config(username, identity, use_sshpass=False):
         settings = {
             'StrictHostKeyChecking': 'no',
-            'PasswordAuthentication': 'no',
         }
+        if use_sshpass:
+            settings['PasswordAuthentication'] = 'yes'
+        else:
+            settings['PasswordAuthentication'] = 'no'
         if username is not None:
             if not isinstance(username, str):
                 raise TypeError("username should be str")
@@ -119,12 +139,14 @@ def main():
                 raise TypeError("identity should be str")
             settings['IdentityFile'] = identity
 
-        return ['-o {}={}'.format(k, v) for k, v in settings.items()]
+        ssh_options = ['-o {}={}'.format(k, v) for k, v in settings.items()]
+        return use_sshpass, ssh_options
 
     class MigrationContext:
-        def __init__(self, target, user, identity_file, disk, forwarded_ports=None, machine_src=None):
+        def __init__(self, target, user, identity, ask_pass, disk, forwarded_ports=None, machine_src=None):
             self.target = target
-            self.target_cfg = _set_ssh_config(user, identity_file)
+            self.use_sshpass, self.target_cfg = _set_ssh_config(user, identity, ask_pass)
+            self._cached_ssh_password = None
             self.disk = disk
             if forwarded_ports is None:
                 forwarded_ports = [(80, 80)]  # Default to forwarding plain HTTP
@@ -133,15 +155,33 @@ def main():
             self.forwarded_ports = forwarded_ports
             self._src_drv = SSHVagrantDriver(machine_src.hostname)
             self._dst_drv = SSHDriver(None)
-            self._dst_drv.connect(self.target, key_filename=identity_file, username=user or 'vagrant')
+            self._dst_drv.connect(self.target, key_filename=identity, username=user)
 
         @property
         def _ssh_base(self):
             return ['ssh'] + self.target_cfg + ['-4', self.target]
 
         def _ssh(self, cmd, **kwargs):
-            arg = self._ssh_base + [cmd]
-            return Popen(arg, **kwargs).wait()
+            ssh_cmd = self._ssh_base + [cmd]
+            if self.use_sshpass:
+                return self._sshpass(ssh_cmd, **kwargs)
+            return Popen(ssh_cmd, **kwargs).wait()
+
+        def _sshpass(self, ssh_cmd, **kwargs):
+            read_pwd, write_pwd = os.pipe()
+            if _set_inheritable is not None:
+                # To reduce risk of data leaks, Py3 FD inheritance is explicit
+                _set_inheritable(read_pwd)
+                kwargs = kwargs.copy()
+                kwargs['pass_fds'] = (read_pwd,)
+            sshpass_cmd = ['sshpass', '-d'+str(read_pwd)] + ssh_cmd
+            child = Popen(sshpass_cmd, **kwargs)
+            ssh_password = self._cached_ssh_password
+            if ssh_password is None:
+                ssh_password = self._cached_ssh_password = getpass("SSH password:").encode()
+            os.write(write_pwd, ssh_password  + b'\n')
+            print(sshpass_cmd)
+            return child.wait()
 
         def _ssh_sudo(self, cmd, **kwargs):
             return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
@@ -372,7 +412,7 @@ eval $(grep ^ExecStart= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d=
 
         mc = MigrationContext(
             ip,
-            _set_ssh_config(parsed.user, parsed.identity),
+            parsed.user, parsed.identity, parsed.ask_pass,
             machine_dst.disks[0].host_path
         )
 
@@ -385,10 +425,12 @@ eval $(grep ^ExecStart= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d=
         _ERR_STATE = "error"
         _SUCCESS_STATE = "success"
 
+        scan_args = '-sS' if parsed.shallow else '-sV'
+
         port_range = parsed.range
         ip = parsed.ip
         port_scanner = nmap.PortScanner()
-        port_scanner.scan(ip, port_range)
+        port_scanner.scan(ip, port_range, arguments=scan_args)
 
         result = {
             "status": _SUCCESS_STATE,

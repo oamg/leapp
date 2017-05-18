@@ -4,3 +4,5 @@
       key_path: ../../../config/leappto_testing_key.pub
     - target
     - docker
+    # Needed for CLI --ask-pass testing
+    - sshd-password-auth
