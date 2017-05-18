@@ -14,3 +14,6 @@ class Actor(object):
 
     def execute(self):
         pass
+
+    def fixup(self):
+        pass
