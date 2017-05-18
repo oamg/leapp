@@ -3,7 +3,7 @@ from leappto.actors import Actor
 
 _DB_SETUP_CONF='/etc/ovirt-engine-dwh/ovirt-engine-dwhd.conf.d/10-setup-database.conf'
 
-@meta.ports(54323)
+@meta.users('ovirt')
 @meta.config_files(_DB_SETUP_CONF)
 @meta.services('ovirt-engine-dwhd')
 @meta.rpms('ovirt-engine-dwh', 'ovirt-engine-dwh-setup')

@@ -3,6 +3,7 @@ from leappto.actors import Actor
 from leappto.actors.apache import Apache
 from leappto.actors.postgres import Postgres
 
+@meta.users('ovirt')
 @meta.services('ovirt-engine')
 @meta.rpms('ovirt-engine', 'ovirt-engine-webadmin-portal')
 @meta.targets_services('ovirt-engine')
