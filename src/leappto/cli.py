@@ -13,7 +13,8 @@ import leappto.actors.load
 from leappto.actors.meta import registry
 from leappto.actors.meta import registry
 from leappto.actors.meta.resolver import resolve as meta_resolve
-from leappto.drivers.ssh import SSHDriver
+from leappto.actors.meta.resolver import dependency_ordered as meta_dependency_ordered
+from leappto.drivers.ssh import SSHDriver, SSHVagrantDriver
 import sys
 import nmap
 
@@ -132,7 +133,7 @@ def main():
             self.forwarded_ports = forwarded_ports
             self._src_drv = SSHVagrantDriver(machine_src.hostname)
             self._dst_drv = SSHDriver(None)
-            self._dst_drv.connect(self.target, key_filename=identity_file, username=user)
+            self._dst_drv.connect(self.target, key_filename=identity_file, username=user or 'vagrant')
 
         @property
         def _ssh_base(self):
@@ -156,39 +157,89 @@ def main():
             return self._ssh_sudo(command)
 
         def analyze_services(self):
+            print '! analyzing services'
             _, out, _ = self._src_drv.exec_command("systemctl list-unit-files | grep enabled | grep \\.service | cut -f1 -d\\ ")
             enabled = []
             service_mapping = {'{}.service'.format(service): cls for cls in registry() for service in cls.leapp_meta().get('services', [])}
+            from pprint import pprint
+            pprint(service_mapping)
             for service in out.read().split():
+                print '! processing service name:', service
                 cls = service_mapping.get(service)
                 if cls:
+                    print '!', service, 'handled by', cls.__name__
                     enabled.append(cls)
+            pprint(enabled)
+            print '! services analyzed'
             return enabled
 
         @staticmethod
         def _get_run_systemd_service_cmd(service):
-            return "/bin/bash -c \"" + \
-                    "function split " + \
-                    "{ cat `find /etc/systemd/system -name $1` | grep $2 | sed 's/[^=]\+=\(.*\)$/\1/'; }; " + \
-                    "function run_service " + \
-                    "{ source `split $1 EnvironmentFile`; eval `split $1 ExecStart`; }; " + \
-                    "run_service {}.service\"".format(service)
+            return "/bin/bash /sbin/leapp-init " + service
 
         def create_systemd_containers(self, services):
-            self._ssh_sudo(self._prep_container_command())
+            # self._ssh_sudo(self._prep_container_command())
+            ftp = self._dst_drv.open_ftp()
+            with ftp.file('/opt/leapp-to/leapp-init', 'w') as f:
+                f.write('''#!/bin/bash
+
+[[ -f /sbin/leapp-init-prepare ]] && /bin/bash /sbin/leapp-init-prepare
+
+SERVICE_NAME=$1.service
+SVCTYPE=$(grep ^Type= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d= -f2-)
+SERVICE_USER=$(grep ^User= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d= -f2-)
+if [[ ! -z "$SERVICE_USER" ]] && [[ "$SERVICE_USER" != "$USER" ]]; then
+        echo $SERVICE_USER;
+        sudo -u $SERVICE_USER /sbin/leapp-init $1;
+        exit $?;
+fi
+eval $(grep ^Environment= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d= -f2-)
+for EFILE in $(grep ^EnvironmentFile= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d= -f2-); do
+        EFILE=$(echo $EFILE | sed "s/^-//");
+        if [ -f $EFILE ]; then
+                source $EFILE;
+        fi
+done;
+
+rm -f /tmp/leappd-init.notify;
+python -c "import os, socket; s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM); s.bind('/tmp/leappd-init.notify'); os.chmod('/tmp/leappd-init.notify', 0777); s.recv(1024)" &
+
+export NOTIFY_SOCKET=/tmp/leappd-init.notify;
+
+eval $(grep ^ExecStartPre= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d= -f2-);
+eval $(grep ^ExecStart= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d= -f2-);
+
+[[ "$SVCTYPE" == "forking" ]] && /usr/bin/sleep infinity;
+
+''')
             meta_resolve(services)
             mapped = registry(mapped=True)
+            services = meta_dependency_ordered(services)
+            from pprint import pprint
+            print "! Resolved service dependencies"
+            pprint(services)
             for svc in services:
-                svc(driver=self._dst_drv).fixup(services)
-                opts = []
-                for links in svc.get('require_links', ()):
-                    opts.append('container-' + mapped[links].leapp_meta()['services'][0])
+                smeta = svc.leapp_meta()
+                sname = smeta['services'][0]
+                svc(driver=self._dst_drv).fixup()
+                opts = [' -v /opt/leapp-to/leapp-init:/sbin/leapp-init']
+                if 'directories' in smeta or 'users' in smeta:
+                    opts.append(' -v /opt/leapp-to/' + sname + '.prepare:/sbin/leapp-init-prepare')
+                    with ftp.file('/opt/leapp-to/' + sname + '.prepare', 'w') as f:
+                        for u in smeta.get('users', ()):
+                            f.write('\ngetent passwd {user} > /dev/null || useradd -o -r {user} -s /sbin/nologin;\n'.format(user=u))
+                        for d in smeta.get('directories', ()):
+                            f.write('\nmkdir -p {path}; chown {user}:{group} {path}; chmod {mode} {path}\n'.format(**d))
+                for link in smeta.get('require_links', ()):
+                    print "opts for link", link
+                    opts.append(' --link container-' + mapped[link['target']].leapp_meta()['services'][0])
                 self.start_container(
-                        'centos:7', _get_run_systemd_service_cmd(svc['services'][0]),
-                        forwarded_ports=['{0}:{0}'.format(port) for port in svc['ports'][0]],
-                        name='container-' + svc['services'][0], exec_prep=False)
+                        'centos:7', self._get_run_systemd_service_cmd(sname),
+                        forwarded_ports=[(port, port) for port in smeta.get('ports', ())],
+                        name='container-' + sname, exec_prep=False, opts=opts)
+            ftp.close()
 
-        def _prep_container_command(self, name):
+        def _prep_container_command(self):
             command = 'rm -rf /opt/leapp-to/container ;' + \
                     'mkdir -p /opt/leapp-to/container && ' + \
                     'tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container'
@@ -209,8 +260,10 @@ def main():
                 else:
                     command += ' -p {:d}:{:d}'.format(host_port, container_port)
             if opts:
-                command += ' ' + opts
+                command += ' ' + ' '.join(opts)
             command += ' --name ' + name + ' ' + img + ' ' + init
+
+            print "Starting container\n----------------------------------\n",command,"\n------------------------------------------------"
             return self._ssh_sudo(command)
 
         def _fix_container(self, fix_str):
@@ -278,16 +331,17 @@ def main():
                 machine_src=machine_src
             )
             print('! copying over')
-            print('! ' + machine_src.suspend())
-            mc.copy()
-            print('! ' + machine_src.resume())
+            if not ovirt:
+                print('! ' + machine_src.suspend())
+                mc.copy()
+                print('! ' + machine_src.resume())
             print('! provisioning ...')
             # if ovirt use detection mechanism
             if ovirt:
-                services = mc.analyze()
-                for svc in services:
-                    mc.create_container(svc)
-                    mc.start_container(svc)
+                services = mc.analyze_services()
+                print('! starting services')
+                mc.create_systemd_containers(services)
+                result = 0
             # if el7 then use systemd
             elif machine_src.installation.os.version.startswith('7'):
                 result = mc.start_container('centos:7', '/usr/lib/systemd/systemd --system')
