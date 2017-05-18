@@ -1,6 +1,6 @@
 Name:       leapp
 Version:    0.0.1
-Release:    5
+Release:    6
 Summary:    leapp tool rpm
 
 Group:      Unspecified
@@ -43,6 +43,7 @@ Requires:   libguestfs-tools-c
 Requires:   libvirt-client
 Requires:   libvirt-python
 Requires:   nmap
+Requires:   sshpass
 Requires:   python-enum34
 Requires:   python2
 Requires:   python2-nmap
@@ -103,6 +104,10 @@ popd
 
 
 %changelog
+
+* Mon May 17 2017 Nick Coghlan <ncoghlan@redhat.com> 0.0.1-6
+- Add sshpass dependency for --ask-pass support in CLI (ncoghlan@redhat.com)
+
 * Mon May 08 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.0.1-5
 - Touch non existing file workaround not necessary anymore files have been
   already added (vfeenstr@redhat.com)

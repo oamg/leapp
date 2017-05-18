@@ -1,6 +1,14 @@
 """Steps for end-to-end testing of remote authentication configuration"""
 from behave import given, then
 
+import os
+
+@given("the tests are being run as root")
+def skip_unless_running_as_root(context):
+    """Skips the scenario if the tests are run as a non-root user"""
+    if os.getuid() != 0:
+        context.scenario.skip("This scenario can only be run as root")
+
 def _make_auth_test_command(context, target):
     """Create a leapp-to command to test remote authentication"""
     # Use destroy-containers, since it's currently the only command
@@ -21,8 +29,18 @@ def check_remote_access_with_identity_file(context, target):
     context.cli_helper.check_response_time(
         _make_auth_test_command(context, target),
         time_limit=20,
-        complete_identity=True
+        use_default_identity=True
     )
+
+@then("{target} should be accessible using the default password")
+def check_remote_access_with_interactive_password_entry(context, target):
+    """Check remote machine access using the default user & password"""
+    context.cli_helper.check_response_time(
+        _make_auth_test_command(context, target),
+        time_limit=20,
+        use_default_password=True
+    )
+
 
 @then("{target} should be accessible using ssh-agent")
 def check_remote_access_with_ssh_agent(context, target):
@@ -30,5 +48,5 @@ def check_remote_access_with_ssh_agent(context, target):
     context.cli_helper.check_response_time(
         _make_auth_test_command(context, target),
         time_limit=20,
-        complete_user=True
+        specify_default_user=True
     )
