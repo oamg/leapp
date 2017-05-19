@@ -366,6 +366,7 @@ eval $(grep ^ExecStart= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d=
                 ip,
                 parsed.user,
                 parsed.identity,
+                parsed.ask_pass,
                 machine_src.disks[0].host_path,
                 forwarded_ports=forwarded_ports,
                 machine_src=machine_src
