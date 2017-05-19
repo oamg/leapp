@@ -6,7 +6,7 @@ After=network.service
 [Service]
 Type=simple
 PIDFile=/var/run/mezzanine-blog.pid
-ExecStart=/bin/bash -c "cd /opt/blog && python manage.py runserver --insecure 0.0.0.0:80"
+ExecStart=python /opt/blog/manage.py runserver --insecure 0.0.0.0:80
 
 [Install]
 WantedBy=multi-user.target
