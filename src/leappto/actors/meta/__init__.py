@@ -12,7 +12,7 @@ def _meta_receiver(cls):
     return cls.__leapp_actor_meta__
 
 
-def _meta_init(cls)
+def _meta_init(cls):
     meta = getattr(cls, '__leapp_actor_meta__', None)
     if not meta:
         _REGISTRY.add(cls)
