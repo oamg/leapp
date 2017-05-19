@@ -12,16 +12,21 @@ def _meta_receiver(cls):
     return cls.__leapp_actor_meta__
 
 
+def _meta_init(cls)
+    meta = getattr(cls, '__leapp_actor_meta__', None)
+    if not meta:
+        _REGISTRY.add(cls)
+        meta = cls.__leapp_actor_meta__ = {}
+        cls.leapp_meta = classmethod(_meta_receiver)
+    return meta
+
+
 def _meta_decorator(f):
     @functools.wraps(f)
     def impl(*args, **kwargs):
         @functools.wraps(f)
         def decorator(cls):
-            meta = getattr(cls, '__leapp_actor_meta__', None)
-            if not meta:
-                _REGISTRY.add(cls)
-                meta = cls.__leapp_actor_meta__ = {}
-                cls.leapp_meta = classmethod(_meta_receiver)
+            meta = _meta_init(cls)
             meta[f.__name__] = meta.get(f.__name__, []) + list(args)
             return cls
         return decorator
@@ -69,6 +74,19 @@ def addr_link(addr, target, args=()):
 @_meta_decorator
 def require_links(*links, **kwargs):
     pass
+
+
+def force_host_networking_to(target):
+    requires_host_networking(target)
+    def wrapper(cls):
+        return cls
+    return wrapper
+
+
+def requires_host_networking(cls):
+    meta = _meta_init(cls)
+    meta['requires-host-networking'] = True
+    return cls
 
 
 def require_link(target):
