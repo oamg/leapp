@@ -273,7 +273,7 @@ eval $(grep ^ExecStart= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d=
                             f.write('\ngetent passwd {user} > /dev/null || useradd -o -r {user} -s /sbin/nologin;\n'.format(user=u))
                         for d in smeta.get('directories', ()):
                             f.write('\nmkdir -p {path}; chown {user}:{group} {path}; chmod {mode} {path}\n'.format(**d))
-                if sname.get('requires-host-networking', False):
+                if smeta.get('requires-host-networking', False):
                     opts.append('--network=host')
                 else:
                     for link in smeta.get('require_links', ()):
