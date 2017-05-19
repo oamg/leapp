@@ -18,6 +18,44 @@ The migration prototype currently handles exactly two cases:
 * migrating from a CentOS 7 VM to a macrocontainer running on
   a CentOS 7 container host.
 
+### Installing LeApp
+
+#### Installation on RHEL / CentOS 7
+* Install the EPEL7 repositories
+
+  On RHEL:
+
+      $ yum install -y http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm
+
+  On CentOS:
+
+      $ yum install epel-release
+
+* Install the repository
+
+      $ cd /etc/yum.repos.d && sudo wget https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/epel-7/evilissimo-leapp-epel-7.repo
+
+* Install LeApp
+
+      $ sudo yum install leapp-cockpit
+
+
+#### Installation on Fedora
+* Install the copr plugin
+
+      $ sudo dnf install dnf-plugins-core
+
+* Install the repo
+
+      $ sudo dnf copr enable evilissimo/leapp
+
+* Install LeApp
+
+      $ sudo dnf install leapp-cockpit
+
+
+## Development, Testing and Demo setup
+
 ### Setting up to run the prototype demonstration
 
 If the integration tests haven't been run, first install the testing
