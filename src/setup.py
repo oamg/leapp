@@ -59,7 +59,8 @@ setup(
     install_requires=[
         "enum34",
         "libvirt-python",
-        "python-nmap==0.6.1"
+        "paramiko",
+        "python-nmap==0.6.1",
     ],
 
     # Extras:

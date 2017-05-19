@@ -1,2 +1,2 @@
-# Symlink to virtualenv
-.venv
+# behave testing reports
+reports/
