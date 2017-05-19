@@ -189,7 +189,7 @@ def main():
         def copy(self):
             # Vagrant always uses qemu:///system, so for now, we always run
             # virt-tar-out as root, rather than as the current user
-            proc = Popen(['sudo', 'virt-tar-out', '-a', self.disk, '/', '-'], stdout=PIPE)
+            proc = Popen(['sudo', 'bash', '-c', 'LIBGUESTFS_BACKEND=direct virt-tar-out -a {} / -'.format(self.disk)], stdout=PIPE)
             return self._ssh('cat > /opt/leapp-to/container.tar.gz', stdin=proc.stdout)
 
         def destroy_containers(self):
