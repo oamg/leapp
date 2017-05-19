@@ -378,10 +378,9 @@ eval $(grep ^ExecStart= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d=
                 machine_src=machine_src
             )
             print('! copying over')
-            if not ovirt:
-                print('! ' + machine_src.suspend())
-                mc.copy()
-                print('! ' + machine_src.resume())
+            print('! ' + machine_src.suspend())
+            mc.copy()
+            print('! ' + machine_src.resume())
             print('! provisioning ...')
             # if ovirt use detection mechanism
             if ovirt:
