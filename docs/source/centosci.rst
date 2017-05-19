@@ -35,16 +35,19 @@ Jenkins Job
 Jenkins Job Builder file is a declarative way (YAML) of describing Jenkins Job, this file also describes who
 can start test runs and what trigger phrase to use for PRs not by people from the admin list.
 
-### Adding yourself to the list of people who can trigger a test run
+Adding yourself to the list of people who can trigger a test run
+----------------------------------------------------------------
 
 Add your GitHub handle to the `admin-list` list under `jobs.triggers.github-pull-request` and open a PR with the change.
 
-### The trigger phrase
+The trigger phrase
+------------------
 
 We're currently using `*Jenkins: ok to test*` with asterisks being wildcards, when any user in the `admin-list` comments on a PR
 with matching pattern a new test run will be scheduled.
 
-### Updating the Jenkins Job
+Updating the Jenkins Job
+------------------------
 
 The job definition in Jenkins is updated periodically in 10 minutes intervals from **master** branch only. That means that for new
 settings to take effect it needs to be merged into master first.

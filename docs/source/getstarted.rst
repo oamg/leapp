@@ -16,31 +16,31 @@ Setting up to run the prototype demonstration
 
 Installation - CentOS 7
 -----------------------
-Install all the requirements of this demo via:
+Install all the requirements of this demo via: ::
 
-	$ sudo yum-config-manager --add-repo https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/epel-7/evilissimo-leapp-epel-7.repo
-	$ sudo yum install epel-release centos-release-scl
-	$ sudo yum install sclo-vagrant1 ansible gcc git libguestfs-tools-c libvirt-client libvirt-devel nmap redhat-rpm-config python2-leapp leapp-cockpit leapp-tool
+    sudo yum-config-manager --add-repo https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/epel-7/evilissimo-leapp-epel-7.repo
+    sudo yum install epel-release centos-release-scl
+    sudo yum install sclo-vagrant1 ansible gcc git libguestfs-tools-c libvirt-client libvirt-devel nmap redhat-rpm-config python2-leapp leapp-cockpit leapp-tool
 	
-Enable vagrant software collection:
+Enable vagrant software collection: ::
 
-	scl enable sclo-vagrant1 bash
+    scl enable sclo-vagrant1 bash
 
 Installation - Fedora 25
 ------------------------
 
-Install all the requirements of this demo via:
+Install all the requirements of this demo via: ::
 
-    $ sudo dnf config-manager --add-repo https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/fedora-25/evilissimo-leapp-fedora-25.repo
-    $ sudo dnf install dnf-plugins-core
-    $ sudo dnf builddep ./demo/prototype-deps.spec  
-    $ sudo dnf install python2-leapp leapp-cockpit leapp-tool 
+    sudo dnf config-manager --add-repo https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/fedora-25/evilissimo-leapp-fedora-25.repo
+    sudo dnf install dnf-plugins-core
+    sudo dnf builddep ./demo/prototype-deps.spec  
+    sudo dnf install python2-leapp leapp-cockpit leapp-tool 
 
 
 If the integration tests haven't been run, first install the testing
-instance of the CLI:
+instance of the CLI: ::
 
-    $ pipsi --bin-dir $PWD/bin install --python `which python2.7` $PWD/src
+    pipsi --bin-dir $PWD/bin install --python `which python2.7` $PWD/src
 
 The integration tests do this automatically, so this step can be skipped if
 those have already been run.
@@ -48,20 +48,21 @@ those have already been run.
 Preparation & Running the demo
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Make sure the libvirt daemon is running and enabled:
-    $ for i in start enable; do sudo systemctl $i libvirtd; done
+Make sure the libvirt daemon is running and enabled: ::
 
-And passwordless access to VM management operations:
+    for i in start enable; do sudo systemctl $i libvirtd; done
 
-    $ sudo usermod -aG vagrant,libvirt $USER
+And passwordless access to VM management operations: ::
+
+    sudo usermod -aG vagrant,libvirt $USER
 
 You will need to log out and back in again, or start a new user
 session with `su $USER`, to get the new group memberships to take
 effect.
 
-Finally, start all the demonstration VMs by running:
+Finally, start all the demonstration VMs by running: ::
 
-    $ demo/start_vms.sh
+    demo/start_vms.sh
 
 This script iterates over all the subdirectories of `demo/vmdefs` and runs
 `vagrant up --provision`.
@@ -78,11 +79,11 @@ The demo admin login credentials are:
 * Username: `root`
 * Password: `toor`
 
-Then, from the base of the local clone, run:
+Then, from the base of the local clone, run: ::
 
-    $ sudo bin/leapp-tool migrate-machine \
-           --identity integration-tests/config/leappto_testing_key \
-           --tcp-port 9000:9000 -t centos7-target centos6-app-vm
+    sudo bin/leapp-tool migrate-machine \
+        --identity integration-tests/config/leappto_testing_key \
+        --tcp-port 9000:9000 -t centos7-target centos6-app-vm
 
 The target VM should now be showing the PHP admin page,
 with the same information as the source VM.
@@ -91,31 +92,25 @@ with the same information as the source VM.
 Running the demonstration via Cockpit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Link the Cockpit plugin (if not already linked):
+Link the Cockpit plugin (if not already linked): ::
 
-    $ mkdir -p ~/.local/share/cockpit
-    $ ln -snf $PWD/cockpit ~/.local/share/cockpit/leapp
+    mkdir -p ~/.local/share/cockpit
+    ln -snf $PWD/cockpit ~/.local/share/cockpit/leapp
 
-Link the `leapp` project directory (if not already linked):
+Link the `leapp` project directory (if not already linked): ::
 
-    $ sudo ln -snf $PWD /opt/leapp
+    sudo ln -snf $PWD /opt/leapp
 
 Open Cockpit in your browser:
 
     http://localhost:9090
 
-When authenticating, check the option to allow
-Cockpit to retain your password for later
-privilege escalation.
-
-Open "Tools->Le-App" from the navigation menu.
-
-Check that the application link for the source VM
-show the PHP info page, while the target VM isn't
+When authenticating, check the option to allow Cockpit to retain your password for later
+privilege escalation. Open **Tools->Le-App** from the navigation menu. Then check that the 
+application link for the source VM show the PHP info page, while the target VM isn't
 running a HTTP server.
 
-Click the "Migrate" button (this is currently
-hardcoded to migrate `centos6-app-vm` to `centos7-target`)
+Click the "Migrate" button (this is currently hardcoded to migrate `centos6-app-vm` to `centos7-target`)
 
 The target VM should now be showing the PHP info page,
 with the same information as the source VM.
@@ -124,13 +119,10 @@ with the same information as the source VM.
 Known Constraints
 ^^^^^^^^^^^^^^^^^
 
-Currently known constraints on this approach:
+Currently known constraints on this approach: 
 
-* SELinux process separation is not available inside
-  the resulting macrocontainer
-
+*   SELinux process separation is not available inside the resulting macrocontainer
 
 Key limitations in the current implementation:
 
-* Remote access to systems requires Vagrant
-  managed VMs running locally under libvirt
+*   Remote access to systems requires Vagrant managed VMs running locally under libvirt

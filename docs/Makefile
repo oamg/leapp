@@ -1,5 +1,7 @@
 # Minimal makefile for Sphinx documentation
 #
+## default build operation:
+all: clean html
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
@@ -12,8 +14,6 @@ BUILDDIR      = build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-all: clean html
-
 .PHONY: help Makefile
 
 # Catch-all target: route all unknown targets to Sphinx using the new
@@ -21,4 +21,3 @@ all: clean html
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-  
