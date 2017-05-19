@@ -1,7 +1,7 @@
 # Minimal makefile for Sphinx documentation
 #
 ## default build operation:
-all: clean html
+all: clean html 
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
