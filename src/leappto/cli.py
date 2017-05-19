@@ -218,7 +218,7 @@ def main():
             return "/bin/bash /sbin/leapp-init " + service
 
         def create_systemd_containers(self, services):
-            # self._ssh_sudo(self._prep_container_command())
+            self._ssh_sudo(self._prep_container_command())
             ftp = self._dst_drv.open_ftp()
             with ftp.file('/opt/leapp-to/leapp-init', 'w') as f:
                 f.write('''#!/bin/bash
@@ -252,6 +252,7 @@ eval $(grep ^ExecStart= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d=
 [[ "$SVCTYPE" == "forking" ]] && /usr/bin/sleep infinity;
 
 ''')
+            ftp.chmod('/opt/leapp-to/leapp-init', 0755)
             meta_resolve(services)
             mapped = registry(mapped=True)
             services = meta_dependency_ordered(services)
@@ -270,9 +271,12 @@ eval $(grep ^ExecStart= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d=
                             f.write('\ngetent passwd {user} > /dev/null || useradd -o -r {user} -s /sbin/nologin;\n'.format(user=u))
                         for d in smeta.get('directories', ()):
                             f.write('\nmkdir -p {path}; chown {user}:{group} {path}; chmod {mode} {path}\n'.format(**d))
-                for link in smeta.get('require_links', ()):
-                    print "opts for link", link
-                    opts.append(' --link container-' + mapped[link['target']].leapp_meta()['services'][0])
+                if sname.get('requires-host-networking', False):
+                    opts.append('--network=host')
+                else:
+                    for link in smeta.get('require_links', ()):
+                        print "opts for link", link
+                        opts.append(' --link container-' + mapped[link['target']].leapp_meta()['services'][0])
                 self.start_container(
                         'centos:7', self._get_run_systemd_service_cmd(sname),
                         forwarded_ports=[(port, port) for port in smeta.get('ports', ())],
