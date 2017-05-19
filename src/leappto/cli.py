@@ -223,6 +223,8 @@ def main():
             with ftp.file('/opt/leapp-to/leapp-init', 'w') as f:
                 f.write('''#!/bin/bash
 
+systemd-tmpfiles --boot --create;
+
 [[ -f /sbin/leapp-init-prepare ]] && /bin/bash /sbin/leapp-init-prepare
 
 SERVICE_NAME=$1.service
