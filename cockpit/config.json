@@ -1,0 +1,5 @@
+{
+    "tool-path": "/opt/leapp/bin/leapp-tool",
+    "tool-workdir": "/opt/leapp/bin/",
+    "version": "0.0.1-master"
+}

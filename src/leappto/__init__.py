@@ -157,6 +157,12 @@ class Machine:
     def installation(self):
         return self._installation
 
+    def suspend(self):
+        raise NotImplementedError
+
+    def resume(self):
+        raise NotImplementedError
+
     def _to_dict(self):
         return {'id': self.id, 'hostname': self.hostname, 'ip': self.ip,
                 'arch': self.arch, 'type': self.type,
