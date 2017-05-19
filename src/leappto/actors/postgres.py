@@ -7,7 +7,7 @@ from leappto.actors import Actor
 @meta.services('postgresql')
 @meta.rpms('postgresql-server')
 @meta.targets_services('postgresql')
-@meta.directory('/var/run/postgresql', user='postgres', group='postgres', mode='0755')
+# @meta.directory('/var/run/postgresql', user='postgres', group='postgres', mode='0755')
 class Postgres(Actor):
     def __init__(self, *args, **kwargs):
         super(Postgres, self).__init__(*args, **kwargs)

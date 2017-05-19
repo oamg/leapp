@@ -7,6 +7,7 @@ from leappto.actors import Actor
 @meta.services('httpd')
 @meta.rpms('httpd')
 @meta.targets_services('httpd')
+# @meta.directory('/var/run/httpd', user='apache', group='apache', mode='0755')
 class Apache(Actor):
     def __init__(self, *args, **kwargs):
         super(Apache, self).__init__(*args, **kwargs)
