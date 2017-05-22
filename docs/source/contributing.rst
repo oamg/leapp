@@ -4,7 +4,7 @@ Contributing to LeApp
 :+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
 
 The following is a set of guidelines for contributing effectively to LeApp,
-which is hosted in the [LeApp-To Organization](https://github.com/leapp-to/) on Github.
+which is hosted in the `LeApp-To Organization <https://github.com/leapp-to/>`_ on Github.
 These guidelines are expected to change over time as the needs of the project
 evolve, so feel free to propose changes to this document in a pull request -
 it's a lot easier to discuss a specific proposed update than it is general
@@ -13,10 +13,9 @@ principles.
 Submitting Issues
 ^^^^^^^^^^^^^^^^^
 
-* All elements of the current prototype (documentation, CLI, demonstration
-Cockpit plugin, integration tests) are maintained in the
-[prototype repo](https://github.com/leapp-to/prototype), so any issues
-should be filed there regardless of the component they relate to
+* All elements of the current prototype (documentation, CLI, demonstration Cockpit plugin, 
+  integration tests) are maintained in the `prototype repo <https://github.com/leapp-to/prototype>`_, 
+  so any issues should be filed there regardless of the component they relate to
 
 Submitting a Pull Request
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -49,13 +48,13 @@ Before you submit your pull request consider the following guidelines:
 * When opening a pull request, select the `master` branch as a base.
 * Mark your pull request with **[WIP]** (Work In Progress) to get feedback but prevent merging (e.g. [WIP] Update CONTRIBUTING.md)
 * If we suggest changes then:
-  * Make the required updates
-  * Push changes to git (this will update your Pull Request):
-    * You can add new commit
-    * Or rebase your branch and force push to your Github repository: ::
+    * Make the required updates
+    * Push changes to git (this will update your Pull Request):
+        * You can add new commit
+        * Or rebase your branch and force push to your Github repository: ::
 
-        git rebase -i master
-        git push -f origin bug/my-fix-branch
+            git rebase -i master
+            git push -f origin bug/my-fix-branch
 
 That's it! Thank you for your contribution!
 
@@ -65,7 +64,7 @@ Merge Rules
 * Include unit or integration tests for the capability you have implemented
 * Include documentation for the capability you have implemented
 * If you are fixing an issue, include the issue number you are fixing
-* Python code should follow [PEP8](https://www.python.org/dev/peps/pep-0008/) conventions
+* Python code should follow `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_ conventions
 
 Git Commit Messages
 ^^^^^^^^^^^^^^^^^^^
@@ -104,8 +103,8 @@ Integration tests
   aren't unexpectedly introduced into the CI environment
 * When new feature files, step files, or context attributes are defined, add
   a corresponding entry to the
-  [integration tests README](../integration-tests/README.md)
-* see the [integration tests README](../integration-tests/README.md) for more
+  :doc:`integration tests <integration-tests>`
+* see the :doc:`integration tests <integration-tests>` for more
   details
 
 ### Demonstration Cockpit plugin
