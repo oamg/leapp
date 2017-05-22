@@ -48,7 +48,7 @@ source_suffix = ['.rst', '.md']
 master_doc = 'index'
 
 # General information about the project.
-project = 'Leapp'
+project = 'LeApp-To'
 copyright = '2017, Leapp Team'
 author = 'Leapp Team'
 
