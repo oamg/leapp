@@ -6,7 +6,3 @@
     - cockpit
     - xorg-x11-server-Xvfb
     - firefox
-
-- name: Check geckodriver
-  shell: geckodriver --version
-
