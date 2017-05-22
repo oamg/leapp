@@ -2,3 +2,4 @@
   roles:
     - scl
     - vagrant
+    - cockpit-integration
