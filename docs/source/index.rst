@@ -19,6 +19,7 @@ Welcome to Leapp's documentation!
    leapp-tool
    ui
    centosci
+   contributing
 
 
 
