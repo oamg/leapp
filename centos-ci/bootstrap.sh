@@ -15,4 +15,7 @@ cd centos-ci/ansible/
 
 ansible-playbook -i 'localhost,' -c local playbook.yml
 
+Xvfb :19 -screen 0 1024x768x16 &
+export DISPLAY=:19
+
 scl enable rh-python35 sclo-vagrant1 -- sh -xc "cd ../.. && pipenv shell 'cd integration-tests && behave --no-color --junit; exit \\\$?'"
