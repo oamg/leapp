@@ -168,6 +168,7 @@ class DemoCockpitSession(object):
         browser = self._browser
         user = self._user
         browser.visit(self._cockpit_url)
+        assert_that(browser.status_code.is_success(), "Failed to load login page")
         # browser.fill_form looks form elements up by name rather than id, so we
         # find and populate the form elements individually
         browser.find_by_id("login-user-input").fill(user.username)
