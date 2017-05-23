@@ -11,7 +11,7 @@
 - name: Symlink LeApp development CLI
   file:
     src: "{{ playbook_dir | dirname | dirname }}"
-    dest: /opt/leapp/
+    dest: /opt/leapp
     owner: root
     group: root
     state: link
