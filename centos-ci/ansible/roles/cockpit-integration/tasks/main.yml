@@ -6,3 +6,13 @@
     - cockpit
     - xorg-x11-server-Xvfb
     - firefox
+
+# Temporary symlink until we actually build and install the LeApp RPMs in CI
+- name: Symlink LeApp development CLI
+- file:
+    src: {{ playbook_dir | dirname | dirname }}
+    dest: /opt/leapp/
+    owner: root
+    group: root
+    state: link
+    mode: 0755
