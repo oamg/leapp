@@ -16,26 +16,52 @@ Setting up to run the prototype demonstration
 
 Installation - CentOS 7
 -----------------------
-Install all the requirements of this demo via: ::
+Install LeApp-to using these steps: ::
 
     sudo yum-config-manager --add-repo https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/epel-7/evilissimo-leapp-epel-7.repo
-    sudo yum install epel-release centos-release-scl
-    sudo yum install sclo-vagrant1 ansible gcc git libguestfs-tools-c libvirt-client libvirt-devel nmap redhat-rpm-config python2-leapp leapp-cockpit leapp-tool
+    sudo yum install epel-release 
+    sudo yum install leapp-cockpit 
+
+: TO BE DONE
+Optional (Demo setup): ::
+
+    sudo yum install centos-release-scl
+    sudo yum install sclo-vagrant1 
 	
 Enable vagrant software collection: ::
 
     scl enable sclo-vagrant1 bash
 
+Installation - RHEL 7
+-----------------------
+Install LeApp-to using these steps: ::
+
+    sudo curl https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/epel-7/evilissimo-leapp-epel-7.repo -o /etc/yum.repos.d/evilissimo-leapp-epel-7.repo
+    sudo yum install http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm
+    sudo subscription-manager --enable rhel-7-server-extras-rpms
+    sudo yum install leapp-cockpit 
+
+: TO BE DONE
+Optional (Demo setup): ::
+
+    sudo yum install sclo-vagrant1 ansible gcc git libguestfs-tools-c libvirt-client libvirt-devel nmap 
+
+Download and install Vagrant from official pages: ::
+
+    https://www.vagrantup.com/downloads.html
+	
+
 Installation - Fedora 25
 ------------------------
-
-Install all the requirements of this demo via: ::
+Install LeApp-to using these steps: ::
 
     sudo dnf config-manager --add-repo https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/fedora-25/evilissimo-leapp-fedora-25.repo
-    sudo dnf install dnf-plugins-core
-    sudo dnf builddep ./demo/prototype-deps.spec  
-    sudo dnf install python2-leapp leapp-cockpit leapp-tool 
+    sudo dnf install leapp-cockpit
 
+: TO BE DONE
+Optional (Demo setup): ::
+        
+    sudo dnf install vagrant
 
 If the integration tests haven't been run, first install the testing
 instance of the CLI: ::
