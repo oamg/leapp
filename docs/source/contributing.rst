@@ -1,7 +1,7 @@
 Contributing to LeApp
 =====================
 
-:+1::tada: First off, thanks for taking the time to contribute! :tada::+1:
+First off, thanks for taking the time to contribute!
 
 The following is a set of guidelines for contributing effectively to LeApp,
 which is hosted in the `LeApp-To Organization <https://github.com/leapp-to/>`_ on Github.
