@@ -14,4 +14,17 @@ ansible = ">= 2.0"
 pipsi = "*"
 pipenv = ">= 3.6.0"
 splinter = "*"
+
+# We restrict ourselves to older versions of Selenium for the Cockpit plugin
+# testing as:
+#
+#  - Selenium 3.0+ requires geckodriver, the WebDriver interface to Firefox
+#  - geckodriver needs a newer version of Firefox than CentOS 7 provides
+#  - even without that, the tests currently fail when run through geckodriver
+#  - Mozilla themselves say "Marionette and geckodriver are not yet feature
+#    complete. This means that they do not yet offer full conformance with the
+#    WebDriver standard or complete compatibility with Selenium."
+#
+# See https://developer.mozilla.org/en-US/docs/Mozilla/QA/Marionette/WebDriver
+# for more details on the development status of Marionette & geckodriver
 selenium = "< 3.0"
