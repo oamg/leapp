@@ -9,7 +9,7 @@
 
 # Temporary symlink until we actually build and install the LeApp RPMs in CI
 - name: Symlink LeApp development CLI
-- file:
+  file:
     src: "{{ playbook_dir | dirname | dirname }}"
     dest: /opt/leapp/
     owner: root
