@@ -16,6 +16,7 @@ Welcome to Leapp's documentation!
    :caption: Contents:
 
    getstarted
+   adddemo
    leapp-tool
    ui
    centosci
