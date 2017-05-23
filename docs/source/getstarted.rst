@@ -16,17 +16,16 @@ Setting up to run the prototype demonstration
 
 Installation - CentOS 7
 -----------------------
-Install LeApp-to using these steps: ::
+Install LeApp-To using these steps: ::
 
     sudo yum-config-manager --add-repo https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/epel-7/evilissimo-leapp-epel-7.repo
     sudo yum install epel-release 
     sudo yum install leapp-cockpit 
 
-: TO BE DONE
 Optional (Demo setup): ::
 
     sudo yum install centos-release-scl
-    sudo yum install sclo-vagrant1 
+    sudo yum install sclo-vagrant1 qemu libguestfs-tools-c libvirt libvirt-devel ruby-devel gcc qemu-kvm nmap libffi-devel
 	
 Enable vagrant software collection: ::
 
@@ -34,35 +33,39 @@ Enable vagrant software collection: ::
 
 Installation - RHEL 7
 -----------------------
-Install LeApp-to using these steps: ::
+Install LeApp-To using these steps: ::
 
     sudo curl https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/epel-7/evilissimo-leapp-epel-7.repo -o /etc/yum.repos.d/evilissimo-leapp-epel-7.repo
     sudo yum install http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm
     sudo subscription-manager --enable rhel-7-server-extras-rpms
     sudo yum install leapp-cockpit 
 
-: TO BE DONE
-Optional (Demo setup): ::
+Optional (Demo setup): 
 
-    sudo yum install sclo-vagrant1 ansible gcc git libguestfs-tools-c libvirt-client libvirt-devel nmap 
-
-Download and install Vagrant from official pages: ::
+* Download and install Vagrant from official pages: ::
 
     https://www.vagrantup.com/downloads.html
+
+* Install dependencies required by vagrant build: ::
+
+    sudo yum install qemu libguestfs-tools-c libvirt libvirt-devel ruby-devel gcc qemu-kvm nmap libffi-devel
 	
 
 Installation - Fedora 25
 ------------------------
-Install LeApp-to using these steps: ::
+Install LeApp-To using these steps: ::
 
-    sudo dnf config-manager --add-repo https://copr.fedorainfracloud.org/coprs/evilissimo/leapp/repo/fedora-25/evilissimo-leapp-fedora-25.repo
+    sudo dnf install dnf-plugins-core 
+    sudo dnf copr enable evilissimo/leapp
     sudo dnf install leapp-cockpit
 
-: TO BE DONE
 Optional (Demo setup): ::
         
-    sudo dnf install vagrant
+    sudo dnf install vagrant qemu libguestfs-tools-c libvirt libvirt-devel ruby-devel gcc qemu-kvm nmap libffi-devel
 
+
+Preparation & Running the demo
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 If the integration tests haven't been run, first install the testing
 instance of the CLI: ::
 
@@ -71,12 +74,13 @@ instance of the CLI: ::
 The integration tests do this automatically, so this step can be skipped if
 those have already been run.
 
-Preparation & Running the demo
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 Make sure the libvirt daemon is running and enabled: ::
 
     for i in start enable; do sudo systemctl $i libvirtd; done
+
+The prototype requires Vagrant with some relevant plugins: ::
+
+    sudo vagrant plugin install ansible hitimes nio4r vagrant-libvirt
 
 And passwordless access to VM management operations: ::
 
