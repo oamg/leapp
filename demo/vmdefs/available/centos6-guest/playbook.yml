@@ -8,4 +8,3 @@
     - role: php
       repo_version: 6
     - phpmyadmin
-    - ovirt-guest-agent
