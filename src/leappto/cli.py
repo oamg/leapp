@@ -2,15 +2,213 @@
 
 from argparse import ArgumentParser
 from grp import getgrnam, getgrgid
-from json import dumps
-from os import getuid
+from json import dumps, loads
+from os import getuid, pipe, read, path
+from tempfile import NamedTemporaryFile, mkdtemp
 from pwd import getpwuid
-from subprocess import Popen, PIPE
-from collections import OrderedDict
+from subprocess import Popen, PIPE, check_output
+from collections import OrderedDict, namedtuple
 from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from leappto.version import __version__
 import sys
 import nmap
+import time
+
+
+# ssh -o IdentityFile=/home/podvody/Repos/leapp-proto/demo/vmdefs/centos7-mezzanine/.vagrant/machines/default/libvirt/private_key -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o User=vagrant -4 192.168.121.251 sudo -u postgres PGPASSWORD=meza007 pg_dump -F t -U meza db | oc exec -i postgresql-1-qm3mx -- bash -c 'pg_restore -C -d postgres -F t'
+
+DatabaseInfo = namedtuple('DatabaseInfo', ['name', 'username', 'password'])
+
+
+def _ssh_config(username, identity):
+    assert username is not None and isinstance(username, str), "username should be str or None"
+    assert isinstance(identity, str), "identity should be str"
+
+    settings = {
+        'StrictHostKeyChecking': 'no',
+        'PasswordAuthentication': 'no',
+        'IdentityFile': identity,
+    }
+    if username is not None:
+        settings['User'] = username
+
+    return ['-o {}={}'.format(k, v) for k, v in settings.items()]
+
+
+def _ssh_base(cfg, tgt):
+    return ['ssh'] + cfg + ['-4', tgt]
+
+
+def _ssh(cfg, tgt, cmd, **kwargs):
+    arg = _ssh_base(cfg, tgt) + cmd
+    print(" ".join(arg))
+    return Popen(arg, **kwargs).wait()
+
+def _ssh_output(cfg, tgt, cmd):
+    arg = _ssh_base(cfg, tgt) + cmd
+    return check_output(arg)
+
+
+def get_value(obj, pathspec, default=None, strict=False):
+    if '.' not in pathspec and pathspec not in obj:
+        if strict:
+            raise ValueError('pathspec: "{}" is invalid'.format(pathspec))
+        return default
+    bound = obj
+    for item in pathspec.split('.'):
+        if item in bound:
+            bound = bound[item]
+        else:
+            if strict:
+                raise ValueError('pathspec: "{}" is invalid'.format(pathspec))
+            return default
+    return bound
+
+
+def get_items(obj, *items):
+    i = []
+    for item in items:
+        i.append(obj[item])
+    return i
+
+
+def get_db_connection(db_info):
+    return DatabaseInfo(*get_items(db_info, 'NAME', 'USER', 'PASSWORD'))
+
+
+def get_data_from_metadata(metadata):
+    # handle only the first django element
+    db_dict = get_value(metadata['django'][0], 'data.db.default')
+    return get_db_connection(db_dict)
+
+
+def migrate_microservices(source_ip, target_ip, openshift, identity, user):
+    ANALYZER_PATH = '/opt/leapp-to/analyzers/django'
+
+    os_user, os_pw = openshift.split(':')
+
+    ssh_config = _ssh_config(user, identity)
+
+    def scp(src, dst, **kwargs):
+        return Popen(['scp', '-r'] + ssh_config + [src, dst], **kwargs).wait()
+
+    def ssh(cmd, **kwargs):
+        return _ssh(ssh_config, source_ip, cmd, **kwargs)
+
+    def ssh_output(cmd):
+        return _ssh_output(ssh_config, source_ip, cmd)
+
+    def oc(cmd, **kwargs):
+        print('oc ' + ' '.join(cmd))
+        return Popen(['oc'] + cmd, **kwargs).wait()
+
+    def oc_process_apply(variables, file):
+        proc = ['oc', 'process', '-f', file]
+        for var in variables:
+            proc += ['-v', var]
+        p = Popen(proc, stdout=PIPE)
+        apply = ['oc', 'apply', '-f', '-']
+        a = Popen(apply, stdin=p.stdout).wait()
+        p.wait()
+
+    def oc_get_pod_name(selector):
+        sel = ["oc", "get", "-o", "jsonpath", "pod",
+               "--selector=name={}".format(selector),
+               "--template={.items[*].metadata.name}"]
+        return check_output(sel)
+
+
+    print('! Creating remote tmp dir')
+    ## = COPY IN THE DATA ====================================================
+    tmp_dir = ssh_output(['mktemp', '-d']).strip()
+    print('! Copying analyzer into remote tmp dir: {}'.format(tmp_dir))
+    scp(ANALYZER_PATH, source_ip+':'+tmp_dir)
+
+    ## = EXECUTE ANALYZER ====================================================
+    print('! Executing analuzer remotely')
+    metadata = loads(ssh_output(['python ' + path.join(tmp_dir, 'django/django_analyzer_impl.py')]))
+    import pprint
+    print('! Analyzer data:')
+    pprint.pprint(metadata)
+
+    print('! Connecting to OpenShift: {}@{}'.format(os_user, target_ip))
+    oc(['login', '-u', os_user, '-p', os_pw, 'https://{}:8443/'.format(target_ip)])
+
+
+    ## = USE DATA ============================================================
+    db_conn = get_data_from_metadata(metadata)
+
+    print('! Starting PostgreSQL Pod & Services')
+    oc_process_apply([], '/home/podvody/Repos/leapp-proto/src/leappto/playground/artifacts/openshift-memcached.yaml')
+    oc_process_apply(['POSTGRESQL_VERSION=9.2'], '/home/podvody/Repos/leapp-proto/src/leappto/playground/artifacts/openshift-postgresql.yaml')
+    
+    pgsql_pod = None
+    deadline = time.time() + 120
+    next_message = time.time() + 2
+    print('! Waiting for PostgreSQL pod to become active ...')
+    while True:
+        if time.time() >= deadline:
+            break
+        if time.time() >= next_message:
+            print(' > still waiting')
+            next_message = time.time() + 2
+        pgsql_pod = oc_get_pod_name('postgresql')
+        time.sleep(1)
+        if pgsql_pod:
+            break
+
+    print('! Waiting for the pod to become ready ...')
+    time.sleep(30)
+    print('! Running PostgreSQL pod: ' + pgsql_pod)
+    create_user = 'PGPASSWORD={pw} createuser {un}'.format(pw=db_conn.password, un=db_conn.username)
+    oc(['exec', pgsql_pod, '--', 'bash', '-c', create_user])
+
+    with NamedTemporaryFile() as tmp:
+        cmd = 'sudo -u {s_user} PGPASSWORD={d_password} pg_dump -F t -U {d_user} {d_name}'
+        fmt = {
+            's_user': 'postgres',
+            'd_user': db_conn.username,
+            'd_name': db_conn.name,
+            'd_password': db_conn.password
+        }
+        ssh([cmd.format(**fmt)], stdout=tmp)
+        print('! Database backup snapshotted in: {} ({} bytes) '.format(tmp.name, path.getsize(tmp.name)))
+
+        tmp.seek(0)
+        cmd = '/opt/rh/postgresql92/root/usr/bin/pg_restore -C -d postgres'
+        oc(['exec', '-i', pgsql_pod, '--', 'bash', '-c', "pg_restore -C -d postgres -F t"], stdin=tmp)
+        print('! Setting password for user: meza')
+        oc(['exec', '-i', pgsql_pod, '--', 'bash', '-c', 'psql -c "ALTER USER meza PASSWORD \'meza007\';"'], stdin=tmp)
+
+    ## =======================================================================
+    print('! Copying application source to artifacts')
+    src_path = metadata['django'][0]['path']
+    app_source_dir = mkdtemp()
+    scp(source_ip+':'+src_path, app_source_dir)
+
+    arr = ['sed', '-i', 's/MIDDLEWARE_CLASSES/MIDDLEWARE/g', path.join(app_source_dir, 'blog/blog', 'settings.py')]
+    print(arr)
+    check_output(arr)
+    print('! Updating configuration before deployment')
+    mocked_settings_py = path.relpath(metadata['django'][0]['settings'][0], src_path)
+    with open(path.join(app_source_dir, 'blog', mocked_settings_py), 'w+') as spy:
+        print('! Updated file: \n' + pprint.pformat(metadata['django'][0]['deploy_settings']))
+        spy.write(metadata['django'][0]['deploy_settings'][0]['detail'])
+    ## =======================================================================
+
+    print('! Compressing sources\n' + check_output(['tar', '--format=gnu', '-cvf', '/tmp/deploy.tar', '-C', app_source_dir+'/'+'blog/', '.']))
+
+    print('! Executing S2I Build')
+    oc(['new-build', '--strategy=source', '--docker-image=centos/python-27-centos7', '--to=django-mezza', app_source_dir+'/'+'blog/'])
+    time.sleep(2)
+    oc(['start-build', '--from-dir=/tmp/deploy.tar', 'django-mezza'])
+    print('! Listening to build events ...')
+    oc(['logs', '-f', 'django-mezza-1-build'])
+    oc(['new-app', 'django-mezza'])
+    oc(['expose', 'service', '--port', '80', '--path', '/', 'django-mezza'])
+    oc(['get', 'route'])
+    ## =======================================================================
+
 
 VERSION='leapp-tool {0}'.format(__version__)
 
@@ -44,6 +242,7 @@ def _make_argument_parser():
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
     destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
     scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
+    microservices_cmd = parser.add_parser('microservices', help='migrate source VM to a target OpenShift cluster')
 
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
     list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
@@ -79,6 +278,12 @@ def _make_argument_parser():
 
     scan_ports_cmd.add_argument('range', help='port range, example of proper form:"-100,200-1024,T:3000-4000,U:60000-"')
     scan_ports_cmd.add_argument('ip', help='virtual machine ip address')
+
+    microservices_cmd.add_argument('source', help='source machine to migrate')
+    microservices_cmd.add_argument('-t', '--target', default=None, help='target VM name')
+    microservices_cmd.add_argument('-o', '--openshift-credentials', default='developer:developer', help='credentials to use to access target OpenShift cluster in the username:password format')
+    _add_identity_options(microservices_cmd)
+
     return ap
 
 # Run the CLI
@@ -303,3 +508,25 @@ def main():
                 result['ports'][proto][port] = port_scanner[ip][proto][port]
 
         print(dumps(result, indent=3))
+
+    elif parsed.action == 'microservices':
+        source = parsed.source
+        target = parsed.target
+        openshift = parsed.openshift_credentials
+
+        if not parsed.identity:
+            raise ValueError("Migration requires path to private SSH key to use (--identity)")
+
+        print('! looking up "{}" as source and "{}" as target'.format(source, target))
+
+        lmp = LibvirtMachineProvider()
+        machines = lmp.get_machines()
+
+        machine_dst = _find_machine(machines, target)
+        machine_src = _find_machine(machines, source)
+
+        src_ip, dst_ip = machine_src.ip[0], machine_dst.ip[0]
+
+        print(' > breaking up monolith at {} into microservices in {}'.format(src_ip, dst_ip))
+
+        migrate_microservices(src_ip, dst_ip, openshift, parsed.identity, parsed.user)
