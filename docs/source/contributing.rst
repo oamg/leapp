@@ -24,11 +24,12 @@ Submitting a Pull Request
 
 Core Reviewers are:
 
-* Nick Coghlan
-* Vinzenz Feenstra
+* Marcel Gazdik
 * Marcin Franczyk
-* Veaceslav Mindru
+* Nick Coghlan
 * Pavel Odvody
+* Veaceslav Mindru
+* Vinzenz Feenstra
 
 Before you submit your pull request consider the following guidelines:
 
