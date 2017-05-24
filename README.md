@@ -10,7 +10,7 @@ use the kernel of the container host rather than providing
 their own.
 
 ## More info
-Please visit [Getting Started](http://leapp-doc.readthedocs.io/en/latest/getstarted.html) 
+Please visit [Getting Started](http://leapp.readthedocs.io/en/latest/getstarted.html) 
 for more infomation and documenation.
 
 ## Contributing
