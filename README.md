@@ -9,7 +9,8 @@ runtime, management tools, configuration files, etc), but
 use the kernel of the container host rather than providing
 their own.
 
-## Migration prototype
+## More info
+Please visit [Getting Started](http://leapp-doc.readthedocs.io/en/latest/getstarted.html) for more infomation and documenation.
 
 The migration prototype currently handles exactly two cases:
 
