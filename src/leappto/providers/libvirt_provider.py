@@ -124,7 +124,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 return client
             return None
 
-        def __get_os_info(domain_name):
+        def __get_os_info(domain_name, shallow):
             client = __get_vagrant_ssh_client_for_domain(domain_name)
             if not client:
                 return None
@@ -137,7 +137,14 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             cmd = "/sbin/ip -4 -o addr list | grep -E 'e(th|ns)' | sed 's/.*inet \\([0-9\\.]\\+\\)\\/.*$/\\1/g'\n"
             _, output, stderr = client.exec_command(cmd)
             ips = [i.strip() for i in output.read().split('\n') if i.strip()]
-            return (ips, hostname, Installation(OperatingSystem(distro, version), []))
+            packages = []
+            if shallow == False:
+                cmd = "python -c \"import rpm, json; print json.dumps([(app['name'], " + \
+                        "'{e}:{v}-{r}.{a}'.format(e=app['epoch'] or 0, v=app['version'], " + \
+                        "a=app['arch'], r=app['release'])) for app in rpm.ts().dbMatch()])\""
+                _, output, _ = client.exec_command(cmd)
+                packages = [Package(e[0], e[1]) for e in json.loads(output.read())]
+            return (ips, hostname, Installation(OperatingSystem(distro, version), packages))
 
 
         def __domain_info(domain):
@@ -170,7 +177,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 hostname = None
             '''
 
-            ips, hostname, inst = __get_os_info(domain.name())
+            ips, hostname, inst = __get_os_info(domain.name(), self._shallow_scan)
 
             storage = __get_storage(root.findall("devices/disk[@device='disk']"))
 
