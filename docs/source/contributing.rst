@@ -76,8 +76,6 @@ Git Commit Messages
 Component specific details
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-: `leapp-tool` CLI
-: ----------------
 
 :doc:`leapp-tool` CLI
 ---------------------
