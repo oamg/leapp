@@ -138,7 +138,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             _, output, stderr = client.exec_command(cmd)
             ips = [i.strip() for i in output.read().split('\n') if i.strip()]
             packages = []
-            if shallow == False:
+            if not shallow:
                 cmd = "python -c \"import rpm, json; print json.dumps([(app['name'], " + \
                         "'{e}:{v}-{r}.{a}'.format(e=app['epoch'] or 0, v=app['version'], " + \
                         "a=app['arch'], r=app['release'])) for app in rpm.ts().dbMatch()])\""
