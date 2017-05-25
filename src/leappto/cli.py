@@ -17,6 +17,7 @@ from leappto.actors.meta.resolver import dependency_ordered as meta_dependency_o
 from leappto.drivers.ssh import SSHDriver, SSHVagrantDriver
 import os
 import sys
+import socket
 import nmap
 
 
@@ -59,7 +60,6 @@ def _make_argument_parser():
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
     destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
     scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
-
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
     list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
 
@@ -94,7 +94,7 @@ def _make_argument_parser():
     destroy_cmd.add_argument('target', help='target VM name')
     _add_identity_options(destroy_cmd)
 
-    scan_ports_cmd.add_argument('ip', help='virtual machine ip address')
+    scan_ports_cmd.add_argument('address', help='virtual machine address')
     scan_ports_cmd.add_argument(
         '--range',
         default=None,
@@ -359,14 +359,15 @@ eval $(grep ^ExecStart= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d=
             machine_src = _find_machine(machines, source)
             machine_dst = _find_machine(machines, target)
 
-            if not machine_dst or not machine_src:
-                print("Machines are not ready:")
+            # We assume the target to be an IP or FQDN if not a machine name
+            ip = machine_dst.ip[0] if machine_dst else target
+
+            if not machine_src:
+                print("Machine is not ready:")
                 print("Source: " + repr(machine_src))
-                print("Target: " + repr(machine_dst))
                 exit(-1)
 
             print('! configuring SSH keys')
-            ip = machine_dst.ip[0]
 
             mc = MigrationContext(
                 ip,
@@ -405,21 +406,17 @@ eval $(grep ^ExecStart= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d=
 
         lmp = LibvirtMachineProvider()
         machines = lmp.get_machines()
+
         machine_dst = _find_machine(machines, target)
+        # We assume the target to be an IP or FQDN if not a machine name
+        ip = machine_dst.ip[0] if machine_dst else target
 
         print('! looking up "{}" as target'.format(target))
-        if not machine_dst:
-            print("Machine is not ready:")
-            print("Target: " + repr(machine_dst))
-            exit(-1)
-
         print('! configuring SSH keys')
-        ip = machine_dst.ip[0]
-
         mc = MigrationContext(
             ip,
             parsed.user, parsed.identity, parsed.ask_pass,
-            machine_dst.disks[0].host_path
+            None
         )
 
         print('! destroying containers on "{}" VM'.format(target))
@@ -434,7 +431,7 @@ eval $(grep ^ExecStart= `find /etc/systemd/system -name $SERVICE_NAME` | cut -d=
         scan_args = '-sS' if parsed.shallow else '-sV'
 
         port_range = parsed.range
-        ip = parsed.ip
+        ip = socket.gethostbyname(parsed.address)
         port_scanner = nmap.PortScanner()
         port_scanner.scan(ip, port_range, arguments=scan_args)
 
