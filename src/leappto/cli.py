@@ -252,7 +252,7 @@ def main():
             ip = machine_dst.ip[0] if machine_dst else target
 
             if not machine_src:
-                print("Machine are not ready:")
+                print("Machine is not ready:")
                 print("Source: " + repr(machine_src))
                 exit(-1)
 
