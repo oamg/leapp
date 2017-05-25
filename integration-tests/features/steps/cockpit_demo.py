@@ -43,7 +43,7 @@ def check_demo_machine_listing(context, time_limit):
     expected_machines = context.vm_helper.machines
     expected_hosts = sorted(host for name, host in expected_machines.items())
     missing = session.list_missing_machines(expected_hosts, time_limit)
-    assert_that(missing, equal_to([]))
+    assert_that(missing, equal_to([]), "Machines missing from listing")
 
 # Helper functions and classes
 # Note: these are all candidates for moving to the `behave` context
@@ -168,6 +168,7 @@ class DemoCockpitSession(object):
         browser = self._browser
         user = self._user
         browser.visit(self._cockpit_url)
+        assert_that(browser.status_code.is_success(), "Failed to load login page")
         # browser.fill_form looks form elements up by name rather than id, so we
         # find and populate the form elements individually
         browser.find_by_id("login-user-input").fill(user.username)
