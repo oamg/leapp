@@ -231,16 +231,7 @@
                     <input id="machine-radio-custom-target" class="radio-target-machine ui-lockable"
                     type="radio" name="target-machine" value="#custom_target" data-ip="#custom_target"/>
                     <label for="machine-radio-custom-target">Custom Target</label>
-                    <div id="custom-target-details wrapper" class="">
-                        <form class="form-horizontal">
-                            <div class="form-group row">
-                                <label class="col-sm-4 col-lg-4 control-label" for="custom_target">Target address</label>
-                                <div class="col-sm-5 col-lg-5">
-                                    <input type="text" class="form-control" id="custom_target" name="custom_target" placeholder="IP or Fully qualified domain name"/>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+                    <input type="text" class="form-control" id="custom_target" name="custom_target" placeholder="IP or Fully qualified domain name"/>
                 </li>
             `);
             output.empty();
@@ -249,9 +240,15 @@
             }
             loader.hide();
 
-            $("#custom_target").change(function() {
-                $("#machine-radio-custom-target").val($("#custom_target").val());
-                $("#machine-radio-custom-target").data('ip', $("#custom_target").val());
+            $("#machine-radio-custom-target").change(function() {
+                $("#custom_target").toggle();
+            });
+            $("#custom_target")
+                .toggle()
+                .focusout(get_target_ports)
+                .change(function() {
+                    $("#machine-radio-custom-target").val($("#custom_target").val());
+                    $("#machine-radio-custom-target").data('ip', $("#custom_target").val());
             })
             $(".radio-source-machine").click(function(event) {
                 var ip_addr = $(event.target).data('ip');
