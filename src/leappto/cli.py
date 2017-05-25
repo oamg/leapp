@@ -81,6 +81,8 @@ def _make_argument_parser():
         type=_port_spec,
         help='Target ports to forward to macrocontainer (temporary!)'
     )
+    migrate_cmd.add_argument("-p", "--print-default-port-map", default=False, help='List suggested port mapping on target host', type=bool)
+    migrate_cmd.add_argument("--ignore-default-port-map", default=False, help='Default port mapping detected by leapp toll will be ignored', type=bool)
     _add_identity_options(migrate_cmd)
 
     destroy_cmd.add_argument('target', help='target VM name')
@@ -113,6 +115,39 @@ def main():
             if machine.hostname == name:
                 return machine
         return None
+
+    class PortScanException(Exception):
+        pass
+
+    def _port_scan(ip, port_range = "", shallow = False):
+        ### TODO: Add param check
+
+        scan_args = '-sS' if shallow else '-sV'
+        
+        port_scanner = nmap.PortScanner()
+        port_scanner.scan(ip, port_range, arguments=scan_args)
+
+        ports = OrderedDict()
+
+        scan_info = port_scanner.scaninfo()
+
+        if scan_info.get('error', False):
+            raise PortScanException(scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error'])
+        elif ip not in port_scanner.all_hosts():
+            raise PortScanException("Machine {} not found".format(ip))
+
+        for proto in port_scanner[ip].all_protocols():
+            ports[proto] = OrderedDict()
+
+            for port in sorted(port_scanner[ip][proto]):
+                if port_scanner[ip][proto][port]['state'] != 'open':
+                    continue
+
+                ports[proto][port] = port_scanner[ip][proto][port]
+
+        return ports
+
+        
 
     def _set_ssh_config(username, identity, use_sshpass=False):
         settings = {
@@ -238,6 +273,7 @@ def main():
         else:
             source = parsed.machine
             target = parsed.target
+
             forwarded_ports = parsed.forwarded_ports
 
             print('! looking up "{}" as source and "{}" as target'.format(source, target))
@@ -311,37 +347,22 @@ def main():
         _ERR_STATE = "error"
         _SUCCESS_STATE = "success"
 
-        scan_args = '-sS' if parsed.shallow else '-sV'
-
-        port_range = parsed.range
-        ip = parsed.ip
-        port_scanner = nmap.PortScanner()
-        port_scanner.scan(ip, port_range, arguments=scan_args)
 
         result = {
             "status": _SUCCESS_STATE,
             "err_msg": "",
-            "ports": OrderedDict()
+            "ports": None
         }
+        
+        try:
+            result["ports"] = _port_scan(parsed.ip, parsed.range, parsed.shallow)
 
-        scan_info = port_scanner.scaninfo()
-        if scan_info.get('error', False):
+        except PortScanException as e:
             result["status"] = _ERR_STATE
-            result["err_msg"] = scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error']
+            result["err_msg"] = str(e)
             print(dumps(result, indent=3))
-            exit(-1)
 
-        if ip not in port_scanner.all_hosts():
-            result["status"] = _ERR_STATE
-            result["err_msg"] = "Machine {} not found".format(ip)
-            print(dumps(result, indent=3))
             exit(-1)
-
-        for proto in port_scanner[ip].all_protocols():
-            result['ports'][proto] = OrderedDict()
-            for port in sorted(port_scanner[ip][proto]):
-                if port_scanner[ip][proto][port]['state'] != 'open':
-                    continue
-                result['ports'][proto][port] = port_scanner[ip][proto][port]
+            
 
         print(dumps(result, indent=3))
