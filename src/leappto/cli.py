@@ -147,6 +147,9 @@ def main():
 
         return ports
 
+
+    def _port_remap(default_ports, remapped_ports):
+        pass
         
 
     def _set_ssh_config(username, identity, use_sshpass=False):
@@ -270,6 +273,7 @@ def main():
             print('! no target specified, creating leappto container package in current directory')
             # TODO: not really for now
             raise NotImplementedError
+            
         else:
             source = parsed.machine
             target = parsed.target
@@ -283,6 +287,7 @@ def main():
 
             machine_src = _find_machine(machines, source)
             machine_dst = _find_machine(machines, target)
+        
 
             if not machine_dst or not machine_src:
                 print("Machines are not ready:")
@@ -292,6 +297,14 @@ def main():
 
             print('! configuring SSH keys')
             ip = machine_dst.ip[0]
+                
+            src_ports = _port_scan(ip)
+       
+            elif parsed.print-default-port-map:
+                print(src_ports)
+                #static_mapping["tcp"] = OrderedDict()
+                #static_mapping["tcp"][22] = 9022
+
 
             mc = MigrationContext(
                 ip,
@@ -346,7 +359,6 @@ def main():
     elif parsed.action == 'port-inspect':
         _ERR_STATE = "error"
         _SUCCESS_STATE = "success"
-
 
         result = {
             "status": _SUCCESS_STATE,
