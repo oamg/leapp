@@ -13,9 +13,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.provider :libvirt do |libvirt|
         libvirt.memory = 2048
         libvirt.cpus = 2
-        if libvirt.respond_to? :channel
-            libvirt.channel :type => 'unix', :target_name => 'com.redhat.rhevm.vdsm', :target_type => 'virtio'
-        end
     end
 
     config.vm.provision "ansible" do |ansible|

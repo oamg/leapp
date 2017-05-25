@@ -50,29 +50,6 @@ class LibvirtMachineProvider(AbstractMachineProvider):
         :return: List[Machine], List of machines running on the system
         """
 
-        def __good_ip(ip):
-            """
-            Check whether the given IP address is considered good
-
-            :param ip: str, ip address to check
-            """
-            if ip in {'127.0.0.1', '::1'}:
-                return False
-            return True
-
-        def __get_ip_addresses(domain):
-            """
-
-            :param domain: libvirt.virDomain, Domain for which to fetch the information
-            """
-            ifaces = domain.interfaceAddresses(libvirt.VIR_DOMAIN_INTERFACE_ADDRESSES_SRC_LEASE, 0)
-            for (name, val) in ifaces.items():
-                if val['addrs']:
-                    for ipaddr in val['addrs']:
-                        if not __good_ip(ipaddr['addr']):
-                            continue
-                        yield ipaddr['addr']
-
         def __get_attribute(elem, attr):
             """
             Get attribute if we have valid element
@@ -99,57 +76,6 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 device = __get_attribute(disk.find('target[@dev]'), 'dev')
                 storage.append(Disk(type_, backing_file, device, driver_type))
             return storage
-
-        def __get_value(elem):
-            """
-
-            :param elem: List[xml.etree.ElementTree.Element], xml tree element
-            :return:
-            """
-            if elem is not None:
-                return next(elem.itertext())
-            else:
-                return ''
-
-        def __virt_inspector_supports_shallow():
-            """
-            :return: True if virt-inspector supports --no-applications and --no-icon
-            """
-            inspector_version = check_output(['virt-inspector', '-V'])
-            major, minor, _ = inspector_version.split(' ')[1].split('.', 2)
-            return (major, minor) >= ('1', '34')
-
-
-        def __inspect_os(domain_name):
-            """
-
-            :param domain_name: str, which domain to inspect
-            :return:
-            """
-            cmd = ['sudo', 'virt-inspector', '-d', domain_name]
-            if __virt_inspector_supports_shallow():
-                cmd.append('--no-icon')
-                if self._shallow_scan:
-                    cmd.append('--no-applications')
-            os_data = check_output(cmd)
-            root = ET.fromstring(os_data)
-            packages = []
-
-            distro = __get_value(root.find('operatingsystem/distro'))
-            major = __get_value(root.find('operatingsystem/major_version'))
-            minor = __get_value(root.find('operatingsystem/minor_version'))
-            hostname = __get_value(root.find('operatingsystem/hostname'))
-
-            for package in root.findall('operatingsystem/applications/application'):
-                name = __get_value(package.find('name'))
-                epoch = __get_value(package.find('epoch'))
-                version = __get_value(package.find('version'))
-                arch = __get_value(package.find('arch'))
-                release = __get_value(package.find('release'))
-                package = Package(name, '{e}:{v}-{r}-{a}'.format(e=epoch or 0, v=version, a=arch, r=release))
-                packages.append(package)
-
-            return (hostname, Installation(OperatingSystem(distro, '{}.{}'.format(major, minor)), packages))
 
         def __get_vagrant_data_path_from_domain(domain_name):
             index_path = os.path.join(os.environ['HOME'], '.vagrant.d/data/machine-index/index')
@@ -198,7 +124,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 return client
             return None
 
-        def __get_ssh_info(domain_name):
+        def __get_os_info(domain_name, shallow):
             client = __get_vagrant_ssh_client_for_domain(domain_name)
             if not client:
                 return None
@@ -211,67 +137,14 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             cmd = "/sbin/ip -4 -o addr list | grep -E 'e(th|ns)' | sed 's/.*inet \\([0-9\\.]\\+\\)\\/.*$/\\1/g'\n"
             _, output, stderr = client.exec_command(cmd)
             ips = [i.strip() for i in output.read().split('\n') if i.strip()]
-            return (ips, hostname, Installation(OperatingSystem(distro, version), []))
-
-
-        def __get_info_shallow(domain, force_ssh=False):
-            result = None
-            if not force_ssh:
-                domxml = ET.fromstring(domain.XMLDesc(0))
-                channel = domxml.find('devices/channel/source')
-                if channel is not None:
-                    result = __get_agent_info(channel)
-                if not result and __virt_inspector_supports_shallow():
-                    result = (list(__get_ip_addresses(domain)),) + __inspect_os(domain.name())
-            if not result:
-                result = __get_ssh_info(domain.name())
-            return result
-
-        def __get_agent_info(channel):
-            result = -1
-            if channel is not None:
-                path = channel.attrib['path']
-                sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                sock.setblocking(0)
-                result = sock.connect_ex(path)
-
-            def _consume(flush=False):
-                while True:
-                    try:
-                        data = sock.recv(2 ** 16)
-                        if not flush:
-                            yield data
-                    except socket.error as err:
-                        if err.errno not in (errno.EWOULDBLOCK, errno.EAGAIN):
-                            raise
-                        if flush and err.errno == errno.EWOULDBLOCK:
-                            break
-            needed = {'os-info': None, 'fqdn': None,
-                      'network-interfaces': None}
-            if result == 0:
-                _consume(flush=True)
-                sock.sendall('{"__name__": "refresh", "apiVersion": 3}\n'
-                             '{"__name__": "api-version", "apiVersion": 3}\n')
-                linebuffer = ""
-                for buf in _consume():
-                    linebuffer += buf
-                    try:
-                        line, linebuffer = linebuffer.split('\n', 1)
-                    except ValueError:
-                        break
-                    data = json.loads(line)
-                    msg = data.pop('__name__')
-                    if msg in needed:
-                        needed[msg] = data
-                    if all(needed.values()):
-                        break
-                intfs = needed['network-interfaces']
-                ips = [a for i in intfs['interfaces'] for a in i['inet']]
-                fqdn = needed['fqdn']['fqdn']
-                distro = needed['os-info']['distribution']
-                version = needed['os-info']['version']
-                return (ips, fqdn, Installation(OperatingSystem(distro, version), []))
-            return None
+            packages = []
+            if not shallow:
+                cmd = "python -c \"import rpm, json; print json.dumps([(app['name'], " + \
+                        "'{e}:{v}-{r}.{a}'.format(e=app['epoch'] or 0, v=app['version'], " + \
+                        "a=app['arch'], r=app['release'])) for app in rpm.ts().dbMatch()])\""
+                _, output, _ = client.exec_command(cmd)
+                packages = [Package(e[0], e[1]) for e in json.loads(output.read())]
+            return (ips, hostname, Installation(OperatingSystem(distro, version), packages))
 
 
         def __domain_info(domain):
@@ -304,11 +177,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 hostname = None
             '''
 
-            if self._shallow_scan:
-                ips, hostname, inst = __get_info_shallow(domain)
-            else:
-                hostname, inst = __inspect_os(domain.name())
-                ips = list(__get_ip_addresses(domain))
+            ips, hostname, inst = __get_os_info(domain.name(), self._shallow_scan)
 
             storage = __get_storage(root.findall("devices/disk[@device='disk']"))
 
