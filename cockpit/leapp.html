@@ -240,8 +240,12 @@
             }
             loader.hide();
 
-            $("#machine-radio-custom-target").change(function() {
-                $("#custom_target").toggle();
+            $("input[name=target-machine]").change(function() {
+                if ($("#machine-radio-custom-target").is(":checked")) {
+                    $("#custom_target").show();
+                } else {
+                    $("#custom_target").hide();
+                }
             });
             $("#custom_target")
                 .toggle()
