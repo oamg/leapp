@@ -286,6 +286,8 @@ def main():
 
         lmp = LibvirtMachineProvider()
         machines = lmp.get_machines()
+
+        machine_dst = _find_machine(machines, target)
         # We assume the target to be an IP or FQDN if not a machine name
         ip = machine_dst.ip[0] if machine_dst else target
 
