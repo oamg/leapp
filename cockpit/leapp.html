@@ -229,7 +229,7 @@
             $("#target-machines ul").append(`
                 <li>
                     <input id="machine-radio-custom-target" class="radio-target-machine ui-lockable"
-                    type="radio" name="target-machine" value="#custom_target" data-ip="#custom_target"/>
+                    type="radio" name="target-machine" value="" data-ip=""/>
                     <label for="machine-radio-custom-target">Custom Target</label>
                     <input type="text" class="form-control" id="custom_target" name="custom_target" placeholder="IP or Fully qualified domain name"/>
                 </li>
@@ -418,8 +418,10 @@
                 return;
             }
 
-            var ip_addr = get_selected_target().data('ip')
-            scan_ports(ip_addr, show_target_ports, null, true);  // scan target machine
+            var ip_addr = get_selected_target().data('ip');
+            if (ip_addr) {
+                scan_ports(ip_addr, show_target_ports, null, true);  // scan target machine
+            }
         }
 
         function show_target_ports(data) {
