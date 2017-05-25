@@ -226,12 +226,34 @@
                     $("#source-machines ul").append(machine_html.replace(/\[type\]/g, "source"))
                 }
             }
+            $("#target-machines ul").append(`
+                <li>
+                    <input id="machine-radio-custom-target" class="radio-target-machine ui-lockable"
+                    type="radio" name="target-machine" value="" data-ip=""/>
+                    <label for="machine-radio-custom-target">Custom Target</label>
+                    <input type="text" class="form-control" id="custom_target" name="custom_target" placeholder="IP or Fully qualified domain name"/>
+                </li>
+            `);
             output.empty();
             if (vm_data.machines.length == 0) {
                 output.append(document.createTextNode("No running local VMs!\n"));
             }
             loader.hide();
 
+            $("input[name=target-machine]").change(function() {
+                if ($("#machine-radio-custom-target").is(":checked")) {
+                    $("#custom_target").show();
+                } else {
+                    $("#custom_target").hide();
+                }
+            });
+            $("#custom_target")
+                .toggle()
+                .focusout(get_target_ports)
+                .change(function() {
+                    $("#machine-radio-custom-target").val($("#custom_target").val());
+                    $("#machine-radio-custom-target").data('ip', $("#custom_target").val());
+            });
             $(".radio-source-machine").click(function(event) {
                 var ip_addr = $(event.target).data('ip');
                 scan_ports(ip_addr, get_source_ports, null, true);  // scan entire machine with shallow scan
@@ -251,11 +273,16 @@
             output.append(`<div style="padding: 2px">${line}</div>`)
         }
 
+        function get_selected_target() {
+            return $("input[name=target-machine]:checked");
+        }
+
+
         function migrate_to_host(event) {
             wait_for_result_msg = true;
 
             var source = $("input[name=source-machine]:checked").val();
-            var target = $("input[name=target-machine]:checked").val();
+            var target = get_selected_target().val();
 
             var mapped_ports = $("#panel-body input.source-ports:checked").map(function() {
                 var target_port = $("#panel-body #target-ports .mapped-ports input[name=" + this.value + "]").val();
@@ -391,8 +418,10 @@
                 return;
             }
 
-            var ip_addr = $("input[name=target-machine]:checked").data('ip');
-            scan_ports(ip_addr, show_target_ports, null, true);  // scan target machine
+            var ip_addr = get_selected_target().data('ip');
+            if (ip_addr) {
+                scan_ports(ip_addr, show_target_ports, null, true);  // scan target machine
+            }
         }
 
         function show_target_ports(data) {
@@ -475,7 +504,7 @@
             output.empty();
 
             // deep scan target machine
-            let target_ip = $("input[name=target-machine]:checked").data('ip');
+            let target_ip = get_selected_target().data('ip');
             let target_ports = $("input.target-ports:checked").map(function() {
                 return this.value;
             }).toArray();
