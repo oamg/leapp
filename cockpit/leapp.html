@@ -249,7 +249,7 @@
                 .change(function() {
                     $("#machine-radio-custom-target").val($("#custom_target").val());
                     $("#machine-radio-custom-target").data('ip', $("#custom_target").val());
-            })
+            });
             $(".radio-source-machine").click(function(event) {
                 var ip_addr = $(event.target).data('ip');
                 scan_ports(ip_addr, get_source_ports, null, true);  // scan entire machine with shallow scan
