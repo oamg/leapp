@@ -300,8 +300,9 @@ def main():
                 
             src_ports = _port_scan(ip)
        
-            elif parsed.print-default-port-map:
+            if parsed.print-default-port-map:
                 print(src_ports)
+                exit(0)
                 #static_mapping["tcp"] = OrderedDict()
                 #static_mapping["tcp"][22] = 9022
 
