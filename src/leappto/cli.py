@@ -248,14 +248,15 @@ def main():
             machine_src = _find_machine(machines, source)
             machine_dst = _find_machine(machines, target)
 
-            if not machine_dst or not machine_src:
-                print("Machines are not ready:")
+            # We assume the target to be an IP or FQDN if not a machine name
+            ip = machine_dst.ip[0] if machine_dst else target
+
+            if not machine_src:
+                print("Machine are not ready:")
                 print("Source: " + repr(machine_src))
-                print("Target: " + repr(machine_dst))
                 exit(-1)
 
             print('! configuring SSH keys')
-            ip = machine_dst.ip[0]
 
             mc = MigrationContext(
                 ip,
