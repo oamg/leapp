@@ -40,6 +40,7 @@
             - mfranczy
             - vmindru
             - vinzenz
+            - GAZDOWN
           cron: '* * * * *'
           permit-all: false
           trigger-phrase: '.*[jJ]enkins: ok to test.*'
