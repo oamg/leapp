@@ -11,6 +11,7 @@ from leappto.providers.libvirt_provider import LibvirtMachineProvider
 from leappto.version import __version__
 import os
 import sys
+import socket
 import nmap
 
 VERSION='leapp-tool {0}'.format(__version__)
@@ -52,7 +53,6 @@ def _make_argument_parser():
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
     destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
     scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
-
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
     list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
 
@@ -86,7 +86,7 @@ def _make_argument_parser():
     destroy_cmd.add_argument('target', help='target VM name')
     _add_identity_options(destroy_cmd)
 
-    scan_ports_cmd.add_argument('ip', help='virtual machine ip address')
+    scan_ports_cmd.add_argument('address', help='virtual machine address')
     scan_ports_cmd.add_argument(
         '--range',
         default=None,
@@ -314,7 +314,7 @@ def main():
         scan_args = '-sS' if parsed.shallow else '-sV'
 
         port_range = parsed.range
-        ip = parsed.ip
+        ip = socket.gethostbyname(parsed.address)
         port_scanner = nmap.PortScanner()
         port_scanner.scan(ip, port_range, arguments=scan_args)
 
