@@ -286,21 +286,15 @@ def main():
 
         lmp = LibvirtMachineProvider()
         machines = lmp.get_machines()
-        machine_dst = _find_machine(machines, target)
+        # We assume the target to be an IP or FQDN if not a machine name
+        ip = machine_dst.ip[0] if machine_dst else target
 
         print('! looking up "{}" as target'.format(target))
-        if not machine_dst:
-            print("Machine is not ready:")
-            print("Target: " + repr(machine_dst))
-            exit(-1)
-
         print('! configuring SSH keys')
-        ip = machine_dst.ip[0]
-
         mc = MigrationContext(
             ip,
             _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
-            machine_dst.disks[0].host_path
+            None
         )
 
         print('! destroying containers on "{}" VM'.format(target))
