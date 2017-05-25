@@ -148,7 +148,23 @@ def main():
         return ports
 
 
-    def _port_remap(default_ports, remapped_ports):
+    def _port_remap(default_ports, remapped_ports = OrderedDict()):
+        ## TODO: add type checking
+
+        if not remapped_ports["tcp"]:
+            remapped_ports["tcp"] = OrderedDict()
+        
+        if not remapped_ports["udp"]:
+            remapped_ports["udp"] = OrderedDict()
+
+        if not remapped_ports["tcp"][22]:
+            remapped_ports["tcp"][22] = 9022
+
+        for protocol in remapped_ports:
+            for port in remapped_ports[protocol]:
+                if default_ports[protocol] and default_ports[protocol][port]:
+                    default_ports[protocol][port]["remap_to"]: remapped_ports[protocol][port]
+
         pass
         
 
@@ -298,13 +314,16 @@ def main():
             print('! configuring SSH keys')
             ip = machine_dst.ip[0]
                 
-            src_ports = _port_scan(ip)
+            if not parsed.ignore_default_port_map:
+                src_ports = _port_scan(ip)
+                _port_remap(src_ports)
+            else:
+                #TODO: include only user defined ports 
+                pass
        
-            if parsed.print-default-port-map:
+            if parsed.print_default_port_map:
                 print(src_ports)
                 exit(0)
-                #static_mapping["tcp"] = OrderedDict()
-                #static_mapping["tcp"][22] = 9022
 
 
             mc = MigrationContext(
