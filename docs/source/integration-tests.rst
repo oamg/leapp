@@ -127,6 +127,17 @@ This allows an initial draft of the desired behaviour to be specified and
 merged prior to starting work on the implementation of the new behaviour and
 any new test steps required.
 
+Some scenarios may be slow or encounter other problems when run as a non-root
+user. These can be marked with ``@root_recommended`` and will then only be
+executed when either that tag is specified, or else the test suite is running as
+the root user (as it does in pre-merge CI).
+
+To run these tests as a regular user for local testing of a particular feature
+without running the whole test suite as root, specify::
+
+    behave -i <feature-of-interest> --tags root_recommended
+
+
 Adding new steps to the steps catalog
 -------------------------------------
 

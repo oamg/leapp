@@ -10,8 +10,9 @@ from hamcrest import assert_that, equal_to, not_none, greater_than
 # Local VM management
 ##############################
 
+@given("the local virtual machines as {user}")
 @given("the local virtual machines")
-def create_local_machines(context):
+def create_local_machines(context, user=None):
     """Accepts a table of local virtual machine definitions, consisting of:
 
     * name: the name to be used to refer to the VM in later test steps
@@ -22,14 +23,22 @@ def create_local_machines(context):
     even when *ensure_fresh* is set to 'no'. For faster test execution, relying
     on Ansible to restore the VM to a known state is recommended, rather than
     requiring a full VM create/destroy cycle.
+
+    When the tests are run as a non-root user, specifying 'as root' implies
+    'ensure_fresh=yes', even if it is otherwise set to 'no'
     """
+    as_root = (user == "root")
+    if user is not None and not as_root:
+        msg = "VMs must be started as either root or the current user"
+        raise RuntimeError(msg)
     vm_helper = context.vm_helper
     for row in context.table:
         ensure_fresh = (row["ensure_fresh"].lower() == "yes")
         vm_helper.ensure_local_vm(
             row["name"],
             row["definition"],
-            destroy=ensure_fresh
+            destroy=ensure_fresh,
+            as_root=as_root,
         )
 
 
