@@ -27,10 +27,10 @@ def create_local_machines(context, user=None):
     When the tests are run as a non-root user, specifying 'as root' implies
     'ensure_fresh=yes', even if it is otherwise set to 'no'
     """
-    as_root = (user == "root")
-    if user is not None and not as_root:
+    if user not in (None, "root"):
         msg = "VMs must be started as either root or the current user"
         raise RuntimeError(msg)
+    as_root = (user == "root")
     vm_helper = context.vm_helper
     for row in context.table:
         ensure_fresh = (row["ensure_fresh"].lower() == "yes")
