@@ -92,7 +92,7 @@ class VirtualMachineHelper(object):
     def _run_vagrant(hostname, *args, as_root=False, ignore_errors=False):
         # TODO: explore https://pypi.python.org/pypi/python-vagrant
         vm_dir = _VM_DEFS[hostname]
-        if as_root:
+        if as_root and os.getuid() != 0:
             cmd = ["sudo", "vagrant"]
         else:
             cmd = ["vagrant"]
