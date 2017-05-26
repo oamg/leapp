@@ -277,6 +277,15 @@
             return $("input[name=target-machine]:checked");
         }
 
+        function override_identity(cmd_args) {
+            // Appends any defined identity override settings to a command
+            if ("override_username" in LEAPP_CONF) {
+                cmd_args.push("--user", LEAPP_CONF["override_username"])
+            }
+            if ("override_identity" in LEAPP_CONF) {
+                cmd_args.push("--identity", LEAPP_CONF["override_identity"])
+            }
+        }
 
         function migrate_to_host(event) {
             wait_for_result_msg = true;
@@ -290,17 +299,13 @@
                     return target_port + ':' + this.value;  // host:container
             }).toArray();
 
-            var proc = call_leapp([
-                    "migrate-machine",
-                    "--tcp-port"
-                ].concat(mapped_ports, [
-                    // TODO: Rely on ssh-agent, rather than a hardcoded known SSH key
-                    "--identity", "/opt/leapp/integration-tests/config/leappto_testing_key",
-                    // Vagrant user fix
-                    "--user", "vagrant",
-                    "-t", target, source
-                ])
-            );
+            var migrate_args = ["migrate-machine"]
+            override_identity(migrate_args);
+            migrate_args.push("--tcp-port");
+            Array.prototype.push.apply(migrate_args, mapped_ports)
+            migrate_args.push("-t", target, source)
+
+            var proc = call_leapp(migrate_args);
 
             output.empty();
             proc.done(cmd_success);
