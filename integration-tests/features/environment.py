@@ -1,4 +1,5 @@
 import contextlib
+import os
 import subprocess
 
 # behave adds the features directory to sys.path, so import the testing helpers
@@ -15,6 +16,7 @@ from leapp_testing import (
 # http://stackoverflow.com/questions/36482419/how-do-i-skip-a-test-in-the-behave-python-bdd-framework/42721605#42721605
 _AUTOSKIP_TAG = "skip"
 _WIP_TAG = "wip"
+_ROOT_RECOMMENDED_TAG = "root_recommended"
 def _skip_test_group(context, test_group):
     """Decides whether or not to skip a test feature or test scenario
 
@@ -24,6 +26,8 @@ def _skip_test_group(context, test_group):
     The `--wip` option currently overrides `--tags`, so groups tagged with both
     `@skip` *and* `@wip` are also executed when the `wip` tag is requested.
     """
+    # "set" tags are those specified on the test group in the feature file
+    # "requested" tags are those specified by the user running the tests
     active_tags = context.config.tags
     autoskip_tag_set = _AUTOSKIP_TAG in test_group.tags
     autoskip_tag_requested = active_tags and active_tags.check([_AUTOSKIP_TAG])
@@ -32,7 +36,14 @@ def _skip_test_group(context, test_group):
     override_autoskip = autoskip_tag_requested or (wip_tag_set and wip_tag_requested)
     skip_group = autoskip_tag_set and not override_autoskip
     if skip_group:
-        test_group.skip("Marked with @skip")
+        test_group.skip("Marked with @" + _AUTOSKIP_TAG)
+    elif os.getuid() != 0:
+        # Unless explicitly requested, skip tests that recommend running as root
+        root_tag_set = _ROOT_RECOMMENDED_TAG in test_group.tags
+        root_tag_requested = active_tags and active_tags.check([_ROOT_RECOMMENDED_TAG])
+        skip_group = root_tag_set and not root_tag_requested
+        if skip_group:
+            test_group.skip("Marked with @" + _ROOT_RECOMMENDED_TAG)
     return skip_group
 
 def before_all(context):

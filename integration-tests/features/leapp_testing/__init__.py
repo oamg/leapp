@@ -62,7 +62,7 @@ class VirtualMachineHelper(object):
         self.machines = {}
         self._resource_manager = contextlib.ExitStack()
 
-    def ensure_local_vm(self, name, definition, destroy=False):
+    def ensure_local_vm(self, name, definition, destroy=False, *, as_root=False):
         """Ensure a local VM exists based on the given definition
 
         *name*: name used to refer to the VM in scenario steps
@@ -73,12 +73,12 @@ class VirtualMachineHelper(object):
         if hostname not in _VM_DEFS:
             raise ValueError("Unknown VM image: {}".format(definition))
         if destroy:
-            self._vm_destroy(hostname)
-        self._vm_up(name, hostname)
+            self._vm_destroy(name, hostname, as_root=as_root)
+        self._vm_up(name, hostname, as_root=as_root)
         if destroy:
-            self._resource_manager.callback(self._vm_destroy, name)
+            self._resource_manager.callback(self._vm_destroy, name, hostname, as_root=as_root)
         else:
-            self._resource_manager.callback(self._vm_halt, name)
+            self._resource_manager.callback(self._vm_halt, name, hostname, as_root=as_root)
 
     def get_hostname(self, name):
         """Return the expected hostname for the named machine"""
@@ -89,28 +89,37 @@ class VirtualMachineHelper(object):
         self._resource_manager.close()
 
     @staticmethod
-    def _run_vagrant(hostname, *args, ignore_errors=False):
+    def _run_vagrant(hostname, *args, as_root=False, ignore_errors=False):
         # TODO: explore https://pypi.python.org/pypi/python-vagrant
         vm_dir = _VM_DEFS[hostname]
-        cmd = ["vagrant"]
+        if as_root and os.getuid() != 0:
+            cmd = ["sudo", "vagrant"]
+        else:
+            cmd = ["vagrant"]
         cmd.extend(args)
         return _run_command(cmd, vm_dir, ignore_errors)
 
-    def _vm_up(self, name, hostname):
-        result = self._run_vagrant(hostname, "up", "--provision")
+    def _vm_up(self, name, hostname, *, as_root=False):
+        result = self._run_vagrant(hostname, "up", "--provision", as_root=as_root)
         print("Started {} VM instance".format(hostname))
         self.machines[name] = hostname
         return result
 
-    def _vm_halt(self, name):
-        hostname = self.machines.pop(name)
-        result = self._run_vagrant(hostname, "halt", ignore_errors=True)
+    def _vm_halt(self, name, hostname, *, as_root=False):
+        try:
+            hostname = self.machines.pop(name)
+        except KeyError:
+            pass
+        result = self._run_vagrant(hostname, "halt", as_root=as_root, ignore_errors=True)
         print("Suspended {} VM instance".format(hostname))
         return result
 
-    def _vm_destroy(self, name):
-        hostname = self.machines.pop(name)
-        result = self._run_vagrant(hostname, "destroy", ignore_errors=True)
+    def _vm_destroy(self, name, hostname, *, as_root=False):
+        try:
+            hostname = self.machines.pop(name)
+        except KeyError:
+            pass
+        result = self._run_vagrant(hostname, "destroy", as_root=as_root, ignore_errors=True)
         print("Destroyed {} VM instance".format(hostname))
         return result
 
