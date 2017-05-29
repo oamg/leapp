@@ -81,8 +81,8 @@ def _make_argument_parser():
         type=_port_spec,
         help='Target ports to forward to macrocontainer (temporary!)'
     )
-    migrate_cmd.add_argument("-p", "--print-port-map", default=False, help='List suggested port mapping on target host', type=bool, action="store_true")
-    migrate_cmd.add_argument("--ignore-default-port-map", default=False, help='Default port mapping detected by leapp toll will be ignored', type=bool, action="strore_true")
+    migrate_cmd.add_argument("-p", "--print-port-map", default=False, help='List suggested port mapping on target host', action="store_true")
+    migrate_cmd.add_argument("--ignore-default-port-map", default=False, help='Default port mapping detected by leapp toll will be ignored', action="store_true")
     _add_identity_options(migrate_cmd)
 
     destroy_cmd.add_argument('target', help='target VM name')
@@ -158,24 +158,26 @@ def main():
                                     22/tcp -> 9022/tcp
         """
         ## TODO: add type checking
+        PROTO_TCP = "tcp"
+        PROTO_UDP = "udp"
 
-        if not user_mapped_ports["tcp"]:
-            user_mapped_ports["tcp"] = OrderedDict()
+        if not PROTO_TCP user_mapped_ports:
+            user_mapped_ports[PROTO_TCP] = OrderedDict()
         
-        if not user_mapped_ports["udp"]:
-            user_mapped_ports["udp"] = OrderedDict()
+        if not PROTO_UDP in user_mapped_ports:
+            user_mapped_ports[PROTO_UDP] = OrderedDict()
 
-        if not user_mapped_ports["tcp"][22]:
-            user_mapped_ports["tcp"][22] = 9022
+        if not 22 in user_mapped_ports[PROTO_TCP]:
+            user_mapped_ports[PROTO_TCP][22] = 9022
 
         remapped_ports = {
-            "tcp": [],
-            "udp": []
+            PROTO_TCP: [],
+            PROTO_UDP: []
         } 
 
         for protocol in source_ports:
             for port in source_ports[protocol]:
-                if user_mapped_ports[protocol] and user_mapped_ports[protocol][port]:
+                if port in user_mapped_ports[protocol]:
                     remapped_ports[protocol].append((port, user_mapped_ports[protocol][port])) 
                 else:
                     remapped_ports[protocol].append((port, port)) 
