@@ -76,10 +76,18 @@ def _make_argument_parser():
     migrate_cmd.add_argument(
         '--tcp-port',
         default=None,
-        dest="forwarded_ports",
+        dest="forwarded_tcp_ports",
         nargs='*',
         type=_port_spec,
-        help='Target ports to forward to macrocontainer (temporary!)'
+        help='Define what ports will ne '
+    )
+    migrate_cmd.add_argument(
+        '--udp-port',
+        default=None,
+        dest="forwarded_udp_ports",
+        nargs='*',
+        type=_port_spec,
+        help='Target ports to forward to macrocontainer'
     )
     migrate_cmd.add_argument("-p", "--print-port-map", default=False, help='List suggested port mapping on target host', action="store_true")
     migrate_cmd.add_argument("--ignore-default-port-map", default=False, help='Default port mapping detected by leapp toll will be ignored', action="store_true")
@@ -161,7 +169,7 @@ def main():
         PROTO_TCP = "tcp"
         PROTO_UDP = "udp"
 
-        if not PROTO_TCP user_mapped_ports:
+        if not PROTO_TCP in user_mapped_ports:
             user_mapped_ports[PROTO_TCP] = OrderedDict()
         
         if not PROTO_UDP in user_mapped_ports:
@@ -311,7 +319,6 @@ def main():
             source = parsed.machine
             target = parsed.target
 
-            forwarded_ports = parsed.forwarded_ports
 
             print('! looking up "{}" as source and "{}" as target'.format(source, target))
 
@@ -328,30 +335,49 @@ def main():
                 print("Target: " + repr(machine_dst))
                 exit(-1)
 
-            print('! Scanning source ports')
             src_ip = machine_src.ip[0]
-            print('! Scanning target ports')
-            dst_ip = machine_dst.ip[0]
+            #dst_ip = machine_dst.ip[0]
+
+            user_mapped_ports = OrderedDict();
+            user_mapped_ports["tcp"] = OrderedDict()
+            user_mapped_ports["udp"] = OrderedDict()
+
+            for mapping in parsed.forwarded_tcp_ports:
+                user_mapped_ports["tcp"][mapping[0]] = mapping[1]
+
+            for mapping in parsed.forwarded_udp_ports:
+                user_mapped_ports["udp"][mapping[0]] = mapping[1]
+
+            tcp_mapping = None
+            udp_mapping = None
                 
             if not parsed.ignore_default_port_map:
+                print('! Scanning source ports')
                 src_ports = _port_scan(src_ip)
+            
+                #print('! Scanning target ports')
+                #dst_ports = _port_scan(dst_ip)
+            
+                tcp_mapping = _port_remap(src_ports, user_mapped_ports)[tcp]
+                
             else:
                 #TODO: include only user defined ports 
-                pass
+                tcp_mapping = user_mapped_ports["tcp"]
+                udp_mapping = user_mapped_ports["udp"]
+
        
             if parsed.print_port_map:
-                dumps(src_ports, indent=3)
-                dumps(_port_remap(src_ports), indent=3)
+                print(dumps(tcp_mapping))
                 exit(0)
     
-            exit(10)
+            #exit(10)
 
             print('! configuring SSH keys')
             mc = MigrationContext(
                 dst_ip,
                 _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
                 machine_src.disks[0].host_path,
-                forwarded_ports
+                tcp_mapping 
             )
             print('! copying over')
             print('! ' + machine_src.suspend())
