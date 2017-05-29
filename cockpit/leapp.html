@@ -279,11 +279,11 @@
 
         function override_identity(cmd_args) {
             // Appends any defined identity override settings to a command
-            if ("override_username" in LEAPP_CONF) {
-                cmd_args.push("--user", LEAPP_CONF["override_username"])
+            if ("override-username" in LEAPP_CONF) {
+                cmd_args.push("--user", LEAPP_CONF["override-username"])
             }
-            if ("override_identity" in LEAPP_CONF) {
-                cmd_args.push("--identity", LEAPP_CONF["override_identity"])
+            if ("override-identity" in LEAPP_CONF) {
+                cmd_args.push("--identity", LEAPP_CONF["override-identity"])
             }
         }
 

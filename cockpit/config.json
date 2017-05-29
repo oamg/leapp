@@ -2,6 +2,6 @@
     "tool-path": "/opt/leapp/bin/leapp-tool",
     "tool-workdir": "/opt/leapp/bin/",
     "version": "0.0.1-master",
-    "override_username": "vagrant",
-    "override_identity": "/opt/leapp/integration-tests/config/leappto_testing_key"
+    "override-username": "vagrant",
+    "override-identity": "/opt/leapp/integration-tests/config/leappto_testing_key"
 }
