@@ -81,8 +81,8 @@ def _make_argument_parser():
         type=_port_spec,
         help='Target ports to forward to macrocontainer (temporary!)'
     )
-    migrate_cmd.add_argument("-p", "--print-default-port-map", default=False, help='List suggested port mapping on target host', type=bool)
-    migrate_cmd.add_argument("--ignore-default-port-map", default=False, help='Default port mapping detected by leapp toll will be ignored', type=bool)
+    migrate_cmd.add_argument("-p", "--print-port-map", default=False, help='List suggested port mapping on target host', type=bool, action="store_true")
+    migrate_cmd.add_argument("--ignore-default-port-map", default=False, help='Default port mapping detected by leapp toll will be ignored', type=bool, action="strore_true")
     _add_identity_options(migrate_cmd)
 
     destroy_cmd.add_argument('target', help='target VM name')
@@ -119,7 +119,7 @@ def main():
     class PortScanException(Exception):
         pass
 
-    def _port_scan(ip, port_range = "", shallow = False):
+    def _port_scan(ip, port_range = None, shallow = False):
         ### TODO: Add param check
 
         scan_args = '-sS' if shallow else '-sV'
@@ -148,24 +148,39 @@ def main():
         return ports
 
 
-    def _port_remap(default_ports, remapped_ports = OrderedDict()):
+    def _port_remap(source_ports, user_mapped_ports = OrderedDict()):
+        """
+        param source_ports      - ports found by the tool
+        param user_mapped_ports - port mapping defined by user.
+                                  if empty, only the default mapping will aaplied
+
+                                  DEFAULT RE-MAP:
+                                    22/tcp -> 9022/tcp
+        """
         ## TODO: add type checking
 
-        if not remapped_ports["tcp"]:
-            remapped_ports["tcp"] = OrderedDict()
+        if not user_mapped_ports["tcp"]:
+            user_mapped_ports["tcp"] = OrderedDict()
         
-        if not remapped_ports["udp"]:
-            remapped_ports["udp"] = OrderedDict()
+        if not user_mapped_ports["udp"]:
+            user_mapped_ports["udp"] = OrderedDict()
 
-        if not remapped_ports["tcp"][22]:
-            remapped_ports["tcp"][22] = 9022
+        if not user_mapped_ports["tcp"][22]:
+            user_mapped_ports["tcp"][22] = 9022
 
-        for protocol in remapped_ports:
-            for port in remapped_ports[protocol]:
-                if default_ports[protocol] and default_ports[protocol][port]:
-                    default_ports[protocol][port]["remap_to"]: remapped_ports[protocol][port]
+        remapped_ports = {
+            "tcp": [],
+            "udp": []
+        } 
 
-        pass
+        for protocol in source_ports:
+            for port in source_ports[protocol]:
+                if user_mapped_ports[protocol] and user_mapped_ports[protocol][port]:
+                    remapped_ports[protocol].append((port, user_mapped_ports[protocol][port])) 
+                else:
+                    remapped_ports[protocol].append((port, port)) 
+
+        return remapped_ports
         
 
     def _set_ssh_config(username, identity, use_sshpass=False):
@@ -311,23 +326,27 @@ def main():
                 print("Target: " + repr(machine_dst))
                 exit(-1)
 
-            print('! configuring SSH keys')
-            ip = machine_dst.ip[0]
+            print('! Scanning source ports')
+            src_ip = machine_src.ip[0]
+            print('! Scanning target ports')
+            dst_ip = machine_dst.ip[0]
                 
             if not parsed.ignore_default_port_map:
-                src_ports = _port_scan(ip)
-                _port_remap(src_ports)
+                src_ports = _port_scan(src_ip)
             else:
                 #TODO: include only user defined ports 
                 pass
        
-            if parsed.print_default_port_map:
-                print(src_ports)
+            if parsed.print_port_map:
+                dumps(src_ports, indent=3)
+                dumps(_port_remap(src_ports), indent=3)
                 exit(0)
+    
+            exit(10)
 
-
+            print('! configuring SSH keys')
             mc = MigrationContext(
-                ip,
+                dst_ip,
                 _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
                 machine_src.disks[0].host_path,
                 forwarded_ports
