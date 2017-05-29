@@ -1,6 +1,27 @@
-- name: Ensure target directory is present
+
+  # with_fileglob doesn't work for subdirectories, so use `ls` directly
+- name: Get list of previously migrated macrocontainers
+  shell: 'ls -1 {{ macrocontainer_storage_path }}'
+  ignore_errors: yes
+  register: ls_macrocontainer_storage
+
+- name: Remove any previously migrated macrocontainers
+  shell: "docker rm -f {{ item }}"
+  with_items:
+    - "{{ ls_macrocontainer_storage.stdout_lines }}"
+  when: ls_macrocontainer_storage|succeeded
+
+- name: Delete any previously migrated macrocontainer data
   file:
-    path: /opt/leapp-to
+    path: '{{ item }}'
+    state: absent
+  with_items:
+    - "{{ ls_macrocontainer_storage.stdout_lines }}"
+  when: ls_macrocontainer_storage|succeeded
+
+- name: Ensure macrocontainer data directory is present
+  file:
+    path: '{{ macrocontainer_storage_path }}'
     state: directory
     owner: vagrant
     group: vagrant

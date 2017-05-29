@@ -179,21 +179,23 @@ def main():
             # Vagrant always uses qemu:///system, so for now, we always run
             # virt-tar-out as root, rather than as the current user
             proc = Popen(['sudo', 'bash', '-c', 'LIBGUESTFS_BACKEND=direct virt-tar-out -a {} / -'.format(self.disk)], stdout=PIPE)
-            return self._ssh('cat > /opt/leapp-to/container.tar.gz', stdin=proc.stdout)
+            return self._ssh('cat > /var/lib/leapp/container.tar.gz', stdin=proc.stdout)
 
         def destroy_containers(self):
             command = 'docker rm -f $(docker ps -q) 2>/dev/null 1>/dev/null; rm -rf /opt/leapp-to/container'
             return self._ssh_sudo(command)
 
         def start_container(self, img, init):
-            command = 'docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container ;' + \
-                    'mkdir -p /opt/leapp-to/container && ' + \
-                    'tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && ' + \
-                    'docker run -tid' + \
-                    ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
+            storage_dir = "/var/lib/leapp/macrocontainers/"
+            container_name = "container"
+            container_dir = os.path.join(storage_dir, container_name)
+            command = ('mkdir -p {0} && '
+                       'tar xf /var/lib/leapp/container.tar.gz -C {0} && '
+                       'docker run -tid'
+                       ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro').format(container_dir)
             good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
             for mount in good_mounts:
-                command += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
+                command += ' -v {d}/{m}:/{m}:Z'.format(d=container_dir, m=mount)
             for host_port, container_port in self.forwarded_ports:
                 if host_port is None:
                     command += ' -p {:d}'.format(container_port)  # docker will select random port for host
