@@ -250,7 +250,8 @@ class DemoCockpitSession(object):
         deadline = time.monotonic() + 60
         while time.monotonic() < deadline:
             time.sleep(0.1)
-            # TODO: Figure out if splinter offers a public API for this check
+            # TODO: Switch to a supported public API for this check
+            #  RFE: https://github.com/cobrateam/splinter/issues/544
             if migrate._element.is_enabled():
                 break
         else:
