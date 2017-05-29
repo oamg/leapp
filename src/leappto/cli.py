@@ -128,8 +128,6 @@ def main():
         pass
 
     def _port_scan(ip, port_range = None, shallow = False):
-        ### TODO: Add param check
-
         scan_args = '-sS' if shallow else '-sV'
         
         port_scanner = nmap.PortScanner()
@@ -165,7 +163,11 @@ def main():
                                   DEFAULT RE-MAP:
                                     22/tcp -> 9022/tcp
         """
-        ## TODO: add type checking
+        if not isinstance(source_ports, OrderedDict) and not isinstance(source_ports, dict):
+            raise TypeError("Source ports must be dict or OrderedDict")
+        if not isinstance(user_mapped_ports, OrderedDict) and not isinstance(user_mapped_ports, dict):
+            raise TypeError("User mapped ports must be dict or OrderedDict")
+
         PROTO_TCP = "tcp"
         PROTO_UDP = "udp"
 
