@@ -81,14 +81,14 @@ def _make_argument_parser():
         type=_port_spec,
         help='Define what ports will ne '
     )
-    migrate_cmd.add_argument(
-        '--udp-port',
-        default=None,
-        dest="forwarded_udp_ports",
-        nargs='*',
-        type=_port_spec,
-        help='Target ports to forward to macrocontainer'
-    )
+    #migrate_cmd.add_argument(
+    #    '--udp-port',
+    #    default=None,
+    #    dest="forwarded_udp_ports",
+    #    nargs='*',
+    #    type=_port_spec,
+    #    help='Target ports to forward to macrocontainer'
+    #)
     migrate_cmd.add_argument("-p", "--print-port-map", default=False, help='List suggested port mapping on target host', action="store_true")
     migrate_cmd.add_argument("--ignore-default-port-map", default=False, help='Default port mapping detected by leapp toll will be ignored', action="store_true")
     _add_identity_options(migrate_cmd)
@@ -169,12 +169,21 @@ def main():
         PROTO_TCP = "tcp"
         PROTO_UDP = "udp"
 
+        # build maps (Add missing keys if necessary)
         if not PROTO_TCP in user_mapped_ports:
             user_mapped_ports[PROTO_TCP] = OrderedDict()
         
         if not PROTO_UDP in user_mapped_ports:
             user_mapped_ports[PROTO_UDP] = OrderedDict()
+        
+        if not PROTO_TCP in source_ports:
+            source_ports[PROTO_TCP] = OrderedDict()
 
+        if not PROTO_UDP in source_ports:
+            source_ports[PROTO_UDP] = OrderedDict()
+
+
+        ## Static mapping
         if not 22 in user_mapped_ports[PROTO_TCP]:
             user_mapped_ports[PROTO_TCP][22] = 9022
 
@@ -183,12 +192,22 @@ def main():
             PROTO_UDP: []
         } 
 
+        ## add user ports which was not discovered
+        for protocol in user_mapped_ports:
+            for port in user_mapped_ports[protocol]:
+                if not (protocol in source_ports and port in source_ports[protocol]):
+                    ## Add dummy port to sources
+                    source_ports[protocol][port] = None 
+
+        ## remap ports
         for protocol in source_ports:
             for port in source_ports[protocol]:
                 if port in user_mapped_ports[protocol]:
                     remapped_ports[protocol].append((port, user_mapped_ports[protocol][port])) 
                 else:
                     remapped_ports[protocol].append((port, port)) 
+
+                    
 
         return remapped_ports
         
@@ -342,14 +361,16 @@ def main():
             user_mapped_ports["tcp"] = OrderedDict()
             user_mapped_ports["udp"] = OrderedDict()
 
-            for mapping in parsed.forwarded_tcp_ports:
-                user_mapped_ports["tcp"][mapping[0]] = mapping[1]
+            if parsed.forwarded_tcp_ports:
+                for mapping in parsed.forwarded_tcp_ports:
+                    user_mapped_ports["tcp"][mapping[0]] = mapping[1]
 
-            for mapping in parsed.forwarded_udp_ports:
-                user_mapped_ports["udp"][mapping[0]] = mapping[1]
+            #if parsed.forwarded_udp_ports:
+            #    for mapping in parsed.forwarded_udp_ports:
+            #        user_mapped_ports["udp"][mapping[0]] = mapping[1]
 
             tcp_mapping = None
-            udp_mapping = None
+            #udp_mapping = None
                 
             if not parsed.ignore_default_port_map:
                 print('! Scanning source ports')
@@ -358,20 +379,17 @@ def main():
                 #print('! Scanning target ports')
                 #dst_ports = _port_scan(dst_ip)
             
-                tcp_mapping = _port_remap(src_ports, user_mapped_ports)[tcp]
+                tcp_mapping = _port_remap(src_ports, user_mapped_ports)["tcp"]
                 
             else:
-                #TODO: include only user defined ports 
                 tcp_mapping = user_mapped_ports["tcp"]
-                udp_mapping = user_mapped_ports["udp"]
+                #udp_mapping = user_mapped_ports["udp"]
 
        
             if parsed.print_port_map:
-                print(dumps(tcp_mapping))
+                print(dumps(tcp_mapping, indent=3))
                 exit(0)
     
-            #exit(10)
-
             print('! configuring SSH keys')
             mc = MigrationContext(
                 dst_ip,
