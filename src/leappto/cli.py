@@ -188,8 +188,8 @@ def main():
             user_mapped_ports[PROTO_TCP][22] = 9022
 
         remapped_ports = {
-            PROTO_TCP: OrderedDict(),
-            PROTO_UDP: OrderedDict()
+            PROTO_TCP: [],
+            PROTO_UDP: [] 
         } 
 
         ## add user ports which was not discovered
@@ -203,9 +203,9 @@ def main():
         for protocol in source_ports:
             for port in source_ports[protocol]:
                 if port in user_mapped_ports[protocol]:
-                    remapped_ports[protocol][port] = user_mapped_ports[protocol][port]
+                    remapped_ports[protocol].append((port, user_mapped_ports[protocol][port]))
                 else:
-                    remapped_ports[protocol][port] = port 
+                    remapped_ports[protocol].append((port, port))
 
                     
 
@@ -355,7 +355,7 @@ def main():
                 exit(-1)
 
             src_ip = machine_src.ip[0]
-            #dst_ip = machine_dst.ip[0]
+            dst_ip = machine_dst.ip[0]
 
             user_mapped_ports = OrderedDict();
             user_mapped_ports["tcp"] = OrderedDict()
@@ -382,8 +382,11 @@ def main():
                 tcp_mapping = _port_remap(src_ports, user_mapped_ports)["tcp"]
                 
             else:
-                tcp_mapping = user_mapped_ports["tcp"]
-                #udp_mapping = user_mapped_ports["udp"]
+                ## this will apply static mapping:
+                #tcp_mapping = _port_remap({}, user_mapped_ports)["tcp"]
+
+                ## forward only user specified ports
+                tcp_mapping = parsed.forwarded_tcp_ports
 
        
             if parsed.print_port_map:
