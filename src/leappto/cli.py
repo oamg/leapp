@@ -188,8 +188,8 @@ def main():
             user_mapped_ports[PROTO_TCP][22] = 9022
 
         remapped_ports = {
-            PROTO_TCP: [],
-            PROTO_UDP: []
+            PROTO_TCP: OrderedDict(),
+            PROTO_UDP: OrderedDict()
         } 
 
         ## add user ports which was not discovered
@@ -203,9 +203,9 @@ def main():
         for protocol in source_ports:
             for port in source_ports[protocol]:
                 if port in user_mapped_ports[protocol]:
-                    remapped_ports[protocol].append((port, user_mapped_ports[protocol][port])) 
+                    remapped_ports[protocol][port] = user_mapped_ports[protocol][port]
                 else:
-                    remapped_ports[protocol].append((port, port)) 
+                    remapped_ports[protocol][port] = port 
 
                     
 
