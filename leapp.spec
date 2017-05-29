@@ -78,7 +78,13 @@ sed -i "s/install_requires=/install_requires=[],__fake=/g" src/setup.py
 pushd src
 %py2_build_egg
 popd
-jq -r '."tool-path" |= "/usr/bin/leapp-tool", ."tool-workdir" |= "/usr/bin", .version = "%{version}-%{release}"' cockpit/config.json > cockpit/config.json
+jq -r '."tool-path" = "/usr/bin/leapp-tool", \
+       ."tool-workdir" = "/usr/bin", \
+       .version = "%{version}-%{release}" \
+       # When installed via RPM, always rely on ssh-agent for key management
+       del("override-user")' \
+       del("override-identity")' \
+       cockpit/config.json > cockpit/config.json
 
 
 %install
