@@ -79,7 +79,7 @@ def _make_argument_parser():
         dest="forwarded_tcp_ports",
         nargs='*',
         type=_port_spec,
-        help='Define what ports will ne '
+        help='(Re)define target tcp ports to forward to macrocontainer'
     )
     #migrate_cmd.add_argument(
     #    '--udp-port',
