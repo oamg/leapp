@@ -82,7 +82,7 @@ jq -r '."tool-path" = "/usr/bin/leapp-tool", \
        ."tool-workdir" = "/usr/bin", \
        .version = "%{version}-%{release}" \
        # When installed via RPM, always rely on ssh-agent for key management
-       del("override-user")' \
+       del("override-user") \
        del("override-identity")' \
        cockpit/config.json > cockpit/config.json
 
