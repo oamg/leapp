@@ -12,6 +12,7 @@ from paramiko import AutoAddPolicy, SSHClient, SSHConfig
 
 from leappto import AbstractMachineProvider, MachineType, Machine, Disk, \
         Package, OperatingSystem, Installation
+from leappto.drivers.ssh import SSHVagrantDriver
 
 
 class LibvirtMachine(Machine):
@@ -77,55 +78,9 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 storage.append(Disk(type_, backing_file, device, driver_type))
             return storage
 
-        def __get_vagrant_data_path_from_domain(domain_name):
-            index_path = os.path.join(os.environ['HOME'], '.vagrant.d/data/machine-index/index')
-            index = json.load(open(index_path, 'r'))
-            for ident, machine in index['machines'].iteritems():
-                path_name = os.path.basename(machine['vagrantfile_path'])
-                vagrant_name = machine.get('name', 'default')
-                if domain_name == path_name + '_' + vagrant_name:
-                    return machine['local_data_path']
-            return None
-
-        def __get_vagrant_ssh_args_from_domain(domain_name):
-            path = __get_vagrant_data_path_from_domain(domain_name)
-            path = os.path.join(path, 'provisioners/ansible/inventory/vagrant_ansible_inventory')
-            with open(path, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line[0] in (';', '#'):
-                        continue
-                    return __parse_ansible_inventory_data(line)
-            return None
-
-        def __parse_ansible_inventory_data(line):
-            parts = shlex.split(line)
-            if parts:
-                parts = parts[1:]
-            args = {}
-            mapping = {
-                    'ansible_ssh_port': ('port', int),
-                    'ansible_ssh_host': ('hostname', str),
-                    'ansible_ssh_private_key_file': ('key_filename', str),
-                    'ansible_ssh_user': ('username', str)}
-            for part in parts:
-                key, value = part.split('=', 1)
-                if key in mapping:
-                    args[mapping[key][0]] = mapping[key][1](value)
-            return args
-
-        def __get_vagrant_ssh_client_for_domain(domain_name):
-            args = __get_vagrant_ssh_args_from_domain(domain_name)
-            if args:
-                client = SSHClient()
-                client.load_system_host_keys()
-                client.set_missing_host_key_policy(AutoAddPolicy())
-                client.connect(args.pop('hostname'), **args)
-                return client
-            return None
-
         def __get_os_info(domain_name, shallow):
-            client = __get_vagrant_ssh_client_for_domain(domain_name)
+            driver = SSHVagrantDriver(domain_name)
+            client = driver.transport
             if not client:
                 return None
             cmd = """python -c 'import platform; print chr(0xa).join(platform.linux_distribution()[:2])'"""

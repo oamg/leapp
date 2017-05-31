@@ -1,0 +1,24 @@
+---
+ovirt_engine_dwh: True
+ovirt_engine_type: 'ovirt-engine'
+ovirt_engine_version: '4.1'
+ovirt_engine_admin_password: '123456'
+
+ovirt_engine_db_host: 'localhost'
+ovirt_engine_db_port: 5432
+ovirt_engine_db_name: 'engine'
+ovirt_engine_db_user: 'engine'
+ovirt_engine_db_password: 'AqbXg4dpkbcVRZwPbY8WOR'
+
+ovirt_engine_dwh_db_host: 'localhost'
+ovirt_engine_dwh_db_port: 5432
+ovirt_engine_dwh_db_name: 'ovirt_engine_history'
+ovirt_engine_dwh_db_user: 'ovirt_engine_history'
+ovirt_engine_dwh_db_password: '37xmBKECANQGm0z3SfylMp'
+
+ovirt_engine_configure_iso_domain: false
+ovirt_engine_iso_domain_path: '/var/lib/exports/iso'
+ovirt_engine_iso_domain_name: 'ISO_DOMAIN'
+ovirt_engine_iso_domain_acl: '0.0.0.0/0.0.0.0(rw)'
+
+ovirt_engine_firewall_manager: 'firewalld'

@@ -1,0 +1,67 @@
+---
+# health page
+- name: check if ovirt-engine running (health page)
+  uri:
+    url: "http://{{ ansible_fqdn }}/ovirt-engine/services/health"
+    status_code: 200
+  register: ovirt_engine_status
+  retries: 2
+  delay: 5
+  until: ovirt_engine_status|success
+  ignore_errors: True
+
+# copy default answer file
+- name: copy default answerfile
+  template:
+    src: answerfile_{{ ovirt_engine_version }}_basic.txt.j2
+    dest: /tmp/answerfile.txt
+    mode: 0644
+    owner: root
+    group: root
+  when: ovirt_engine_answer_file_path is undefined
+
+# copy custom answer file
+- name: copy custom answer file
+  template:
+    src: "{{ ovirt_engine_answer_file_path }}"
+    dest: /tmp/answerfile.txt
+    mode: 0644
+    owner: root
+    group: root
+  when: ovirt_engine_answer_file_path is defined
+
+- name: run engine-setup with answerfile
+  shell: 'engine-setup --config-append=/tmp/answerfile.txt'
+  when: ovirt_engine_status|failed
+  tags:
+    - skip_ansible_lint
+
+- name: check state of database
+  service:
+    name: postgresql
+    state: started
+  when: (ovirt_engine_dwh_db_host == 'localhost' and ovirt_engine_dwh == True) or ovirt_engine_db_host == 'localhost'
+
+- name: check state of engine
+  service:
+    name: ovirt-engine
+    state: started
+
+- name: restart of ovirt-engine service
+  service:
+    name: ovirt-engine
+    state: restarted
+
+- name: check health status of page
+  uri:
+    url: "http://{{ ansible_fqdn }}/ovirt-engine/services/health"
+    status_code: 200
+  register: health_page
+  retries: 12
+  delay: 10
+  until: health_page|success
+
+- name: clean tmp files
+  file:
+    path: '/tmp/answerfile.txt'
+    state: 'absent'
