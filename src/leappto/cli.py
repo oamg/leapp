@@ -331,6 +331,11 @@ def main():
         print(dumps({'machines': [m._to_dict() for m in lmp.get_machines()]}, indent=3))
 
     elif parsed.action == 'migrate-machine':
+        def print_migrate_info(text):
+            if not parsed.print_port_map:
+                print(text)
+
+
         if not parsed.target:
             print('! no target specified, creating leappto container package in current directory')
             # TODO: not really for now
@@ -341,7 +346,7 @@ def main():
             target = parsed.target
 
 
-            print('! looking up "{}" as source and "{}" as target'.format(source, target))
+            print_migrate_info('! looking up "{}" as source and "{}" as target'.format(source, target))
 
             lmp = LibvirtMachineProvider()
             machines = lmp.get_machines()
@@ -375,10 +380,10 @@ def main():
             #udp_mapping = None
                 
             if not parsed.ignore_default_port_map:
-                print('! Scanning source ports')
+                print_migrate_info('! Scanning source ports')
                 src_ports = _port_scan(src_ip)
             
-                #print('! Scanning target ports')
+                #print_migrate_info('! Scanning target ports')
                 #dst_ports = _port_scan(dst_ip)
             
                 tcp_mapping = _port_remap(src_ports, user_mapped_ports)["tcp"]
@@ -395,28 +400,28 @@ def main():
                 print(dumps(tcp_mapping, indent=3))
                 exit(0)
     
-            print('! configuring SSH keys')
+            print_migrate_info('! configuring SSH keys')
             mc = MigrationContext(
                 dst_ip,
                 _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
                 machine_src.disks[0].host_path,
                 tcp_mapping 
             )
-            print('! copying over')
-            print('! ' + machine_src.suspend())
+            print_migrate_info('! copying over')
+            print_migrate_info('! ' + machine_src.suspend())
             mc.copy()
-            print('! ' + machine_src.resume())
-            print('! provisioning ...')
+            print_migrate_info('! ' + machine_src.resume())
+            print_migrate_info('! provisioning ...')
             # if el7 then use systemd
             if machine_src.installation.os.version.startswith('7'):
                 result = mc.start_container('centos:7', '/usr/lib/systemd/systemd --system')
-                print('! starting services')
+                print_migrate_info('! starting services')
                 mc.fix_systemd()
             else:
                 result = mc.start_container('centos:6', '/sbin/init')
-                print('! starting services')
+                print_migrate_info('! starting services')
                 mc.fix_upstart()
-            print('! done')
+            print_migrate_info('! done')
             sys.exit(result)
 
     elif parsed.action == 'destroy-containers':
