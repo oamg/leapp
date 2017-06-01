@@ -226,11 +226,7 @@ def main():
 
 
     parsed = ap.parse_args()
-    if parsed.action == 'list-machines':
-        lmp = LibvirtMachineProvider(parsed.shallow)
-        print(dumps({'machines': [m._to_dict() for m in lmp.get_machines()]}, indent=3))
-
-    elif parsed.action == 'migrate-machine':
+    if parsed.action == 'migrate-machine':
         if not parsed.target:
             print('! no target specified, creating leappto container package in current directory')
             # TODO: not really for now
