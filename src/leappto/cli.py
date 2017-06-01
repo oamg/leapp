@@ -380,11 +380,15 @@ def main():
             #udp_mapping = None
                 
             if not parsed.ignore_default_port_map:
-                print_migrate_info('! Scanning source ports')
-                src_ports = _port_scan(src_ip)
+                try:
+                    print_migrate_info('! Scanning source ports')
+                    src_ports = _port_scan(src_ip)
             
-                #print_migrate_info('! Scanning target ports')
-                #dst_ports = _port_scan(dst_ip)
+                    #print_migrate_info('! Scanning target ports')
+                    #dst_ports = _port_scan(dst_ip)
+                except Exception as e:
+                    print("An error occured during port scan: {}".format(str(e)))
+                    exit(-1)
             
                 tcp_mapping = _port_remap(src_ports, user_mapped_ports)["tcp"]
                 
