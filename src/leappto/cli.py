@@ -279,9 +279,7 @@ def main():
             return self._ssh_sudo(command)
 
         def start_container(self, img, init):
-            # remove unpacking and removing container dir to copy function
-            command = 'docker run -tid' + \
-                    ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
+            command = 'docker run -tid -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
             good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
             for mount in good_mounts:
                 command += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
@@ -347,7 +345,6 @@ def main():
                 exit(-1)
 
             print('! configuring SSH keys')
-            # pass source machine ip
             mc = MigrationContext(
                 machine_src,
                 machine_dst,
