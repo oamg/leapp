@@ -143,7 +143,8 @@ def main():
 
     class MigrationContext:
 
-        _SSH_CONTROL_PATH = '-o ControlPath="/home/mfranczy/.ssh/ctl/%L-%r@%h:%p"'  # TODO: change path
+        _SSH_CTL_PATH = '{}/.ssh/ctl'.format(os.environ['HOME'])
+        _SSH_CONTROL_PATH = '-o ControlPath="{}/%L-%r@%h:%p"'.format(_SSH_CTL_PATH)
 
         def __init__(self, source, target, ssh_settings, disk, forwarded_ports=None, rsync_cp_backend=False):
             self.source = source
@@ -185,12 +186,19 @@ def main():
             return Popen(ssh_cmd, **kwargs).wait()
 
         def _open_permanent_ssh_conn(self, addr):
-            cmd = ['ssh', '-nNf', '-o ControlMaster=yes', self._SSH_CONTROL_PATH] + self.ssh_cfg + ['-4', addr]
-            return Popen(cmd).wait()
+            if not os.path.exists(self._SSH_CTL_PATH):
+                try:
+                    os.makedirs(self._SSH_CTL_PATH)
+                except OSError as exc:
+                    if exc.errno != 17:
+                        raise
+
+            cmd = 'ssh -nNf -o ControlMaster=yes {} {} -4 {}'.format(self._SSH_CONTROL_PATH, ' '.join(self.ssh_cfg), addr)
+            return Popen(shlex.split(cmd)).wait()
 
         def _close_permanent_ssh_conn(self, addr):
-            cmd = ['sudo', 'ssh', self._SSH_CONTROL_PATH, '-O exit', addr]
-            return Popen(cmd).wait()
+            cmd = 'ssh {} {} -O exit {}'.format(self._SSH_CONTROL_PATH, ' '.join(self.ssh_cfg), addr)
+            return Popen(shlex.split(cmd)).wait()
 
         def _sshpass(self, ssh_cmd, **kwargs):
             read_pwd, write_pwd = os.pipe()
@@ -216,9 +224,9 @@ def main():
                 rsync_dir = '/opt/leapp-to/container'
 
                 try:
-                    os.makedirs('/opt/leapp-to/container')
+                    os.makedirs(rsync_dir)
                 except OSError as exc:
-                    if exc.ernno != 17:  # raise exception if it's different than FileExists
+                    if exc.errno != 17:  # raise exception if it's different than FileExists
                         raise
 
                 self._open_permanent_ssh_conn(self.source_addr)
@@ -235,22 +243,24 @@ def main():
                     Popen(shlex.split(source_cmd)).wait()
                 finally:
                     self._ssh_sudo('fsfreeze -u /', reuse_ssh_conn=True, addr=self.source_addr)
+                    self._close_permanent_ssh_conn(self.source_addr)
 
                 # if it's localhost this should not be executed
-                if self._target_addr not in ['127.0.0.1', 'localhost']:
-                    target_cmd = 'sudo rsync -aAX --rsync-path="sudo rsync" -r {}/ -e "ssh {}" {}:/opt/leapp-to/container'\
+                # and it would be useful to check if source and target are in the same network
+                # if yes then source -> rsync -> custom target
+                if self.target_addr not in ['127.0.0.1', 'localhost']:
+                    target_cmd = 'sudo rsync -aAX --rsync-path="sudo rsync" -r {0}/ -e "ssh {1}" {2}:{0}' \
                                  .format(rsync_dir, ' '.join(self.ssh_cfg), self.target_addr)
                     Popen(shlex.split(target_cmd)).wait()
-
-                shutil.rmtree(rsync_dir)
-                self._close_permanent_ssh_conn(self.source_addr)
+                    shutil.rmtree(rsync_dir)
 
             def _virt_tar_out():
                 try:
                     print('! ', self.source.suspend())
                     # Vagrant always uses qemu:///system, so for now, we always run
                     # virt-tar-out as root, rather than as the current user
-                    proc = Popen(['sudo', 'bash', '-c', 'LIBGUESTFS_BACKEND=direct virt-tar-out -a {} / -'.format(self.disk)], stdout=PIPE)
+                    proc = Popen(['sudo', 'bash', '-c', 'LIBGUESTFS_BACKEND=direct virt-tar-out -a {} / -' \
+                                .format(self.disk)], stdout=PIPE)
                     return self._ssh_sudo(
                         'cat > /opt/leapp-to/container.tar.gz && tar xf /opt/leapp-to/container.tar.gz -C ' + \
                         '/opt/leapp-to/container', stdin=proc.stdout
@@ -258,7 +268,8 @@ def main():
                 finally:
                     print('! ', self.source.resume())
 
-            self._ssh_sudo('docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container; mkdir -p /opt/leapp-to/container')
+            self._ssh_sudo('docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container; ' + \
+                           'mkdir -p /opt/leapp-to/container')
             if self.rsync_cp_backend:
                 return _rsync()
             return _virt_tar_out()
@@ -367,13 +378,12 @@ def main():
         machines = lmp.get_machines()
 
         machine_dst = _find_machine(machines, target)
-        # We assume the target to be an IP or FQDN if not a machine name
-        ip = machine_dst.ip[0] if machine_dst else target
 
         print('! looking up "{}" as target'.format(target))
         print('! configuring SSH keys')
         mc = MigrationContext(
-            ip,
+            None,
+            machine_dst,
             _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
             None
         )
