@@ -7,12 +7,15 @@ from json import dumps
 from pwd import getpwuid
 from subprocess import Popen, PIPE
 from collections import OrderedDict
-from leappto.providers.libvirt_provider import LibvirtMachineProvider
+from leappto.providers.libvirt_provider import LibvirtMachineProvider, LibvirtMachine
 from leappto.version import __version__
 import os
 import sys
 import socket
 import nmap
+import shlex
+import shutil
+import tempfile
 
 VERSION='leapp-tool {0}'.format(__version__)
 
@@ -81,6 +84,11 @@ def _make_argument_parser():
         type=_port_spec,
         help='Target ports to forward to macrocontainer (temporary!)'
     )
+    migrate_cmd.add_argument(
+        '--use-rsync',
+        action='store_true',
+        help='use rsync as backend for filesystem migration, otherwise virt-tar-out'
+    )
     _add_identity_options(migrate_cmd)
 
     destroy_cmd.add_argument('target', help='target VM name')
@@ -135,26 +143,55 @@ def main():
         return use_sshpass, ssh_options
 
     class MigrationContext:
-        def __init__(self, target, ssh_settings, disk, forwarded_ports=None):
+
+        _SSH_CONTROL_PATH = '-o ControlPath="/home/mfranczy/.ssh/ctl/%L-%r@%h:%p"'  # TODO: change path
+
+        def __init__(self, source, target, ssh_settings, disk, forwarded_ports=None, rsync_cp_backend=False):
+            self.source = source
             self.target = target
-            self.use_sshpass, self.target_cfg = ssh_settings
+            self.use_sshpass, self.ssh_cfg = ssh_settings
             self._cached_ssh_password = None
             self.disk = disk
+            self.rsync_cp_backend = rsync_cp_backend
             if forwarded_ports is None:
                 forwarded_ports = [(80, 80)]  # Default to forwarding plain HTTP
             else:
                 forwarded_ports = list(forwarded_ports)
             self.forwarded_ports = forwarded_ports
 
-        @property
-        def _ssh_base(self):
-            return ['ssh'] + self.target_cfg + ['-4', self.target]
+        def __get_machine_addr(self, machine):
+            # We assume the source/target to be an IP or FQDN if not a machine name
+            return machine.ip[0] if isinstance(machine, LibvirtMachine) else machine
 
-        def _ssh(self, cmd, **kwargs):
-            ssh_cmd = self._ssh_base + [cmd]
+        @property
+        def target_addr(self):
+            return self.__get_machine_addr(self.target)
+
+        @property
+        def source_addr(self):
+            return self.__get_machine_addr(self.source)
+
+        def _ssh_base(self, addr=None):
+            if addr is None:
+                addr = self.target_addr
+            return ['ssh'] + self.ssh_cfg + ['-4', addr]
+
+        def _ssh(self, cmd, reuse_ssh_conn=False, addr=None, **kwargs):
+            ssh_cmd = self._ssh_base(addr)
+            if reuse_ssh_conn:
+                ssh_cmd += [self._SSH_CONTROL_PATH]
+            ssh_cmd += [cmd]
             if self.use_sshpass:
                 return self._sshpass(ssh_cmd, **kwargs)
             return Popen(ssh_cmd, **kwargs).wait()
+
+        def _open_permanent_ssh_conn(self, addr):
+            cmd = ['ssh', '-nNf', '-o ControlMaster=yes', self._SSH_CONTROL_PATH] + self.ssh_cfg + ['-4', addr]
+            return Popen(cmd).wait()
+
+        def _close_permanent_ssh_conn(self, addr):
+            cmd = ['sudo', 'ssh', self._SSH_CONTROL_PATH, '-O exit', addr]
+            return Popen(cmd).wait()
 
         def _sshpass(self, ssh_cmd, **kwargs):
             read_pwd, write_pwd = os.pipe()
@@ -169,27 +206,63 @@ def main():
             if ssh_password is None:
                 ssh_password = self._cached_ssh_password = getpass("SSH password:").encode()
             os.write(write_pwd, ssh_password  + b'\n')
-            print(sshpass_cmd)
             return child.wait()
 
         def _ssh_sudo(self, cmd, **kwargs):
             return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
 
         def copy(self):
-            # Vagrant always uses qemu:///system, so for now, we always run
-            # virt-tar-out as root, rather than as the current user
-            proc = Popen(['sudo', 'bash', '-c', 'LIBGUESTFS_BACKEND=direct virt-tar-out -a {} / -'.format(self.disk)], stdout=PIPE)
-            return self._ssh('cat > /opt/leapp-to/container.tar.gz', stdin=proc.stdout)
+
+            def _rsync():
+                rsync_tmp_dir = tempfile.mkdtemp()
+
+                self._open_permanent_ssh_conn(self.source_addr)
+                self._ssh_sudo('sync && fsfreeze -f /', reuse_ssh_conn=True, addr=self.source_addr)
+
+                source_cmd = 'sudo rsync --rsync-path="sudo rsync" -aAX -r'
+                for exd in ['/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*']:
+                    source_cmd += ' --exclude=' + exd
+                source_cmd += ' -e "ssh {} {}" {}:/ {}'.format(
+                        self._SSH_CONTROL_PATH, ' '.join(self.ssh_cfg), self.source_addr, rsync_tmp_dir
+                )
+
+                try:
+                    Popen(shlex.split(source_cmd)).wait()
+                finally:
+                    self._ssh_sudo('fsfreeze -u /', reuse_ssh_conn=True, addr=self.source_addr)
+
+                target_cmd = 'sudo rsync -aAX --rsync-path="sudo rsync" -r {}/ -e "ssh {}" {}:/opt/leapp-to/container'.format(rsync_tmp_dir, ' '.join(self.ssh_cfg), self.target_addr)
+
+                Popen(shlex.split(target_cmd)).wait()
+
+                shutil.rmtree(rsync_tmp_dir)
+                self._close_permanent_ssh_conn(self.source_addr)
+
+            def _virt_tar_out():
+                try:
+                    print('! ', self.source.suspend())
+                    # Vagrant always uses qemu:///system, so for now, we always run
+                    # virt-tar-out as root, rather than as the current user
+                    proc = Popen(['sudo', 'bash', '-c', 'LIBGUESTFS_BACKEND=direct virt-tar-out -a {} / -'.format(self.disk)], stdout=PIPE)
+                    return self._ssh_sudo(
+                        'cat > /opt/leapp-to/container.tar.gz && tar xf /opt/leapp-to/container.tar.gz -C ' + \
+                        '/opt/leapp-to/container', stdin=proc.stdout
+                    )
+                finally:
+                    print('! ', self.source.resume())
+
+            self._ssh_sudo('docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container; mkdir -p /opt/leapp-to/container')
+            if self.rsync_cp_backend:
+                return _rsync()
+            return _virt_tar_out()
 
         def destroy_containers(self):
             command = 'docker rm -f $(docker ps -q) 2>/dev/null 1>/dev/null; rm -rf /opt/leapp-to/container'
             return self._ssh_sudo(command)
 
         def start_container(self, img, init):
-            command = 'docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container ;' + \
-                    'mkdir -p /opt/leapp-to/container && ' + \
-                    'tar xf /opt/leapp-to/container.tar.gz -C /opt/leapp-to/container && ' + \
-                    'docker run -tid' + \
+            # remove unpacking and removing container dir to copy function
+            command = 'docker run -tid' + \
                     ' -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
             good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
             for mount in good_mounts:
@@ -248,7 +321,6 @@ def main():
             machine_src = _find_machine(machines, source)
             machine_dst = _find_machine(machines, target)
 
-            # We assume the target to be an IP or FQDN if not a machine name
             ip = machine_dst.ip[0] if machine_dst else target
 
             if not machine_src:
@@ -257,17 +329,17 @@ def main():
                 exit(-1)
 
             print('! configuring SSH keys')
-
+            # pass source machine ip
             mc = MigrationContext(
-                ip,
+                machine_src,
+                machine_dst,
                 _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
                 machine_src.disks[0].host_path,
-                forwarded_ports
+                forwarded_ports,
+                parsed.use_rsync
             )
             print('! copying over')
-            print('! ' + machine_src.suspend())
             mc.copy()
-            print('! ' + machine_src.resume())
             print('! provisioning ...')
             # if el7 then use systemd
             if machine_src.installation.os.version.startswith('7'):
