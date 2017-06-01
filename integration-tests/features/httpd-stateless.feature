@@ -7,7 +7,8 @@ Scenario: HTTP default server page
          | target     | centos7-target      | no           |
     When app-source is redeployed to target as a macrocontainer
     Then the HTTP 403 response on port 80 should match within 90 seconds
- 
+
+@wip
 Scenario: HTTP default server page - migrated by using rsync
    Given the local virtual machines:
          | name       | definition          | ensure_fresh |

@@ -292,13 +292,16 @@ class ClientHelper(object):
 
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host, migration_opt):
+        as_sudo = False
         cmd_args = ["migrate-machine"]
         if migration_opt == 'rsync':
-            cmd_args.push('--use-rsync')
+            cmd_args.append('--use-rsync')
+            as_sudo = True
         cmd_args.extend(["-t", target_host, source_host])
         result = cls._run_leapp(cmd_args,
                                 add_default_user=True,
-                                add_default_identity=True)
+                                add_default_identity=True,
+                                as_sudo=as_sudo)
         msg = "Redeployed {} as macrocontainer on {}"
         print(msg.format(source_host, target_host))
         return result

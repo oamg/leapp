@@ -252,7 +252,9 @@ def main():
                     target_cmd = 'sudo rsync -aAX --rsync-path="sudo rsync" -r {0}/ -e "ssh {1}" {2}:{0}' \
                                  .format(rsync_dir, ' '.join(self.ssh_cfg), self.target_addr)
                     Popen(shlex.split(target_cmd)).wait()
-                    shutil.rmtree(rsync_dir)
+
+                # temporary, after task with different names for containers should be removed
+                shutil.rmtree(rsync_dir)
 
             def _virt_tar_out():
                 try:
