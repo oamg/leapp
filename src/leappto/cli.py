@@ -465,7 +465,7 @@ def main():
         }
         
         try:
-            result["ports"] = _port_scan(parsed.ip, parsed.range, parsed.shallow)
+            result["ports"] = _port_scan(parsed.address, parsed.range, parsed.shallow)
 
         except PortScanException as e:
             result["status"] = _ERR_STATE
