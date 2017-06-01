@@ -47,7 +47,7 @@ def create_local_machines(context, user=None):
 ##############################
 
 @when("{source_vm} is redeployed to {target_vm} as a macrocontainer")
-def redeploy_vm_as_macrocontainer(context, source_vm, target_vm):
+def redeploy_vm_as_macrocontainer(context, source_vm, target_vm, migration_opt=None):
     """Uses leapp-tool.py to redeploy the given source VM
 
     Both *source_vm* and *target_vm* must be named in a previous local
@@ -55,13 +55,16 @@ def redeploy_vm_as_macrocontainer(context, source_vm, target_vm):
     """
     context.redeployment_source = source_vm
     context.redeployment_target = target_vm
-    result = context.cli_helper.redeploy_as_macrocontainer(source_vm, target_vm)
+    result = context.cli_helper.redeploy_as_macrocontainer(source_vm, target_vm, migration_opt)
     assert_that(result.local_vm_count, greater_than(1), "At least 2 local VMs")
     assert_that(result.source_ip, not_none(), "Valid source IP")
     assert_that(result.target_ip, not_none(), "Valid target IP")
     context.redeployment_source_ip = result.source_ip
     context.redeployment_target_ip = result.target_ip
 
+@when("{source_vm} is redeployed to {target_vm} as a macrocontainer and {migration_opt} is used for fs migration")
+def redeploy_vm_as_macrocontainer_with_migration_opt(context, source_vm, target_vm, migration_opt):
+    redeploy_vm_as_macrocontainer(context, source_vm, target_vm, migration_opt)
 
 ##############################
 # Service status checking
