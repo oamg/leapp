@@ -45,6 +45,19 @@ def check_demo_machine_listing(context, time_limit):
     missing = session.list_missing_machines(expected_hosts, time_limit)
     assert_that(missing, equal_to([]), "Machines missing from listing")
 
+@when("the demonstration user redeploys {source_vm} to {target_vm}")
+def redeploy_vm_via_plugin(context, source_vm, target_vm):
+    session = context.demo_session
+    gethost = context.vm_helper.get_hostname
+    session.start_vm_redeployment(gethost(source_vm), gethost(target_vm))
+    session.wait_for_redeployment_to_start(10)
+
+@then("the redeployment should be reported as complete within {time_limit:g} seconds")
+def check_demo_redeployment_result(context, time_limit):
+    session = context.demo_session
+    session.wait_for_successful_redeployment(time_limit)
+
+
 # Helper functions and classes
 # Note: these are all candidates for moving to the `behave` context
 #       where they can use the shared `_run_command` implementation
@@ -203,21 +216,61 @@ class DemoCockpitSession(object):
         _enter_context = self._scenario_cleanup.enter_context
         self._plugin_frame = _enter_context(browser.get_iframe(frame_name))
 
+    @property
+    def plugin_frame(self):
+        result = self._plugin_frame
+        if result is None:
+            raise RuntimeError("Must open app plugin before querying content")
+        return result
+
     def list_missing_machines(self, expected_hostnames, time_limit):
         """Checks the given machine hostnames are visible on the current page
 
         Returns a list of hostnames that were NOT found on the page
         """
-        if self._plugin_frame is None:
-            raise RuntimeError("Must open app plugin before querying content")
         deadline = time.monotonic() + time_limit
         missing = set(expected_hostnames)
         # Query the page state every 100 ms until either all expected
         # machines are listed or the deadline expires
-        option_found = self._plugin_frame.find_by_value
+        option_found = self.plugin_frame.find_by_value
         while missing and time.monotonic() < deadline:
             time.sleep(0.1)
             for hostname in list(missing):
                 if option_found(hostname):
                     missing.remove(hostname)
         return sorted(missing)
+
+    def start_vm_redeployment(self, source_hostname, target_hostname):
+        """Selects source & target machine, then starts a migration"""
+        frame = self.plugin_frame
+        frame.choose("target-machine", target_hostname)
+        frame.choose("source-machine", source_hostname)
+        assert_that(frame.is_text_present("discovered ports", wait_time=20))
+        migrate = frame.find_by_id("migrate-button").first
+        deadline = time.monotonic() + 60
+        while time.monotonic() < deadline:
+            time.sleep(0.1)
+            # TODO: Switch to a supported public API for this check
+            #  RFE: https://github.com/cobrateam/splinter/issues/544
+            if migrate._element.is_enabled():
+                break
+        else:
+            assert_that(False, "Selecting source & target failed to allow migration")
+        migrate.click()
+
+    def wait_for_redeployment_to_start(self, time_limit):
+        frame = self.plugin_frame
+        assert_that(frame.is_text_present("Migrating ", wait_time=time_limit),
+                    "Failed to start migration")
+        time.sleep(0.1) # Immediate check for argument parsing failure
+        assert_that(frame.is_text_not_present("Command failed"),
+                    "Migration operation immediately reported failure")
+
+    def wait_for_successful_redeployment(self, time_limit):
+        frame = self.plugin_frame
+        assert_that(frame.is_text_present("> done", wait_time=time_limit),
+                    "Migration failed to complete within time limit")
+        assert_that(frame.is_text_not_present("Command failed"),
+                    "Migration operation reported failure")
+        assert_that(frame.is_text_present("Command completed successfully"),
+                    "Migration operation did not report success")
