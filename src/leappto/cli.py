@@ -15,7 +15,6 @@ import socket
 import nmap
 import shlex
 import shutil
-import tempfile
 
 VERSION='leapp-tool {0}'.format(__version__)
 
@@ -214,28 +213,36 @@ def main():
         def copy(self):
 
             def _rsync():
-                rsync_tmp_dir = tempfile.mkdtemp()
-
-                self._open_permanent_ssh_conn(self.source_addr)
-                self._ssh_sudo('sync && fsfreeze -f /', reuse_ssh_conn=True, addr=self.source_addr)
-
-                source_cmd = 'sudo rsync --rsync-path="sudo rsync" -aAX -r'
-                for exd in ['/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*']:
-                    source_cmd += ' --exclude=' + exd
-                source_cmd += ' -e "ssh {} {}" {}:/ {}'.format(
-                        self._SSH_CONTROL_PATH, ' '.join(self.ssh_cfg), self.source_addr, rsync_tmp_dir
-                )
+                rsync_dir = '/opt/leapp-to/container'
 
                 try:
+                    os.makedirs('/opt/leapp-to/container')
+                except OSError as exc:
+                    if exc.ernno != 17:  # raise exception if it's different than FileExists
+                        raise
+
+                self._open_permanent_ssh_conn(self.source_addr)
+                try:
+                    self._ssh_sudo('sync && fsfreeze -f /', reuse_ssh_conn=True, addr=self.source_addr)
+
+                    source_cmd = 'sudo rsync --rsync-path="sudo rsync" -aAX -r'
+                    for exd in ['/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*']:
+                        source_cmd += ' --exclude=' + exd
+                    source_cmd += ' -e "ssh {} {}" {}:/ {}'.format(
+                        self._SSH_CONTROL_PATH, ' '.join(self.ssh_cfg), self.source_addr, rsync_dir
+                    )
+
                     Popen(shlex.split(source_cmd)).wait()
                 finally:
                     self._ssh_sudo('fsfreeze -u /', reuse_ssh_conn=True, addr=self.source_addr)
 
-                target_cmd = 'sudo rsync -aAX --rsync-path="sudo rsync" -r {}/ -e "ssh {}" {}:/opt/leapp-to/container'.format(rsync_tmp_dir, ' '.join(self.ssh_cfg), self.target_addr)
+                # if it's localhost this should not be executed
+                if self._target_addr not in ['127.0.0.1', 'localhost']:
+                    target_cmd = 'sudo rsync -aAX --rsync-path="sudo rsync" -r {}/ -e "ssh {}" {}:/opt/leapp-to/container'\
+                                 .format(rsync_dir, ' '.join(self.ssh_cfg), self.target_addr)
+                    Popen(shlex.split(target_cmd)).wait()
 
-                Popen(shlex.split(target_cmd)).wait()
-
-                shutil.rmtree(rsync_tmp_dir)
+                shutil.rmtree(rsync_dir)
                 self._close_permanent_ssh_conn(self.source_addr)
 
             def _virt_tar_out():
