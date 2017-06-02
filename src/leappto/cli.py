@@ -129,7 +129,99 @@ def main():
     
     class PortCollisionException(Exception):
         pass
+
+    class PortMap(object):
+        PROTO_TCP = "tcp"
+        PROTO_UDP = "udp"
+
+        def __init__(self, port_map = None):
+            self.port_map = self.__init_structure()
+
+            if port_map and isinstance(port_map, OrderedDict()):
+                self.__from_dict(port_map)
+            elif portmap:
+                raise AttributeError("Unknown port_map type")
+
+
+        def __init_structure(self):
+            port_map = OrderedDict()
+
+            if not PROTO_TCP in port_map:
+                port_map[PROTO_TCP] = OrderedDict()
         
+            if not PROTO_UDP in port_map:
+                port_map[PROTO_UDP] = OrderedDict()
+
+            return port_map
+        
+        def __is_int(self, number):
+            try:
+                int(number)
+                return True
+            except Exception:
+                return False
+
+        def __from_dict(self, dict_data):
+            protocols = dict_data.keys()
+
+            if PROTO_TCP in protocols:
+                for port in dict_data[PROTO_TCP]:
+                    ## PORTS MUST BE NUMBERS
+                    if self.__is_int(port) and self.__is_int(dict_data[PROTO_TCP][port]):
+                        self.add_tcp_port(port, dict_data[PROTO_TCP][port])
+                
+                    elif self.__is_int(port):
+                        self.add_tcp_port(port, port)
+
+
+        def add_port(self, protocol, source, target = None):
+            if not target:
+                target = source
+
+            if self.__is_int(source) and self.__is_int(target):
+                self.port_map[protocol][source] = target
+            else:
+                raise AttributeError("Source and target must be number")
+
+        def add_tcp_port(self, source, target = None):
+            self.add_port(PROTO_TCP, source, target)
+
+        def list_ports(self, protocol):
+            return self.port_map[protocol].keys()
+
+        def list_tcp_source_ports(self):
+            return self.list_ports(PROTO_TCP)
+        
+        def has_port(self, protocol, source):
+            if not source in self.list_ports(protocol):
+                return False
+
+            return True
+        
+        def has_tcp_port(self, source):
+            return self.has_port(PROTO_TCP, source) 
+
+        def get_target_port(self, protocol, source):
+            if not self.has_port(protocol, source):
+                raise AttributeError("Port {} is not mapped".format(str(source))) 
+
+            return self.port_map[protocol][source]
+
+        def get_tcp_target_port(self, source):
+            return self.get_target_port(PROTO_TCP, source)
+
+        def get_protocols(self):
+            protocols = []
+            
+            if self.port_map[PROTO_TCP]:
+                protocols.append(PROTO_TCP)
+            
+            if self.port_map[PROTO_UDP]:
+                protocols.append(PROTO_UDP)
+
+            return protocols
+
+
     def _init_port_map(port_map = OrderedDict()):
         PROTO_TCP = "tcp"
         PROTO_UDP = "udp"
@@ -169,7 +261,7 @@ def main():
         return ports
 
 
-    def _port_remap(source_ports, target_ports = OrderedDict(), user_mapped_ports = OrderedDict()):
+    def _port_remap(source_ports, target_ports = PortMap(), user_mapped_ports = PortMap()):
         """
         param source_ports      - ports found by the tool on source machine
         param source_ports      - ports found by the tool on target machine
@@ -179,25 +271,20 @@ def main():
                                   DEFAULT RE-MAP:
                                     22/tcp -> 9022/tcp
         """
-        if not isinstance(source_ports, OrderedDict) and not isinstance(source_ports, dict):
-            raise TypeError("Source ports must be dict or OrderedDict")
-        if not isinstance(target_ports, OrderedDict) and not isinstance(target_ports, dict):
-            raise TypeError("Target ports must be dict or OrderedDict")
-        if not isinstance(user_mapped_ports, OrderedDict) and not isinstance(user_mapped_ports, dict):
-            raise TypeError("User mapped ports must be dict or OrderedDict")
+        if not isinstance(source_ports, PortMap):
+            raise TypeError("Source ports must PortMap")
+        if not isinstance(target_ports, PortMap):
+            raise TypeError("Target ports must PortMap")
+        if not isinstance(user_mapped_ports, PortMap):
+            raise TypeError("User mapped ports must PortMap")
 
         PROTO_TCP = "tcp"
         PROTO_UDP = "udp"
         PORT_MAX = 65535
 
-        # build maps (Add missing keys if necessary)
-        user_mapped_ports = _init_port_map(user_mapped_ports)
-        source_ports      = _init_port_map(source_ports)
-        target_ports      = _init_port_map(target_ports)
-
         ## Static mapping
-        if not 22 in user_mapped_ports[PROTO_TCP]:
-            user_mapped_ports[PROTO_TCP][22] = 9022
+        if not user_mapped_ports.has_tcp_port(22):
+            user_mapped_ports.add_tcp_port(22, 9022)
 
         """
             remapped_ports structure:
@@ -217,24 +304,23 @@ def main():
         } 
 
         ## add user ports which was not discovered
-        for protocol in user_mapped_ports:
-            for port in user_mapped_ports[protocol]:
-                if not (protocol in source_ports and port in source_ports[protocol]):
+        for protocol in user_mapped_ports.get_protocols():
+            for port in user_mapped_ports.list_ports(protocol):
+                if not source_ports.has_port(protocol, port):
                     ## Add dummy port to sources
                     source_ports[protocol][port] = None 
-
+                    
         ## remap ports
-        for protocol in source_ports:
-            for port in source_ports[protocol]:
+        for protocol in source_port.get_protocols():
+            for port in source_port.list_ports(protocol):
                 target_port = source_port = port
-
+                
                 ## remap port if user defined it
-                if port in user_mapped_ports[protocol]:
-                    target_port = user_mapped_ports[protocol][port]
+                if  user_mapped_ports.has_port(protocol, port):
+                    target_port = user_mapped_ports.get_target_port(protocol, port)
 
-                ## Conflict resolver
                 while target_port <= PORT_MAX:
-                    if target_port in target_ports[protocol]:
+                    if target_ports.has_port(protocol, target_port):
                         if target_port == PORT_MAX:
                             raise PortCollisionException("Automatic port collision resolve failed, please use --tcp-port SELECTED_TARGET_PORT:{} to solve the issue".format(source_port))
 
@@ -243,7 +329,6 @@ def main():
                         break
 
                 remapped_ports[protocol].append((target_port, source_port))
-                    
 
         return remapped_ports
         
@@ -387,10 +472,6 @@ def main():
 
             machine_src = _find_machine(machines, source)
             machine_dst = _find_machine(machines, target)
-        
-
-            # We assume the target to be an IP or FQDN if not a machine name
-            ip = machine_dst.ip[0] if machine_dst else target
 
             if not machine_src:
                 print("Machine is not ready:")
@@ -400,11 +481,11 @@ def main():
             src_ip = machine_src.ip[0]
             dst_ip = machine_dst.ip[0]
 
-            user_mapped_ports = _init_port_map()
+            user_mapped_ports = PortMap()
 
             if parsed.forwarded_tcp_ports:
                 for mapping in parsed.forwarded_tcp_ports:
-                    user_mapped_ports["tcp"][mapping[0]] = mapping[1]
+                    user_mapped_ports.add_tcp_port(mapping[0], mapping[1])
 
             #if parsed.forwarded_udp_ports:
             #    for mapping in parsed.forwarded_udp_ports:
@@ -416,10 +497,11 @@ def main():
             if not parsed.ignore_default_port_map:
                 try:
                     print_migrate_info('! Scanning source ports')
-                    src_ports = _port_scan(src_ip)
+                    src_ports = PortMap(_port_scan(src_ip))
             
                     print_migrate_info('! Scanning target ports')
-                    dst_ports = _port_scan(dst_ip)
+                    dst_ports = PortMap(_port_scan(dst_ip))
+
                 except Exception as e:
                     print("An error occured during port scan: {}".format(str(e)))
                     exit(-1)
