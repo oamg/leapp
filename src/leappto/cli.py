@@ -137,7 +137,7 @@ def main():
         def __init__(self, port_map = None):
             self.port_map = self.__init_structure()
 
-            if port_map and isinstance(port_map, OrderedDict()):
+            if port_map and isinstance(port_map, OrderedDict):
                 self.__from_dict(port_map)
             elif port_map:
                 raise AttributeError("Unknown port_map type")
@@ -168,13 +168,13 @@ def main():
                 for port in dict_data[self.PROTO_TCP]:
                     ## PORTS MUST BE NUMBERS
                     if self.__is_int(port) and self.__is_int(dict_data[self.PROTO_TCP][port]):
-                        self.add_tcp_port(port, dict_data[self.PROTO_TCP][port])
+                        self.set_tcp_port(port, dict_data[self.PROTO_TCP][port])
                 
                     elif self.__is_int(port):
-                        self.add_tcp_port(port, port)
+                        self.set_tcp_port(port, port)
 
 
-        def add_port(self, protocol, source, target = None):
+        def set_port(self, protocol, source, target = None):
             if not target:
                 target = source
 
@@ -183,8 +183,8 @@ def main():
             else:
                 raise AttributeError("Source and target must be number")
 
-        def add_tcp_port(self, source, target = None):
-            self.add_port(self.PROTO_TCP, source, target)
+        def set_tcp_port(self, source, target = None):
+            self.set_port(self.PROTO_TCP, source, target)
 
         def list_ports(self, protocol):
             return self.port_map[protocol].keys()
@@ -221,18 +221,6 @@ def main():
 
             return protocols
 
-
-    def _init_port_map(port_map = OrderedDict()):
-        PROTO_TCP = "tcp"
-        PROTO_UDP = "udp"
-
-        if not PROTO_TCP in port_map:
-            port_map[PROTO_TCP] = OrderedDict()
-        
-        if not PROTO_UDP in port_map:
-            port_map[PROTO_UDP] = OrderedDict()
-
-        return port_map
 
     def _port_scan(ip, port_range = None, shallow = False):
         scan_args = '-sS' if shallow else '-sV'
@@ -284,7 +272,7 @@ def main():
 
         ## Static mapping
         if not user_mapped_ports.has_tcp_port(22):
-            user_mapped_ports.add_tcp_port(22, 9022)
+            user_mapped_ports.set_tcp_port(22, 9022)
 
         """
             remapped_ports structure:
@@ -308,11 +296,11 @@ def main():
             for port in user_mapped_ports.list_ports(protocol):
                 if not source_ports.has_port(protocol, port):
                     ## Add dummy port to sources
-                    source_ports[protocol][port] = None 
+                    source_ports.set_port(protocol, port) 
                     
         ## remap ports
-        for protocol in source_port.get_protocols():
-            for port in source_port.list_ports(protocol):
+        for protocol in source_ports.get_protocols():
+            for port in source_ports.list_ports(protocol):
                 target_port = source_port = port
                 
                 ## remap port if user defined it
@@ -485,7 +473,7 @@ def main():
 
             if parsed.forwarded_tcp_ports:
                 for mapping in parsed.forwarded_tcp_ports:
-                    user_mapped_ports.add_tcp_port(mapping[0], mapping[1])
+                    user_mapped_ports.set_tcp_port(mapping[0], mapping[1])
 
             #if parsed.forwarded_udp_ports:
             #    for mapping in parsed.forwarded_udp_ports:
