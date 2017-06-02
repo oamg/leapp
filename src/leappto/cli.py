@@ -176,6 +176,7 @@ def main():
 
         PROTO_TCP = "tcp"
         PROTO_UDP = "udp"
+        PORT_MAX = 65535
 
         # build maps (Add missing keys if necessary)
         if not PROTO_TCP in user_mapped_ports:
@@ -235,9 +236,9 @@ def main():
                     target_port = user_mapped_ports[protocol][port]
 
                 ## Conflict resolver
-                while target_port <= 65535:
+                while target_port <= PORT_MAX:
                     if target_port in target_ports[protocol]:
-                        if target_port == 65535:
+                        if target_port == PORT_MAX:
                             raise PortCollisionException("Automatic port collision resolve failed, please use --tcp-port SELECTED_TARGET_PORT:{} to solve the issue".format(source_port))
 
                         target_port = target_port + 1

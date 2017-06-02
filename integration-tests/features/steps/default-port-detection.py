@@ -22,35 +22,35 @@ def _assert_discovered_ports(ports, expected_ports):
 
 @then("get list of discovered ports from {vm_source_name} which will be forwared from {vm_target_name}")
 def check_specific_ports_used_by_vm(context, vm_source_name, vm_target_name):
-    """check if ports 22,80,111 are open and forwarded to 9022,80,111"""
+    """check if ports 22,80,111 are open and forwarded to 9022,80,112"""
 
     ports = context.cli_helper.check_response_time(
         ["migrate-machine", "-p", "-t", _get_hostname(context, vm_target_name), _get_hostname(context, vm_source_name)],
         time_limit=60
     )
-    expected_ports = "[[9022,22],[80,80],[111,111]]"
+    expected_ports = "[[9022,22],[80,80],[112,111]]"
     _assert_discovered_ports(ports, expected_ports)
      
 @then("get list of discovered ports on {vm_source_name} which will be forwarded from {vm_target_name} and override port {source_port} to {target_port}")
 def check_specific_ports_used_by_vm_with_override(context, vm_source_name, vm_target_name, source_port, target_port):
-    """check if ports 22,80,111 are open and forwarded to 9022,8080,111"""
+    """check if ports 22,80,111 are open and forwarded to 9022,8080,112"""
 
     ports = context.cli_helper.check_response_time(
         ["migrate-machine", "-p", "-t", _get_hostname(context, vm_target_name), _get_hostname(context, vm_source_name), "--tcp-port", "{}:{}".format(source_port, target_port)],
         time_limit=60
     )
-    expected_ports = "[[9022,22],[{},{}],[111,111]]".format(target_port, source_port)
+    expected_ports = "[[9022,22],[{},{}],[112,111]]".format(target_port, source_port)
     _assert_discovered_ports(ports, expected_ports)
 
 @then("get list of discovered ports on {vm_source_name} which will be forwarded from {vm_target_name} and add port {source_port} to {target_port}")
 def check_specific_ports_used_by_vm_with_addition(context, vm_source_name, vm_target_name, source_port, target_port):
-    """check if ports 22,80,111,8080 are open and forwarded to 9022,8080,111,8080"""
+    """check if ports 22,80,111,8080 are open and forwarded to 9022,8080,112,8080"""
 
     ports = context.cli_helper.check_response_time(
         ["migrate-machine", "-p", "-t", _get_hostname(context, vm_target_name), _get_hostname(context, vm_source_name), "--tcp-port", "{}:{}".format(source_port, target_port)],
         time_limit=60
     )
-    expected_ports = "[[9022,22],[80,80],[111,111],[{},{}]]".format(target_port, source_port)
+    expected_ports = "[[9022,22],[80,80],[112,111],[{},{}]]".format(target_port, source_port)
     _assert_discovered_ports(ports, expected_ports)
 
 @then("get list of user defined ports from {vm_source_name} which will be forwarded from {vm_target_name} - port {target_port_0}, port {target_port_1}")
