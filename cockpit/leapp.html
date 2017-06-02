@@ -8,59 +8,17 @@
         var LEAPP_CONF = {};
     </script>
     <style>
-        #panel-body {
-            width: 100%;
-            height: auto;
-            float: left;
-            margin: 10px 0 10px 0;
-            border: 1px solid #ddd;
-        }
-
-        #panel-body #tables-head, #panel-body #machines-list, #panel-body #credentials,
-        #panel-body #ports {
-            width: 100%;
-            float: left;
-            display: flex;
-        }
-
-        #panel-body h2, #panel-body h3 {
-            float: left;
-            text-align: center;
-            display: block;
-            width: 100%;
-        }
-
-        #panel-body ul {
-            margin: 10px;
-            clear: both;
-        }
-
-        #panel-body li {
-            display: block;
-            list-style-type: none;
-        }
-
-        #panel-body li label, #panel-body li span {
-            margin-left: 30px;
-            font-size: 16px;
-        }
-
-        #panel-body .wd50-left {
-            width: 50%;
-            float: left;
-        }
-
-        #panel-body #ports ul li {
+        #ports ul li {
             font-size: 15px;
             margin-left: 50px;
             margin-top: 5px;
         }
 
-        #panel-body .border-top-dashed {
+        .border-top-dashed {
             border-top: 2px dashed #ddd;
         }
 
-        #panel-body .border-left-dashed {
+        .border-left-dashed {
             border-left: 2px dashed #ddd;
         }
 
@@ -68,7 +26,7 @@
             margin: 5px 15px 15px 0;
         }
 
-        #panel-body input[name=target-ports] {
+        input[name=target-ports] {
             text-align: center;
         }
 
@@ -78,6 +36,14 @@
             margin: 0 !important;
         }
 
+        .leapp ul {
+            list-style-type: none;
+        }
+
+        .leapp h3 {
+            text-align: center;
+        }
+
         .invalid {
             background-color: #f66 !important;
         }
@@ -85,77 +51,114 @@
         .service-info {
             margin: 0 !important;
         }
+
+        #import-details .section.col-sm-6:first-child {
+            padding-right: 0px;
+        }
+        #import-details .section.col-sm-6:last-child {
+            padding-left: 0px;
+        }
+        #import-details .section h3 {
+            border: 1px solid #ddd;
+            padding: .75em;
+        }
     </style>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <span translatable="yes">Local Virtual Machines</span>
-                <div class="pull-right">
-                    <button translatable="yes" class="btn btn-default btn-primary" id="list-vms">Refresh</button>
-                </div>
-            </div>
-        </div>
-        <div style="height:30px;">
+    <div class="container-fluid leapp">
+        <div style="height: 30px; padding-top: 1em; margin-bottom: -20px;" class="row">
             <div class="spinner spinner-lg" id="loader"></div>
         </div>
-        <div id="panel-body">
-            <div id="tables-head">
-                <div class="wd50-left">
-                    <h2>Source</h2>
-                </div>
-                <div class="wd50-left border-left-dashed">
-                    <h2>Target</h2>
-                </div>
-            </div>
-            <div id="machines-list" class="border-top-dashed">
-                <div id="source-machines" class="wd50-left">
-                    <ul></ul>
-                </div>
-                <div id="target-machines" class="wd50-left border-left-dashed">
-                    <ul></ul>
-                </div>
-            </div>
-            <div id="credentials" style="min-height: 75px; display: none;" class="border-top-dashed">
-                <div id="source-credentials" class="wd50-left">
-                    <h3>Credentials to source host</h3>
-                </div>
-                <div id="target-credentials" class="wd50-left border-left-dashed">
-                    <h3>Credentials to target host</h3>
-                </div>
-            </div>
-            <div id="ports" class="border-top-dashed" style="display: none;">
-                <div id="source-ports" class="wd50-left">
-                    <h3>Source host discovered ports</h3>
-                    <ul></ul>
-                </div>
-                <div id="target-ports" class="wd50-left border-left-dashed">
-                    <h3 class="discovered-ports">Target host discovered ports</h3>
-                    <ul class="discovered-ports"></ul>
-                    <h3 class="mapped_ports">Mapped ports - Source &rarr; Target</h3>
-                    <ul class="mapped-ports"></ul>
+        <div class="row">
+            <div id="source-details" class="col-sm-12">
+                <h2 class="page-header">Source</h2>
+                <div class="input-group col-sm-4">
+                   <span class="input-group-addon" id="basic-addon1" data-toggle="tooltip" data-placement="bottom"
+                         title="Specify here an IP or FQDN of the machine from which the applications shall be
+                                imported. It is required that machine is accessible by root and the current user has
+                                been adding their SSH key for accessing this machine to the cockpit session's SSH
+                                agent.">
+                        <span class="glyphicon glyphicon-info-sign"></span>
+                    </span>
+                   <input id="source-address" type="text" class="form-control ui-lockable" placeholder="Source address or IP">
+                    <span class="input-group-btn">
+                        <button id="scan-source-btn" class="btn btn-info .ui-lockable" type="button">
+                            &nbsp;<span class="glyphicon glyphicon-arrow-right"></span>&nbsp;
+                        </button>
+                    </span>
                 </div>
             </div>
         </div>
-        <button translatable="yes" class="btn btn-default btn-primary migrate-app pull-right ui-lockable"
-        id="migrate-button" disabled>Migrate</button>
-        <p>
-            <pre id="output" style="clear: both"></pre>
-        </p>
-    </div>
-    <div>
-        <center id="leapp-version"></center>
+        <div id="import-details" class="row">
+            <div class="col-sm-12">
+                <h2 class="page-header">Details</h2>
+                <div class="row">
+                    <div id="port-discovery" class="col-sm-12">
+                        <div class="row">
+                            <div id="source-ports" class="col-sm-6 section">
+                                <h3>Source host discovered ports</h3>
+                                <ul></ul>
+                            </div>
+                            <div id="target-ports" class="col-sm-6 section">
+                                <h3 class="discovered-ports">Target host discovered ports</h3>
+                                <ul class="discovered-ports"></ul>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div id="port-mapping" class="col-sm-12 section">
+                                <h3 class="mapped_ports">Mapped ports - Source &rarr; Target</h3>
+                                <ul class="mapped-ports"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <h2 class="page-header">Finalization</h2>
+                <div class="row">
+                    <div class="col-sm-12 text-center">
+                        <button translatable="yes" class="btn btn-default btn-primary btn-lg migrate-app ui-lockable"
+                                id="migrate-button" disabled>Migrate</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <h2 class="page-header">Informational</h2>
+                <pre id="output"></pre>
+                <pre id="commands"></pre>
+            </div>
+        </div>
+        <div>
+            <center id="leapp-version"></center>
+        </div>
     </div>
 
     <script>
+        function scan_source() {
+            scan_ports($('#source-address').val(), callback, ports=null, shallow=true);
+        }
+    </script>
+
+    <script>
+        $(function () {
+          $('#port-discovery').hide();
+          $('[data-toggle="tooltip"]').tooltip()
+        });
+        $("#scan-source-btn").click(function(){
+            scan_ports($("#source-address").val(), get_source_ports, null, true);
+            $("#port-discovery").fadeIn();
+        });
+
         var output = $("#output");
         var loader = $("#loader");
-
+        loader.hide();
         // flag to show "wait for result" message after command exc - must be removed after summit !
         var wait_for_result_msg = false;
 
-        $("#list-vms").on("click", list_local_vms);
         $(".migrate-app").on("click", migrate_to_host);
 
         $(document).ready(function() {
@@ -168,8 +171,6 @@
                 },
             }).then(function() {
                 $("#leapp-version").text("Le-App - " + LEAPP_CONF["version"]);
-                // Automatically load the VM list when the page opens
-                list_local_vms();
             });
         });
 
@@ -181,8 +182,14 @@
             $(".ui-lockable").removeAttr("disabled");
         }
 
+        function out(line) {
+            output.append(`<div style="padding: 2px">${line}</div>`)
+        }
+
         function call_leapp(cmd_args) {
             set_lock_cmd();
+            var line = ['leapp-tool'].concat(cmd_args).join(' ');
+            $("#commands").append(`<div style="padding: 2px">${line}</div>`)
             return cockpit.spawn(
                 [LEAPP_CONF["tool-path"]].concat(cmd_args),
                 {
@@ -191,90 +198,6 @@
                     "err": "out"
                 }
             );
-        }
-
-        function list_local_vms() {
-            var proc = call_leapp(["list-machines", "--shallow"]);
-            proc.done(refresh_vm_table);
-            proc.fail(list_local_vms_fail);
-
-            output.empty();
-            out("Refreshing VM list");
-            loader.show();
-        }
-
-        function refresh_vm_table(data) {
-            var vm_data = JSON.parse(data);
-            $("#credentials, #ports").fadeOut();
-            $("#machines-list ul li, #ports ul li").remove()
-            $("#migrate-button").attr("disabled", true);
-
-            for (var idx in vm_data.machines) {
-                var machine = vm_data.machines[idx];
-                var machine_html = `
-                    <li>
-                        <input id="machine-radio-${machine.ip[0]}" class="radio-[type]-machine ui-lockable" 
-                        type="radio" name="[type]-machine" value="${machine.hostname}" data-ip="${machine.ip[0]}"
-                        data-ports="${ports}" />
-                        <label for="machine-radio-${machine.ip[0]}">${machine.hostname}</label>
-                    </li>
-                `;
-
-                if (machine.name.indexOf("target") > -1) {
-                    $("#target-machines ul").append(machine_html.replace(/\[type\]/g, "target"))
-                } else {
-                    $("#source-machines ul").append(machine_html.replace(/\[type\]/g, "source"))
-                }
-            }
-            $("#target-machines ul").append(`
-                <li>
-                    <input id="machine-radio-custom-target" class="radio-target-machine ui-lockable"
-                    type="radio" name="target-machine" value="" data-ip=""/>
-                    <label for="machine-radio-custom-target">Custom Target</label>
-                    <input type="text" class="form-control" id="custom_target" name="custom_target" placeholder="IP or Fully qualified domain name"/>
-                </li>
-            `);
-            output.empty();
-            if (vm_data.machines.length == 0) {
-                output.append(document.createTextNode("No running local VMs!\n"));
-            }
-            loader.hide();
-
-            $("input[name=target-machine]").change(function() {
-                if ($("#machine-radio-custom-target").is(":checked")) {
-                    $("#custom_target").show();
-                } else {
-                    $("#custom_target").hide();
-                }
-            });
-            $("#custom_target")
-                .toggle()
-                .focusout(get_target_ports)
-                .change(function() {
-                    $("#machine-radio-custom-target").val($("#custom_target").val());
-                    $("#machine-radio-custom-target").data('ip', $("#custom_target").val());
-            });
-            $(".radio-source-machine").click(function(event) {
-                var ip_addr = $(event.target).data('ip');
-                scan_ports(ip_addr, get_source_ports, null, true);  // scan entire machine with shallow scan
-            });
-
-            $(".radio-target-machine").on('click', get_target_ports);
-        }
-
-        function list_local_vms_fail(data) {
-            output.empty();
-            output.append(document.createTextNode("Command failed!\n"));
-            output.append(document.createTextNode(data));
-            loader.hide();
-        }
-
-        function out(line) {
-            output.append(`<div style="padding: 2px">${line}</div>`)
-        }
-
-        function get_selected_target() {
-            return $("input[name=target-machine]:checked");
         }
 
         function override_identity(cmd_args) {
@@ -292,11 +215,11 @@
         function migrate_to_host(event) {
             wait_for_result_msg = true;
 
-            var source = $("input[name=source-machine]:checked").val();
-            var target = get_selected_target().val();
+            var source = $("#source-address").val();
+            var target = "127.0.0.1";
 
-            var mapped_ports = $("#panel-body input.source-ports:checked").map(function() {
-                var target_port = $("#panel-body #target-ports .mapped-ports input[name=" + this.value + "]").val();
+            var mapped_ports = $("input.source-ports:checked").map(function() {
+                var target_port = $("#port-mapping .mapped-ports input[name=" + this.value + "]").val();
                 if (target_port)
                     return target_port + ':' + this.value;  // host:container
             }).toArray();
@@ -358,7 +281,7 @@
             $("#ports").fadeIn();
 
             // deep scan source machine
-            let source_ip = $("input[name=source-machine]:checked").data('ip');
+            let source_ip = $("#source-address").val();
             let source_ports = $("input.source-ports:checked").map(function() {
                 return this.value;
             }).toArray();
@@ -394,7 +317,7 @@
 
             var mapped_ports = {};
 
-	        function get_free_port(port, busy_ports, attempt) {
+            function get_free_port(port, busy_ports, attempt) {
                 if (attempt > MAX_ATTEMPTS) {
                     throw 'Max attempts reached - could not find free port';
                 }
@@ -410,7 +333,7 @@
             }
 
             try {
-	            selected_ports.forEach(function(selected_port) {
+                selected_ports.forEach(function(selected_port) {
                     mapped_ports[selected_port] = get_free_port(selected_port, busy_ports, 0);
                 });
             } catch (e) {
@@ -421,15 +344,7 @@
         }
 
         function get_target_ports() {
-            if (! $("input[name=target-machine]:checked").length ||
-                ! $("input[name=source-machine]:checked").length) {
-                return;
-            }
-
-            var ip_addr = get_selected_target().data('ip');
-            if (ip_addr) {
-                scan_ports(ip_addr, show_target_ports, null, true);  // scan target machine
-            }
+            scan_ports("127.0.0.1", show_target_ports, null, true);  // scan target machine
         }
 
         function show_target_ports(data) {
@@ -440,6 +355,7 @@
             loader.show();
 
             $("#target-ports ul li").remove();
+            $("#port-mapping ul li").remove();
             if (typeof(data.ports.tcp) !== undefined) {
                 for (port in data.ports.tcp) {
                     $("#target-ports ul.discovered-ports").append(`
@@ -455,18 +371,18 @@
 
             output.append(document.createTextNode("Mapping target ports"));
 
-            var selected_ports = $("#panel-body input.source-ports:checked").map(function() {
+            var selected_ports = $("input.source-ports:checked").map(function() {
                 return parseInt(this.value);
             }).toArray();
 
-            var busy_ports = $("#panel-body input.target-ports:checked").map(function() {
+            var busy_ports = $("input.target-ports:checked").map(function() {
                 return parseInt(this.value);
             }).toArray();
 
             var mapped_ports = map_ports(selected_ports, busy_ports);
 
             for (source_port in mapped_ports) {
-                $("#target-ports ul.mapped-ports").append(`
+                $("#port-mapping ul.mapped-ports").append(`
                     <li>
                         Source host port: <span class="source-port-font">${source_port}</span> &rarr;
                         target host port:
@@ -512,7 +428,7 @@
             output.empty();
 
             // deep scan target machine
-            let target_ip = get_selected_target().data('ip');
+            let target_ip = "127.0.0.1"
             let target_ports = $("input.target-ports:checked").map(function() {
                 return this.value;
             }).toArray();
