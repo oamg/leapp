@@ -154,7 +154,7 @@ def main():
                     rsync_cp_backend=False):
             self.source = source
             self.target = target
-            self.source_use_sshpass, self.source_cfg = None, None if source_ssh_cfg is None else source_ssh_cfg
+            self.source_use_sshpass, self.source_cfg = (None, None) if source_ssh_cfg is None else source_ssh_cfg
             self.target_use_sshpass, self.target_cfg = target_ssh_cfg
             self._cached_ssh_password = None
             self.disk = disk
@@ -187,7 +187,6 @@ def main():
             if machine_context is None:
                 machine_context = self.TARGET
             addr, cfg, use_sshpass = self.__get_machine_opt_by_context(machine_context)
-
             ssh_cmd = self._ssh_base(addr, cfg)
             if reuse_ssh_conn:
                 ssh_cmd += [self._SSH_CONTROL_PATH]
@@ -198,7 +197,6 @@ def main():
 
         def _open_permanent_ssh_conn(self, machine_context):
             addr, cfg, _ = self.__get_machine_opt_by_context(machine_context)
-
             if not os.path.exists(self._SSH_CTL_PATH):
                 try:
                     os.makedirs(self._SSH_CTL_PATH)
