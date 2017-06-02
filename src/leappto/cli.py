@@ -355,8 +355,6 @@ def main():
             machine_src = _find_machine(machines, source)
             machine_dst = _find_machine(machines, target)
 
-            ip = machine_dst.ip[0] if machine_dst else target
-
             if not machine_src:
                 print("Machine is not ready:")
                 print("Source: " + repr(machine_src))
