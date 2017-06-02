@@ -191,10 +191,10 @@ def main():
         if not PROTO_UDP in source_ports:
             source_ports[PROTO_UDP] = OrderedDict()
         
-        if not PROTO_TCP in source_ports:
+        if not PROTO_TCP in target_ports:
             target_ports[PROTO_TCP] = OrderedDict()
 
-        if not PROTO_UDP in source_ports:
+        if not PROTO_UDP in target_ports:
             target_ports[PROTO_UDP] = OrderedDict()
 
 
