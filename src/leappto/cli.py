@@ -129,6 +129,18 @@ def main():
     
     class PortCollisionException(Exception):
         pass
+        
+    def _init_port_map(port_map = OrderedDict()):
+        PROTO_TCP = "tcp"
+        PROTO_UDP = "udp"
+
+        if not PROTO_TCP in port_map:
+            port_map[PROTO_TCP] = OrderedDict()
+        
+        if not PROTO_UDP in port_map:
+            port_map[PROTO_UDP] = OrderedDict()
+
+        return port_map
 
     def _port_scan(ip, port_range = None, shallow = False):
         scan_args = '-sS' if shallow else '-sV'
@@ -179,24 +191,9 @@ def main():
         PORT_MAX = 65535
 
         # build maps (Add missing keys if necessary)
-        if not PROTO_TCP in user_mapped_ports:
-            user_mapped_ports[PROTO_TCP] = OrderedDict()
-        
-        if not PROTO_UDP in user_mapped_ports:
-            user_mapped_ports[PROTO_UDP] = OrderedDict()
-        
-        if not PROTO_TCP in source_ports:
-            source_ports[PROTO_TCP] = OrderedDict()
-
-        if not PROTO_UDP in source_ports:
-            source_ports[PROTO_UDP] = OrderedDict()
-        
-        if not PROTO_TCP in source_ports:
-            target_ports[PROTO_TCP] = OrderedDict()
-
-        if not PROTO_UDP in source_ports:
-            target_ports[PROTO_UDP] = OrderedDict()
-
+        user_mapped_ports = _init_port_map(user_mapped_ports)
+        source_ports      = _init_port_map(source_ports)
+        target_ports      = _init_port_map(target_ports)
 
         ## Static mapping
         if not 22 in user_mapped_ports[PROTO_TCP]:
@@ -403,9 +400,7 @@ def main():
             src_ip = machine_src.ip[0]
             dst_ip = machine_dst.ip[0]
 
-            user_mapped_ports = OrderedDict();
-            user_mapped_ports["tcp"] = OrderedDict()
-            user_mapped_ports["udp"] = OrderedDict()
+            user_mapped_ports = _init_port_map()
 
             if parsed.forwarded_tcp_ports:
                 for mapping in parsed.forwarded_tcp_ports:
