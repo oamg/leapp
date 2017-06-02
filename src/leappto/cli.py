@@ -15,6 +15,7 @@ import socket
 import nmap
 import shlex
 import shutil
+import errno
 
 VERSION='leapp-tool {0}'.format(__version__)
 
@@ -149,11 +150,11 @@ def main():
         _SSH_CTL_PATH = '{}/.ssh/ctl'.format(os.environ['HOME'])
         _SSH_CONTROL_PATH = '-o ControlPath="{}/%L-%r@%h:%p"'.format(_SSH_CTL_PATH)
 
-        def __init__(self, source, target, source_ssh_cfg, target_ssh_cfg, disk, forwarded_ports=None,
+        def __init__(self, target, target_ssh_cfg, disk, source=None, source_ssh_cfg=None, forwarded_ports=None,
                     rsync_cp_backend=False):
             self.source = source
             self.target = target
-            self.source_use_sshpass, self.source_cfg = source_ssh_cfg
+            self.source_use_sshpass, self.source_cfg = None, None if source_ssh_cfg is None else source_ssh_cfg
             self.target_use_sshpass, self.target_cfg = target_ssh_cfg
             self._cached_ssh_password = None
             self.disk = disk
@@ -196,23 +197,23 @@ def main():
             return Popen(ssh_cmd, **kwargs).wait()
 
         def _open_permanent_ssh_conn(self, machine_context):
-            addr = getattr(self, '{}_addr'.format(machine_context))
+            addr, cfg, _ = self.__get_machine_opt_by_context(machine_context)
 
             if not os.path.exists(self._SSH_CTL_PATH):
                 try:
                     os.makedirs(self._SSH_CTL_PATH)
                 except OSError as exc:
-                    if exc.errno != 17:
+                    if exc.errno != errno.EEXIST:
                         raise
 
             cmd = 'ssh -nNf -o ControlMaster=yes {} {} -4 {}'.format(
-                    self._SSH_CONTROL_PATH, ' '.join(self.ssh_cfg), addr
+                    self._SSH_CONTROL_PATH, ' '.join(cfg), addr
             )
             return Popen(shlex.split(cmd)).wait()
 
         def _close_permanent_ssh_conn(self, machine_context):
-            addr = getattr(self, '{}_addr'.format(machine_context))
-            cmd = 'ssh {} {} -O exit {}'.format(self._SSH_CONTROL_PATH, ' '.join(self.ssh_cfg), addr)
+            addr, cfg, _ = self.__get_machine_opt_by_context(machine_context)
+            cmd = 'ssh {} {} -O exit {}'.format(self._SSH_CONTROL_PATH, ' '.join(cfg), addr)
             return Popen(shlex.split(cmd)).wait()
 
         def _sshpass(self, ssh_cmd, **kwargs):
@@ -241,12 +242,12 @@ def main():
                 try:
                     os.makedirs(rsync_dir)
                 except OSError as exc:
-                    if exc.errno != 17:  # raise exception if it's different than FileExists
+                    if exc.errno != errno.EEXIST:  # raise exception if it's different than FileExists
                         raise
 
                 self._open_permanent_ssh_conn(self.SOURCE)
                 try:
-                    ret_code = self._ssh_sudo('sync && fsfreeze -f /', self.SOURCE, reuse_ssh_conn=True)
+                    ret_code = self._ssh_sudo('sync && fsfreeze -f /', machine_context=self.SOURCE, reuse_ssh_conn=True)
                     if ret_code != 0:
                         sys.exit(ret_code)
 
@@ -259,7 +260,7 @@ def main():
 
                     Popen(shlex.split(source_cmd)).wait()
                 finally:
-                    self._ssh_sudo('fsfreeze -u /', self.SOURCE, reuse_ssh_conn=True)
+                    self._ssh_sudo('fsfreeze -u /', machine_context=self.SOURCE, reuse_ssh_conn=True)
                     self._close_permanent_ssh_conn(self.SOURCE)
 
                 # if it's localhost this should not be executed
@@ -365,11 +366,11 @@ def main():
 
             print('! configuring SSH keys')
             mc = MigrationContext(
-                machine_src,
                 machine_dst,
-                _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),  # source cfg, should be custom
                 _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
                 machine_src.disks[0].host_path,
+                machine_src,
+                _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),  # source cfg, should be custom
                 forwarded_ports,
                 parsed.use_rsync
             )
@@ -399,8 +400,6 @@ def main():
         print('! looking up "{}" as target'.format(target))
         print('! configuring SSH keys')
         mc = MigrationContext(
-            None,
-            None,
             machine_dst,
             _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
             None
