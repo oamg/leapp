@@ -130,12 +130,18 @@ def main():
     class PortCollisionException(Exception):
         pass
 
-    class PortMap(object):
+    class PortMap(OrderedDict):
         PROTO_TCP = "tcp"
         PROTO_UDP = "udp"
 
         def __init__(self, port_map = None):
-            self.port_map = self.__init_structure()
+            super(PortMap, self).__init__()
+
+            #port_map = None
+            self.__init_structure()
+
+            #if params[0]:
+            #    port_map = params[0]
 
             if port_map and isinstance(port_map, OrderedDict):
                 self.__from_dict(port_map)
@@ -144,15 +150,11 @@ def main():
 
 
         def __init_structure(self):
-            port_map = OrderedDict()
-
-            if not self.PROTO_TCP in port_map:
-                port_map[self.PROTO_TCP] = OrderedDict()
+            if not self.PROTO_TCP in self:
+                self[self.PROTO_TCP] = OrderedDict()
         
-            if not self.PROTO_UDP in port_map:
-                port_map[self.PROTO_UDP] = OrderedDict()
-
-            return port_map
+            if not self.PROTO_UDP in self:
+                self[self.PROTO_UDP] = OrderedDict()
         
         def __is_int(self, number):
             try:
@@ -179,7 +181,7 @@ def main():
                 target = source
 
             if self.__is_int(source) and self.__is_int(target):
-                self.port_map[protocol][source] = target
+                self[protocol][source] = target
             else:
                 raise AttributeError("Source and target must be number")
 
@@ -187,7 +189,7 @@ def main():
             self.set_port(self.PROTO_TCP, source, target)
 
         def list_ports(self, protocol):
-            return self.port_map[protocol].keys()
+            return self[protocol].keys()
 
         def list_tcp_source_ports(self):
             return self.list_ports(self.PROTO_TCP)
@@ -205,7 +207,7 @@ def main():
             if not self.has_port(protocol, source):
                 raise AttributeError("Port {} is not mapped".format(str(source))) 
 
-            return self.port_map[protocol][source]
+            return self[protocol][source]
 
         def get_tcp_target_port(self, source):
             return self.get_target_port(self.PROTO_TCP, source)
@@ -213,10 +215,10 @@ def main():
         def get_protocols(self):
             protocols = []
             
-            if self.port_map[self.PROTO_TCP]:
+            if self[self.PROTO_TCP]:
                 protocols.append(self.PROTO_TCP)
             
-            if self.port_map[self.PROTO_UDP]:
+            if self[self.PROTO_UDP]:
                 protocols.append(self.PROTO_UDP)
 
             return protocols
