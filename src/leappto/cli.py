@@ -417,6 +417,17 @@ def main():
             if parsed.print_port_map:
                 print(dumps(tcp_mapping, indent=3))
                 exit(0)
+
+            print_migrate_info("! Detected port mapping:\n")
+            print_migrate_info("! +-------------+-------------+")
+            print_migrate_info("! | Target port | Source port |")
+            print_migrate_info("! +=============+=============+")
+
+            for pmap in tcp_mapping:
+                print_migrate_info("! | {:11d} | {:11d} |".format(pmap[0], pmap[1]))
+
+            print_migrate_info("! +-------------+-------------+")
+            
     
             print_migrate_info('! configuring SSH keys')
 
