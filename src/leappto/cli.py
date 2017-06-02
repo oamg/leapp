@@ -126,6 +126,9 @@ def main():
 
     class PortScanException(Exception):
         pass
+    
+    class PortCollisionException(Exception):
+        pass
 
     def _port_scan(ip, port_range = None, shallow = False):
         scan_args = '-sS' if shallow else '-sV'
@@ -154,9 +157,10 @@ def main():
         return ports
 
 
-    def _port_remap(source_ports, user_mapped_ports = OrderedDict()):
+    def _port_remap(source_ports, target_ports = OrderedDict(), user_mapped_ports = OrderedDict()):
         """
-        param source_ports      - ports found by the tool
+        param source_ports      - ports found by the tool on source machine
+        param source_ports      - ports found by the tool on target machine
         param user_mapped_ports - port mapping defined by user.
                                   if empty, only the default mapping will aaplied
 
@@ -165,6 +169,8 @@ def main():
         """
         if not isinstance(source_ports, OrderedDict) and not isinstance(source_ports, dict):
             raise TypeError("Source ports must be dict or OrderedDict")
+        if not isinstance(target_ports, OrderedDict) and not isinstance(target_ports, dict):
+            raise TypeError("Target ports must be dict or OrderedDict")
         if not isinstance(user_mapped_ports, OrderedDict) and not isinstance(user_mapped_ports, dict):
             raise TypeError("User mapped ports must be dict or OrderedDict")
 
@@ -183,6 +189,12 @@ def main():
 
         if not PROTO_UDP in source_ports:
             source_ports[PROTO_UDP] = OrderedDict()
+        
+        if not PROTO_TCP in source_ports:
+            target_ports[PROTO_TCP] = OrderedDict()
+
+        if not PROTO_UDP in source_ports:
+            target_ports[PROTO_UDP] = OrderedDict()
 
 
         ## Static mapping
@@ -216,11 +228,23 @@ def main():
         ## remap ports
         for protocol in source_ports:
             for port in source_ports[protocol]:
-                if port in user_mapped_ports[protocol]:
-                    remapped_ports[protocol].append((user_mapped_ports[protocol][port], port))
-                else:
-                    remapped_ports[protocol].append((port, port))
+                target_port = source_port = port
 
+                ## remap port if user defined it
+                if port in user_mapped_ports[protocol]:
+                    target_port = user_mapped_ports[protocol][port]
+
+                ## Conflict resolver
+                while target_port <= 65535:
+                    if target_port in target_ports[protocol]:
+                        if target_port == 65535:
+                            raise PortCollisionException("Automatic port collision resolve failed, please use --tcp-port SELECTED_TARGET_PORT:{} to solve the issue".format(source_port))
+
+                        target_port = target_port + 1
+                    else:
+                        break
+
+                remapped_ports[protocol].append((target_port, source_port))
                     
 
         return remapped_ports
@@ -398,13 +422,13 @@ def main():
                     print_migrate_info('! Scanning source ports')
                     src_ports = _port_scan(src_ip)
             
-                    #print_migrate_info('! Scanning target ports')
-                    #dst_ports = _port_scan(dst_ip)
+                    print_migrate_info('! Scanning target ports')
+                    dst_ports = _port_scan(dst_ip)
                 except Exception as e:
                     print("An error occured during port scan: {}".format(str(e)))
                     exit(-1)
             
-                tcp_mapping = _port_remap(src_ports, user_mapped_ports)["tcp"]
+                tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports)["tcp"]
                 
             else:
                 ## this will apply static mapping:
