@@ -143,13 +143,18 @@ def main():
 
     class MigrationContext:
 
+        SOURCE = 'source'
+        TARGET = 'target'
+
         _SSH_CTL_PATH = '{}/.ssh/ctl'.format(os.environ['HOME'])
         _SSH_CONTROL_PATH = '-o ControlPath="{}/%L-%r@%h:%p"'.format(_SSH_CTL_PATH)
 
-        def __init__(self, source, target, ssh_settings, disk, forwarded_ports=None, rsync_cp_backend=False):
+        def __init__(self, source, target, source_ssh_cfg, target_ssh_cfg, disk, forwarded_ports=None,
+                    rsync_cp_backend=False):
             self.source = source
             self.target = target
-            self.use_sshpass, self.ssh_cfg = ssh_settings
+            self.source_use_sshpass, self.source_cfg = source_ssh_cfg
+            self.target_use_sshpass, self.target_cfg = target_ssh_cfg
             self._cached_ssh_password = None
             self.disk = disk
             self.rsync_cp_backend = rsync_cp_backend
@@ -158,6 +163,9 @@ def main():
             else:
                 forwarded_ports = list(forwarded_ports)
             self.forwarded_ports = forwarded_ports
+
+        def __get_machine_opt_by_context(self, machine_context):
+            return (getattr(self, '{}_{}'.format(machine_context, opt)) for opt in ['addr', 'cfg', 'use_sshpass'])
 
         def __get_machine_addr(self, machine):
             # We assume the source/target to be an IP or FQDN if not a machine name
@@ -171,21 +179,25 @@ def main():
         def source_addr(self):
             return self.__get_machine_addr(self.source)
 
-        def _ssh_base(self, addr=None):
-            if addr is None:
-                addr = self.target_addr
-            return ['ssh'] + self.ssh_cfg + ['-4', addr]
+        def _ssh_base(self, addr, cfg):
+            return ['ssh'] + cfg + ['-4', addr]
 
-        def _ssh(self, cmd, reuse_ssh_conn=False, addr=None, **kwargs):
-            ssh_cmd = self._ssh_base(addr)
+        def _ssh(self, cmd, machine_context=None, reuse_ssh_conn=False, **kwargs):
+            if machine_context is None:
+                machine_context = self.TARGET
+            addr, cfg, use_sshpass = self.__get_machine_opt_by_context(machine_context)
+
+            ssh_cmd = self._ssh_base(addr, cfg)
             if reuse_ssh_conn:
                 ssh_cmd += [self._SSH_CONTROL_PATH]
             ssh_cmd += [cmd]
-            if self.use_sshpass:
+            if use_sshpass:
                 return self._sshpass(ssh_cmd, **kwargs)
             return Popen(ssh_cmd, **kwargs).wait()
 
-        def _open_permanent_ssh_conn(self, addr):
+        def _open_permanent_ssh_conn(self, machine_context):
+            addr = getattr(self, '{}_addr'.format(machine_context))
+
             if not os.path.exists(self._SSH_CTL_PATH):
                 try:
                     os.makedirs(self._SSH_CTL_PATH)
@@ -193,10 +205,13 @@ def main():
                     if exc.errno != 17:
                         raise
 
-            cmd = 'ssh -nNf -o ControlMaster=yes {} {} -4 {}'.format(self._SSH_CONTROL_PATH, ' '.join(self.ssh_cfg), addr)
+            cmd = 'ssh -nNf -o ControlMaster=yes {} {} -4 {}'.format(
+                    self._SSH_CONTROL_PATH, ' '.join(self.ssh_cfg), addr
+            )
             return Popen(shlex.split(cmd)).wait()
 
-        def _close_permanent_ssh_conn(self, addr):
+        def _close_permanent_ssh_conn(self, machine_context):
+            addr = getattr(self, '{}_addr'.format(machine_context))
             cmd = 'ssh {} {} -O exit {}'.format(self._SSH_CONTROL_PATH, ' '.join(self.ssh_cfg), addr)
             return Popen(shlex.split(cmd)).wait()
 
@@ -229,9 +244,9 @@ def main():
                     if exc.errno != 17:  # raise exception if it's different than FileExists
                         raise
 
-                self._open_permanent_ssh_conn(self.source_addr)
+                self._open_permanent_ssh_conn(self.SOURCE)
                 try:
-                    ret_code = self._ssh_sudo('sync && fsfreeze -f /', reuse_ssh_conn=True, addr=self.source_addr)
+                    ret_code = self._ssh_sudo('sync && fsfreeze -f /', self.SOURCE, reuse_ssh_conn=True)
                     if ret_code != 0:
                         sys.exit(ret_code)
 
@@ -239,20 +254,20 @@ def main():
                     for exd in ['/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*']:
                         source_cmd += ' --exclude=' + exd
                     source_cmd += ' -e "ssh {} {}" {}:/ {}'.format(
-                        self._SSH_CONTROL_PATH, ' '.join(self.ssh_cfg), self.source_addr, rsync_dir
+                        self._SSH_CONTROL_PATH, ' '.join(self.source_cfg), self.source_addr, rsync_dir
                     )
 
                     Popen(shlex.split(source_cmd)).wait()
                 finally:
-                    self._ssh_sudo('fsfreeze -u /', reuse_ssh_conn=True, addr=self.source_addr)
-                    self._close_permanent_ssh_conn(self.source_addr)
+                    self._ssh_sudo('fsfreeze -u /', self.SOURCE, reuse_ssh_conn=True)
+                    self._close_permanent_ssh_conn(self.SOURCE)
 
                 # if it's localhost this should not be executed
                 # and it would be useful to check if source and target are in the same network
                 # if yes then source -> rsync -> custom target
                 if self.target_addr not in ['127.0.0.1', 'localhost']:
                     target_cmd = 'sudo rsync -aAX --rsync-path="sudo rsync" -r {0}/ -e "ssh {1}" {2}:{0}' \
-                                 .format(rsync_dir, ' '.join(self.ssh_cfg), self.target_addr)
+                                 .format(rsync_dir, ' '.join(self.target_cfg), self.target_addr)
                     Popen(shlex.split(target_cmd)).wait()
 
                 # temporary, after task with different names for containers should be removed
@@ -352,6 +367,7 @@ def main():
             mc = MigrationContext(
                 machine_src,
                 machine_dst,
+                _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),  # source cfg, should be custom
                 _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
                 machine_src.disks[0].host_path,
                 forwarded_ports,
@@ -383,6 +399,7 @@ def main():
         print('! looking up "{}" as target'.format(target))
         print('! configuring SSH keys')
         mc = MigrationContext(
+            None,
             None,
             machine_dst,
             _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
