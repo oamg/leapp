@@ -79,7 +79,7 @@ def _make_argument_parser():
         dest="forwarded_tcp_ports",
         nargs='*',
         type=_port_spec,
-        help='(Re)define target tcp ports to forward to macrocontainer'
+        help='(Re)define target tcp ports to forward to macrocontainer - <target_port:source_port>'
     )
     #migrate_cmd.add_argument(
     #    '--udp-port',
@@ -189,6 +189,18 @@ def main():
         if not 22 in user_mapped_ports[PROTO_TCP]:
             user_mapped_ports[PROTO_TCP][22] = 9022
 
+        """
+            remapped_ports structure:
+            {
+                tcp: [
+                    [ exposed port on target, source_port ],
+                    .
+                    .
+                    .
+                ]
+                udp: [ ... ]
+            }
+        """
         remapped_ports = {
             PROTO_TCP: [],
             PROTO_UDP: [] 
@@ -205,7 +217,7 @@ def main():
         for protocol in source_ports:
             for port in source_ports[protocol]:
                 if port in user_mapped_ports[protocol]:
-                    remapped_ports[protocol].append((port, user_mapped_ports[protocol][port]))
+                    remapped_ports[protocol].append((user_mapped_ports[protocol][port], port))
                 else:
                     remapped_ports[protocol].append((port, port))
 
