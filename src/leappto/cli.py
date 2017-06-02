@@ -231,7 +231,9 @@ def main():
 
                 self._open_permanent_ssh_conn(self.source_addr)
                 try:
-                    self._ssh_sudo('sync && fsfreeze -f /', reuse_ssh_conn=True, addr=self.source_addr)
+                    ret_code = self._ssh_sudo('sync && fsfreeze -f /', reuse_ssh_conn=True, addr=self.source_addr)
+                    if ret_code != 0:
+                        sys.exit(ret_code)
 
                     source_cmd = 'sudo rsync --rsync-path="sudo rsync" -aAX -r'
                     for exd in ['/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*']:
