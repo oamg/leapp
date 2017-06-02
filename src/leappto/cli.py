@@ -139,18 +139,18 @@ def main():
 
             if port_map and isinstance(port_map, OrderedDict()):
                 self.__from_dict(port_map)
-            elif portmap:
+            elif port_map:
                 raise AttributeError("Unknown port_map type")
 
 
         def __init_structure(self):
             port_map = OrderedDict()
 
-            if not PROTO_TCP in port_map:
-                port_map[PROTO_TCP] = OrderedDict()
+            if not self.PROTO_TCP in port_map:
+                port_map[self.PROTO_TCP] = OrderedDict()
         
-            if not PROTO_UDP in port_map:
-                port_map[PROTO_UDP] = OrderedDict()
+            if not self.PROTO_UDP in port_map:
+                port_map[self.PROTO_UDP] = OrderedDict()
 
             return port_map
         
@@ -164,11 +164,11 @@ def main():
         def __from_dict(self, dict_data):
             protocols = dict_data.keys()
 
-            if PROTO_TCP in protocols:
-                for port in dict_data[PROTO_TCP]:
+            if self.PROTO_TCP in protocols:
+                for port in dict_data[self.PROTO_TCP]:
                     ## PORTS MUST BE NUMBERS
-                    if self.__is_int(port) and self.__is_int(dict_data[PROTO_TCP][port]):
-                        self.add_tcp_port(port, dict_data[PROTO_TCP][port])
+                    if self.__is_int(port) and self.__is_int(dict_data[self.PROTO_TCP][port]):
+                        self.add_tcp_port(port, dict_data[self.PROTO_TCP][port])
                 
                     elif self.__is_int(port):
                         self.add_tcp_port(port, port)
@@ -184,13 +184,13 @@ def main():
                 raise AttributeError("Source and target must be number")
 
         def add_tcp_port(self, source, target = None):
-            self.add_port(PROTO_TCP, source, target)
+            self.add_port(self.PROTO_TCP, source, target)
 
         def list_ports(self, protocol):
             return self.port_map[protocol].keys()
 
         def list_tcp_source_ports(self):
-            return self.list_ports(PROTO_TCP)
+            return self.list_ports(self.PROTO_TCP)
         
         def has_port(self, protocol, source):
             if not source in self.list_ports(protocol):
@@ -199,7 +199,7 @@ def main():
             return True
         
         def has_tcp_port(self, source):
-            return self.has_port(PROTO_TCP, source) 
+            return self.has_port(self.PROTO_TCP, source) 
 
         def get_target_port(self, protocol, source):
             if not self.has_port(protocol, source):
@@ -208,16 +208,16 @@ def main():
             return self.port_map[protocol][source]
 
         def get_tcp_target_port(self, source):
-            return self.get_target_port(PROTO_TCP, source)
+            return self.get_target_port(self.PROTO_TCP, source)
 
         def get_protocols(self):
             protocols = []
             
-            if self.port_map[PROTO_TCP]:
-                protocols.append(PROTO_TCP)
+            if self.port_map[self.PROTO_TCP]:
+                protocols.append(self.PROTO_TCP)
             
-            if self.port_map[PROTO_UDP]:
-                protocols.append(PROTO_UDP)
+            if self.port_map[self.PROTO_UDP]:
+                protocols.append(self.PROTO_UDP)
 
             return protocols
 
