@@ -85,7 +85,7 @@ def _make_argument_parser():
         '--no-tcp-port',
         default=None,
         dest="excluded_tcp_ports",
-        nargs=1,
+        nargs='*',
         type=_port_spec,
         help='define tcp ports which will be excluded from the mapped ports [[target_port]:source_port>]'
     )
@@ -497,12 +497,12 @@ def main():
             user_excluded_ports = PortMap()
 
             if parsed.forwarded_tcp_ports:
-                for mapping in parsed.forwarded_tcp_ports:
-                    user_mapped_ports.set_tcp_port(mapping[0], mapping[1])
+                for target_port, source_port in parsed.forwarded_tcp_ports:
+                    user_mapped_ports.set_tcp_port(source_port, target_port)
 
             if parsed.excluded_tcp_ports:
-                for mapping in parsed.excluded_tcp_ports:
-                    user_excluded_ports.set_tcp_port(mapping[0], mapping[1])
+                for target_port, source_port in parsed.excluded_tcp_ports:
+                    user_excluded_ports.set_tcp_port(source_port)
 
 
             tcp_mapping = None
