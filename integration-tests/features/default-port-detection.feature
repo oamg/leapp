@@ -27,3 +27,17 @@ Scenario: Disable default port mapping and return user defined ports - port 1111
          | source     | centos6-guest-httpd | no           |
          | target     | centos7-target      | no           |
      Then get list of user defined ports from source which will be forwarded from target - port 11111, port 11112
+
+Scenario: Return default port detected on source machine - disable 111
+   Given the local virtual machines:
+         | name       | definition          | ensure_fresh |
+         | source     | centos6-guest-httpd | no           |
+         | target     | centos7-target      | no           |
+     Then get list of discovered ports on source which will be forwarded from target and disable port 111
+
+Scenario: Return default port detected on source machine - enable 1111 && disable 1111
+   Given the local virtual machines:
+         | name       | definition          | ensure_fresh |
+         | source     | centos6-guest-httpd | no           |
+         | target     | centos7-target      | no           |
+     Then get list of discovered ports on source which will be forwarded from target and port 1111 will not be added

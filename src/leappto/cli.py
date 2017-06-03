@@ -85,7 +85,7 @@ def _make_argument_parser():
         '--no-tcp-port',
         default=None,
         dest="excluded_tcp_ports",
-        nargs='*',
+        nargs=1,
         type=_port_spec,
         help='define tcp ports which will be excluded from the mapped ports [[target_port]:source_port>]'
     )
@@ -196,6 +196,15 @@ def main():
         def set_tcp_port(self, source, target = None):
             self.set_port(self.PROTO_TCP, source, target)
 
+        def unset_port(self, protocol, source):
+            if not self.has_port(protocol, source):
+                raise AttributeError("Port {} is not defined".format(str(source)))
+
+            del self[protocol][source]
+
+        def unset_tcp_port(self, source):
+            self.unset_port(self.PROTO_TCP, source)
+
         def list_ports(self, protocol):
             return self[protocol].keys()
 
@@ -259,7 +268,7 @@ def main():
         return ports
 
 
-    def _port_remap(source_ports, target_ports = PortMap(), user_mapped_ports = PortMap()):
+    def _port_remap(source_ports, target_ports = PortMap(), user_mapped_ports = PortMap(), user_excluded_ports = PortMap()):
         """
         param source_ports      - ports found by the tool on source machine
         param source_ports      - ports found by the tool on target machine
@@ -305,6 +314,13 @@ def main():
                 if not source_ports.has_port(protocol, port):
                     ## Add dummy port to sources
                     source_ports.set_port(protocol, port) 
+
+        ## remove unwanted ports
+        for protocol in user_excluded_ports.get_protocols():
+            for port in user_excluded_ports.list_ports(protocol):
+                if source_ports.has_port(protocol, port):
+                    ## remove port from sources
+                    source_ports.unset_port(protocol, port) 
                     
         ## remap ports
         for protocol in source_ports.get_protocols():
@@ -478,14 +494,16 @@ def main():
             dst_ip = machine_dst.ip[0]
 
             user_mapped_ports = PortMap()
+            user_excluded_ports = PortMap()
 
             if parsed.forwarded_tcp_ports:
                 for mapping in parsed.forwarded_tcp_ports:
                     user_mapped_ports.set_tcp_port(mapping[0], mapping[1])
 
-            #if parsed.forwarded_udp_ports:
-            #    for mapping in parsed.forwarded_udp_ports:
-            #        user_mapped_ports["udp"][mapping[0]] = mapping[1]
+            if parsed.excluded_tcp_ports:
+                for mapping in parsed.excluded_tcp_ports:
+                    user_excluded_ports.set_tcp_port(mapping[0], mapping[1])
+
 
             tcp_mapping = None
             #udp_mapping = None
@@ -502,7 +520,7 @@ def main():
                     print("An error occured during port scan: {}".format(str(e)))
                     exit(-1)
             
-                tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports)["tcp"]
+                tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
                 
             else:
                 ## this will apply static mapping:
