@@ -79,7 +79,15 @@ def _make_argument_parser():
         dest="forwarded_tcp_ports",
         nargs='*',
         type=_port_spec,
-        help='(Re)define target tcp ports to forward to macrocontainer - <target_port:source_port>'
+        help='(Re)define target tcp ports to forward to macrocontainer - [target_port:source_port]'
+    )
+    migrate_cmd.add_argument(
+        '--no-tcp-port',
+        default=None,
+        dest="excluded_tcp_ports",
+        nargs='*',
+        type=_port_spec,
+        help='define tcp ports which will be excluded from the mapped ports [[target_port]:source_port>]'
     )
     #migrate_cmd.add_argument(
     #    '--udp-port',
@@ -268,8 +276,6 @@ def main():
         if not isinstance(user_mapped_ports, PortMap):
             raise TypeError("User mapped ports must PortMap")
 
-        PROTO_TCP = "tcp"
-        PROTO_UDP = "udp"
         PORT_MAX = 65535
 
         ## Static mapping
@@ -289,8 +295,8 @@ def main():
             }
         """
         remapped_ports = {
-            PROTO_TCP: [],
-            PROTO_UDP: [] 
+            PortMap.PROTO_TCP: [],
+            PortMap.PROTO_UDP: [] 
         } 
 
         ## add user ports which was not discovered
