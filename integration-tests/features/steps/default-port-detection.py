@@ -20,7 +20,7 @@ def _assert_discovered_ports(ports, expected_ports):
     assert_that(ports, equal_to(expected_ports))
 
 
-@then("get list of discovered ports from {vm_source_name} which will be forwared from {vm_target_name}")
+@then("get list of discovered ports from {vm_source_name} which will be forwared to {vm_target_name}")
 def check_specific_ports_used_by_vm(context, vm_source_name, vm_target_name):
     """check if ports 22,80,111 are open and forwarded to 9022,80,112"""
 
@@ -31,7 +31,7 @@ def check_specific_ports_used_by_vm(context, vm_source_name, vm_target_name):
     expected_ports = "[[9022,22],[80,80],[112,111]]"
     _assert_discovered_ports(ports, expected_ports)
      
-@then("get list of discovered ports on {vm_source_name} which will be forwarded from {vm_target_name} and override port {source_port} to {target_port}")
+@then("get list of discovered ports on {vm_source_name} which will be forwarded to {vm_target_name} and override port {source_port} to {target_port}")
 def check_specific_ports_used_by_vm_with_override(context, vm_source_name, vm_target_name, source_port, target_port):
     """check if ports 22,80,111 are open and forwarded to 9022,8080,112"""
 
@@ -42,7 +42,7 @@ def check_specific_ports_used_by_vm_with_override(context, vm_source_name, vm_ta
     expected_ports = "[[9022,22],[{},{}],[112,111]]".format(target_port, source_port)
     _assert_discovered_ports(ports, expected_ports)
 
-@then("get list of discovered ports on {vm_source_name} which will be forwarded from {vm_target_name} and add port {source_port} to {target_port} after collision detection")
+@then("get list of discovered ports on {vm_source_name} which will be forwarded to {vm_target_name} and add port {source_port} to {target_port} after collision detection")
 def check_specific_ports_used_by_vm_with_addition_and_override(context, vm_source_name, vm_target_name, source_port, target_port):
     """check if ports 22,80,111 are open and forwarded to 9022,8080,112"""
 
@@ -53,7 +53,7 @@ def check_specific_ports_used_by_vm_with_addition_and_override(context, vm_sourc
     expected_ports = "[[9022,22],[80,80],[81,8080],[112,111]]"
     _assert_discovered_ports(ports, expected_ports)
 
-@then("get list of discovered ports on {vm_source_name} which will be forwarded from {vm_target_name} and add port {source_port} to {target_port}")
+@then("get list of discovered ports on {vm_source_name} which will be forwarded to {vm_target_name} and add port {source_port} to {target_port}")
 def check_specific_ports_used_by_vm_with_addition(context, vm_source_name, vm_target_name, source_port, target_port):
     """check if ports 22,80,111,8080 are open and forwarded to 9022,8080,112,8080"""
 
@@ -64,7 +64,7 @@ def check_specific_ports_used_by_vm_with_addition(context, vm_source_name, vm_ta
     expected_ports = "[[9022,22],[80,80],[112,111],[{},{}]]".format(target_port, source_port)
     _assert_discovered_ports(ports, expected_ports)
 
-@then("get list of user defined ports from {vm_source_name} which will be forwarded from {vm_target_name} - port {target_port_0}, port {target_port_1}")
+@then("get list of user defined ports from {vm_source_name} which will be forwarded to {vm_target_name} - port {target_port_0}, port {target_port_1}")
 def check_user_defined_ports(context, vm_source_name, vm_target_name, target_port_0, target_port_1):
     """check if ports 22,80,111,8080 are open and forwarded to 9022,8080,111,8080"""
 
@@ -77,7 +77,7 @@ def check_user_defined_ports(context, vm_source_name, vm_target_name, target_por
     _assert_discovered_ports(ports, expected_ports)
 
 
-@then('get list of discovered ports on {vm_source_name} which will be forwarded from {vm_target_name} and disable port {excluded_port}')
+@then('get list of discovered ports on {vm_source_name} which will be forwarded to {vm_target_name} and disable port {excluded_port}')
 def check_specific_ports_used_by_vm_and_remove_some(context, vm_source_name, vm_target_name, excluded_port):
     """check if ports 22,80,111,8080 are open and forwarded to 9022,8080,112,8080"""
 
@@ -88,7 +88,7 @@ def check_specific_ports_used_by_vm_and_remove_some(context, vm_source_name, vm_
     expected_ports = "[[9022,22],[80,80]]"
     _assert_discovered_ports(ports, expected_ports)
 
-@then('get list of discovered ports on {vm_source_name} which will be forwarded from {vm_target_name} and port {add_port} will not be added')
+@then('get list of discovered ports on {vm_source_name} which will be forwarded to {vm_target_name} and port {add_port} will not be added')
 def check_specific_ports_used_by_vm_add_and_remove(context, vm_source_name, vm_target_name, add_port):
     """check if ports 22,80,111,1111 are open and forwarded to 9022,8080,112"""
 
