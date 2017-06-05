@@ -622,10 +622,10 @@ def main():
             if not parsed.ignore_default_port_map:
                 try:
                     print_migrate_info('! Scanning source ports')
-                    src_ports = PortMap(_port_scan(src_ip))
+                    src_ports = PortMap(_port_scan(src_ip, shallow=True))
             
                     print_migrate_info('! Scanning target ports')
-                    dst_ports = PortMap(_port_scan(dst_ip))
+                    dst_ports = PortMap(_port_scan(dst_ip, shallow=True))
 
                 except Exception as e:
                     print("An error occured during port scan: {}".format(str(e)))
