@@ -22,7 +22,7 @@
             border-left: 2px dashed #ddd;
         }
 
-        #migrate-button {
+        #import-button {
             margin: 5px 15px 15px 0;
         }
 
@@ -40,7 +40,7 @@
             list-style-type: none;
         }
 
-        .leapp h3 {
+        #import-details h3 {
             text-align: center;
         }
 
@@ -62,16 +62,39 @@
             border: 1px solid #ddd;
             padding: .75em;
         }
+        .spacer {
+            margin: 30px;
+        }
+        .note {
+            font-size: smaller;
+            margin-top: 10px;
+        }
+
+        .leapp-progress h2 {
+            margin: 0px;
+            padding: 0px;
+            display: block;
+            text-align: center;
+        }
+
+        .leapp-progress #output {
+            margin: -20px 20px 0 20px;
+        }
+
+        .leapp-progress #output div {
+            font-weight: bolder;
+        }
     </style>
 </head>
 <body>
     <div class="container-fluid leapp">
+        <button class="btn btn-info" id='source-option-toggle'>Toggle Source Option</button>
         <div style="height: 30px; padding-top: 1em; margin-bottom: -20px;" class="row">
             <div class="spinner spinner-lg" id="loader"></div>
         </div>
-        <div class="row">
+        <div class="spacer"></div>
+        <div class="row source-option">
             <div id="source-details" class="col-sm-12">
-                <h2 class="page-header">Source</h2>
                 <div class="input-group col-sm-4">
                    <span class="input-group-addon" id="basic-addon1" data-toggle="tooltip" data-placement="bottom"
                          title="Specify here an IP or FQDN of the machine from which the applications shall be
@@ -82,14 +105,50 @@
                    <input id="source-address" type="text" class="form-control ui-lockable"
                           placeholder="Source IP or FQDN">
                     <span class="input-group-btn">
-                        <button id="scan-source-btn" class="btn btn-info .ui-lockable" type="button">
-                            &nbsp;<span class="glyphicon glyphicon-arrow-right"></span>&nbsp;
+                        <button id="scan-source-btn" class="btn btn-info ui-lockable" type="button">
+                            Find apps <span class="glyphicon glyphicon-arrow-right"></span>&nbsp;
                         </button>
                     </span>
                 </div>
             </div>
         </div>
-        <div id="import-details" class="row">
+        <div class="row source-option">
+            <div class="col-sm-10">
+                   <input id="source-address" type="text" class="form-control ui-lockable"
+                          placeholder="Source IP or FQDN">
+            </div>
+            <div class="col-sm-2">
+                <button id="scan-source-btn" class="btn btn-info form-control ui-lockable" type="button">Find apps
+                </button>
+            </div>
+            <div class="col-sm-12">&nbsp;</div>
+            <div class="col-md-10 col-sm-12">
+                <div class="alert alert-info">
+                  <span class="pficon pficon-info"></span>
+                    SSH access for root must be enabled on the source machine. Upload a key to the users home folder
+                    and unlock the key <a href="/#credentials-dialog" data-toggle="modal"
+                    data-target="#credentials-dialog" class="alert-link" id="credentials-item">here</a>.
+                    <strong>RSync has to be installed on the source machine.</strong>
+                </div>
+            </div>
+        </div>
+        <div class="spacer"></div>
+        <div id="analyze-stage" class="row border-top-dashed">
+            <div class="col-md-6 col-sm-12">
+                <h3>Externally visble TCP ports</h3>
+                <div class="row">
+                    <div class="col-sm-6"></div>
+                    <div id="target-ports-field" class="col-sm-6">
+                        <h4>Ports already in use:</h4>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-sm-12">
+                <!-- Application/Target container name... --!>
+            </div>
+        </div>
+        <div id="import-details" class="row hidden">
             <div class="col-sm-12">
                 <h2 class="page-header">Details</h2>
                 <div class="row">
@@ -114,22 +173,23 @@
                 </div>
             </div>
         </div>
-        <div class="row">
+        <div class="row hidden">
             <div class="col-sm-12">
                 <h2 class="page-header">Finalization</h2>
                 <div class="row">
                     <div class="col-sm-12 text-center">
-                        <button translatable="yes" class="btn btn-default btn-primary btn-lg migrate-app ui-lockable"
-                                id="migrate-button" disabled>Migrate</button>
+                        <button translatable="yes" class="btn btn-default btn-primary btn-lg import-app ui-lockable"
+                                id="import-button" disabled>Import</button>
                     </div>
                 </div>
             </div>
         </div>
         <div class="row">
             <div class="col-sm-12">
-                <h2 class="page-header">Informational</h2>
-                <pre id="output"></pre>
-                <pre id="commands"></pre>
+                <pre class="leapp-progress">
+                    <h2>Progress</h2>
+                    <div id="output"></div>
+                </pre>
             </div>
         </div>
         <div>
@@ -141,16 +201,18 @@
         function scan_source() {
             scan_ports($('#source-address').val(), callback, ports=null, shallow=true);
         }
-    </script>
 
-    <script>
+        $('#source-option-toggle').click(function(){$('.source-option').toggle(); });
+
         $(function () {
-          $('#port-discovery').hide();
+          $('.analyze').hide();
+          $('.source-option').not(':first').hide();
           $('[data-toggle="tooltip"]').tooltip()
         });
+
         $("#scan-source-btn").click(function(){
             scan_ports($("#source-address").val(), get_source_ports, null, true);
-            $("#port-discovery").fadeIn();
+            $(".analyze").fadeIn();
         });
 
         var output = $("#output");
@@ -159,9 +221,13 @@
         // flag to show "wait for result" message after command exc - must be removed after summit !
         var wait_for_result_msg = false;
 
-        $(".migrate-app").on("click", migrate_to_host);
+        $(".import-app").on("click", import_to_host);
+
+        var target_ports = [];
+
 
         $(document).ready(function() {
+            get_target_ports();
             // First load the configuration and then start running all other tasks
             $.ajax({
                 dataType: "json",
@@ -183,13 +249,14 @@
         }
 
         function out(line) {
-            output.append(`<div style="padding: 2px">${line}</div>`)
+            var stamp = (new Date()).toUTCString();
+            output.append(`<div>${stamp} - ${line}</div>`)
         }
 
         function call_leapp(cmd_args) {
             set_lock_cmd();
             var line = ['leapp-tool'].concat(cmd_args).join(' ');
-            $("#commands").append(`<div style="padding: 2px">${line}</div>`)
+            out(`Executing: ${line}`);
             return cockpit.spawn(
                 [LEAPP_CONF["tool-path"]].concat(cmd_args),
                 {
@@ -212,7 +279,7 @@
             }
         }
 
-        function migrate_to_host(event) {
+        function import_to_host(event) {
             wait_for_result_msg = true;
 
             var source = $("#source-address").val();
@@ -224,15 +291,15 @@
                     return target_port + ':' + this.value;  // host:container
             }).toArray();
 
-            var migrate_args = ["migrate-machine"]
-            override_identity(migrate_args);
-            migrate_args.push("--tcp-port");
-            Array.prototype.push.apply(migrate_args, mapped_ports)
-            migrate_args.push("-t", target, source)
-
-            var proc = call_leapp(migrate_args);
+            var import_args = ["import-machine"]
+            override_identity(import_args);
+            import_args.push("--tcp-port");
+            Array.prototype.push.apply(import_args, mapped_ports)
+            import_args.push("-t", target, source)
 
             output.empty();
+            var proc = call_leapp(import_args);
+
             proc.done(cmd_success);
             proc.fail(cmd_fail);
             proc.stream(cmd_stdout);
@@ -251,8 +318,8 @@
             if (shallow) {
                 scan_args.push('--shallow');
             }
-            var proc = call_leapp(scan_args);
             output.empty();
+            var proc = call_leapp(scan_args);
             proc.done(callback);
             proc.fail(cmd_fail);
 
@@ -286,7 +353,7 @@
                 return this.value;
             }).toArray();
             scan_ports(source_ip, show_source_products_info, source_ports);
-            output.append(document.createTextNode("Getting info about products which are listening on discovered ports"));
+            out("Getting info about products which are listening on discovered ports");
         }
 
         function add_ports_product_info(data, path) {
@@ -354,6 +421,15 @@
             var data = JSON.parse(data);
             loader.show();
 
+
+            if (typeof(data.ports.tcp) !== undefined) {
+                target_ports = [];
+                for (port in data.ports.tcp) {
+                    target_ports.push(port);
+                }
+                $("#target-ports-field span").text(target_ports.join(", "));
+            }
+
             $("#target-ports ul li").remove();
             $("#port-mapping ul li").remove();
             if (typeof(data.ports.tcp) !== undefined) {
@@ -369,7 +445,7 @@
                 }
             }
 
-            output.append(document.createTextNode("Mapping target ports"));
+            outp("Mapping target ports");
 
             var selected_ports = $("input.source-ports:checked").map(function() {
                 return parseInt(this.value);
@@ -405,7 +481,7 @@
                 if (busy_ports.indexOf(new_port) > -1 || new_port < MIN_PORT
                     || new_port > MAX_PORT) {
                     $(this).addClass('invalid');
-                    $("#migrate-button").attr("disabled", true);
+                    $("#import-button").attr("disabled", true);
                     update_busy_ports(busy_ports, old_port, new_port);
                     return;
                 }
@@ -421,7 +497,7 @@
                     $(obj.get(0)).removeClass('invalid');
 
                 if ($("input.mapped-ports").filter('.invalid').length < 1) {
-                    $("#migrate-button").removeAttr("disabled");
+                    $("#import-button").removeAttr("disabled");
                 }
             });
 
@@ -433,7 +509,7 @@
                 return this.value;
             }).toArray();
             scan_ports(target_ip, show_target_products_info, target_ports);
-            output.append(document.createTextNode("Getting info about products which are listening on discovered ports"));
+            out("Getting info about products which are listening on discovered ports");
         }
 
         function show_target_products_info(data) {
@@ -456,11 +532,9 @@
         function cmd_success(data) {
             //output.empty();
             cmd_stdout(data);
-            output.append(document.createTextNode("Command completed successfully"));
+            out("Command completed successfully");
             if (wait_for_result_msg) {
-                output.append(
-                    document.createTextNode("\n\nMigrated service is now starting, please wait about 2 minutes to see results..")
-                );
+                out("\n\nImported service is now starting, please wait about 2 minutes to see results..");
             }
             loader.hide();
 
@@ -470,9 +544,9 @@
 
         function cmd_fail(exc, data) {
             //output.empty();
-            cmd_stdout(data);
+            cmd_stdout(data || '');
             err_msg = `Command failed with status ${exc.exit_status}!\n`
-            output.append(document.createTextNode(err_msg));
+            out(err_msg);
             loader.hide();
             release_lock_cmd();
         }
