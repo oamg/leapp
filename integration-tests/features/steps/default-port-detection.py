@@ -50,7 +50,7 @@ def check_specific_ports_used_by_vm_with_addition_and_override(context, vm_sourc
         ["migrate-machine", "-p", "-t", _get_hostname(context, vm_target_name), _get_hostname(context, vm_source_name), "--tcp-port", "{}:{}".format(target_port, source_port)],
         time_limit=60
     )
-    expected_ports = "[[9022,22],[80,80][81,8080],[112,111]]"
+    expected_ports = "[[9022,22],[80,80],[81,8080],[112,111]]"
     _assert_discovered_ports(ports, expected_ports)
 
 @then("get list of discovered ports on {vm_source_name} which will be forwarded from {vm_target_name} and add port {source_port} to {target_port}")
