@@ -188,12 +188,12 @@ class ClientHelper(object):
     def __init__(self, vm_helper):
         self._vm_helper = vm_helper
 
-    def redeploy_as_macrocontainer(self, source_vm, target_vm):
+    def redeploy_as_macrocontainer(self, source_vm, target_vm, migration_opt=None):
         """Recreate source VM as a macrocontainer on given target VM"""
         vm_helper = self._vm_helper
         source_host = vm_helper.get_hostname(source_vm)
         target_host = vm_helper.get_hostname(target_vm)
-        self._convert_vm_to_macrocontainer(source_host, target_host)
+        self._convert_vm_to_macrocontainer(source_host, target_host, migration_opt)
         return self._get_migration_host_info(source_host, target_host)
 
     def check_response_time(self, cmd_args, time_limit, *,
@@ -291,12 +291,17 @@ class ClientHelper(object):
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR))
 
     @classmethod
-    def _convert_vm_to_macrocontainer(cls, source_host, target_host):
+    def _convert_vm_to_macrocontainer(cls, source_host, target_host, migration_opt):
+        as_sudo = False
         cmd_args = ["migrate-machine"]
+        if migration_opt == 'rsync':
+            cmd_args.append('--use-rsync')
+            as_sudo = True
         cmd_args.extend(["-t", target_host, source_host])
         result = cls._run_leapp(cmd_args,
                                 add_default_user=True,
-                                add_default_identity=True)
+                                add_default_identity=True,
+                                as_sudo=as_sudo)
         msg = "Redeployed {} as macrocontainer on {}"
         print(msg.format(source_host, target_host))
         return result
