@@ -19,6 +19,10 @@ import errno
 
 VERSION='leapp-tool {0}'.format(__version__)
 
+MACROCONTAINER_STORAGE_DIR = '/var/lib/leapp/macrocontainers/'
+SOURCE_APP_EXPORT_DIR = '/var/lib/leapp/source_export/'
+
+
 # Python 2/3 compatibility
 try:
     _set_inheritable = os.set_inheritable
@@ -235,9 +239,8 @@ def main():
             return os.path.join(storage_dir, container_name)
 
         def copy(self):
-            storage_dir = '/var/lib/leapp/macrocontainers/'
             container_name = "container"
-            container_dir = os.path.join(storage_dir, container_name)
+            container_dir = os.path.join(MACROCONTAINER_STORAGE_DIR, container_name)
 
             def _rsync():
                 rsync_dir = container_dir
@@ -284,15 +287,21 @@ def main():
                     # virt-tar-out as root, rather than as the current user
                     proc = Popen(['sudo', 'bash', '-c', 'LIBGUESTFS_BACKEND=direct virt-tar-out -a {} / -' \
                                 .format(self.disk)], stdout=PIPE)
+                    assert SOURCE_APP_EXPORT_DIR
                     return self._ssh_sudo(
-                        'cat > /opt/leapp-to/container.tar.gz && tar xf /opt/leapp-to/container.tar.gz -C ' + \
-                        container_dir, stdin=proc.stdout
+                        ('mkdir -p {0}/ && cat > {0}/exported_app.tar.gz && '
+                         'tar xf {0}/exported_app.tar.gz -C {1} && '
+                         'rm {0}/exported_app.tar.gz').format(
+                            SOURCE_APP_EXPORT_DIR,
+                            container_dir
+                        ),
+                        stdin=proc.stdout
                     )
                 finally:
                     print('! ', self.source.resume())
 
-            self._ssh_sudo('docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/; ' + \
-                           '; mkdir -p /opt/leapp-to/; mkdir -p {}'.format(container_dir))
+            self._ssh_sudo('docker rm -f container 2>/dev/null 1>/dev/null; ' + \
+                           'mkdir -p {}'.format(container_dir))
             if self.rsync_cp_backend:
                 return _rsync()
             return _virt_tar_out()
