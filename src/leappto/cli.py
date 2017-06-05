@@ -340,6 +340,10 @@ def main():
                     else:
                         break
 
+                ## add newly mapped port to target ports so we can track collisions
+                target_ports.set_port(protocol, target_port)
+
+                ## create mapping array
                 remapped_ports[protocol].append((target_port, source_port))
 
         return remapped_ports
