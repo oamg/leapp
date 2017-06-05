@@ -12,8 +12,8 @@
   changed_when: ls_macrocontainer_storage.stdout != ""
 
   # docker doesn't seem to offer a simple "Does this container exist?" command
-  # but a quiet filter only produces output if it matches, and the grep
-  # only succeeds if the piped command produces output
+  # but a quiet filter only produces output if it matches, and the 'when'
+  # clause on the removal task skips the container if it doesn't
 - name: Find any corresponding macrocontainers
   shell: >
       docker ps -aq --filter "name={{ item }}"
