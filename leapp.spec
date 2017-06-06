@@ -13,8 +13,10 @@ BuildRequires:   jq
 BuildRequires:   python2-devel
 %if 0%{?el7}
 BuildRequires:   python-setuptools
+BuildRequires:   epel-rpm-macros
 %else
 BuildRequires:   python2-setuptools
+BuildRequires:   python-rpm-macros
 %endif
 
 %description
@@ -76,14 +78,14 @@ sed -i "s/install_requires=/install_requires=[],__fake=/g" src/setup.py
 
 %build
 pushd src
-%py2_build_egg
+%py2_build
 popd
 # When installed via RPM, always rely on ssh-agent for key management
 jq -r ".\"tool-path\" = \"/usr/bin/leapp-tool\" | \
        .\"tool-workdir\" = \"/usr/bin\" | \
        .version = \"%{version}-%{release}\" | \
-       del(\"override-user\") | \
-       del(\"override-identity\")" \
+       del(.\"override-user\") | \
+       del(.\"override-identity\")" \
        cockpit/config.json > tmp_config.json && \
        mv tmp_config.json cockpit/config.json
 
@@ -93,7 +95,7 @@ jq -r ".\"tool-path\" = \"/usr/bin/leapp-tool\" | \
 /bin/cp -a cockpit/* %{buildroot}/%{_datadir}/cockpit/leapp/
 
 pushd src
-%py2_install_egg
+%py2_install
 popd
 
 %files tool
