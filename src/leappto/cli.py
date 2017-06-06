@@ -7,6 +7,7 @@ from json import dumps
 from pwd import getpwuid
 from subprocess import Popen, PIPE
 from collections import OrderedDict
+from leappto import Machine
 from leappto.driver import LocalDriver
 from leappto.providers.libvirt_provider import LibvirtMachineProvider, LibvirtMachine
 from leappto.providers.ssh_provider import SSHMachine
@@ -48,10 +49,17 @@ def _user_has_required_permissions():
     return True
 
 # Parsing CLI arguments
-def _add_identity_options(cli_cmd):
-    cli_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
-    cli_cmd.add_argument('--ask-pass', '-k', action='store_true', help='Ask for SSH password')
-    cli_cmd.add_argument('--user', '-u', default=None, help='Connect as this user')
+def _add_identity_options(cli_cmd, context=''):
+    if context:
+        cli_cmd.add_argument('--' + context + '-identity', default=None,
+                             help='Path to private SSH key for the ' + context + ' machine')
+        cli_cmd.add_argument('--' + context + '-ask-pass', action='store_true',
+                             help='Ask for SSH password for the ' + context + ' machine')
+        cli_cmd.add_argument('--' + context + '-user', default=None, help='Connect as this user to the ' + context)
+    else:
+        cli_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
+        cli_cmd.add_argument('--ask-pass', '-k', action='store_true', help='Ask for SSH password')
+        cli_cmd.add_argument('--user', '-u', default=None, help='Connect as this user')
 
 def _make_argument_parser():
     ap = ArgumentParser()
@@ -115,7 +123,8 @@ def _make_argument_parser():
         action='store_true',
         help='use rsync as backend for filesystem migration, otherwise virt-tar-out'
     )
-    _add_identity_options(migrate_cmd)
+    _add_identity_options(migrate_cmd, context='source')
+    _add_identity_options(migrate_cmd, context='target')
 
     destroy_cmd.add_argument('target', help='target VM name')
     _add_identity_options(destroy_cmd)
@@ -403,7 +412,7 @@ def main():
 
         def __get_machine_addr(self, machine):
             # We assume the source/target to be an IP or FQDN if not a machine name
-            return machine.ip[0] if isinstance(machine, LibvirtMachine) else machine
+            return machine.ip[0] if isinstance(machine, Machine) else machine
 
         @property
         def target_addr(self):
@@ -676,10 +685,10 @@ def main():
 
             mc = MigrationContext(
                 machine_dst,
-                _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
+                _set_ssh_config(parsed.target_user, parsed.target_identity, parsed.target_ask_pass),
                 machine_src.disks[0].host_path,
                 machine_src,
-                _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),  # source cfg, should be custom
+                _set_ssh_config(parsed.source_user, parsed.source_identity, parsed.source_ask_pass),
                 tcp_mapping,
                 parsed.use_rsync
             )

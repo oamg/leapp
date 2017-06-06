@@ -117,8 +117,11 @@ The demo admin login credentials are:
 
 Then, from the base of the local clone, run: ::
 
-    sudo bin/leapp-tool migrate-machine --user vagrant \
-        --identity integration-tests/config/leappto_testing_key \
+    sudo bin/leapp-tool migrate-machine
+        --target-user vagrant \
+        --target-identity integration-tests/config/leappto_testing_key \
+        --source-user vagrant \
+        --source-identity integration-tests/config/leappto_testing_key \
         --tcp-port 9000:9000 -t centos7-target centos6-app-vm
 
 The target VM should now be showing the PHP admin page,

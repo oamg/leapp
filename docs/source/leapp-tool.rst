@@ -24,8 +24,10 @@ migrate-machine
     **usage:** 
         leapp-tool migrate-machine [-h] [-t TARGET]
                                    [--tcp-port [FORWARDED_PORTS [FORWARDED_PORTS ...]]]
-                                   [--identity IDENTITY] [--ask-pass]
-                                   [--user USER]
+                                   [--source-identity IDENTITY] [--source-ask-pass]
+                                   [--source-user USER]
+                                   [--target-identity IDENTITY] [--target-ask-pass]
+                                   [--target-user USER]
                                    machine
     
     positional arguments:
@@ -37,10 +39,13 @@ migrate-machine
         ==================================================  =======================================================
         -h, --help                                          Show this help message and exit
         -t TARGET, --target TARGET                          target VM name
-        --identity IDENTITY                                 Path to private SSH key
         --tcp-port [FORWARDED_PORTS [FORWARDED_PORTS ...]]  Target ports to forward to macrocontainer (temporary!)
-        --ask-pass, -k                                      Ask for SSH password
-        --user USER, -u USER                                Connect as this user
+        --source-identity IDENTITY                          Path to private SSH key for the source machine
+        --source-ask-pass                                   Ask for SSH password for the source machine
+        --source-user USER                                  Connect as this user to the source machine
+        --target-identity IDENTITY                          Path to private SSH key for the target machine
+        --target-ask-pass                                   Ask for SSH password for the target machine
+        --target-user USER                                  Connect as this user to the target machine
         ==================================================  =======================================================
 
 
