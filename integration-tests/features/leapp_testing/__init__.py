@@ -137,6 +137,8 @@ _SSH_IDENTITY = str(REPO_DIR / "integration-tests/config/leappto_testing_key")
 _SSH_PASSWORD = "vagrant"
 _DEFAULT_LEAPP_USER = ['--user', _SSH_USER]
 _DEFAULT_LEAPP_IDENTITY = ['--identity', _SSH_IDENTITY]
+_DEFAULT_LEAPP_MIGRATE_USER = ['--target-user', _SSH_USER, '--source-user', _SSH_USER]
+_DEFAULT_LEAPP_MIGRATE_IDENTITY = ['--target-identity', _SSH_IDENTITY, '--source-identity', _SSH_IDENTITY]
 
 def install_client():
     """Install the CLI and its dependencies into a Python 2.7 environment"""
@@ -270,13 +272,14 @@ class ClientHelper(object):
     def _run_leapp(cmd_args, *,
                    add_default_user=False,
                    add_default_identity=False,
+                   is_migrate=False,
                    as_sudo=False):
         cmd = [_LEAPP_TOOL]
         cmd.extend(cmd_args)
         if add_default_user:
-            cmd.extend(_DEFAULT_LEAPP_USER)
+            cmd.extend(_DEFAULT_LEAPP_MIGRATE_USER if is_migrate else _DEFAULT_LEAPP_USER)
         if add_default_identity:
-            cmd.extend(_DEFAULT_LEAPP_IDENTITY)
+            cmd.extend(_DEFAULT_LEAPP_MIGRATE_IDENTITY if is_migrate else _DEFAULT_LEAPP_IDENTITY)
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), as_sudo=as_sudo)
 
     @staticmethod
