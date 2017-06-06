@@ -176,10 +176,10 @@ def main():
 
     class PortScanException(Exception):
         pass
-    
+
     class PortCollisionException(Exception):
         pass
-    
+
     class PortList(OrderedDict):
         PROTO_TCP = "tcp"
         PROTO_UDP = "udp"
@@ -220,7 +220,7 @@ def main():
 
         def list_tcp_ports(self):
             return self.list_ports(self.PROTO_TCP)
-        
+
         def has_port(self, protocol, source):
             self._raise_for_protocol(protocol)
 
@@ -228,13 +228,13 @@ def main():
                 return False
 
             return True
-        
+
         def has_tcp_port(self, source):
-            return self.has_port(self.PROTO_TCP, source) 
+            return self.has_port(self.PROTO_TCP, source)
 
         def get_port(self, protocol, source):
             if not self.has_port(protocol, source):
-                raise ValueError("Port {} is not mapped".format(str(source))) 
+                raise ValueError("Port {} is not mapped".format(str(source)))
 
             return self[protocol][source]
 
@@ -242,7 +242,7 @@ def main():
             return self.get_port(self.PROTO_TCP, source)
 
         def get_protocols(self):
-            return self.keys() 
+            return self.keys()
 
     class PortMap(PortList):
         def set_port(self, protocol, source, target = None):
@@ -255,14 +255,14 @@ def main():
             for _, used_tport in self[protocol].items():
                 if used_tport == target:
                     raise PortCollisionException("Target port {} has been already mapped".format(target))
-            
+
             super(PortMap, self).set_port(protocol, source, int(target))
 
 
 
     def _port_scan(ip, port_range = None, shallow = False):
         scan_args = '-sS' if shallow else '-sV'
-        
+
         port_scanner = nmap.PortScanner()
         port_scanner.scan(ip, port_range, arguments=scan_args)
         scan_info = port_scanner.scaninfo()
@@ -272,7 +272,7 @@ def main():
         elif ip not in port_scanner.all_hosts():
             raise PortScanException("Machine {} not found".format(ip))
 
-        ports = PortList() 
+        ports = PortList()
 
         for proto in port_scanner[ip].all_protocols():
             for port in sorted(port_scanner[ip][proto]):
@@ -322,8 +322,8 @@ def main():
         """
         remapped_ports = {
             PortMap.PROTO_TCP: [],
-            PortMap.PROTO_UDP: [] 
-        } 
+            PortMap.PROTO_UDP: []
+        }
 
         ## add user ports which was not discovered
         for protocol in user_mapped_ports.get_protocols():
@@ -335,7 +335,7 @@ def main():
 
                 ## Add dummy port to sources
                 if not source_ports.has_port(protocol, port):
-                    source_ports.set_port(protocol, port) 
+                    source_ports.set_port(protocol, port)
 
         ## Static (default) mapping applied only when the source service is available
         if not user_mapped_ports.has_tcp_port(22):
@@ -346,13 +346,13 @@ def main():
             for port in user_excluded_ports.list_ports(protocol):
                 if source_ports.has_port(protocol, port):
                     ## remove port from sources
-                    source_ports.unset_port(protocol, port) 
-                    
+                    source_ports.unset_port(protocol, port)
+
         ## remap ports
         for protocol in source_ports.get_protocols():
             for port in source_ports.list_ports(protocol):
                 target_port = source_port = port
-                
+
                 ## remap port if user defined it
                 if  user_mapped_ports.has_port(protocol, port):
                     target_port = user_mapped_ports.get_port(protocol, port)
@@ -373,7 +373,7 @@ def main():
                 remapped_ports[protocol].append((target_port, source_port))
 
         return remapped_ports
-        
+
 
     def _set_ssh_config(username, identity, use_sshpass=False):
         settings = {
@@ -622,7 +622,7 @@ def main():
             print('! no target specified, creating leappto container package in current directory')
             # TODO: not really for now
             raise NotImplementedError
-            
+
         else:
             source = parsed.machine
             target = parsed.target
@@ -670,8 +670,8 @@ def main():
                     print_migrate_info('! Scanning source ports')
                     src_ports = _port_scan(src_ip, shallow=True)
                 else:
-                    src_ports = PortList() 
-            
+                    src_ports = PortList()
+
                 print_migrate_info('! Scanning target ports')
                 dst_ports = _port_scan(dst_ip, shallow=True)
 
@@ -683,8 +683,8 @@ def main():
             except PortScanException as e:
                 print("An error occured during port scan: {}".format(str(e)))
                 exit(-1)
-                
-       
+
+
             if parsed.print_port_map:
                 print(dumps(tcp_mapping, indent=3))
                 exit(0)
@@ -698,8 +698,8 @@ def main():
                 print_migrate_info("! | {:11d} | {:11d} |".format(pmap[0], pmap[1]))
 
             print_migrate_info("! +-------------+-------------+")
-            
-    
+
+
             print_migrate_info('! configuring SSH keys')
 
             mc = MigrationContext(
@@ -757,7 +757,7 @@ def main():
             "err_msg": "",
             "ports": None
         }
-        
+
         try:
             result["ports"] = _port_scan(parsed.address, parsed.range, parsed.shallow)
 
@@ -767,6 +767,6 @@ def main():
             print(dumps(result, indent=3))
 
             exit(-1)
-            
+
 
         print(dumps(result, indent=3))
