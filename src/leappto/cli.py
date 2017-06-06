@@ -58,6 +58,7 @@ def _make_argument_parser():
 
     list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
+    destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
     scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
     list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
@@ -93,6 +94,9 @@ def _make_argument_parser():
         help='use rsync as backend for filesystem migration, otherwise virt-tar-out'
     )
     _add_identity_options(migrate_cmd)
+
+    destroy_cmd.add_argument('target', help='target VM name')
+    _add_identity_options(destroy_cmd)
 
     scan_ports_cmd.add_argument('address', help='virtual machine address')
     scan_ports_cmd.add_argument(
@@ -233,14 +237,12 @@ def main():
             return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
 
         def _get_container_dir(self):
-            storage_dir = "/var/lib/leapp/macrocontainers/"
             # TODO: Derive container name from source host name
             container_name = "container"
-            return os.path.join(storage_dir, container_name)
+            return os.path.join(MACROCONTAINER_STORAGE_DIR, container_name)
 
         def copy(self):
-            container_name = "container"
-            container_dir = os.path.join(MACROCONTAINER_STORAGE_DIR, container_name)
+            container_dir = self._get_container_dir()
 
             def _rsync():
                 rsync_dir = container_dir
@@ -300,11 +302,18 @@ def main():
                 finally:
                     print('! ', self.source.resume())
 
-            self._ssh_sudo('docker rm -f container 2>/dev/null 1>/dev/null; ' + \
+            self._ssh_sudo('docker rm -fv container 2>/dev/null 1>/dev/null; '
                            'mkdir -p {}'.format(container_dir))
             if self.rsync_cp_backend:
                 return _rsync()
             return _virt_tar_out()
+
+        def destroy_containers(self):
+            # TODO: Replace this subcommand with a "check-access" subcommand
+            storage_dir = MACROCONTAINER_STORAGE_DIR
+            return self._ssh_sudo(
+                'docker rm -fv container 2>/dev/null 1>/dev/null; '
+                'rm -rf {}/*'.format(storage_dir))
 
         def start_container(self, img, init):
             container_dir = self._get_container_dir()
@@ -395,6 +404,27 @@ def main():
                 mc.fix_upstart()
             print('! done')
             sys.exit(result)
+
+    elif parsed.action == 'destroy-containers':
+        target = parsed.target
+
+        lmp = LibvirtMachineProvider()
+        machines = lmp.get_machines()
+
+        machine_dst = _find_machine(machines, target)
+
+        print('! looking up "{}" as target'.format(target))
+        print('! configuring SSH keys')
+        mc = MigrationContext(
+            machine_dst,
+            _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
+            None
+        )
+
+        print('! destroying containers on "{}" VM'.format(target))
+        result = mc.destroy_containers()
+        print('! done')
+        sys.exit(result)
 
     elif parsed.action == 'port-inspect':
         _ERR_STATE = "error"
