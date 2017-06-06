@@ -152,12 +152,7 @@ def main():
 
         def __init__(self, port_map = None):
             super(PortMap, self).__init__()
-
-            #port_map = None
             self.__init_structure()
-
-            #if params[0]:
-            #    port_map = params[0]
 
             if port_map and isinstance(port_map, OrderedDict):
                 self.__from_dict(port_map)
