@@ -166,11 +166,8 @@ def main():
 
 
         def __init_structure(self):
-            if not self.PROTO_TCP in self:
-                self[self.PROTO_TCP] = OrderedDict()
-        
-            if not self.PROTO_UDP in self:
-                self[self.PROTO_UDP] = OrderedDict()
+            self[self.PROTO_TCP] = OrderedDict()
+            self[self.PROTO_UDP] = OrderedDict()
         
         def __is_int(self, number):
             try:
