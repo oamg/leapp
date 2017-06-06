@@ -82,11 +82,11 @@ def _make_argument_parser():
     migrate_cmd.add_argument('-t', '--target', default=None, help='target VM name')
     migrate_cmd.add_argument(
         '--tcp-port',
+        default=None,
         dest="forwarded_ports",
         nargs='*',
         type=_port_spec,
-        help='Target ports to forward to macrocontainer (temporary!)',
-        required=True
+        help='Target ports to forward to macrocontainer (temporary!)'
     )
     migrate_cmd.add_argument(
         '--use-rsync',
@@ -163,7 +163,7 @@ def main():
             self._cached_ssh_password = None
             self.disk = disk
             self.rsync_cp_backend = rsync_cp_backend
-            self.forwarded_ports = list(forwarded_ports)
+            self.forwarded_ports = list(forwarded_ports) if forwarded_ports is not None else list()
 
         def __get_machine_opt_by_context(self, machine_context):
             return (getattr(self, '{}_{}'.format(machine_context, opt)) for opt in ['addr', 'cfg', 'use_sshpass'])
