@@ -281,11 +281,13 @@ def main():
         :param user_excluded_ports: excluded port mapping defined by user
         """
         if not isinstance(source_ports, PortMap):
-            raise TypeError("Source ports must PortMap")
+            raise TypeError("Source ports must be PortMap")
         if not isinstance(target_ports, PortMap):
-            raise TypeError("Target ports must PortMap")
+            raise TypeError("Target ports must be PortMap")
         if not isinstance(user_mapped_ports, PortMap):
-            raise TypeError("User mapped ports must PortMap")
+            raise TypeError("User mapped ports must be PortMap")
+        if not isinstance(user_excluded_ports, PortMap):
+            raise TypeError("User excluded ports must be PortMap")
 
         PORT_MAX = 65535
 
