@@ -1,6 +1,6 @@
 Name:       leapp
 Version:    0.0.1
-Release:    6
+Release:    5
 Summary:    leapp tool rpm
 
 Group:      Unspecified
@@ -78,13 +78,14 @@ sed -i "s/install_requires=/install_requires=[],__fake=/g" src/setup.py
 pushd src
 %py2_build_egg
 popd
-jq -r '."tool-path" = "/usr/bin/leapp-tool", \
-       ."tool-workdir" = "/usr/bin", \
-       .version = "%{version}-%{release}" \
-       # When installed via RPM, always rely on ssh-agent for key management
-       del("override-user") \
-       del("override-identity")' \
-       cockpit/config.json > cockpit/config.json
+# When installed via RPM, always rely on ssh-agent for key management
+jq -r ".\"tool-path\" = \"/usr/bin/leapp-tool\" | \
+       .\"tool-workdir\" = \"/usr/bin\" | \
+       .version = \"%{version}-%{release}\" | \
+       del(\"override-user\") | \
+       del(\"override-identity\")" \
+       cockpit/config.json > tmp_config.json && \
+       mv tmp_config.json cockpit/config.json
 
 
 %install
@@ -110,9 +111,6 @@ popd
 
 
 %changelog
-
-* Mon May 17 2017 Nick Coghlan <ncoghlan@redhat.com> 0.0.1-6
-- Add sshpass dependency for --ask-pass support in CLI (ncoghlan@redhat.com)
 
 * Mon May 08 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.0.1-5
 - Touch non existing file workaround not necessary anymore files have been
