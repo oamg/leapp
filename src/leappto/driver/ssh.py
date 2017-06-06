@@ -1,5 +1,7 @@
 import getpass
+import json
 import os
+import shlex
 import socket
 
 import paramiko
@@ -69,7 +71,7 @@ class SSHConnection(LocalDriver):
         super(LocalDriver, self).__init__()
 
     def exec_command(self, *args, **kwargs):
-        return super(LocalDriver, self).exec_command(['ssh', '-t', self._target] + list(args)])
+        return super(LocalDriver, self).exec_command(['ssh', '-t', self._target] + list(args))
 
 
 class VagrantSSHDriver(Driver):
@@ -80,7 +82,7 @@ class VagrantSSHDriver(Driver):
         return self._connection.exec_command(*args, **kwargs)
 
     @staticmethod
-    def __get_vagrant_data_path_from_domain(domain_name):
+    def _get_vagrant_data_path_from_domain(domain_name):
         index_path = os.path.join(os.environ['HOME'], '.vagrant.d/data/machine-index/index')
         index = json.load(open(index_path, 'r'))
         for ident, machine in index['machines'].iteritems():
@@ -92,14 +94,14 @@ class VagrantSSHDriver(Driver):
 
     @staticmethod
     def _get_vagrant_ssh_args_from_domain(domain_name):
-        path = __get_vagrant_data_path_from_domain(domain_name)
+        path = VagrantSSHDriver._get_vagrant_data_path_from_domain(domain_name)
         path = os.path.join(path, 'provisioners/ansible/inventory/vagrant_ansible_inventory')
         with open(path, 'r') as f:
             for line in f:
                 line = line.strip()
                 if not line or line[0] in (';', '#'):
                     continue
-                return __parse_ansible_inventory_data(line)
+                return VagrantSSHDriver._parse_ansible_inventory_data(line)
         return None
 
     @staticmethod
@@ -121,11 +123,11 @@ class VagrantSSHDriver(Driver):
 
     @staticmethod
     def _get_vagrant_ssh_client_for_domain(domain_name):
-        args = __get_vagrant_ssh_args_from_domain(domain_name)
+        args = VagrantSSHDriver._get_vagrant_ssh_args_from_domain(domain_name)
         if args:
-            client = SSHClient()
+            client = paramiko.SSHClient()
             client.load_system_host_keys()
-            client.set_missing_host_key_policy(AutoAddPolicy())
+            client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
             client.connect(args.pop('hostname'), **args)
             return client
         return None
