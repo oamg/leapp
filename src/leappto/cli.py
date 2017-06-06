@@ -276,15 +276,17 @@ def main():
         return ports
 
 
-    def _port_remap(source_ports, target_ports = PortMap(), user_mapped_ports = PortMap(), user_excluded_ports = PortMap()):
+    def _port_remap(source_ports, target_ports, user_mapped_ports = PortMap(), user_excluded_ports = PortMap()):
         """
-        :param source_ports:       ports found by the tool on source machine
-        :param source_ports:       ports found by the tool on target machine
-        :param user_mapped_ports:  port mapping defined by user.
-                                   if empty, only the default mapping will aaplied
+        :param source_ports:        ports found by the tool on source machine
+        :param target_ports:        ports found by the tool on target machine
+        :param user_mapped_ports:   port mapping defined by user
+                                    if empty, only the default mapping will aaplied
 
-                                   DEFAULT RE-MAP:
-                                     22/tcp -> 9022/tcp
+                                    DEFAULT RE-MAP:
+                                      22/tcp -> 9022/tcp
+
+        :param user_excluded_ports: excluded port mapping defined by user
         """
         if not isinstance(source_ports, PortMap):
             raise TypeError("Source ports must PortMap")
