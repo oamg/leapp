@@ -24,14 +24,12 @@ def inspect_machine(driver, shallow):
 
 
 class SSHMachine(Machine):
-    def __init__(self, host, user=None, port=22, shallow_scan=True):
-        self._driver = SSHDriver(host, user, port)
-        self._driver.connect()
-        ips, hostname, installation, packages = ([], host, None, [])
-        try:
-            ips, hostname, installation, packages = inspect_machine(self._driver, shallow_scan)
-        except ValueError:
-            raise
+    def __init__(self, host_or_driver, user=None, port=22, shallow_scan=True):
+        if isinstance(host_or_driver, Driver):
+            self._driver = host_or_driver
+        else:
+            self._driver = SSHDriver(host, user, port)
+        ips, hostname, installation, packages = inspect_machine(self._driver, shallow_scan)
         super(Machine, self).__init__(host, hostname, ips, 'x86_64', MachineType.SSH, [], hostname, installation, None)
 
 
