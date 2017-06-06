@@ -19,6 +19,10 @@ import errno
 
 VERSION='leapp-tool {0}'.format(__version__)
 
+MACROCONTAINER_STORAGE_DIR = '/var/lib/leapp/macrocontainers/'
+SOURCE_APP_EXPORT_DIR = '/var/lib/leapp/source_export/'
+
+
 # Python 2/3 compatibility
 try:
     _set_inheritable = os.set_inheritable
@@ -232,10 +236,16 @@ def main():
         def _ssh_sudo(self, cmd, **kwargs):
             return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
 
+        def _get_container_dir(self):
+            # TODO: Derive container name from source host name
+            container_name = "container"
+            return os.path.join(MACROCONTAINER_STORAGE_DIR, container_name)
+
         def copy(self):
+            container_dir = self._get_container_dir()
 
             def _rsync():
-                rsync_dir = '/opt/leapp-to/container'
+                rsync_dir = container_dir
 
                 try:
                     os.makedirs(rsync_dir)
@@ -279,28 +289,38 @@ def main():
                     # virt-tar-out as root, rather than as the current user
                     proc = Popen(['sudo', 'bash', '-c', 'LIBGUESTFS_BACKEND=direct virt-tar-out -a {} / -' \
                                 .format(self.disk)], stdout=PIPE)
+                    assert SOURCE_APP_EXPORT_DIR
                     return self._ssh_sudo(
-                        'cat > /opt/leapp-to/container.tar.gz && tar xf /opt/leapp-to/container.tar.gz -C ' + \
-                        '/opt/leapp-to/container', stdin=proc.stdout
+                        ('mkdir -p {0}/ && cat > {0}/exported_app.tar.gz && '
+                         'tar xf {0}/exported_app.tar.gz -C {1} && '
+                         'rm {0}/exported_app.tar.gz').format(
+                            SOURCE_APP_EXPORT_DIR,
+                            container_dir
+                        ),
+                        stdin=proc.stdout
                     )
                 finally:
                     print('! ', self.source.resume())
 
-            self._ssh_sudo('docker rm -f container 2>/dev/null 1>/dev/null ; rm -rf /opt/leapp-to/container; ' + \
-                           'mkdir -p /opt/leapp-to/container')
+            self._ssh_sudo('docker rm -fv container 2>/dev/null 1>/dev/null; '
+                           'mkdir -p {}'.format(container_dir))
             if self.rsync_cp_backend:
                 return _rsync()
             return _virt_tar_out()
 
         def destroy_containers(self):
-            command = 'docker rm -f $(docker ps -q) 2>/dev/null 1>/dev/null; rm -rf /opt/leapp-to/container'
-            return self._ssh_sudo(command)
+            # TODO: Replace this subcommand with a "check-access" subcommand
+            storage_dir = MACROCONTAINER_STORAGE_DIR
+            return self._ssh_sudo(
+                'docker rm -fv container 2>/dev/null 1>/dev/null; '
+                'rm -rf {}/*'.format(storage_dir))
 
         def start_container(self, img, init):
+            container_dir = self._get_container_dir()
             command = 'docker run -tid -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
             good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
             for mount in good_mounts:
-                command += ' -v /opt/leapp-to/container/{m}:/{m}:Z'.format(m=mount)
+                command += ' -v {d}/{m}:/{m}:Z'.format(d=container_dir, m=mount)
             for host_port, container_port in self.forwarded_ports:
                 if host_port is None:
                     command += ' -p {:d}'.format(container_port)  # docker will select random port for host
