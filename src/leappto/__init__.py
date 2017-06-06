@@ -8,6 +8,7 @@ class MachineType(IntEnum):
     Default = 0
     Kvm = 1
     Hvm = 2
+    SSH = 3
 
 
 class DiskType(IntEnum):
