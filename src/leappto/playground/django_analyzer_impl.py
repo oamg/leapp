@@ -32,6 +32,12 @@ def first_contains(seq, string):
             return item
 
 
+__comparator_map = {
+    'any_endswith': any_endswith,
+    'any_contains': any_contains,
+}
+
+
 def find_unit_by(units, key, value, selector=None, comparator=None, lowercase=False):
     """
     
@@ -135,7 +141,7 @@ from shutil import copyfile
 for dju in data['django']:
     ds = dju['deploy_settings'][0]
     with open('artifacts/local_settings.py', 'w+') as out:
-	out.write(ds['detail'])
+        out.write(ds['detail'])
     copyfile(ds['name'], 'artifacts/local_settings.py.original')
 
 print(dumps(data, indent=4))

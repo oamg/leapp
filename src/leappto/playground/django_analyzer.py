@@ -37,7 +37,7 @@ if pid > 0:
 else:
     os.close(w)
     while True:
-        data=os.read(r, 1024)
+        data = os.read(r, 1024)
         if not data:
             break
         print(data)
