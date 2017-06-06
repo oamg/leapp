@@ -12,7 +12,7 @@ from paramiko import AutoAddPolicy, SSHClient, SSHConfig
 
 from leappto import AbstractMachineProvider, MachineType, Machine, Disk, \
         Package, OperatingSystem, Installation
-
+from leappto.providers.ssh_provider import SSHMachineProvider
 
 class LibvirtMachine(Machine):
     # TODO: Libvirt Python API doesn't seem to expose 
@@ -128,24 +128,7 @@ class LibvirtMachineProvider(AbstractMachineProvider):
             client = __get_vagrant_ssh_client_for_domain(domain_name)
             if not client:
                 return None
-            cmd = """python -c 'import platform; print chr(0xa).join(platform.linux_distribution()[:2])'"""
-            _, output, _ = client.exec_command(cmd)
-            distro, version = output.read().strip().replace('\r', '').split('\n', 1)
-            cmd = """python -c 'import socket; print socket.gethostname()'"""
-            _, output, _ = client.exec_command(cmd)
-            hostname = output.read().strip()
-            cmd = "/sbin/ip -4 -o addr list | grep -E 'e(th|ns)' | sed 's/.*inet \\([0-9\\.]\\+\\)\\/.*$/\\1/g'\n"
-            _, output, stderr = client.exec_command(cmd)
-            ips = [i.strip() for i in output.read().split('\n') if i.strip()]
-            packages = []
-            if not shallow:
-                cmd = "python -c \"import rpm, json; print json.dumps([(app['name'], " + \
-                        "'{e}:{v}-{r}.{a}'.format(e=app['epoch'] or 0, v=app['version'], " + \
-                        "a=app['arch'], r=app['release'])) for app in rpm.ts().dbMatch()])\""
-                _, output, _ = client.exec_command(cmd)
-                packages = [Package(e[0], e[1]) for e in json.loads(output.read())]
-            return (ips, hostname, Installation(OperatingSystem(distro, version), packages))
-
+            return SSHMachineProvider._get_os_info(client, shallow)
 
         def __domain_info(domain):
             """
