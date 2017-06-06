@@ -22,18 +22,19 @@
             border-left: 2px dashed #ddd;
         }
 
-        #import-button {
-            margin: 5px 15px 15px 0;
-        }
-
         input[name=target-ports] {
             text-align: center;
         }
 
+        input[type=text].mapped-ports {
+            margin-left: 10px;
+        }
         .source-port-font {
             font-weight: bold;
             color: #398fff;
             margin: 0 !important;
+            display: inline-block;
+            width:   40px;
         }
 
         .leapp ul {
@@ -84,6 +85,16 @@
         .leapp-progress #output div {
             font-weight: bolder;
         }
+
+        .leapp .section {
+            padding-bottom: 20px;
+        }
+
+        .import-info {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding-right: 0px;
+        }
     </style>
 </head>
 <body>
@@ -92,8 +103,7 @@
         <div style="height: 30px; padding-top: 1em; margin-bottom: -20px;" class="row">
             <div class="spinner spinner-lg" id="loader"></div>
         </div>
-        <div class="spacer"></div>
-        <div class="row source-option">
+        <div class="row section source-option">
             <div id="source-details" class="col-sm-12">
                 <div class="input-group col-sm-4">
                    <span class="input-group-addon" id="basic-addon1" data-toggle="tooltip" data-placement="bottom"
@@ -112,7 +122,7 @@
                 </div>
             </div>
         </div>
-        <div class="row source-option">
+        <div class="row section source-option">
             <div class="col-sm-10">
                    <input id="source-address" type="text" class="form-control ui-lockable"
                           placeholder="Source IP or FQDN">
@@ -132,12 +142,18 @@
                 </div>
             </div>
         </div>
-        <div class="spacer"></div>
-        <div id="analyze-stage" class="row border-top-dashed">
+        <div id="analyze-stage" class="row section border-top-dashed">
             <div class="col-md-6 col-sm-12">
-                <h3>Externally visble TCP ports</h3>
+                <h3>Externally visible TCP ports</h3>
                 <div class="row">
-                    <div class="col-sm-6"></div>
+                    <div id="source-ports" class="hidden col-sm-6">
+                        <ul>
+                        </ul>
+                    </div>
+                    <div id="mapped-ports" class="col-sm-6">
+                        <ul>
+                        </ul>
+                    </div>
                     <div id="target-ports-field" class="col-sm-6">
                         <h4>Ports already in use:</h4>
                         <span></span>
@@ -148,43 +164,24 @@
                 <!-- Application/Target container name... --!>
             </div>
         </div>
-        <div id="import-details" class="row hidden">
-            <div class="col-sm-12">
-                <h2 class="page-header">Details</h2>
-                <div class="row">
-                    <div id="port-discovery" class="col-sm-12">
-                        <div class="row">
-                            <div id="source-ports" class="col-sm-6 section">
-                                <h3>Source host discovered ports</h3>
-                                <ul></ul>
-                            </div>
-                            <div id="target-ports" class="col-sm-6 section">
-                                <h3 class="discovered-ports">Target host discovered ports</h3>
-                                <ul class="discovered-ports"></ul>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div id="port-mapping" class="col-sm-12 section">
-                                <h3 class="mapped_ports">Mapped ports - Source &rarr; Target</h3>
-                                <ul class="mapped-ports"></ul>
-                            </div>
-                        </div>
-                    </div>
+
+        <div class="row section border-top-dashed">
+            <div class="import-info col-xs-12">
+                <div class="row col-xs-12">
+                    <span class="pull-right">
+                        The application will be put into a container and run on this machine.
+                    </span>
+                </div>
+                <div class="row col-xs-12">
+                    <span class="pull-right">The orignal application will stay intact.</span>
                 </div>
             </div>
-        </div>
-        <div class="row hidden">
-            <div class="col-sm-12">
-                <h2 class="page-header">Finalization</h2>
-                <div class="row">
-                    <div class="col-sm-12 text-center">
-                        <button translatable="yes" class="btn btn-default btn-primary btn-lg import-app ui-lockable"
-                                id="import-button" disabled>Import</button>
-                    </div>
-                </div>
+            <div class="row col-xs-12">
+                <button translatable="yes" class="btn btn-default btn-primary btn-lg ui-lockable pull-right"
+                        id="import-button" disabled>Import</button>
             </div>
         </div>
-        <div class="row">
+        <div class="row section">
             <div class="col-sm-12">
                 <pre class="leapp-progress">
                     <h2>Progress</h2>
@@ -221,13 +218,12 @@
         // flag to show "wait for result" message after command exc - must be removed after summit !
         var wait_for_result_msg = false;
 
-        $(".import-app").on("click", import_to_host);
+        $("#import-button").on("click", import_to_host);
 
-        var target_ports = [];
+        var target_ports = null;
 
 
         $(document).ready(function() {
-            get_target_ports();
             // First load the configuration and then start running all other tasks
             $.ajax({
                 dataType: "json",
@@ -237,6 +233,7 @@
                 },
             }).then(function() {
                 $("#leapp-version").text("Le-App - " + LEAPP_CONF["version"]);
+                get_target_ports();
             });
         });
 
@@ -255,7 +252,7 @@
 
         function call_leapp(cmd_args) {
             set_lock_cmd();
-            var line = ['leapp-tool'].concat(cmd_args).join(' ');
+            var line = [LEAPP_CONF["tool-path"]].concat(cmd_args).join(' ');
             out(`Executing: ${line}`);
             return cockpit.spawn(
                 [LEAPP_CONF["tool-path"]].concat(cmd_args),
@@ -297,7 +294,7 @@
             Array.prototype.push.apply(import_args, mapped_ports)
             import_args.push("-t", target, source)
 
-            output.empty();
+            //output.empty();
             var proc = call_leapp(import_args);
 
             proc.done(cmd_success);
@@ -318,7 +315,7 @@
             if (shallow) {
                 scan_args.push('--shallow');
             }
-            output.empty();
+            //output.empty();
             var proc = call_leapp(scan_args);
             proc.done(callback);
             proc.fail(cmd_fail);
@@ -328,7 +325,8 @@
         }
 
         function get_source_ports(data) {
-            $("#ports ul li").remove();
+            $("#source-ports ul li").remove();
+            $("#mapped-ports ul li").remove();
             var data = JSON.parse(data);
             // get all protocols not only tcp
             if (typeof(data.ports.tcp) !== undefined) {
@@ -336,7 +334,7 @@
                     $("#source-ports ul").append(`
                         <li>
                             <input type="checkbox" name="${port}" value="${port}"
-                            checked="checked" disabled style="display: none" class="source-ports" />
+                            checked="checked" class="source-ports" />
                             Port: <span class="source-port-font">${port}</span> - used by: ${data.ports.tcp[port].name}
                             <span class="service-info"></span>
                         </li>
@@ -344,39 +342,36 @@
                 }
             }
 
-            $("#credentials").fadeIn(); // this shouldn't be here, now it's only to show full page
-            $("#ports").fadeIn();
-
-            // deep scan source machine
             let source_ip = $("#source-address").val();
             let source_ports = $("input.source-ports:checked").map(function() {
                 return this.value;
             }).toArray();
+            source_ports = source_ports.filter(function(value, index){ return this.indexOf(value) == index },
+                                               source_ports);
+            map_target_ports();
             scan_ports(source_ip, show_source_products_info, source_ports);
             out("Getting info about products which are listening on discovered ports");
         }
 
-        function add_ports_product_info(data, path) {
+        function add_ports_product_info(data) {
             if (typeof(data.ports.tcp) !== undefined) {
-                for (port in data.ports.tcp) {
-                    let product = data.ports.tcp[port].product
-
-                    if (! product)
-                        continue;
-
-                    $(path + " input[name=" + port + "]").closest('li').find('span.service-info').text(
-                        "- " + product
-                    );
-                }
+                console.log(`add_ports_product_info: `, data.ports);
+                $('.mapped-port-info').each(function(i,e) {
+                    var p = $(e).data('port');
+                    console.log(`Checking for port ${p}`);
+                    if (p in data.ports.tcp) {
+                        $(e).attr('data-original-title',
+                                  `Port ${p} is used by ${data.ports.tcp[p].product || data.ports.tcp[p].name}`);
+                        $(e).tooltip('fixTitle');
+                    }
+                });
             }
         }
 
         function show_source_products_info(data) {
-            add_ports_product_info(JSON.parse(data), "#source-ports");
-            output.empty();
+            add_ports_product_info(JSON.parse(data));
             loader.hide();
             release_lock_cmd();
-            get_target_ports();
         }
 
         function map_ports(selected_ports, busy_ports) {
@@ -419,54 +414,44 @@
             const MIN_PORT = 1;
 
             var data = JSON.parse(data);
-            loader.show();
-
-
+            target_ports = [];
             if (typeof(data.ports.tcp) !== undefined) {
-                target_ports = [];
                 for (port in data.ports.tcp) {
                     target_ports.push(port);
                 }
                 $("#target-ports-field span").text(target_ports.join(", "));
             }
+            loader.hide();
+            release_lock_cmd();
+         }
 
-            $("#target-ports ul li").remove();
-            $("#port-mapping ul li").remove();
-            if (typeof(data.ports.tcp) !== undefined) {
-                for (port in data.ports.tcp) {
-                    $("#target-ports ul.discovered-ports").append(`
-                        <li>
-                            <input type="checkbox" name="${port}" value="${port}"
-                            checked="checked" disabled style="display: none" class="target-ports" />
-                            Port: <strong>${port}</strong> - used by: ${data.ports.tcp[port].name}
-                            <span class="service-info"></span>
-                        </li>
-                    `)
-                }
-            }
-
-            outp("Mapping target ports");
+         function map_target_ports() {
+            out("Mapping target ports");
 
             var selected_ports = $("input.source-ports:checked").map(function() {
                 return parseInt(this.value);
             }).toArray();
 
-            var busy_ports = $("input.target-ports:checked").map(function() {
-                return parseInt(this.value);
-            }).toArray();
-
-            var mapped_ports = map_ports(selected_ports, busy_ports);
+            var mapped_ports = map_ports(selected_ports, target_ports);
 
             for (source_port in mapped_ports) {
-                $("#port-mapping ul.mapped-ports").append(`
-                    <li>
-                        Source host port: <span class="source-port-font">${source_port}</span> &rarr;
-                        target host port:
+                $("#mapped-ports ul").append(`
+                    <li class="checkbox">
+                        <label>
+                            <input type="checkbox" name="mapped-port" checked>
+                            Port
+                            <span class="source-port-font mapped-port-info" data-toggle="tooltip"
+                                  data-placement="bottom" title="loading..." data-port="${source_port}">
+                                ${source_port}
+                            </span>
+                        </label>
+                        <span style="font-size: 2em;">&rarr;</span>
                         <input type="text" size="6" name="${source_port}" value="${mapped_ports[source_port]}"
                         class="mapped-ports ui-lockable" data-prev="${mapped_ports[source_port]}" disabled/>
                     </li>
                 `)
             }
+            $('.mapped-port-info').tooltip();
 
             function update_busy_ports(busy_ports, old_port, new_port) {
                 busy_ports.splice(busy_ports.indexOf(old_port), 1);
@@ -501,22 +486,7 @@
                 }
             });
 
-            output.empty();
-
-            // deep scan target machine
-            let target_ip = "127.0.0.1"
-            let target_ports = $("input.target-ports:checked").map(function() {
-                return this.value;
-            }).toArray();
-            scan_ports(target_ip, show_target_products_info, target_ports);
-            out("Getting info about products which are listening on discovered ports");
-        }
-
-        function show_target_products_info(data) {
-            add_ports_product_info(JSON.parse(data), "#target-ports ul.discovered-ports");
-            output.empty();
-            loader.hide();
-            release_lock_cmd();
+            //output.empty();
         }
 
         function cmd_stdout(data) {
