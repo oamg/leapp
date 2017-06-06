@@ -1,5 +1,6 @@
 import json
 
+from leappto.driver import Driver
 from leappto.driver.ssh import SSHDriver
 from leappto import AbstractMachineProvider, MachineType, Machine, Disk, \
         Package, OperatingSystem, Installation
@@ -12,7 +13,7 @@ def inspect_machine(driver, shallow):
     cmd = """python -c 'import socket; print socket.gethostname()'"""
     _, output, _ = driver.exec_command(cmd)
     hostname = output.read().strip()
-    cmd = "/sbin/ip -4 -o addr list | grep -E 'e(th|ns)' | sed 's/.*inet \\([0-9\\.]\\+\\)\\/.*$/\\1/g'\n"
+    cmd = "bash -c \"/sbin/ip -4 -o addr list | grep -E 'e(th|ns)' | sed 's/.*inet \\([0-9\\.]\\+\\)\\/.*$/\\1/g'\""
     _, output, stderr = driver.exec_command(cmd)
     ips = [i.strip() for i in output.read().split('\n') if i.strip()]
     packages = []
@@ -30,8 +31,9 @@ class SSHMachine(Machine):
         if isinstance(host_or_driver, Driver):
             self._driver = host_or_driver
         else:
-            self._driver = SSHDriver(host, user, port)
-        ips, hostname, installation, packages = inspect_machine(self._driver, shallow_scan)
-        super(Machine, self).__init__(host, hostname, ips, 'x86_64', MachineType.SSH, [], hostname, installation, None)
+            self._driver = SSHDriver(host_or_driver, user, port, use_paramiko=False)
+        ips, hostname, installation = inspect_machine(self._driver, shallow_scan)
+        super(SSHMachine, self).__init__(hostname, hostname, ips, 'x86_64', MachineType.SSH, [], hostname,
+                                         installation, None)
 
 

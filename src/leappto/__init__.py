@@ -23,7 +23,7 @@ class StorageFormat(IntEnum):
     RAW = 2
 
 
-class NameVersion:
+class NameVersion(object):
     _NAME = 'NameVersion'
 
     def __init__(self, name, version):
@@ -53,7 +53,7 @@ class Package(NameVersion):
     _NAME = 'Package'
 
 
-class Installation:
+class Installation(object):
     def __init__(self, os, packages):
         self._os = os
         self._packages = packages
@@ -73,7 +73,7 @@ class Installation:
         return '<Installation os={os}, packages={packages}>'.format(**self._to_dict())
 
 
-class Disk:
+class Disk(object):
     def __init__(self, dt, host_path, device, sf):
         self._disk_type = dt
         self._host_path = host_path
@@ -107,7 +107,7 @@ class Disk:
         return msg.format(**arg)
 
 
-class Machine:
+class Machine(object):
 
     _NAME = 'Machine'
 
@@ -178,7 +178,7 @@ class Machine:
         return msg.format(**arg)
 
 
-class AbstractMachineProvider:
+class AbstractMachineProvider(object):
     def get_machines(self):
         """
 
