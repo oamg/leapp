@@ -9,7 +9,7 @@ from subprocess import Popen, PIPE
 from collections import OrderedDict
 from leappto.driver import LocalDriver
 from leappto.providers.libvirt_provider import LibvirtMachineProvider, LibvirtMachine
-from leappto.providers.ssh_provider import SSHMachine, inspect_machine
+from leappto.providers.ssh_provider import SSHMachine
 from leappto.version import __version__
 import os
 import sys
@@ -64,6 +64,8 @@ def _make_argument_parser():
     scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
     list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
+    list_cmd.add_argument('--user', '-u', default=None, help='Username to to be used by the scan')
+    list_cmd.add_argument('--ip', nargs='*', default=None, help='list of IPs to scan')
 
     def _port_spec(arg):
         """Converts a port forwarding specifier to a (host_port, container_port) tuple
@@ -144,14 +146,16 @@ def main():
         for machine in ms:
             if machine.hostname == name:
                 return machine
-        return inspect_machine(name)
+        return _inspect_machine(name)
 
-    def _inspect_machine(host):
+    def _inspect_machine(host, shallow=True, user='root'):
         try:
             if host in ('localhost', '127.0.0.1'):
-                return SSHMachine(LocalDriver(), shallow_scan=True)
-            return SSHMachine(host, shallow_scan=True)
-        except Exception:
+                return SSHMachine(LocalDriver(), shallow_scan=shallow)
+            return SSHMachine(host, user=user, shallow_scan=shallow)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
             return None
 
     class PortScanException(Exception):
@@ -579,8 +583,12 @@ def main():
 
     parsed = ap.parse_args()
     if parsed.action == 'list-machines':
-        lmp = LibvirtMachineProvider(parsed.shallow)
-        print(dumps({'machines': [m._to_dict() for m in lmp.get_machines()]}, indent=3))
+        if not parsed.ip:
+            lmp = LibvirtMachineProvider(parsed.shallow)
+            machines = lmp.get_machines()
+        else:
+            machines = [_inspect_machine(m, shallow=parsed.shallow, user=parsed.user or 'root') for m in parsed.ip]
+        print(dumps({'machines': [m._to_dict() for m in machines if m]}, indent=3))
 
     elif parsed.action == 'migrate-machine':
         def print_migrate_info(text):
