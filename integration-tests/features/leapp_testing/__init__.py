@@ -293,7 +293,7 @@ class ClientHelper(object):
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host, migration_opt):
         as_sudo = False
-        cmd_args = ["migrate-machine"]
+        cmd_args = ["migrate-machine", "--tcp-port", "80:80"]
         if migration_opt == 'rsync':
             cmd_args.append('--use-rsync')
             as_sudo = True
