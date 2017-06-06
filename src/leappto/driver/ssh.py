@@ -4,6 +4,12 @@ import os
 import shlex
 import socket
 
+try:
+    from pipes import quote
+except ImportError:
+    from shelx import quote
+
+
 import paramiko
 
 from leappto.driver import Driver, LocalDriver
@@ -24,7 +30,7 @@ class ParamikoConnection(object):
             self._socket.connect((hostname, port))
         except socket.error as e:
             raise SSHConnectionError('Failed to connect to {}:{}: {}'.format(hostname, port, e.message))
-        self._transport = paramiki.Transport(self._socket)
+        self._transport = paramiko.Transport(self._socket)
 
         try:
             self._transport.start_client()
@@ -58,20 +64,24 @@ class ParamikoConnection(object):
         if not self._transport.is_authenticated():
             raise SSHAuthenticationError('Could not find auth key for {}@{}'.format(self.username, hostname))
 
-        self._session = self._transport.open_session()
 
-    def exec_command(self, *args, **kwargs):
-        return self._session.exec_command(*args, **kwargs)
+    def exec_command(self, cmd, *args, **kwargs):
+        chan = self._transport.open_session()
+        chan.exec_command(cmd)
+        stdin = chan.makefile('wb', 1)
+        stdout = chan.makefile('r', 1)
+        stderr = chan.makefile_stderr('r', 1)
+        return stdin, stdout, stderr
 
 
 class SSHConnection(LocalDriver):
     def __init__(self, hostname, username=None, port=22):
         userspec = username + '@' if username else ''
-        self._target = '{}{}:{}'.format(userspec, hostname, port)
+        self._target = '{}{} -p {}'.format(userspec, hostname, port)
         super(LocalDriver, self).__init__()
 
-    def exec_command(self, *args, **kwargs):
-        return super(LocalDriver, self).exec_command(['ssh', '-t', self._target] + list(args))
+    def exec_command(self, cmd, *args, **kwargs):
+        return super(SSHConnection, self).exec_command('ssh -t ' +  self._target + ' ' + quote(cmd), *args)
 
 
 class VagrantSSHDriver(Driver):
@@ -135,7 +145,7 @@ class VagrantSSHDriver(Driver):
 
 class SSHDriver(Driver):
     def __init__(self, hostname, username=None, port=22, use_paramiko=True):
-        super(Driver, self).__init__()
+        super(SSHDriver, self).__init__()
         if use_paramiko:
             self._connection = ParamikoConnection(hostname, username=username, port=port)
         else:
