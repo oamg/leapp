@@ -7,7 +7,9 @@ from json import dumps
 from pwd import getpwuid
 from subprocess import Popen, PIPE
 from collections import OrderedDict
+from leappto.driver import LocalDriver
 from leappto.providers.libvirt_provider import LibvirtMachineProvider, LibvirtMachine
+from leappto.providers.ssh_provider import SSHMachine, inspect_machine
 from leappto.version import __version__
 import os
 import sys
@@ -142,7 +144,15 @@ def main():
         for machine in ms:
             if machine.hostname == name:
                 return machine
-        return None
+        return inspect_machine(name)
+
+    def _inspect_machine(host):
+        try:
+            if host in ('localhost', '127.0.0.1'):
+                return SSHMachine(LocalDriver(), shallow_scan=True)
+            return SSHMachine(host, shallow_scan=True)
+        except Exception:
+            return None
 
     class PortScanException(Exception):
         pass
