@@ -8,11 +8,9 @@ from io import BytesIO
 from subprocess import check_output
 from xml.etree import ElementTree as ET
 
-from paramiko import AutoAddPolicy, SSHClient, SSHConfig
-
 from leappto import AbstractMachineProvider, MachineType, Machine, Disk, \
         Package, OperatingSystem, Installation
-from leappto.drivers.ssh import VagrantSSHDriver
+from leappto.driver.ssh import VagrantSSHDriver
 from leappto.providers.ssh_provider import inspect_machine
 
 class LibvirtMachine(Machine):
@@ -77,10 +75,6 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 device = __get_attribute(disk.find('target[@dev]'), 'dev')
                 storage.append(Disk(type_, backing_file, device, driver_type))
             return storage
-
-
-        def __get_os_info(domain_name, shallow):
-            return SSHMachine(VagrantSSHDriver(domain_name), shallow_scan=shallow)
 
         def __domain_info(domain):
             """
