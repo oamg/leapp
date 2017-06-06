@@ -1,3 +1,5 @@
+import json
+
 from leappto.driver.ssh import SSHDriver
 from leappto import AbstractMachineProvider, MachineType, Machine, Disk, \
         Package, OperatingSystem, Installation
