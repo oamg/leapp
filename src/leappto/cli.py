@@ -163,7 +163,7 @@ def main():
             self._cached_ssh_password = None
             self.disk = disk
             self.rsync_cp_backend = rsync_cp_backend
-            self.forwarded_ports = list(forwarded_ports) if forwarded_ports is not None else list()
+            self.forwarded_ports = list(forwarded_ports or ())
 
         def __get_machine_opt_by_context(self, machine_context):
             return (getattr(self, '{}_{}'.format(machine_context, opt)) for opt in ['addr', 'cfg', 'use_sshpass'])
