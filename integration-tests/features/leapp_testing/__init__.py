@@ -88,6 +88,12 @@ class VirtualMachineHelper(object):
         """Halt or destroy all created VMs"""
         self._resource_manager.close()
 
+    def run_remote_command(self, name, *cmd, ignore_errors=False):
+        """Run the given command on the named machine"""
+        hostname = self.machines[name]
+        return self._run_vagrant(hostname, "ssh", "--", *cmd,
+                                 ignore_errors=ignore_errors)
+
     @staticmethod
     def _run_vagrant(hostname, *args, as_root=False, ignore_errors=False):
         # TODO: explore https://pypi.python.org/pypi/python-vagrant
