@@ -83,11 +83,29 @@ def _make_argument_parser():
     migrate_cmd.add_argument(
         '--tcp-port',
         default=None,
-        dest="forwarded_ports",
+        dest="forwarded_tcp_ports",
         nargs='*',
         type=_port_spec,
-        help='Target ports to forward to macrocontainer (temporary!)'
+        help='(Re)define target tcp ports to forward to macrocontainer - [target_port:source_port]'
     )
+    migrate_cmd.add_argument(
+        '--no-tcp-port',
+        default=None,
+        dest="excluded_tcp_ports",
+        nargs='*',
+        type=_port_spec,
+        help='define tcp ports which will be excluded from the mapped ports [[target_port]:source_port>]'
+    )
+    #migrate_cmd.add_argument(
+    #    '--udp-port',
+    #    default=None,
+    #    dest="forwarded_udp_ports",
+    #    nargs='*',
+    #    type=_port_spec,
+    #    help='Target ports to forward to macrocontainer'
+    #)
+    migrate_cmd.add_argument("-p", "--print-port-map", default=False, help='List suggested port mapping on target host', action="store_true")
+    migrate_cmd.add_argument("--ignore-default-port-map", default=False, help='Default port mapping detected by leapp toll will be ignored', action="store_true")
     migrate_cmd.add_argument(
         '--use-rsync',
         action='store_true',
@@ -125,6 +143,194 @@ def main():
             if machine.hostname == name:
                 return machine
         return None
+
+    class PortScanException(Exception):
+        pass
+    
+    class PortCollisionException(Exception):
+        pass
+    
+    class PortList(OrderedDict):
+        PROTO_TCP = "tcp"
+        PROTO_UDP = "udp"
+
+        def __init__(self):
+            super(PortList, self).__init__()
+
+            self[self.PROTO_TCP] = OrderedDict()
+            self[self.PROTO_UDP] = OrderedDict()
+
+        def _raise_for_protocol(self, protocol):
+            if not protocol in self.get_protocols():
+                raise ValueError("Invalid protocol: {}".format(str(protocol)))
+
+        def set_port(self, protocol, source, data = None):
+            self._raise_for_protocol(protocol)
+
+            self[protocol][int(source)] = data
+
+        def set_tcp_port(self, source, target = None):
+            self.set_port(self.PROTO_TCP, source, target)
+
+        def unset_port(self, protocol, source):
+            self._raise_for_protocol(protocol)
+
+            if not self.has_port(protocol, source):
+                raise ValueError("Invalid port: {}".format(str(source)))
+
+            del self[protocol][source]
+
+        def unset_tcp_port(self, source):
+            self.unset_port(self.PROTO_TCP, source)
+
+        def list_ports(self, protocol):
+            self._raise_for_protocol(protocol)
+
+            return self[protocol].keys()
+
+        def list_tcp_ports(self):
+            return self.list_ports(self.PROTO_TCP)
+        
+        def has_port(self, protocol, source):
+            self._raise_for_protocol(protocol)
+
+            if not source in self.list_ports(protocol):
+                return False
+
+            return True
+        
+        def has_tcp_port(self, source):
+            return self.has_port(self.PROTO_TCP, source) 
+
+        def get_port(self, protocol, source):
+            if not self.has_port(protocol, source):
+                raise ValueError("Port {} is not mapped".format(str(source))) 
+
+            return self[protocol][source]
+
+        def get_tcp_port(self, source):
+            return self.get_port(self.PROTO_TCP, source)
+
+        def get_protocols(self):
+            return self.keys() 
+
+    class PortMap(PortList):
+        def set_port(self, protocol, source, target = None):
+            if not target:
+                target = source
+
+            super(PortMap, self).set_port(protocol, source, int(target))
+
+
+
+    def _port_scan(ip, port_range = None, shallow = False):
+        scan_args = '-sS' if shallow else '-sV'
+        
+        port_scanner = nmap.PortScanner()
+        port_scanner.scan(ip, port_range, arguments=scan_args)
+        scan_info = port_scanner.scaninfo()
+
+        if scan_info.get('error', False):
+            raise PortScanException(scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error'])
+        elif ip not in port_scanner.all_hosts():
+            raise PortScanException("Machine {} not found".format(ip))
+
+        ports = PortList() 
+
+        for proto in port_scanner[ip].all_protocols():
+            for port in sorted(port_scanner[ip][proto]):
+                if port_scanner[ip][proto][port]['state'] != 'open':
+                    continue
+
+                ports.set_port(proto, port, port_scanner[ip][proto][port])
+
+        return ports
+
+
+    def _port_remap(source_ports, target_ports, user_mapped_ports = PortMap(), user_excluded_ports = PortMap()):
+        """
+        :param source_ports:        ports found by the tool on source machine
+        :param target_ports:        ports found by the tool on target machine
+        :param user_mapped_ports:   port mapping defined by user
+                                    if empty, only the default mapping will aaplied
+
+                                    DEFAULT RE-MAP:
+                                      22/tcp -> 9022/tcp
+
+        :param user_excluded_ports: excluded port mapping defined by user
+        """
+        if not isinstance(source_ports, PortList):
+            raise TypeError("Source ports must be PortMap")
+        if not isinstance(target_ports, PortList):
+            raise TypeError("Target ports must be PortMap")
+        if not isinstance(user_mapped_ports, PortMap):
+            raise TypeError("User mapped ports must be PortMap")
+        if not isinstance(user_excluded_ports, PortList):
+            raise TypeError("User excluded ports must be PortMap")
+
+        PORT_MAX = 65535
+
+        ## Static mapping
+        if not user_mapped_ports.has_tcp_port(22):
+            user_mapped_ports.set_tcp_port(22, 9022)
+
+        """
+            remapped_ports structure:
+            {
+                tcp: [
+                    [ exposed port on target, source_port ],
+                    .
+                    .
+                    .
+                ]
+                udp: [ ... ]
+            }
+        """
+        remapped_ports = {
+            PortMap.PROTO_TCP: [],
+            PortMap.PROTO_UDP: [] 
+        } 
+
+        ## add user ports which was not discovered
+        for protocol in user_mapped_ports.get_protocols():
+            for port in user_mapped_ports.list_ports(protocol):
+                if not source_ports.has_port(protocol, port):
+                    ## Add dummy port to sources
+                    source_ports.set_port(protocol, port) 
+
+        ## remove unwanted ports
+        for protocol in user_excluded_ports.get_protocols():
+            for port in user_excluded_ports.list_ports(protocol):
+                if source_ports.has_port(protocol, port):
+                    ## remove port from sources
+                    source_ports.unset_port(protocol, port) 
+                    
+        ## remap ports
+        for protocol in source_ports.get_protocols():
+            for port in source_ports.list_ports(protocol):
+                target_port = source_port = port
+                
+                ## remap port if user defined it
+                if  user_mapped_ports.has_port(protocol, port):
+                    target_port = user_mapped_ports.get_port(protocol, port)
+
+                while target_port <= PORT_MAX:
+                    if target_ports.has_port(protocol, target_port):
+                        if target_port == PORT_MAX:
+                            raise PortCollisionException("Automatic port collision resolve failed, please use --tcp-port SELECTED_TARGET_PORT:{} to solve the issue".format(source_port))
+
+                        target_port = target_port + 1
+                    else:
+                        break
+
+                ## add newly mapped port to target ports so we can track collisions
+                target_ports.set_port(protocol, target_port)
+
+                ## create mapping array
+                remapped_ports[protocol].append((target_port, source_port))
+
+        return remapped_ports
+        
 
     def _set_ssh_config(username, identity, use_sshpass=False):
         settings = {
@@ -358,16 +564,22 @@ def main():
         print(dumps({'machines': [m._to_dict() for m in lmp.get_machines()]}, indent=3))
 
     elif parsed.action == 'migrate-machine':
+        def print_migrate_info(text):
+            if not parsed.print_port_map:
+                print(text)
+
+
         if not parsed.target:
             print('! no target specified, creating leappto container package in current directory')
             # TODO: not really for now
             raise NotImplementedError
+            
         else:
             source = parsed.machine
             target = parsed.target
-            forwarded_ports = parsed.forwarded_ports
 
-            print('! looking up "{}" as source and "{}" as target'.format(source, target))
+
+            print_migrate_info('! looking up "{}" as source and "{}" as target'.format(source, target))
 
             lmp = LibvirtMachineProvider()
             machines = lmp.get_machines()
@@ -380,29 +592,86 @@ def main():
                 print("Source: " + repr(machine_src))
                 exit(-1)
 
-            print('! configuring SSH keys')
+            src_ip = machine_src.ip[0]
+            dst_ip = machine_dst.ip[0]
+
+            user_mapped_ports = PortMap()
+            user_excluded_ports = PortList()
+
+            if parsed.forwarded_tcp_ports:
+                for target_port, source_port in parsed.forwarded_tcp_ports:
+                    user_mapped_ports.set_tcp_port(source_port, target_port)
+
+            if parsed.excluded_tcp_ports:
+                for target_port, source_port in parsed.excluded_tcp_ports:
+                    user_excluded_ports.set_tcp_port(source_port)
+
+
+            tcp_mapping = None
+            #udp_mapping = None
+                
+            if not parsed.ignore_default_port_map:
+                try:
+                    print_migrate_info('! Scanning source ports')
+                    src_ports = _port_scan(src_ip, shallow=True)
+            
+                    print_migrate_info('! Scanning target ports')
+                    dst_ports = _port_scan(dst_ip, shallow=True)
+
+                except Exception as e:
+                    print("An error occured during port scan: {}".format(str(e)))
+                    exit(-1)
+            
+                tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
+                
+            else:
+                ## this will apply static mapping:
+                #tcp_mapping = _port_remap({}, user_mapped_ports)["tcp"]
+
+                ## forward only user specified ports
+                tcp_mapping = parsed.forwarded_tcp_ports
+
+       
+            if parsed.print_port_map:
+                print(dumps(tcp_mapping, indent=3))
+                exit(0)
+
+            print_migrate_info("! Detected port mapping:\n")
+            print_migrate_info("! +-------------+-------------+")
+            print_migrate_info("! | Target port | Source port |")
+            print_migrate_info("! +=============+=============+")
+
+            for pmap in tcp_mapping:
+                print_migrate_info("! | {:11d} | {:11d} |".format(pmap[0], pmap[1]))
+
+            print_migrate_info("! +-------------+-------------+")
+            
+    
+            print_migrate_info('! configuring SSH keys')
+
             mc = MigrationContext(
                 machine_dst,
                 _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
                 machine_src.disks[0].host_path,
                 machine_src,
                 _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),  # source cfg, should be custom
-                forwarded_ports,
+                tcp_mapping,
                 parsed.use_rsync
             )
-            print('! copying over')
+            print_migrate_info('! copying over')
             mc.copy()
-            print('! provisioning ...')
+            print_migrate_info('! provisioning ...')
+
             # if el7 then use systemd
             if machine_src.installation.os.version.startswith('7'):
                 result = mc.start_container('centos:7', '/usr/lib/systemd/systemd --system')
-                print('! starting services')
+                print_migrate_info('! starting services')
                 mc.fix_systemd()
             else:
                 result = mc.start_container('centos:6', '/sbin/init')
-                print('! starting services')
+                print_migrate_info('! starting services')
                 mc.fix_upstart()
-            print('! done')
+            print_migrate_info('! done')
             sys.exit(result)
 
     elif parsed.action == 'destroy-containers':
@@ -430,37 +699,21 @@ def main():
         _ERR_STATE = "error"
         _SUCCESS_STATE = "success"
 
-        scan_args = '-sS' if parsed.shallow else '-sV'
-
-        port_range = parsed.range
-        ip = socket.gethostbyname(parsed.address)
-        port_scanner = nmap.PortScanner()
-        port_scanner.scan(ip, port_range, arguments=scan_args)
-
         result = {
             "status": _SUCCESS_STATE,
             "err_msg": "",
-            "ports": OrderedDict()
+            "ports": None
         }
+        
+        try:
+            result["ports"] = _port_scan(parsed.address, parsed.range, parsed.shallow)
 
-        scan_info = port_scanner.scaninfo()
-        if scan_info.get('error', False):
+        except PortScanException as e:
             result["status"] = _ERR_STATE
-            result["err_msg"] = scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error']
+            result["err_msg"] = str(e)
             print(dumps(result, indent=3))
-            exit(-1)
 
-        if ip not in port_scanner.all_hosts():
-            result["status"] = _ERR_STATE
-            result["err_msg"] = "Machine {} not found".format(ip)
-            print(dumps(result, indent=3))
             exit(-1)
-
-        for proto in port_scanner[ip].all_protocols():
-            result['ports'][proto] = OrderedDict()
-            for port in sorted(port_scanner[ip][proto]):
-                if port_scanner[ip][proto][port]['state'] != 'open':
-                    continue
-                result['ports'][proto][port] = port_scanner[ip][proto][port]
+            
 
         print(dumps(result, indent=3))
