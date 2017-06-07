@@ -216,9 +216,16 @@ def main():
 
     class PortMap(PortList):
         def set_port(self, protocol, source, target = None):
+            self._raise_for_protocol(protocol)
+
             if not target:
                 target = source
 
+            # Check if there isn't map colision on right side
+            for _, used_tport in self[protocol].items():
+                if used_tport == target:
+                    raise PortCollisionException("Target port {} has been already mapped".format(target))
+            
             super(PortMap, self).set_port(protocol, source, int(target))
 
 
@@ -270,9 +277,6 @@ def main():
 
         PORT_MAX = 65535
 
-        ## Static mapping
-        if not user_mapped_ports.has_tcp_port(22):
-            user_mapped_ports.set_tcp_port(22, 9022)
 
         """
             remapped_ports structure:
@@ -294,9 +298,18 @@ def main():
         ## add user ports which was not discovered
         for protocol in user_mapped_ports.get_protocols():
             for port in user_mapped_ports.list_ports(protocol):
+                user_target_port = user_mapped_ports.get_port(protocol, port)
+
+                if target_ports.has_port(protocol, user_target_port):
+                    raise PortCollisionException("Specified mapping is in conflict with target {} -> {}".format(port, user_target_port))
+
+                ## Add dummy port to sources
                 if not source_ports.has_port(protocol, port):
-                    ## Add dummy port to sources
                     source_ports.set_port(protocol, port) 
+
+        ## Static (default) mapping applied only when the source service is available
+        if not user_mapped_ports.has_tcp_port(22):
+            user_mapped_ports.set_tcp_port(22, 9022)
 
         ## remove unwanted ports
         for protocol in user_excluded_ports.get_protocols():
@@ -598,9 +611,13 @@ def main():
             user_mapped_ports = PortMap()
             user_excluded_ports = PortList()
 
-            if parsed.forwarded_tcp_ports:
-                for target_port, source_port in parsed.forwarded_tcp_ports:
-                    user_mapped_ports.set_tcp_port(source_port, target_port)
+            try:
+                if parsed.forwarded_tcp_ports:
+                    for target_port, source_port in parsed.forwarded_tcp_ports:
+                        user_mapped_ports.set_tcp_port(source_port, target_port)
+            except Exception as e:
+                print(str(e))
+                exit(-1)
 
             if parsed.excluded_tcp_ports:
                 for target_port, source_port in parsed.excluded_tcp_ports:
@@ -618,18 +635,29 @@ def main():
                     print_migrate_info('! Scanning target ports')
                     dst_ports = _port_scan(dst_ip, shallow=True)
 
+                    tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
+
+                except PortCollisionException as e:
+                    print(str(e))
+                    exit(-1)
                 except Exception as e:
                     print("An error occured during port scan: {}".format(str(e)))
                     exit(-1)
-            
-                tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
                 
             else:
-                ## this will apply static mapping:
-                #tcp_mapping = _port_remap({}, user_mapped_ports)["tcp"]
+                try:
+                    print_migrate_info('! Scanning target ports')
+                    dst_ports = _port_scan(dst_ip, shallow=True)
 
-                ## forward only user specified ports
-                tcp_mapping = parsed.forwarded_tcp_ports
+                    tcp_mapping = _port_remap(PortList(), dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
+
+                except PortCollisionException as e:
+                    print(str(e))
+                    exit(-1)
+                except Exception as e:
+                    print("An error occured during port scan: {}".format(str(e)))
+                    exit(-1)
+
 
        
             if parsed.print_port_map:
