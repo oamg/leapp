@@ -4,7 +4,7 @@ All steps in this file should only assume access to the LeApp CLI client,
 to allow testing of behaviour without the DBus service running.
 """
 from behave import given, when, then, step
-from hamcrest import assert_that, equal_to, not_none, greater_than
+from hamcrest import assert_that, equal_to, is_not, not_none, greater_than
 
 ##############################
 # Local VM management
@@ -56,12 +56,27 @@ def redeploy_vm_as_macrocontainer(context, source_vm, target_vm, migration_opt=N
     """
     context.redeployment_source = source_vm
     context.redeployment_target = target_vm
-    result = context.cli_helper.redeploy_as_macrocontainer(source_vm, target_vm, migration_opt)
-    assert_that(result.local_vm_count, greater_than(1), "At least 2 local VMs")
-    assert_that(result.source_ip, not_none(), "Valid source IP")
-    assert_that(result.target_ip, not_none(), "Valid target IP")
-    context.redeployment_source_ip = result.source_ip
-    context.redeployment_target_ip = result.target_ip
+    context.redeployment_migration_opt = migration_opt
+    redeploy_app = context.cli_helper.redeploy_as_macrocontainer
+    vm_info = redeploy_app(source_vm, target_vm, migration_opt)
+    assert_that(vm_info.local_vm_count, greater_than(1), "At least 2 local VMs")
+    assert_that(vm_info.source_ip, not_none(), "Valid source IP")
+    assert_that(vm_info.target_ip, not_none(), "Valid target IP")
+    context.redeployment_source_ip = vm_info.source_ip
+    context.redeployment_target_ip = vm_info.target_ip
+
+@then("attempting another redeployment should fail within {time_limit:g} seconds")
+def repeat_previous_redeployment(context, time_limit):
+    """Attempts to repeat a previously executed redeployment command"""
+    source_vm = context.redeployment_source
+    target_vm = context.redeployment_target
+    migration_opt = context.redeployment_migration_opt
+    helper = context.cli_helper
+    cmd_args = helper.make_migration_command(source_vm, target_vm, migration_opt)
+    output = helper.check_response_time(cmd_args, time_limit,
+                                        use_default_identity=True,
+                                        expect_failure=True)
+    assert_that(output, is_not(equal_to("")))
 
 
 ##############################

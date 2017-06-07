@@ -72,6 +72,7 @@ def _make_argument_parser():
 
     list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
+    check_target_cmd = parser.add_parser('check-target', help='check for claimed names on target container host')
     destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
     scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
@@ -129,6 +130,9 @@ def _make_argument_parser():
     )
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
+
+    check_target_cmd.add_argument('target', help='target VM name')
+    _add_identity_options(check_target_cmd)
 
     destroy_cmd.add_argument('target', help='target VM name')
     _add_identity_options(destroy_cmd)
@@ -438,12 +442,12 @@ def main():
                 return []
             return ['ssh'] + cfg + ['-4', addr]
 
-        def _ssh(self, cmd, machine_context=None, reuse_ssh_conn=False, **kwargs):
+        def _ssh_make_child(self, cmd, machine_context=None, reuse_ssh_conn=False, **kwargs):
             if machine_context is None:
                 machine_context = self.TARGET
             machine = getattr(self, machine_context, None)
             if isinstance(machine, Machine) and machine.is_local:
-                return Popen(shlex.split(cmd)).wait()
+                return Popen(shlex.split(cmd))
             addr, cfg, use_sshpass = self.__get_machine_opt_by_context(machine_context)
             ssh_cmd = self._ssh_base(addr, cfg)
             if reuse_ssh_conn:
@@ -451,7 +455,10 @@ def main():
             ssh_cmd += [cmd]
             if use_sshpass:
                 return self._sshpass(ssh_cmd, **kwargs)
-            return Popen(ssh_cmd, **kwargs).wait()
+            return Popen(ssh_cmd, **kwargs)
+
+        def _ssh(self, cmd, **kwargs):
+            return self._ssh_make_child(cmd, **kwargs).wait()
 
         def _open_permanent_ssh_conn(self, machine_context):
             addr, cfg, _ = self.__get_machine_opt_by_context(machine_context)
@@ -482,10 +489,23 @@ def main():
             if ssh_password is None:
                 ssh_password = self._cached_ssh_password = getpass("SSH password:").encode()
             os.write(write_pwd, ssh_password  + b'\n')
-            return child.wait()
+            return child
 
         def _ssh_sudo(self, cmd, **kwargs):
-            return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
+            sudo_cmd = "sudo bash -c '{}'".format(cmd)
+            return self._ssh(sudo_cmd, **kwargs)
+
+        def _ssh_out(self, cmd, machine_context=None, **kwargs):
+            """Capture SSH command output in addition to return code"""
+            child = self._ssh_make_child(cmd, reuse_ssh_conn=False, stdout=PIPE, stderr=PIPE)
+            output, err_output = child.communicate()
+            if err_output:
+                sys.stderr.write(err_output + b"\n")
+            return child.returncode, output
+
+        def _ssh_sudo_out(self, cmd, **kwargs):
+            sudo_cmd = "sudo bash -c '{}'".format(cmd)
+            return self._ssh_out(sudo_cmd, **kwargs)
 
         def _get_container_dir(self):
             # TODO: Derive container name from source host name
@@ -554,13 +574,26 @@ def main():
                     print('! ', self.source.resume())
 
             self._ssh_sudo('docker rm -fv container 2>/dev/null 1>/dev/null; '
-                           'mkdir -p {}'.format(container_dir))
+                           'mkdir -p "{}"'.format(container_dir))
             if self.rsync_cp_backend:
                 return _rsync()
             return _virt_tar_out()
 
+        def check_target(self):
+            storage_dir = MACROCONTAINER_STORAGE_DIR
+            ps_containers = 'docker ps -a --format "{{.Names}}"'
+            rc, containers = self._ssh_sudo_out(ps_containers)
+            if rc:
+                return rc, []
+            names = containers.splitlines()
+            ls_storage_directories = 'ls -1 "{}"'.format(storage_dir)
+            rc, dirs = self._ssh_sudo_out(ls_storage_directories)
+            if rc:
+                return rc, []
+            names.extend(dirs.splitlines())
+            return 0, sorted(set(names))
+
         def destroy_containers(self):
-            # TODO: Replace this subcommand with a "check-access" subcommand
             storage_dir = MACROCONTAINER_STORAGE_DIR
             return self._ssh_sudo(
                 'docker rm -fv container 2>/dev/null 1>/dev/null; '
@@ -727,6 +760,26 @@ def main():
             print_migrate_info('! done')
             sys.exit(result)
 
+    elif parsed.action == 'check-target':
+        target = parsed.target
+
+        lmp = LibvirtMachineProvider()
+        machines = lmp.get_machines()
+
+        machine_dst = _find_machine(machines, target)
+
+        mc = MigrationContext(
+            machine_dst,
+            _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
+            None
+        )
+
+        return_code, claimed_names = mc.check_target()
+        for name in sorted(claimed_names):
+            print(name)
+
+        sys.exit(return_code)
+
     elif parsed.action == 'destroy-containers':
         target = parsed.target
 
@@ -747,6 +800,7 @@ def main():
         result = mc.destroy_containers()
         print('! done')
         sys.exit(result)
+
 
     elif parsed.action == 'port-inspect':
         _ERR_STATE = "error"
