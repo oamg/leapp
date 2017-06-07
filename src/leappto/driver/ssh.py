@@ -29,7 +29,7 @@ class ParamikoConnection(object):
         try:
             self._socket.connect((hostname, port))
         except socket.error as e:
-            raise SSHConnectionError('Failed to connect to {}:{}: {}'.format(hostname, port, e.message))
+            raise SSHConnectionError('Failed to connect to {}:{} ERROR: {}'.format(hostname, port, e.message))
         self._transport = paramiko.Transport(self._socket)
 
         try:
@@ -40,16 +40,16 @@ class ParamikoConnection(object):
         try:
             host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
         except IOError:
-            host_keys = {}
+            host_keys = paramiko.hostkeys.HostKeys()
 
         if strict_host_key:
             remote_key = self._transport.get_remote_server_key()
-            if hostname not in host_keys:
-                raise SSHHostKeyError('Could not find {} in known hosts'.format(hostname))
-            elif remote_key.get_name() not in host_keys[hostname]:
-                raise SSHHostKeyError('Key {} for host {} is unknown'.format(remote_key.get_name(), hostname))
-            elif host_keys[hostname][remote_key.get_name()] != remote_key:
-                raise SSHHostKeyError('Key for host {} has changed!'.format(hostname))
+            if not host_keys.check(hostname, remote_key):
+                raise SSHHostKeyError(
+                        'Could not find {} - {} in known hosts for host {}'.format(
+                            remote_key.get_name(),
+                            remote_key.get_base64(),
+                            hostname))
             else:
                 pass #  OK
 
@@ -81,7 +81,7 @@ class SSHConnection(LocalDriver):
         super(LocalDriver, self).__init__()
 
     def exec_command(self, cmd, *args, **kwargs):
-        return super(SSHConnection, self).exec_command('ssh -t ' +  self._target + ' ' + quote(cmd), *args)
+        return super(SSHConnection, self).exec_command('ssh ' +  self._target + ' ' + quote(cmd), *args)
 
 
 class VagrantSSHDriver(Driver):
