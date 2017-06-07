@@ -98,3 +98,11 @@ def check_specific_ports_used_by_vm_add_and_remove(context, vm_source_name, vm_t
     )
     expected_ports = "[[9022,22],[80,80],[112,111]]"
     _assert_discovered_ports(ports, expected_ports)
+
+
+def collision_detect(context, vm_source_name, vm_target_name, source_port, target_port):
+    ports = context.cli_helper.check_response_time(
+        ["migrate-machine", "-p", "-t", _get_hostname(context, vm_target_name), _get_hostname(context, vm_source_name), "--tcp-port", "{}:{}".format(source_port, target_port)],
+        time_limit=60
+    )
+    
