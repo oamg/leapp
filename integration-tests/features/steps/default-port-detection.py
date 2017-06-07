@@ -3,6 +3,7 @@ from behave import then
 from hamcrest import assert_that
 from hamcrest import equal_to 
 from json import loads
+import subprocess
 
 def _sort_ports(ports):
     return sorted(ports, key = lambda x: x[0])
@@ -100,9 +101,15 @@ def check_specific_ports_used_by_vm_add_and_remove(context, vm_source_name, vm_t
     _assert_discovered_ports(ports, expected_ports)
 
 
+@when('A manually mapped {vm_source_name} port {source_port} is already used on {vm_target_name} port {target_port}')
 def collision_detect(context, vm_source_name, vm_target_name, source_port, target_port):
-    ports = context.cli_helper.check_response_time(
-        ["migrate-machine", "-p", "-t", _get_hostname(context, vm_target_name), _get_hostname(context, vm_source_name), "--tcp-port", "{}:{}".format(source_port, target_port)],
-        time_limit=60
-    )
-    
+    return_code = 0
+    try:
+        context.cli_helper.check_response_time(
+            ["migrate-machine", "-p", "-t", _get_hostname(context, vm_target_name), _get_hostname(context, vm_source_name), "--tcp-port", "{}:{}".format(source_port, target_port)],
+            time_limit=60
+        )
+    except subprocess.CalledProcessError as e:
+        return_code = e.returncode 
+
+    assert_that(int(return_code), not equal_to(0))
