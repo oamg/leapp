@@ -6,7 +6,7 @@ from getpass import getpass
 from grp import getgrnam, getgrgid
 from json import dumps
 from pwd import getpwuid
-from subprocess import Popen as RealPopen, PIPE
+from subprocess import Popen, PIPE
 from collections import OrderedDict
 from leappto import Machine
 from leappto.driver import LocalDriver
@@ -22,11 +22,6 @@ import nmap
 import shlex
 import shutil
 import errno
-
-class Popen(RealPopen):
-    def __init__(self, *args, **kwargs):
-        print(">>>> POPEN:", *args)
-        super(Popen, self).__init__(*args, **kwargs)
 
 
 VERSION='leapp-tool {0}'.format(__version__)
@@ -169,7 +164,6 @@ def main():
     def _inspect_machine(host, shallow=True, user='root'):
         try:
             if host in ('localhost', '127.0.0.1'):
-                print(">>>>>>>> Inspect => Local")
                 return LocalMachine(shallow_scan=shallow)
             return SSHMachine(host, user=user, shallow_scan=shallow)
         except Exception as e:
