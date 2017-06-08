@@ -1,0 +1,22 @@
+VAGRANTFILE_API_VERSION = "2"
+
+ipaddr = ENV.fetch('SRC_IP_ADDR', '10.0.0.20')
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+    config.vm.box = "centos/6"
+    config.vm.hostname = "leapp-tests-centos6-drools"
+
+    config.vm.network :private_network, ip: ipaddr
+    config.vm.synced_folder "./", "/vagrant", type: "rsync", id: "vagrant", :nfs => false,
+        :mount_options => ["dmode=777", "fmode=666"]
+
+    config.vm.provider :libvirt do |libvirt|
+	libvirt.memory = 2048
+	libvirt.cpus = 2
+    end
+
+    config.vm.provision "ansible" do |ansible|
+        ansible.playbook = "playbook.yml"
+        ansible.sudo = true
+    end
+end
