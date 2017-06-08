@@ -49,14 +49,15 @@ Scenario: Return default port detected on source machine - enable 1111 && disabl
          | target     | centos7-target      | no           |
      Then get list of discovered ports on source which will be forwarded to target and port 1111 will not be added
 
-#Scenario: Detect a collision in map defined by user
-#   Given the local virtual machines:
-#         | name       | definition          | ensure_fresh |
-#         | source     | centos6-guest-httpd | no           |
-#         | target     | centos7-target      | no           |
-#     Then An exception will be raised and tool will exit 
+Scenario: Detect a collision in map defined by user
+   Given the local virtual machines:
+         | name       | definition          | ensure_fresh |
+         | source     | centos6-guest-httpd | no           |
+         | target     | centos7-target      | no           |
+     When A manually mapped target port 144 is used multiple times for different source port
+     Then An exception will be raised and tool will exit 
 
-Scenario: Detect a collision created by mapping source port to unavailable port on target (22 - 22) 
+Scenario: Detect a collision created by mapping source port to unavailable port on target
    Given the local virtual machines:
          | name       | definition          | ensure_fresh |
          | source     | centos6-guest-httpd | no           |
