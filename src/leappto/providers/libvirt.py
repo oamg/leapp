@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import errno
 import json
 import libvirt
@@ -11,10 +13,10 @@ from xml.etree import ElementTree as ET
 from leappto import AbstractMachineProvider, MachineType, Machine, Disk, \
         Package, OperatingSystem, Installation
 from leappto.driver.ssh import VagrantSSHDriver
-from leappto.providers.ssh_provider import inspect_machine
+from leappto.providers.ssh import inspect_machine
 
 class LibvirtMachine(Machine):
-    # TODO: Libvirt Python API doesn't seem to expose 
+    # TODO: Libvirt Python API doesn't seem to expose
     # virDomainSuspend and virDomainResume so use Virsh
     # for the time being
     def suspend(self):
