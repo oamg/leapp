@@ -9,6 +9,7 @@ from subprocess import Popen, PIPE
 from collections import OrderedDict
 from leappto import Machine
 from leappto.driver import LocalDriver
+from leappto.driver.ssh import LocalDriver, SSHDriver
 from leappto.providers.libvirt_provider import LibvirtMachineProvider, LibvirtMachine
 from leappto.providers.ssh_provider import SSHMachine
 from leappto.version import __version__
@@ -151,11 +152,11 @@ def main():
 
     ap = _make_argument_parser()
 
-    def _find_machine(ms, name):
+    def _find_machine(ms, name, shallow=True, user='root'):
         for machine in ms:
             if machine.hostname == name:
                 return machine
-        return _inspect_machine(name)
+        return _inspect_machine(name, shallow=shallow, user=user)
 
     def _inspect_machine(host, shallow=True, user='root'):
         try:
@@ -619,9 +620,11 @@ def main():
 
             lmp = LibvirtMachineProvider()
             machines = lmp.get_machines()
+            source_user = parsed.source_user or 'root'
+            target_user = parsed.target_user or 'root'
 
-            machine_src = _find_machine(machines, source)
-            machine_dst = _find_machine(machines, target)
+            machine_src = _find_machine(machines, source, user=source_user)
+            machine_dst = _find_machine(machines, target, user=target_user)
 
             if not machine_src:
                 print("Machine is not ready:")
@@ -686,7 +689,7 @@ def main():
             mc = MigrationContext(
                 machine_dst,
                 _set_ssh_config(parsed.target_user, parsed.target_identity, parsed.target_ask_pass),
-                machine_src.disks[0].host_path,
+                None if parsed.use_rsync else machine_src.disks[0].host_path,
                 machine_src,
                 _set_ssh_config(parsed.source_user, parsed.source_identity, parsed.source_ask_pass),
                 tcp_mapping,
