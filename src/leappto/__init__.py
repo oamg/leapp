@@ -9,6 +9,7 @@ class MachineType(IntEnum):
     Kvm = 1
     Hvm = 2
     SSH = 3
+    Local = 4
 
 
 class DiskType(IntEnum):
@@ -121,6 +122,10 @@ class Machine(object):
         self._provider = provider
         self._name = name
         self._installation = installation
+
+    @property
+    def is_local(self):
+        return self._type == MachineType.Local
 
     @property
     def id(self):
