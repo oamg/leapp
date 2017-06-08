@@ -15,11 +15,19 @@ import paramiko
 from leappto.driver import Driver, LocalDriver
 
 
-class SSHConnectionError(Exception):
+class SSHError(Exception):
     pass
 
 
-class SSHHostKeyError(Exception):
+class SSHConnectionError(SSHError):
+    pass
+
+
+class SSHHostKeyError(SSHError):
+    pass
+
+
+class SSHAuthenticationError(SSHError):
     pass
 
 
@@ -74,12 +82,36 @@ class ParamikoConnection(object):
         return stdin, stdout, stderr
 
 
-class SSHConnection(LocalDriver):
-    def __init__(self, hostname, username=None, port=22):
-        userspec = username + '@' if username else ''
-        self._target = '{}{} -p {}'.format(userspec, hostname, port)
-        super(LocalDriver, self).__init__()
+class SSHConfig(object):
+    def __init__(self, hostname, username=None, port=22, strict_host_key_checking=False, identity_file=None,
+                 use_pass=False, control_path=None, options=None):
+        self._options = options or {}
+        self._add_opt('User', username)
+        self._add_opt('IdentityFile', username)
+        self._add_opt('Host', hostname)
+        self._add_opt('Port', port, int)
+        self._add_opt('PasswordAuthentication', 'yes' if use_pass else 'no')
+        self._add_opt('StrictHostKeyChecking', 'yes' if strict_host_key_checking else 'no')
+        self._add_opt('ControlPath', control_path)
 
+    def ssh_cmd(self, *args, add_options=None):
+        options = {k: v for k, v in self._options.items()}
+        if add_options:
+            options.update(add_options)
+        return ['ssh'] + [e for l in [['-v', '{}={}'.format(k, v)] for k, v in options.items] for e in l] + list(args)
+
+    def _add_opt(self, name, value, value_type=basestring):
+        if value:
+            if not value_type or isinstance(value, value_type):
+                self._options[name] = value
+            else:
+                raise TypeError('{} should be of type {}'.format(name, value_type.__name__))
+
+
+class SSHConnection(LocalDriver):
+    def __init__(self, config):
+        self._config = config
+        super(LocalDriver, self).__init__()
     def exec_command(self, cmd, *args, **kwargs):
         return super(SSHConnection, self).exec_command('ssh ' +  self._target + ' ' + quote(cmd), *args)
 
