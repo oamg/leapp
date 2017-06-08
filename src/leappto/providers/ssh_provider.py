@@ -31,7 +31,7 @@ class SSHMachine(Machine):
         if isinstance(host_or_driver, Driver):
             self._driver = host_or_driver
         else:
-            self._driver = SSHDriver(host_or_driver, user, port, use_paramiko=False)
+            self._driver = SSHDriver(host_or_driver, user, port)
         ips, hostname, installation = inspect_machine(self._driver, shallow_scan)
         super(SSHMachine, self).__init__(hostname, hostname, ips, 'x86_64', MachineType.SSH, [], hostname,
                                          installation, None)
