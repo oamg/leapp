@@ -382,11 +382,7 @@ def main():
             self._cached_ssh_password = None
             self.disk = disk
             self.rsync_cp_backend = rsync_cp_backend
-            if forwarded_ports is None:
-                forwarded_ports = [(80, 80)]  # Default to forwarding plain HTTP
-            else:
-                forwarded_ports = list(forwarded_ports)
-            self.forwarded_ports = forwarded_ports
+            self.forwarded_ports = list(forwarded_ports or ())
 
         def __get_machine_opt_by_context(self, machine_context):
             return (getattr(self, '{}_{}'.format(machine_context, opt)) for opt in ['addr', 'cfg', 'use_sshpass'])
