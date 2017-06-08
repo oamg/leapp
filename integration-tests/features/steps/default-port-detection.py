@@ -102,7 +102,7 @@ def check_specific_ports_used_by_vm_add_and_remove(context, vm_source_name, vm_t
 
 
 @when('A manually mapped {vm_source_name} port {source_port} is already used on {vm_target_name} port {target_port}')
-def collision_detect(context, vm_source_name, vm_target_name, source_port, target_port):
+def collision_detect_source_target(context, vm_source_name, vm_target_name, source_port, target_port):
     return_code = 0
     try:
         context.cli_helper.check_response_time(
@@ -111,5 +111,23 @@ def collision_detect(context, vm_source_name, vm_target_name, source_port, targe
         )
     except subprocess.CalledProcessError as e:
         return_code = e.returncode 
+     
+    context.return_code = return_code
+     
+@when("A manually mapped {vm_target_name} port {target_port} is used multiple times for different {vm_source_name} port")
+def collision_detect_target_target(context, vm_source_name, vm_target_name, target_port):
+    return_code = 0
+    try:
+        context.cli_helper.check_response_time(
+            ["migrate-machine", "-p", "-t", _get_hostname(context, vm_target_name), _get_hostname(context, vm_source_name), "--tcp-port", "{}:111".format(target_port), "{}:112".format(target_port)],
+            time_limit=60
+        )
+    except subprocess.CalledProcessError as e:
+        return_code = e.returncode 
+     
+    context.return_code = return_code
 
-    assert_that(int(return_code), not equal_to(0))
+@then("An exception will be raised and tool will exit")
+def colision_detect_result(context):
+   assert_that(context.return_code, not equal_to(0))
+   
