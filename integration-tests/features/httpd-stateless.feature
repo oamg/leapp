@@ -14,4 +14,4 @@ Scenario: Drools default server page
          | drools | centos6-drools | no |
          | target | centos7-target | no |
     When drools is redeployed to target as a macrocontainer
-    Then the HTTP 200 response against drools-wb/ on port 8080 should match within 90 seconds
+    Then the HTTP 200 response against /drools-wb/ on port 8080 should match within 90 seconds

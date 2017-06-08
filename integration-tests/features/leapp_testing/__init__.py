@@ -360,14 +360,14 @@ class RequestsHelper(object):
     @classmethod
     def compare_redeployed_response(cls, original_ip, redeployed_ip, *,
                                     tcp_port, status, wait_for_target, 
-                                    path=None):
+                                    path=''):
         """Compare a pre-migration app response with a redeployed response
 
         Expects an immediate response from the original IP, and allows for
         a delay before the redeployment target starts returning responses
         """
         # Get response from source VM
-        original_url = "http://{}:{}/{}".format(original_ip, tcp_port, path)
+        original_url = "http://{}:{}{}".format(original_ip, tcp_port, path)
         original_response = cls.get_response(original_url)
         print("Response received from {}".format(original_url))
         original_status = original_response.status_code
