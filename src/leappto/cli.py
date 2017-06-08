@@ -611,54 +611,37 @@ def main():
             user_mapped_ports = PortMap()
             user_excluded_ports = PortList()
 
+            tcp_mapping = None
+            #udp_mapping = None
+
             try:
                 if parsed.forwarded_tcp_ports:
                     for target_port, source_port in parsed.forwarded_tcp_ports:
                         user_mapped_ports.set_tcp_port(source_port, target_port)
-            except Exception as e:
-                print(str(e))
-                exit(-1)
 
-            if parsed.excluded_tcp_ports:
-                for target_port, source_port in parsed.excluded_tcp_ports:
-                    user_excluded_ports.set_tcp_port(source_port)
+                if parsed.excluded_tcp_ports:
+                    for target_port, source_port in parsed.excluded_tcp_ports:
+                        user_excluded_ports.set_tcp_port(source_port)
 
 
-            tcp_mapping = None
-            #udp_mapping = None
-                
-            if not parsed.ignore_default_port_map:
-                try:
+                if not parsed.ignore_default_port_map:
                     print_migrate_info('! Scanning source ports')
                     src_ports = _port_scan(src_ip, shallow=True)
+                else:
+                    src_ports = PortList() 
             
-                    print_migrate_info('! Scanning target ports')
-                    dst_ports = _port_scan(dst_ip, shallow=True)
+                print_migrate_info('! Scanning target ports')
+                dst_ports = _port_scan(dst_ip, shallow=True)
 
-                    tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
+                tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
 
-                except PortCollisionException as e:
-                    print(str(e))
-                    exit(-1)
-                except Exception as e:
-                    print("An error occured during port scan: {}".format(str(e)))
-                    exit(-1)
+            except PortCollisionException as e:
+                print(str(e))
+                exit(-1)
+            except PortScanException as e:
+                print("An error occured during port scan: {}".format(str(e)))
+                exit(-1)
                 
-            else:
-                try:
-                    print_migrate_info('! Scanning target ports')
-                    dst_ports = _port_scan(dst_ip, shallow=True)
-
-                    tcp_mapping = _port_remap(PortList(), dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
-
-                except PortCollisionException as e:
-                    print(str(e))
-                    exit(-1)
-                except Exception as e:
-                    print("An error occured during port scan: {}".format(str(e)))
-                    exit(-1)
-
-
        
             if parsed.print_port_map:
                 print(dumps(tcp_mapping, indent=3))
