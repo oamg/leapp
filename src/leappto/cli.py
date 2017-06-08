@@ -1,3 +1,4 @@
+from __future__ import print_function
 """LeApp CLI implementation"""
 
 from argparse import ArgumentParser
@@ -5,13 +6,14 @@ from getpass import getpass
 from grp import getgrnam, getgrgid
 from json import dumps
 from pwd import getpwuid
-from subprocess import Popen, PIPE
+from subprocess import Popen as RealPopen, PIPE
 from collections import OrderedDict
 from leappto import Machine
 from leappto.driver import LocalDriver
 from leappto.driver.ssh import LocalDriver, SSHDriver
-from leappto.providers.libvirt_provider import LibvirtMachineProvider, LibvirtMachine
-from leappto.providers.ssh_provider import SSHMachine
+from leappto.providers.libvirt import LibvirtMachineProvider, LibvirtMachine
+from leappto.providers.ssh import SSHMachine
+from leappto.providers.local import LocalMachine
 from leappto.version import __version__
 import os
 import sys
@@ -21,11 +23,17 @@ import shlex
 import shutil
 import errno
 
+class Popen(RealPopen):
+    def __init__(self, *args, **kwargs):
+        print(">>>> POPEN:", *args)
+        super(Popen, self).__init__(*args, **kwargs)
+
+
 VERSION='leapp-tool {0}'.format(__version__)
 
 MACROCONTAINER_STORAGE_DIR = '/var/lib/leapp/macrocontainers/'
 SOURCE_APP_EXPORT_DIR = '/var/lib/leapp/source_export/'
-
+_LOCALHOST='localhost'
 
 # Python 2/3 compatibility
 try:
@@ -161,7 +169,8 @@ def main():
     def _inspect_machine(host, shallow=True, user='root'):
         try:
             if host in ('localhost', '127.0.0.1'):
-                return SSHMachine(LocalDriver(), shallow_scan=shallow)
+                print(">>>>>>>> Inspect => Local")
+                return LocalMachine(shallow_scan=shallow)
             return SSHMachine(host, user=user, shallow_scan=shallow)
         except Exception as e:
             import traceback
@@ -413,7 +422,11 @@ def main():
 
         def __get_machine_addr(self, machine):
             # We assume the source/target to be an IP or FQDN if not a machine name
-            return machine.ip[0] if isinstance(machine, Machine) else machine
+            if isinstance(machine, Machine):
+                if machine.is_local:
+                    return _LOCALHOST
+                return machine.ip[0]
+            return machine
 
         @property
         def target_addr(self):
@@ -424,11 +437,16 @@ def main():
             return self.__get_machine_addr(self.source)
 
         def _ssh_base(self, addr, cfg):
+            if addr == _LOCALHOST:
+                return []
             return ['ssh'] + cfg + ['-4', addr]
 
         def _ssh(self, cmd, machine_context=None, reuse_ssh_conn=False, **kwargs):
             if machine_context is None:
                 machine_context = self.TARGET
+            machine = getattr(self, machine_context, None)
+            if isinstance(machine, Machine) and machine.is_local:
+                return Popen(shlex.split(cmd)).wait()
             addr, cfg, use_sshpass = self.__get_machine_opt_by_context(machine_context)
             ssh_cmd = self._ssh_base(addr, cfg)
             if reuse_ssh_conn:
@@ -446,10 +464,7 @@ def main():
                 except OSError as exc:
                     if exc.errno != errno.EEXIST:
                         raise
-
-            cmd = 'ssh -nNf -o ControlMaster=yes {} {} -4 {}'.format(
-                    self._SSH_CONTROL_PATH, ' '.join(cfg), addr
-            )
+            cmd = ' '.join(self._ssh_base(addr, ['-nNf -o ControlMaster=yes', self._SSH_CONTROL_PATH] + cfg))
             return Popen(shlex.split(cmd)).wait()
 
         def _close_permanent_ssh_conn(self, machine_context):
@@ -518,8 +533,8 @@ def main():
                                  .format(rsync_dir, ' '.join(self.target_cfg), self.target_addr)
                     Popen(shlex.split(target_cmd)).wait()
 
-                # temporary, after task with different names for containers should be removed
-                shutil.rmtree(rsync_dir)
+                    # temporary, after task with different names for containers should be removed
+                    shutil.rmtree(rsync_dir)
 
             def _virt_tar_out():
                 try:

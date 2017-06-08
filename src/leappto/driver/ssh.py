@@ -94,10 +94,9 @@ class SSHConfig(object):
         self._add_opt('StrictHostKeyChecking', 'yes' if strict_host_key_checking else 'no')
         self._add_opt('ControlPath', control_path)
 
-    def ssh_cmd(self, *args, add_options=None):
-        options = {k: v for k, v in self._options.items()}
-        if add_options:
-            options.update(add_options)
+    def ssh_cmd(self, *args, **kwargs):
+        options = self._options.copy()
+        options.update(kwargs)
         return ['ssh'] + [e for l in [['-v', '{}={}'.format(k, v)] for k, v in options.items] for e in l] + list(args)
 
     def _add_opt(self, name, value, value_type=basestring):
