@@ -92,9 +92,11 @@ effect.
 
 Finally, start all the demonstration VMs by running: ::
 
-    demo/start_vms.sh
+    ln -s ../available/centos6-guest demo/vmdefs/enabled/
+    ln -s ../available/centos7-target demo/vmdefs/enabled/
+    sudo demo/vmctl.sh provision
 
-This script iterates over all the subdirectories of `demo/vmdefs` and runs
+This script iterates over all the subdirectories of `demo/vmdefs/emabled` and runs
 `vagrant up --provision`.
 
 Running the demonstration via the CLI
@@ -111,7 +113,7 @@ The demo admin login credentials are:
 
 Then, from the base of the local clone, run: ::
 
-    sudo bin/leapp-tool migrate-machine \
+    sudo bin/leapp-tool migrate-machine --user vagrant \
         --identity integration-tests/config/leappto_testing_key \
         --tcp-port 9000:9000 -t centos7-target centos6-app-vm
 
