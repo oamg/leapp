@@ -12,6 +12,12 @@ yum install -y python2-pip gcc redhat-rpm-config openssl-devel python-devel
 # Interim EPEL-based approach to enable testing of --ask-pass option
 yum install -y sshpass
 
+# Check the RPM can be built successfully
+yum install -y tito
+yum-builddep -y leapp.spec
+TERM=xterm tito build --rpm --test || (echo "Failed to build leapp RPM" && exit 1)
+# TODO: Actually install the built RPM & use that in the integration tests
+
 pip install ansible==2.2.0
 
 cd centos-ci/ansible/
