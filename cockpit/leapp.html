@@ -99,30 +99,12 @@
 </head>
 <body>
     <div class="container-fluid leapp">
-        <button class="btn btn-info" id='source-option-toggle'>Toggle Source Option</button>
-        <div style="height: 30px; padding-top: 1em; margin-bottom: -20px;" class="row">
-            <div class="spinner spinner-lg" id="loader"></div>
-        </div>
-        <div class="row section source-option">
-            <div id="source-details" class="col-sm-12">
-                <div class="input-group col-sm-4">
-                   <span class="input-group-addon" id="basic-addon1" data-toggle="tooltip" data-placement="bottom"
-                         title="Specify here an IP or FQDN of the machine from which the applications shall be
-                                imported. It is required that machine is accessible by root and the current user has
-                                added their SSH key for accessing this machine to the cockpit session's SSH agent.">
-                        <span class="glyphicon glyphicon-info-sign"></span>
-                    </span>
-                   <input id="source-address" type="text" class="form-control ui-lockable"
-                          placeholder="Source IP or FQDN">
-                    <span class="input-group-btn">
-                        <button id="scan-source-btn" class="btn btn-info ui-lockable" type="button">
-                            Find apps <span class="glyphicon glyphicon-arrow-right"></span>&nbsp;
-                        </button>
-                    </span>
-                </div>
+        <div style="padding: 1em;" class="row">
+            <div class="col-sm-12" style="height: 30px;" >
+                <div class="spinner spinner-lg" id="loader"></div>
             </div>
         </div>
-        <div class="row section source-option">
+        <div class="row section">
             <div class="col-sm-10">
                    <input id="source-address" type="text" class="form-control ui-lockable"
                           placeholder="Source IP or FQDN">
@@ -142,7 +124,7 @@
                 </div>
             </div>
         </div>
-        <div id="analyze-stage" class="row section border-top-dashed">
+        <div id="analyze-stage" class="row section border-top-dashed analyze">
             <div class="col-md-6 col-sm-12">
                 <h3>Externally visible TCP ports</h3>
                 <div class="row">
@@ -165,7 +147,7 @@
             </div>
         </div>
 
-        <div class="row section border-top-dashed">
+        <div class="row section border-top-dashed analyze">
             <div class="import-info col-xs-12">
                 <div class="row col-xs-12">
                     <span class="pull-right">
@@ -199,11 +181,8 @@
             scan_ports($('#source-address').val(), callback, ports=null, shallow=true);
         }
 
-        $('#source-option-toggle').click(function(){$('.source-option').toggle(); });
-
         $(function () {
           $('.analyze').hide();
-          $('.source-option').not(':first').hide();
           $('[data-toggle="tooltip"]').tooltip()
         });
 
@@ -252,8 +231,6 @@
 
         function call_leapp(cmd_args) {
             set_lock_cmd();
-            var line = [LEAPP_CONF["tool-path"]].concat(cmd_args).join(' ');
-            out(`Executing: ${line}`);
             return cockpit.spawn(
                 [LEAPP_CONF["tool-path"]].concat(cmd_args),
                 {
@@ -288,7 +265,8 @@
                     return target_port + ':' + this.value;  // host:container
             }).toArray();
 
-            var import_args = ["import-machine"]
+            var import_args = ["migrate-machine"]
+            import_args.push("--use-rsync");
             override_identity(import_args);
             import_args.push("--tcp-port");
             Array.prototype.push.apply(import_args, mapped_ports)
