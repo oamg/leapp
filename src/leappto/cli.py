@@ -10,7 +10,7 @@ from subprocess import Popen, PIPE
 from collections import OrderedDict
 from leappto import Machine
 from leappto.driver import LocalDriver
-from leappto.driver.ssh import LocalDriver, SSHDriver
+from leappto.driver.ssh import SSHDriver
 from leappto.providers.libvirt import LibvirtMachineProvider, LibvirtMachine
 from leappto.providers.ssh import SSHMachine
 from leappto.providers.local import LocalMachine
