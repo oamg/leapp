@@ -208,13 +208,15 @@ class ClientHelper(object):
         Returns the contents of stdout as a string.
         """
         start = time.monotonic()
+        is_migrate = 'migrate-machine' in cmd_args
         if use_default_password:
-            cmd_output = self._run_leapp_with_askpass(cmd_args)
+            cmd_output = self._run_leapp_with_askpass(cmd_args, is_migrate=is_migrate)
         else:
             add_default_user = specify_default_user or use_default_identity
             cmd_output = self._run_leapp(cmd_args,
                                          add_default_user=add_default_user,
                                          add_default_identity=use_default_identity,
+                                         is_migrate=is_migrate,
                                          as_sudo=as_sudo)
         response_time = time.monotonic() - start
         assert_that(response_time, less_than_or_equal_to(time_limit))
@@ -283,14 +285,15 @@ class ClientHelper(object):
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), as_sudo=as_sudo)
 
     @staticmethod
-    def _run_leapp_with_askpass(cmd_args):
+    def _run_leapp_with_askpass(cmd_args, is_migrate=False):
         # Helper specifically for --ask-pass testing with default credentials
         if os.getuid() != 0:
             err = "sshpass TTY emulation is incompatible with sudo credential caching"
             raise RuntimeError(err)
         cmd = ["sshpass", "-p"+_SSH_PASSWORD, _LEAPP_TOOL]
         cmd.extend(cmd_args)
-        cmd.extend(("--user", _SSH_USER, "--ask-pass"))
+        cmd.extend(_DEFAULT_LEAPP_MIGRATE_USER if is_migrate else _DEFAULT_LEAPP_USER)
+        cmd.append("--ask-pass")
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR))
 
     @classmethod
@@ -304,6 +307,7 @@ class ClientHelper(object):
         result = cls._run_leapp(cmd_args,
                                 add_default_user=True,
                                 add_default_identity=True,
+                                is_migrate=True,
                                 as_sudo=as_sudo)
         msg = "Redeployed {} as macrocontainer on {}"
         print(msg.format(source_host, target_host))
