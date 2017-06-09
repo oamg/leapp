@@ -30,7 +30,7 @@ except AttributeError:
     _set_inheritable = None
 
 # Checking for required permissions
-_REQUIRED_GROUPS = ["vagrant", "libvirt"]
+_REQUIRED_GROUPS = ["libvirt"]
 def _user_has_required_permissions():
     """Check user has necessary permissions to reliably run leapp-tool"""
     uid = os.getuid()
@@ -56,12 +56,10 @@ def _make_argument_parser():
     ap.add_argument('-v', '--version', action='version', version=VERSION, help='display version information')
     parser = ap.add_subparsers(help='sub-command', dest='action')
 
-    list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
+
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
     destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
     scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
-    list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
-    list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
 
     def _port_spec(arg):
         """Converts a port forwarding specifier to a (host_port, container_port) tuple
