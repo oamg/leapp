@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import errno
 import json
 import libvirt
@@ -8,14 +10,13 @@ from io import BytesIO
 from subprocess import check_output
 from xml.etree import ElementTree as ET
 
-from paramiko import AutoAddPolicy, SSHClient, SSHConfig
-
 from leappto import AbstractMachineProvider, MachineType, Machine, Disk, \
         Package, OperatingSystem, Installation
-
+from leappto.driver.ssh import VagrantSSHDriver
+from leappto.providers.ssh import inspect_machine
 
 class LibvirtMachine(Machine):
-    # TODO: Libvirt Python API doesn't seem to expose 
+    # TODO: Libvirt Python API doesn't seem to expose
     # virDomainSuspend and virDomainResume so use Virsh
     # for the time being
     def suspend(self):
@@ -77,76 +78,6 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 storage.append(Disk(type_, backing_file, device, driver_type))
             return storage
 
-        def __get_vagrant_data_path_from_domain(domain_name):
-            index_path = os.path.join(os.environ['HOME'], '.vagrant.d/data/machine-index/index')
-            index = json.load(open(index_path, 'r'))
-            for ident, machine in index['machines'].iteritems():
-                path_name = os.path.basename(machine['vagrantfile_path'])
-                vagrant_name = machine.get('name', 'default')
-                if domain_name == path_name + '_' + vagrant_name:
-                    return machine['local_data_path']
-            return None
-
-        def __get_vagrant_ssh_args_from_domain(domain_name):
-            path = __get_vagrant_data_path_from_domain(domain_name)
-            path = os.path.join(path, 'provisioners/ansible/inventory/vagrant_ansible_inventory')
-            with open(path, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line[0] in (';', '#'):
-                        continue
-                    return __parse_ansible_inventory_data(line)
-            return None
-
-        def __parse_ansible_inventory_data(line):
-            parts = shlex.split(line)
-            if parts:
-                parts = parts[1:]
-            args = {}
-            mapping = {
-                    'ansible_ssh_port': ('port', int),
-                    'ansible_ssh_host': ('hostname', str),
-                    'ansible_ssh_private_key_file': ('key_filename', str),
-                    'ansible_ssh_user': ('username', str)}
-            for part in parts:
-                key, value = part.split('=', 1)
-                if key in mapping:
-                    args[mapping[key][0]] = mapping[key][1](value)
-            return args
-
-        def __get_vagrant_ssh_client_for_domain(domain_name):
-            args = __get_vagrant_ssh_args_from_domain(domain_name)
-            if args:
-                client = SSHClient()
-                client.load_system_host_keys()
-                client.set_missing_host_key_policy(AutoAddPolicy())
-                client.connect(args.pop('hostname'), **args)
-                return client
-            return None
-
-        def __get_os_info(domain_name, shallow):
-            client = __get_vagrant_ssh_client_for_domain(domain_name)
-            if not client:
-                return None
-            cmd = """python -c 'import platform; print chr(0xa).join(platform.linux_distribution()[:2])'"""
-            _, output, _ = client.exec_command(cmd)
-            distro, version = output.read().strip().replace('\r', '').split('\n', 1)
-            cmd = """python -c 'import socket; print socket.gethostname()'"""
-            _, output, _ = client.exec_command(cmd)
-            hostname = output.read().strip()
-            cmd = "/sbin/ip -4 -o addr list | grep -E 'e(th|ns)' | sed 's/.*inet \\([0-9\\.]\\+\\)\\/.*$/\\1/g'\n"
-            _, output, stderr = client.exec_command(cmd)
-            ips = [i.strip() for i in output.read().split('\n') if i.strip()]
-            packages = []
-            if not shallow:
-                cmd = "python -c \"import rpm, json; print json.dumps([(app['name'], " + \
-                        "'{e}:{v}-{r}.{a}'.format(e=app['epoch'] or 0, v=app['version'], " + \
-                        "a=app['arch'], r=app['release'])) for app in rpm.ts().dbMatch()])\""
-                _, output, _ = client.exec_command(cmd)
-                packages = [Package(e[0], e[1]) for e in json.loads(output.read())]
-            return (ips, hostname, Installation(OperatingSystem(distro, version), packages))
-
-
         def __domain_info(domain):
             """
             Create `Machine` description out of `virDomain` object
@@ -177,7 +108,8 @@ class LibvirtMachineProvider(AbstractMachineProvider):
                 hostname = None
             '''
 
-            ips, hostname, inst = __get_os_info(domain.name(), self._shallow_scan)
+            vagrant_driver = VagrantSSHDriver(domain.name())
+            ips, hostname, inst = inspect_machine(vagrant_driver, self._shallow_scan)
 
             storage = __get_storage(root.findall("devices/disk[@device='disk']"))
 

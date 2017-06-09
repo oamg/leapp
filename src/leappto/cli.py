@@ -1,3 +1,4 @@
+from __future__ import print_function
 """LeApp CLI implementation"""
 
 from argparse import ArgumentParser
@@ -7,7 +8,12 @@ from json import dumps
 from pwd import getpwuid
 from subprocess import Popen, PIPE
 from collections import OrderedDict
-from leappto.providers.libvirt_provider import LibvirtMachineProvider, LibvirtMachine
+from leappto import Machine
+from leappto.driver import LocalDriver
+from leappto.driver.ssh import LocalDriver, SSHDriver
+from leappto.providers.libvirt import LibvirtMachineProvider, LibvirtMachine
+from leappto.providers.ssh import SSHMachine
+from leappto.providers.local import LocalMachine
 from leappto.version import __version__
 import os
 import sys
@@ -17,11 +23,12 @@ import shlex
 import shutil
 import errno
 
+
 VERSION='leapp-tool {0}'.format(__version__)
 
 MACROCONTAINER_STORAGE_DIR = '/var/lib/leapp/macrocontainers/'
 SOURCE_APP_EXPORT_DIR = '/var/lib/leapp/source_export/'
-
+_LOCALHOST='localhost'
 
 # Python 2/3 compatibility
 try:
@@ -46,10 +53,17 @@ def _user_has_required_permissions():
     return True
 
 # Parsing CLI arguments
-def _add_identity_options(cli_cmd):
-    cli_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
-    cli_cmd.add_argument('--ask-pass', '-k', action='store_true', help='Ask for SSH password')
-    cli_cmd.add_argument('--user', '-u', default=None, help='Connect as this user')
+def _add_identity_options(cli_cmd, context=''):
+    if context:
+        cli_cmd.add_argument('--' + context + '-identity', default=None,
+                             help='Path to private SSH key for the ' + context + ' machine')
+        cli_cmd.add_argument('--' + context + '-ask-pass', action='store_true',
+                             help='Ask for SSH password for the ' + context + ' machine')
+        cli_cmd.add_argument('--' + context + '-user', default=None, help='Connect as this user to the ' + context)
+    else:
+        cli_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
+        cli_cmd.add_argument('--ask-pass', '-k', action='store_true', help='Ask for SSH password')
+        cli_cmd.add_argument('--user', '-u', default=None, help='Connect as this user')
 
 def _make_argument_parser():
     ap = ArgumentParser()
@@ -58,10 +72,13 @@ def _make_argument_parser():
 
     list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
+    check_target_cmd = parser.add_parser('check-target', help='check for claimed names on target container host')
     destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
     scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
     list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
+    list_cmd.add_argument('--user', '-u', default=None, help='Username to to be used by the scan')
+    list_cmd.add_argument('--ip', nargs='*', default=None, help='list of IPs to scan')
 
     def _port_spec(arg):
         """Converts a port forwarding specifier to a (host_port, container_port) tuple
@@ -111,7 +128,11 @@ def _make_argument_parser():
         action='store_true',
         help='use rsync as backend for filesystem migration, otherwise virt-tar-out'
     )
-    _add_identity_options(migrate_cmd)
+    _add_identity_options(migrate_cmd, context='source')
+    _add_identity_options(migrate_cmd, context='target')
+
+    check_target_cmd.add_argument('target', help='target VM name')
+    _add_identity_options(check_target_cmd)
 
     destroy_cmd.add_argument('target', help='target VM name')
     _add_identity_options(destroy_cmd)
@@ -138,11 +159,21 @@ def main():
 
     ap = _make_argument_parser()
 
-    def _find_machine(ms, name):
+    def _find_machine(ms, name, shallow=True, user='root'):
         for machine in ms:
             if machine.hostname == name:
                 return machine
-        return None
+        return _inspect_machine(name, shallow=shallow, user=user)
+
+    def _inspect_machine(host, shallow=True, user='root'):
+        try:
+            if host in ('localhost', '127.0.0.1'):
+                return LocalMachine(shallow_scan=shallow)
+            return SSHMachine(host, user=user, shallow_scan=shallow)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return None
 
     class PortScanException(Exception):
         pass
@@ -389,7 +420,11 @@ def main():
 
         def __get_machine_addr(self, machine):
             # We assume the source/target to be an IP or FQDN if not a machine name
-            return machine.ip[0] if isinstance(machine, LibvirtMachine) else machine
+            if isinstance(machine, Machine):
+                if machine.is_local:
+                    return _LOCALHOST
+                return machine.ip[0]
+            return machine
 
         @property
         def target_addr(self):
@@ -400,11 +435,16 @@ def main():
             return self.__get_machine_addr(self.source)
 
         def _ssh_base(self, addr, cfg):
+            if addr == _LOCALHOST:
+                return []
             return ['ssh'] + cfg + ['-4', addr]
 
-        def _ssh(self, cmd, machine_context=None, reuse_ssh_conn=False, **kwargs):
+        def _ssh_make_child(self, cmd, machine_context=None, reuse_ssh_conn=False, **kwargs):
             if machine_context is None:
                 machine_context = self.TARGET
+            machine = getattr(self, machine_context, None)
+            if isinstance(machine, Machine) and machine.is_local:
+                return Popen(shlex.split(cmd))
             addr, cfg, use_sshpass = self.__get_machine_opt_by_context(machine_context)
             ssh_cmd = self._ssh_base(addr, cfg)
             if reuse_ssh_conn:
@@ -412,7 +452,10 @@ def main():
             ssh_cmd += [cmd]
             if use_sshpass:
                 return self._sshpass(ssh_cmd, **kwargs)
-            return Popen(ssh_cmd, **kwargs).wait()
+            return Popen(ssh_cmd, **kwargs)
+
+        def _ssh(self, cmd, **kwargs):
+            return self._ssh_make_child(cmd, **kwargs).wait()
 
         def _open_permanent_ssh_conn(self, machine_context):
             addr, cfg, _ = self.__get_machine_opt_by_context(machine_context)
@@ -422,10 +465,7 @@ def main():
                 except OSError as exc:
                     if exc.errno != errno.EEXIST:
                         raise
-
-            cmd = 'ssh -nNf -o ControlMaster=yes {} {} -4 {}'.format(
-                    self._SSH_CONTROL_PATH, ' '.join(cfg), addr
-            )
+            cmd = ' '.join(self._ssh_base(addr, ['-nNf -o ControlMaster=yes', self._SSH_CONTROL_PATH] + cfg))
             return Popen(shlex.split(cmd)).wait()
 
         def _close_permanent_ssh_conn(self, machine_context):
@@ -446,10 +486,23 @@ def main():
             if ssh_password is None:
                 ssh_password = self._cached_ssh_password = getpass("SSH password:").encode()
             os.write(write_pwd, ssh_password  + b'\n')
-            return child.wait()
+            return child
 
         def _ssh_sudo(self, cmd, **kwargs):
-            return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
+            sudo_cmd = "sudo bash -c '{}'".format(cmd)
+            return self._ssh(sudo_cmd, **kwargs)
+
+        def _ssh_out(self, cmd, machine_context=None, **kwargs):
+            """Capture SSH command output in addition to return code"""
+            child = self._ssh_make_child(cmd, reuse_ssh_conn=False, stdout=PIPE, stderr=PIPE)
+            output, err_output = child.communicate()
+            if err_output:
+                sys.stderr.write(err_output + b"\n")
+            return child.returncode, output
+
+        def _ssh_sudo_out(self, cmd, **kwargs):
+            sudo_cmd = "sudo bash -c '{}'".format(cmd)
+            return self._ssh_out(sudo_cmd, **kwargs)
 
         def _get_container_dir(self):
             # TODO: Derive container name from source host name
@@ -494,8 +547,8 @@ def main():
                                  .format(rsync_dir, ' '.join(self.target_cfg), self.target_addr)
                     Popen(shlex.split(target_cmd)).wait()
 
-                # temporary, after task with different names for containers should be removed
-                shutil.rmtree(rsync_dir)
+                    # temporary, after task with different names for containers should be removed
+                    shutil.rmtree(rsync_dir)
 
             def _virt_tar_out():
                 try:
@@ -518,13 +571,26 @@ def main():
                     print('! ', self.source.resume())
 
             self._ssh_sudo('docker rm -fv container 2>/dev/null 1>/dev/null; '
-                           'mkdir -p {}'.format(container_dir))
+                           'mkdir -p "{}"'.format(container_dir))
             if self.rsync_cp_backend:
                 return _rsync()
             return _virt_tar_out()
 
+        def check_target(self):
+            storage_dir = MACROCONTAINER_STORAGE_DIR
+            ps_containers = 'docker ps -a --format "{{.Names}}"'
+            rc, containers = self._ssh_sudo_out(ps_containers)
+            if rc:
+                return rc, []
+            names = containers.splitlines()
+            ls_storage_directories = 'ls -1 "{}"'.format(storage_dir)
+            rc, dirs = self._ssh_sudo_out(ls_storage_directories)
+            if rc:
+                return rc, []
+            names.extend(dirs.splitlines())
+            return 0, sorted(set(names))
+
         def destroy_containers(self):
-            # TODO: Replace this subcommand with a "check-access" subcommand
             storage_dir = MACROCONTAINER_STORAGE_DIR
             return self._ssh_sudo(
                 'docker rm -fv container 2>/dev/null 1>/dev/null; '
@@ -569,8 +635,12 @@ def main():
 
     parsed = ap.parse_args()
     if parsed.action == 'list-machines':
-        lmp = LibvirtMachineProvider(parsed.shallow)
-        print(dumps({'machines': [m._to_dict() for m in lmp.get_machines()]}, indent=3))
+        if not parsed.ip:
+            lmp = LibvirtMachineProvider(parsed.shallow)
+            machines = lmp.get_machines()
+        else:
+            machines = [_inspect_machine(m, shallow=parsed.shallow, user=parsed.user or 'root') for m in parsed.ip]
+        print(dumps({'machines': [m._to_dict() for m in machines if m]}, indent=3))
 
     elif parsed.action == 'migrate-machine':
         def print_migrate_info(text):
@@ -592,9 +662,11 @@ def main():
 
             lmp = LibvirtMachineProvider()
             machines = lmp.get_machines()
+            source_user = parsed.source_user or 'root'
+            target_user = parsed.target_user or 'root'
 
-            machine_src = _find_machine(machines, source)
-            machine_dst = _find_machine(machines, target)
+            machine_src = _find_machine(machines, source, user=source_user)
+            machine_dst = _find_machine(machines, target, user=target_user)
 
             if not machine_src:
                 print("Machine is not ready:")
@@ -658,10 +730,10 @@ def main():
 
             mc = MigrationContext(
                 machine_dst,
-                _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
-                machine_src.disks[0].host_path,
+                _set_ssh_config(parsed.target_user, parsed.target_identity, parsed.target_ask_pass),
+                None if parsed.use_rsync else machine_src.disks[0].host_path,
                 machine_src,
-                _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),  # source cfg, should be custom
+                _set_ssh_config(parsed.source_user, parsed.source_identity, parsed.source_ask_pass),
                 tcp_mapping,
                 parsed.use_rsync
             )
@@ -680,6 +752,26 @@ def main():
                 mc.fix_upstart()
             print_migrate_info('! done')
             sys.exit(result)
+
+    elif parsed.action == 'check-target':
+        target = parsed.target
+
+        lmp = LibvirtMachineProvider()
+        machines = lmp.get_machines()
+
+        machine_dst = _find_machine(machines, target)
+
+        mc = MigrationContext(
+            machine_dst,
+            _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
+            None
+        )
+
+        return_code, claimed_names = mc.check_target()
+        for name in sorted(claimed_names):
+            print(name)
+
+        sys.exit(return_code)
 
     elif parsed.action == 'destroy-containers':
         target = parsed.target
@@ -701,6 +793,7 @@ def main():
         result = mc.destroy_containers()
         print('! done')
         sys.exit(result)
+
 
     elif parsed.action == 'port-inspect':
         _ERR_STATE = "error"
