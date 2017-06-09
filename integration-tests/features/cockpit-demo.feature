@@ -1,5 +1,6 @@
 Feature: Demonstration Cockpit plugin
 
+@skip
 @root_recommended
 Scenario: Initial page visit & app redeployment
   Given Cockpit is installed on the testing host
