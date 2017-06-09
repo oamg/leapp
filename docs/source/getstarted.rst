@@ -96,7 +96,7 @@ Finally, start all the demonstration VMs by running: ::
     ln -s ../available/centos7-target demo/vmdefs/enabled/
     sudo demo/vmctl.sh provision
 
-This script iterates over all the subdirectories of `demo/vmdefs/emabled` and runs
+This script iterates over all the subdirectories of `demo/vmdefs/enabled` and runs
 `vagrant up --provision`.
 
 Note that the VMs shall be started by the same user who will run the
