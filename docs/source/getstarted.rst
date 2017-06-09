@@ -99,6 +99,10 @@ Finally, start all the demonstration VMs by running: ::
 This script iterates over all the subdirectories of `demo/vmdefs/emabled` and runs
 `vagrant up --provision`.
 
+Note that the VMs shall be started by the same user who will run the
+demo, i.e. when using sudo to run the demo, one shall use sudo to
+start the VMs as well.
+
 Running the demonstration via the CLI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
