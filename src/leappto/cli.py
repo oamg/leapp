@@ -10,7 +10,7 @@ from subprocess import Popen, PIPE
 from collections import OrderedDict
 from leappto import Machine
 from leappto.driver import LocalDriver
-from leappto.driver.ssh import SSHDriver
+from leappto.driver.ssh import SSHDriver, SSHConnectionError
 from leappto.providers.libvirt import LibvirtMachineProvider, LibvirtMachine
 from leappto.providers.ssh import SSHMachine
 from leappto.providers.local import LocalMachine
@@ -166,6 +166,9 @@ def main():
             if host in ('localhost', '127.0.0.1'):
                 return LocalMachine(shallow_scan=shallow)
             return SSHMachine(host, user=user, shallow_scan=shallow)
+        except SSHConnectionError as e:
+            print("SSH error: {0}".format(e))
+            return None
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -633,11 +636,15 @@ def main():
             target_user = parsed.target_user or 'root'
 
             machine_src = _find_machine(machines, source, user=source_user)
-            machine_dst = _find_machine(machines, target, user=target_user)
 
             if not machine_src:
-                print("Machine is not ready:")
-                print("Source: " + repr(machine_src))
+                print("Source machine is not ready: " + source)
+                exit(-1)
+
+            machine_dst = _find_machine(machines, target, user=target_user)
+
+            if not machine_dst:
+                print("Target machine is not ready: " + target)
                 exit(-1)
 
             src_ip = machine_src.ip[0]
