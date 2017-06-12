@@ -96,7 +96,7 @@ def _make_argument_parser():
         return host_port, container_port
 
     migrate_cmd.add_argument('machine', help='source machine to migrate')
-    migrate_cmd.add_argument('-t', '--target', default=None, help='target VM name')
+    migrate_cmd.add_argument('-t', '--target', default='localhost', help='target VM name')
     migrate_cmd.add_argument(
         '--tcp-port',
         default=None,
@@ -519,6 +519,8 @@ def main():
                 rsync_dir = container_dir
 
                 try:
+                    # temporary, after task with different names for containers rmtree should be removed
+                    shutil.rmtree(rsync_dir)
                     os.makedirs(rsync_dir)
                 except OSError as exc:
                     if exc.errno != errno.EEXIST:  # raise exception if it's different than FileExists
@@ -549,9 +551,6 @@ def main():
                     target_cmd = 'sudo rsync -aAX --rsync-path="sudo rsync" -r {0}/ -e "ssh {1}" {2}:{0}' \
                                  .format(rsync_dir, ' '.join(self.target_cfg), self.target_addr)
                     Popen(shlex.split(target_cmd)).wait()
-
-                    # temporary, after task with different names for containers should be removed
-                    shutil.rmtree(rsync_dir)
 
             def _virt_tar_out():
                 try:
