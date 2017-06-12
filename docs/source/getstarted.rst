@@ -117,7 +117,7 @@ The demo admin login credentials are:
 
 Then, from the base of the local clone, run: ::
 
-    sudo bin/leapp-tool migrate-machine
+    sudo bin/leapp-tool migrate-machine \
         --target-user vagrant \
         --target-identity integration-tests/config/leappto_testing_key \
         --source-user vagrant \
