@@ -195,10 +195,11 @@
           $('[data-toggle="tooltip"]').tooltip()
         });
 
+
+        // Handle enter key press in the ip/fqdn field and submit
         $("#source-address").keypress(function(e) {
             if (e.which == 13) {
-                scan_ports($("#source-address").val(), get_source_ports, null, true);
-                $(".analyze").fadeIn();
+                $("#scan-source-btn").click();
             }
         });
 
