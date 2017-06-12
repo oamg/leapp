@@ -7,3 +7,4 @@ playbook.retry
 dist/
 *.egg-info/
 docs/build/
+.idea/

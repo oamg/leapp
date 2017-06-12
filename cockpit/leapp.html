@@ -152,7 +152,7 @@
                 </div>
             </div>
             <div class="col-md-6 col-sm-12">
-                <!-- Application/Target container name... --!>
+                <!-- Application/Target container name... -->
             </div>
         </div>
 
@@ -193,6 +193,13 @@
         $(function () {
           $('.analyze').hide();
           $('[data-toggle="tooltip"]').tooltip()
+        });
+
+        $("#source-address").keypress(function(e) {
+            if (e.which == 13) {
+                scan_ports($("#source-address").val(), get_source_ports, null, true);
+                $(".analyze").fadeIn();
+            }
         });
 
         $("#scan-source-btn").click(function(){
