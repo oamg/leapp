@@ -298,11 +298,12 @@ class ClientHelper(object):
 
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host, migration_opt):
-        as_sudo = False
+        # migrate-machine currently always requires root, as otherwise nmap fails
+        # with "You requested a scan type which requires root privileges."
+        as_sudo = True
         cmd_args = ["migrate-machine", "--tcp-port", "80:80"]
         if migration_opt == 'rsync':
             cmd_args.append('--use-rsync')
-            as_sudo = True
         cmd_args.extend(["-t", target_host, source_host])
         result = cls._run_leapp(cmd_args,
                                 add_default_user=True,
