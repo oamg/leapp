@@ -100,12 +100,16 @@ class VirtualMachineHelper(object):
         return _run_command(cmd, vm_dir, ignore_errors)
 
     def _vm_up(self, name, hostname, *, as_root=False):
-        result = self._run_vagrant(hostname, "up", "--provision", as_root=as_root)
+        """Ensures given VM is running and runs Ansible provisioning playbook"""
+        up_result = self._run_vagrant(hostname, "up", as_root=as_root)
         print("Started {} VM instance".format(hostname))
+        provision_result = self._run_vagrant(hostname, "provision", as_root=as_root)
+        print("Provisioned {} VM instance".format(hostname))
         self.machines[name] = hostname
-        return result
+        return up_result, provision_result
 
     def _vm_halt(self, name, hostname, *, as_root=False):
+        """Ensures given VM is suspended (if not already destroyed)"""
         try:
             hostname = self.machines.pop(name)
         except KeyError:
@@ -115,6 +119,7 @@ class VirtualMachineHelper(object):
         return result
 
     def _vm_destroy(self, name, hostname, *, as_root=False):
+        """Ensures given VM is completely removes from the system"""
         try:
             hostname = self.machines.pop(name)
         except KeyError:
