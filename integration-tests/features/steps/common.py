@@ -21,11 +21,11 @@ def create_local_machines(context, user=None):
 
     Note: Ansible VM provisioning playbooks are always executed by this step,
     even when *ensure_fresh* is set to 'no'. For faster test execution, relying
-    on Ansible to restore the VM to a known state is recommended, rather than
-    requiring a full VM create/destroy cycle.
+    on Ansible to restore the VM to a known state is strongly recommended,
+    rather than requiring a full VM create/destroy cycle.
 
     When the tests are run as a non-root user, specifying 'as root' implies
-    'ensure_fresh=yes', even if it is otherwise set to 'no'
+    'ensure_fresh=yes', even if it is otherwise set to 'no'.
     """
     if user not in (None, "root"):
         msg = "VMs must be started as either root or the current user"

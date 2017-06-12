@@ -137,6 +137,40 @@ without running the whole test suite as root, specify::
 
     behave -i <feature-of-interest> --tags root_recommended
 
+Setting up VMs for test scenarios
+---------------------------------
+
+Most test scenarios will include a VM setup step along the following lines::
+
+   Given the local virtual machines:
+         | name       | definition          | ensure_fresh |
+         | app-source | centos6-guest-httpd | no           |
+         | target     | centos7-target      | no           |
+
+Configuration of these VMs is handled in the following ways:
+
+* through the Vagrant file
+  (``/integration-tests/vmdefs/<definition>/Vagrantfile``)
+* through the Ansible provisioning playbook
+  (``/integration-tests/vmdefs/<definition>/ansible/playbook.yml``)
+* through additional setup steps in the test scenario itself
+
+For checked in tests, the ``ensure_fresh`` setting should always be ``no``, and
+the Ansible provisioning playbook for the VM definition should cover everything
+needed to ensure that the VM is in a known-good state for running test
+scenarios. This allows a single VM instance for each VM definition to be shared
+not only between test scenarios, but also between different test *runs*, saving
+around 3-5 minutes of test execution time for each VM destruction and recreation
+cycle avoided.
+
+For development and test debugging purposes, the ``ensure_fresh` setting can be
+changed to ``yes``. This means that instead of just re-running the Ansible
+provisioning playbook when a suitable VM instance already exists and halting
+the VM instance when the scenario ends, the tests will instead destroy any
+existing instance, create a completely fresh one, and then destroy that fresh
+instance when the scenario ends.
+
+
 
 Adding new steps to the steps catalog
 -------------------------------------

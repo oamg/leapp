@@ -63,6 +63,9 @@ Merge Rules
 -----------
 
 * Include unit or integration tests for the capability you have implemented
+* Integration tests should use "ensure_fresh=no" when setting up VMs (if
+  "ensure_fresh=yes" seems to be needed, it's a sign that there's a missing
+  cleanup task in the Ansible provisioning playbook for that VM definition)
 * Include documentation for the capability you have implemented
 * If you are fixing an issue, include the issue number you are fixing
 * Python code should follow `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_ conventions
