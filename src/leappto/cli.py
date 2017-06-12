@@ -487,12 +487,16 @@ def main():
         def _ssh_sudo(self, cmd, **kwargs):
             return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
 
+        def _get_container_name(self):
+            name_list = ["container", self.source.hostname]
+            return '_'.join(name_list)
+
         def _get_container_dir(self):
-            # TODO: Derive container name from source host name
-            container_name = "container"
+            container_name = self._get_container_name()
             return os.path.join(MACROCONTAINER_STORAGE_DIR, container_name)
 
         def copy(self):
+            container_name = self._get_container_name()
             container_dir = self._get_container_dir()
 
             def _rsync():
@@ -553,8 +557,8 @@ def main():
                 finally:
                     print('! ', self.source.resume())
 
-            self._ssh_sudo('docker rm -fv container 2>/dev/null 1>/dev/null; '
-                           'mkdir -p {}'.format(container_dir))
+            self._ssh_sudo('docker rm -fv {} 2>/dev/null 1>/dev/null; '
+                           'mkdir -p {}'.format(container_name, container_dir))
             if self.rsync_cp_backend:
                 return _rsync()
             return _virt_tar_out()
@@ -567,6 +571,7 @@ def main():
                 'rm -rf {}/*'.format(storage_dir))
 
         def start_container(self, img, init):
+            container_name = self._get_container_name()
             container_dir = self._get_container_dir()
             command = 'docker run -tid -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
             good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
@@ -577,11 +582,12 @@ def main():
                     command += ' -p {:d}'.format(container_port)  # docker will select random port for host
                 else:
                     command += ' -p {:d}:{:d}'.format(host_port, container_port)
-            command += ' --name container ' + img + ' ' + init
+            command += ' --name ' + container_name + ' ' + img + ' ' + init
             return self._ssh_sudo(command)
 
         def _fix_container(self, fix_str):
-            return self._ssh_sudo('docker exec -t container {}'.format(fix_str))
+            container_name = self._get_container_name()
+            return self._ssh_sudo('docker exec -t {} {}'.format(container_name, fix_str))
 
         def fix_upstart(self):
             fixer = 'bash -c "echo ! waiting ; ' + \
