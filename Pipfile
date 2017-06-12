@@ -3,18 +3,20 @@ url = "https://pypi.python.org/simple"
 verify_ssl = true
 
 [dev-packages]
+# Docs build dependencies
+Sphinx = "*"
+sphinx_rtd_theme = "*"
+recommonmark = "*"
+# Testing dependencies
 behave = "*"
 pylint = "*"
 requests = "*"
 attrs = "*"
 PyHamcrest = "*"
-
-[packages]
 ansible = ">= 2.0"
 pipsi = "*"
 pipenv = ">= 3.6.0"
 splinter = "*"
-
 # We restrict ourselves to older versions of Selenium for the Cockpit plugin
 # testing as:
 #
@@ -31,3 +33,6 @@ splinter = "*"
 # See https://developer.mozilla.org/en-US/docs/Mozilla/QA/Marionette/WebDriver
 # for more details on the development status of Marionette & geckodriver
 selenium = "< 3.0"
+
+[packages]
+# Runtime dependencies are in `src/setup.py`
