@@ -13,7 +13,7 @@ def inspect_machine(driver, shallow):
     cmd = """python -c 'import socket; print socket.gethostname()'"""
     _, output, _ = driver.exec_command(cmd)
     hostname = output.read().strip()
-    cmd = "bash -c \"/sbin/ip -4 -o addr list | grep -E 'e(th|ns)' | sed 's/.*inet \\([0-9\\.]\\+\\)\\/.*$/\\1/g'\""
+    cmd = "bash -c \"/sbin/ip -4 -o addr list | grep -E '(wlp|e(th|n[np]))' | sed 's/.*inet \\([0-9\\.]\\+\\)\\/.*$/\\1/g'\""
     _, output, stderr = driver.exec_command(cmd)
     ips = [i.strip() for i in output.read().split('\n') if i.strip()]
     packages = []
