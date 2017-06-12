@@ -8,3 +8,4 @@ dist/
 *.egg-info/
 docs/build/
 .idea/
+docs/build/
