@@ -168,7 +168,10 @@ changed to ``yes``. This means that instead of just re-running the Ansible
 provisioning playbook when a suitable VM instance already exists and halting
 the VM instance when the scenario ends, the tests will instead destroy any
 existing instance, create a completely fresh one, and then destroy that fresh
-instance when the scenario ends.
+instance when the scenario ends. This is particularly helpful when writing
+the initial ``Vagrantfile`` for a new VM definition, but can also be beneficial
+when attempting to determine if a test failure may be due to a missing cleanup
+step in the Ansible provisioning playbook.
 
 
 
