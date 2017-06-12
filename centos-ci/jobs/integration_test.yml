@@ -41,6 +41,7 @@
             - vmindru
             - vinzenz
             - GAZDOWN
+            - artmello
           cron: '* * * * *'
           permit-all: false
           trigger-phrase: '.*[jJ]enkins: ok to test.*'
