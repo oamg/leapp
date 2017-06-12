@@ -3,8 +3,8 @@ Feature: Get information about ports which will be forwarded from source
 Scenario: Return default port detected on source machine - discovered ports only
    Given the local virtual machines:
          | name       | definition          | ensure_fresh |
-         | source     | centos6-guest-httpd | yes          |
-         | target     | centos7-target      | yes          |
+         | source     | centos6-guest-httpd | no          |
+         | target     | centos7-target      | no          |
      Then get list of discovered ports from source which will be forwared to target
 
 Scenario: Return default port detected on source machine - override port 80
