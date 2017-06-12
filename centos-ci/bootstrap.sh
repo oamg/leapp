@@ -18,7 +18,8 @@ yum-builddep -y leapp.spec
 TERM=xterm tito build --rpm --test || (echo "Failed to build leapp RPM" && exit 1)
 # TODO: Actually install the built RPM & use that in the integration tests
 
-pip install ansible==2.2.0
+# Configure the system to run the integration tests
+yum install -y ansible
 
 cd centos-ci/ansible/
 
