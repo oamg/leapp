@@ -37,7 +37,7 @@ class ParamikoConnection(object):
         try:
             self._socket.connect((hostname, port))
         except socket.error as e:
-            raise SSHConnectionError('Failed to connect to {}:{} ERROR: {}'.format(hostname, port, e.message))
+            raise SSHConnectionError('Failed to connect to {}:{} ERROR: {}'.format(hostname, port, e))
         self._transport = paramiko.Transport(self._socket)
 
         try:
