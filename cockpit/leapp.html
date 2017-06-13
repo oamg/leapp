@@ -242,7 +242,7 @@
         }
 
         function out(line, is_command) {
-            var stamp = (new Date()).toUTCString();
+            var stamp = (new Date()).toISOString();
             var style = '';
             if (is_command === true) {
                 style += 'color: #000;';
