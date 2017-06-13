@@ -440,12 +440,17 @@ def main():
                 return []
             return ['ssh'] + cfg + ['-4', addr]
 
+        def _exec_cmd(self, cmd, **kwargs):
+            p = Popen(cmd, stdout=PIPE, **kwargs)
+            cmd_stdout, _ = p.communicate()
+            return p.returncode, cmd_stdout
+
         def _ssh(self, cmd, machine_context=None, reuse_ssh_conn=False, **kwargs):
             if machine_context is None:
                 machine_context = self.TARGET
             machine = getattr(self, machine_context, None)
             if isinstance(machine, Machine) and machine.is_local:
-                return Popen(shlex.split(cmd)).wait()
+                return self._exec_cmd(shlex.split(cmd), **kwargs)
             addr, cfg, use_sshpass = self.__get_machine_opt_by_context(machine_context)
             ssh_cmd = self._ssh_base(addr, cfg)
             if reuse_ssh_conn:
@@ -453,7 +458,7 @@ def main():
             ssh_cmd += [cmd]
             if use_sshpass:
                 return self._sshpass(ssh_cmd, **kwargs)
-            return Popen(ssh_cmd, **kwargs).wait()
+            return self._exec_cmd(ssh_cmd, **kwargs)
 
         def _open_permanent_ssh_conn(self, machine_context):
             addr, cfg, _ = self.__get_machine_opt_by_context(machine_context)
@@ -479,12 +484,11 @@ def main():
                 kwargs = kwargs.copy()
                 kwargs['pass_fds'] = (read_pwd,)
             sshpass_cmd = ['sshpass', '-d'+str(read_pwd)] + ssh_cmd
-            child = Popen(sshpass_cmd, **kwargs)
             ssh_password = self._cached_ssh_password
             if ssh_password is None:
                 ssh_password = self._cached_ssh_password = getpass("SSH password:").encode()
             os.write(write_pwd, ssh_password  + b'\n')
-            return child.wait()
+            return self._exec_cmd(sshpass_cmd, **kwargs)
 
         def _ssh_sudo(self, cmd, **kwargs):
             return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
@@ -515,7 +519,7 @@ def main():
 
                 self._open_permanent_ssh_conn(self.SOURCE)
                 try:
-                    ret_code = self._ssh_sudo('sync && fsfreeze -f /', machine_context=self.SOURCE, reuse_ssh_conn=True)
+                    ret_code, _ = self._ssh_sudo('sync && fsfreeze -f /', machine_context=self.SOURCE, reuse_ssh_conn=True)
                     if ret_code != 0:
                         sys.exit(ret_code)
 
@@ -550,7 +554,7 @@ def main():
                     proc = Popen(['sudo', 'bash', '-c', 'LIBGUESTFS_BACKEND=direct virt-tar-out -a {} / -' \
                                 .format(self.disk)], stdout=PIPE)
                     assert SOURCE_APP_EXPORT_DIR
-                    return self._ssh_sudo(
+                    ret_code, _ = self._ssh_sudo(
                         ('mkdir -p {0}/ && cat > {0}/exported_app.tar.gz && '
                          'tar xf {0}/exported_app.tar.gz -C {1} && '
                          'rm {0}/exported_app.tar.gz').format(
@@ -559,6 +563,7 @@ def main():
                         ),
                         stdin=proc.stdout
                     )
+                    return ret_code
                 finally:
                     print('! ', self.source.resume())
 
@@ -568,12 +573,13 @@ def main():
                 return _rsync()
             return _virt_tar_out()
 
-        def destroy_containers(self):
+        def destroy_all_containers(self):
             # TODO: Replace this subcommand with a "check-access" subcommand
             storage_dir = MACROCONTAINER_STORAGE_DIR
-            return self._ssh_sudo(
+            ret_code, _ = self._ssh_sudo(
                 'docker rm -fv container 2>/dev/null 1>/dev/null; '
                 'rm -rf {}/*'.format(storage_dir))
+            return ret_code
 
         def start_container(self, img, init):
             container_name = self._get_container_name()
@@ -588,11 +594,13 @@ def main():
                 else:
                     command += ' -p {:d}:{:d}'.format(host_port, container_port)
             command += ' --name ' + container_name + ' ' + img + ' ' + init
-            return self._ssh_sudo(command)
+            ret_code, _ = self._ssh_sudo(command)
+            return ret_code
 
         def _fix_container(self, fix_str):
             container_name = self._get_container_name()
-            return self._ssh_sudo('docker exec -t {} {}'.format(container_name, fix_str))
+            ret_code, _ = self._ssh_sudo('docker exec -t {} {}'.format(container_name, fix_str))
+            return ret_code
 
         def fix_upstart(self):
             fixer = 'bash -c "echo ! waiting ; ' + \
@@ -756,7 +764,7 @@ def main():
         )
 
         print('! destroying containers on "{}" VM'.format(target))
-        result = mc.destroy_containers()
+        result = mc.destroy_all_containers()
         print('! done')
         sys.exit(result)
 
