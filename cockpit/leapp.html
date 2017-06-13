@@ -241,15 +241,21 @@
             $(".ui-lockable").removeAttr("disabled");
         }
 
-        function out(line) {
+        function out(line, is_command) {
             var stamp = (new Date()).toUTCString();
-            output.append(`<div>${stamp} - ${line}</div>`)
+            var style = '';
+            if (is_command === true) {
+                style += 'color: #000;';
+            }
+            output.append(`<div>${stamp} - <span style="${style}">${line}</span></div>`);
         }
 
         function call_leapp(cmd_args) {
             set_lock_cmd();
+            var cmd_line = [LEAPP_CONF["tool-path"]].concat(cmd_args);
+            out(cmd_line.join(' '), true);
             return cockpit.spawn(
-                [LEAPP_CONF["tool-path"]].concat(cmd_args),
+                cmd_line,
                 {
                     "directory": LEAPP_CONF["tool-workdir"],
                     "superuser": "required",
