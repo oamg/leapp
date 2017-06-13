@@ -1,5 +1,5 @@
 """Steps to test the "scan-ports" subcommand"""
-from behave import then
+from behave import then, when
 from hamcrest import assert_that
 from hamcrest import equal_to 
 from json import loads
@@ -21,7 +21,7 @@ def _assert_discovered_ports(ports, expected_ports):
     assert_that(ports, equal_to(expected_ports))
 
 
-@then("get list of discovered ports from {vm_source_name} which will be forwared to {vm_target_name}")
+@then("get list of discovered ports from {vm_source_name} which will be forwarded to {vm_target_name}")
 def check_specific_ports_used_by_vm(context, vm_source_name, vm_target_name):
     """check if ports 22,80,111 are open and forwarded to 9022,80,112"""
 

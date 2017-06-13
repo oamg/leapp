@@ -69,20 +69,20 @@ def before_feature(context, feature):
     # Use contextlib.ExitStack to manage per-feature resources
     context._feature_cleanup = contextlib.ExitStack()
 
+    # Each feature gets a VirtualMachineHelper instance
+    # VMs are relatively slow to start/stop, so by default, we defer halting
+    # or destroying them to the end of the overall test run
+    # Scenario steps can still opt in to eagerly cleaning up a scenario's VMs
+    # by doing `context.scenario_cleanup.callback(context.vm_helper.close)`
+    context.vm_helper = vm_helper = VirtualMachineHelper()
+    context._global_cleanup.callback(vm_helper.close)
+
 def before_scenario(context, scenario):
     if _skip_test_group(context, scenario):
         return
 
     # Each scenario has a contextlib.ExitStack instance for resource cleanup
     context.scenario_cleanup = contextlib.ExitStack()
-
-    # Each scenario gets a VirtualMachineHelper instance
-    # VMs are relatively slow to start/stop, so by default, we defer halting
-    # or destroying them to the end of the overall test run
-    # Feature steps can still opt in to eagerly cleaning up a scenario's VMs
-    # by doing `context.scenario_cleanup.callback(context.vm_helper.close)`
-    context.vm_helper = vm_helper = VirtualMachineHelper()
-    context._global_cleanup.callback(vm_helper.close)
 
     # Each scenario gets a ClientHelper instance
     context.cli_helper = cli_helper = ClientHelper(context.vm_helper)
