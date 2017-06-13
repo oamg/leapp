@@ -160,7 +160,7 @@ import splinter
 
 # Map from plugin menu entries to expected iframe names
 KNOWN_PLUGINS = {
-   "Le-App": "cockpit1:localhost/leapp/leapp"
+   "Import Apps": "cockpit1:localhost/leapp/leapp"
 }
 
 class DemoCockpitSession(object):

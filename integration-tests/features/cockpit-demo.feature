@@ -9,7 +9,7 @@ Scenario: Initial page visit & app redeployment
          | name       | definition          | ensure_fresh |
          | app-source | centos6-guest-httpd | no           |
          | target     | centos7-target      | no           |
-  When the demonstration user visits the Le-App page
+  When the demonstration user visits the Import Apps page
   Then the local VMs should be listed within 120 seconds
 
   # The above scenario is both slow to run *and* required as setup for the next
