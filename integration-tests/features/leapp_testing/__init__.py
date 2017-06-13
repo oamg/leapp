@@ -199,7 +199,7 @@ class MigrationInfo(object):
     target_ip = attrib()
 
     @classmethod
-    def from_vm_list(cls, machines, source_host, target_host, return_code):
+    def from_vm_list(cls, machines, source_host, target_host):
         """Build a result given a local VM listing and migration hostnames"""
         vm_count = len(machines)
         source_ip = target_ip = None
