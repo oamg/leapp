@@ -617,114 +617,108 @@ def main():
                 print(text)
 
 
-        if not parsed.target:
-            print('! no target specified, creating leappto container package in current directory')
-            # TODO: not really for now
-            raise NotImplementedError
-
-        else:
-            source = parsed.machine
-            target = parsed.target
+        source = parsed.machine
+        target = parsed.target
 
 
-            print_migrate_info('! looking up "{}" as source and "{}" as target'.format(source, target))
+        print_migrate_info('! looking up "{}" as source and "{}" as target'.format(source, target))
 
-            lmp = LibvirtMachineProvider()
-            machines = lmp.get_machines()
-            source_user = parsed.source_user or 'root'
-            target_user = parsed.target_user or 'root'
+        lmp = LibvirtMachineProvider()
+        machines = lmp.get_machines()
+        source_user = parsed.source_user or 'root'
+        target_user = parsed.target_user or 'root'
 
-            machine_src = _find_machine(machines, source, user=source_user)
+        machine_src = _find_machine(machines, source, user=source_user)
 
-            if not machine_src:
-                print("Source machine is not ready: " + source)
-                exit(-1)
+        if not machine_src:
+            print("Source machine is not ready: " + source)
+            exit(-1)
 
-            machine_dst = _find_machine(machines, target, user=target_user)
+        machine_dst = _find_machine(machines, target, user=target_user)
 
-            if not machine_dst:
-                print("Target machine is not ready: " + target)
-                exit(-1)
+        if not machine_dst:
+            print("Target machine is not ready: " + target)
+            exit(-1)
 
-            src_ip = machine_src.ip[0]
-            dst_ip = machine_dst.ip[0]
+        src_ip = machine_src.ip[0]
+        dst_ip = machine_dst.ip[0]
 
-            user_mapped_ports = PortMap()
-            user_excluded_ports = PortList()
+        user_mapped_ports = PortMap()
+        user_excluded_ports = PortList()
 
-            tcp_mapping = None
-            #udp_mapping = None
+        tcp_mapping = None
+        #udp_mapping = None
 
-            try:
-                if parsed.forwarded_tcp_ports:
-                    for target_port, source_port in parsed.forwarded_tcp_ports:
-                        user_mapped_ports.set_tcp_port(source_port, target_port)
+        try:
+            if parsed.forwarded_tcp_ports:
+                for target_port, source_port in parsed.forwarded_tcp_ports:
+                    user_mapped_ports.set_tcp_port(source_port, target_port)
 
-                if parsed.excluded_tcp_ports:
-                    for target_port, source_port in parsed.excluded_tcp_ports:
-                        user_excluded_ports.set_tcp_port(source_port)
-
-
-                if not parsed.ignore_default_port_map:
-                    print_migrate_info('! Scanning source ports')
-                    src_ports = _port_scan(src_ip, shallow=True)
-                else:
-                    src_ports = PortList()
-
-                print_migrate_info('! Scanning target ports')
-                dst_ports = _port_scan(dst_ip, shallow=True)
-
-                tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
-
-            except PortCollisionException as e:
-                print(str(e))
-                exit(-1)
-            except PortScanException as e:
-                print("An error occured during port scan: {}".format(str(e)))
-                exit(-1)
+            if parsed.excluded_tcp_ports:
+                for target_port, source_port in parsed.excluded_tcp_ports:
+                    user_excluded_ports.set_tcp_port(source_port)
 
 
-            if parsed.print_port_map:
-                print(dumps(tcp_mapping, indent=3))
-                exit(0)
-
-            print_migrate_info("! Detected port mapping:\n")
-            print_migrate_info("! +-------------+-------------+")
-            print_migrate_info("! | Target port | Source port |")
-            print_migrate_info("! +=============+=============+")
-
-            for pmap in tcp_mapping:
-                print_migrate_info("! | {:11d} | {:11d} |".format(pmap[0], pmap[1]))
-
-            print_migrate_info("! +-------------+-------------+")
-
-
-            print_migrate_info('! configuring SSH keys')
-
-            mc = MigrationContext(
-                machine_dst,
-                _set_ssh_config(parsed.target_user, parsed.target_identity, parsed.target_ask_pass),
-                None if parsed.use_rsync else machine_src.disks[0].host_path,
-                machine_src,
-                _set_ssh_config(parsed.source_user, parsed.source_identity, parsed.source_ask_pass),
-                tcp_mapping,
-                parsed.use_rsync
-            )
-            print_migrate_info('! copying over')
-            mc.copy()
-            print_migrate_info('! provisioning ...')
-
-            # if el7 then use systemd
-            if machine_src.installation.os.version.startswith('7'):
-                result = mc.start_container('centos:7', '/usr/lib/systemd/systemd --system')
-                print_migrate_info('! starting services')
-                mc.fix_systemd()
+            if not parsed.ignore_default_port_map:
+                print_migrate_info('! Scanning source ports')
+                src_ports = _port_scan(src_ip, shallow=True)
             else:
-                result = mc.start_container('centos:6', '/sbin/init')
-                print_migrate_info('! starting services')
-                mc.fix_upstart()
-            print_migrate_info('! done')
-            sys.exit(result)
+                src_ports = PortList()
+
+            print_migrate_info('! Scanning target ports')
+            dst_ports = _port_scan(dst_ip, shallow=True)
+
+            tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
+
+        except PortCollisionException as e:
+            print(str(e))
+            exit(-1)
+        except PortScanException as e:
+            print("An error occured during port scan: {}".format(str(e)))
+            exit(-1)
+
+
+        if parsed.print_port_map:
+            print(dumps(tcp_mapping, indent=3))
+            exit(0)
+
+        print_migrate_info("! Detected port mapping:\n")
+        print_migrate_info("! +-------------+-------------+")
+        print_migrate_info("! | Target port | Source port |")
+        print_migrate_info("! +=============+=============+")
+
+        for pmap in tcp_mapping:
+            print_migrate_info("! | {:11d} | {:11d} |".format(pmap[0], pmap[1]))
+
+        print_migrate_info("! +-------------+-------------+")
+
+
+        print_migrate_info('! configuring SSH keys')
+
+        mc = MigrationContext(
+            machine_dst,
+            _set_ssh_config(parsed.target_user, parsed.target_identity, parsed.target_ask_pass),
+            None if parsed.use_rsync else machine_src.disks[0].host_path,
+            machine_src,
+            _set_ssh_config(parsed.source_user, parsed.source_identity, parsed.source_ask_pass),
+            tcp_mapping,
+            parsed.use_rsync
+        )
+        print_migrate_info('! copying over')
+        mc.copy()
+        print_migrate_info('! provisioning ...')
+
+        # if el7 then use systemd
+        if machine_src.installation.os.version.startswith('7'):
+            result = mc.start_container('centos:7', '/usr/lib/systemd/systemd --system')
+            print_migrate_info('! starting services')
+            mc.fix_systemd()
+        else:
+            result = mc.start_container('centos:6', '/sbin/init')
+            print_migrate_info('! starting services')
+            mc.fix_upstart()
+        print_migrate_info('! done')
+        sys.exit(result)
 
     elif parsed.action == 'destroy-containers':
         target = parsed.target
