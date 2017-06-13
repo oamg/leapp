@@ -127,6 +127,7 @@ def _make_argument_parser():
         action='store_true',
         help='use rsync as backend for filesystem migration, otherwise virt-tar-out'
     )
+    migrate_cmd.add_argument('--container-name', '-n', default=None, help='Name of new container created on target host')
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
 
@@ -404,7 +405,7 @@ def main():
         _SSH_CONTROL_PATH = '-o ControlPath="{}/%L-%r@%h:%p"'.format(_SSH_CTL_PATH)
 
         def __init__(self, target, target_ssh_cfg, disk, source=None, source_ssh_cfg=None, forwarded_ports=None,
-                    rsync_cp_backend=False):
+                    rsync_cp_backend=False, container_name=None):
             self.source = source
             self.target = target
             self.source_use_sshpass, self.source_cfg = (None, None) if source_ssh_cfg is None else source_ssh_cfg
@@ -412,6 +413,7 @@ def main():
             self._cached_ssh_password = None
             self.disk = disk
             self.rsync_cp_backend = rsync_cp_backend
+            self.container_name = container_name
             self.forwarded_ports = list(forwarded_ports or ())
 
         def __get_machine_opt_by_context(self, machine_context):
@@ -488,6 +490,9 @@ def main():
             return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
 
         def _get_container_name(self):
+            if self.container_name:
+                return self.container_name
+
             name_list = ["container", self.source.hostname]
             return '_'.join(name_list)
 
@@ -715,7 +720,8 @@ def main():
                 machine_src,
                 _set_ssh_config(parsed.source_user, parsed.source_identity, parsed.source_ask_pass),
                 tcp_mapping,
-                parsed.use_rsync
+                parsed.use_rsync,
+                parsed.container_name
             )
             print_migrate_info('! copying over')
             mc.copy()
