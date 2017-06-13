@@ -464,15 +464,15 @@
                 var old_port = $(this).data('prev');
                 $(this).data("prev", new_port);
 
-                if (busy_ports.indexOf(new_port) > -1 || new_port < MIN_PORT
+                if (target_ports.indexOf(new_port) > -1 || new_port < MIN_PORT
                     || new_port > MAX_PORT) {
                     $(this).addClass('invalid');
                     $("#import-button").attr("disabled", true);
-                    update_busy_ports(busy_ports, old_port, new_port);
+                    update_busy_ports(target_ports, old_port, new_port);
                     return;
                 }
 
-                update_busy_ports(busy_ports, old_port, new_port);
+                update_busy_ports(target_ports, old_port, new_port);
                 $(this).removeClass('invalid');
 
                 let obj = $("input.mapped-ports").filter(function() {
