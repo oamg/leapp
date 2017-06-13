@@ -3,7 +3,7 @@
 
     "tools": {
         "pinger": {
-            "label": "Le-App",
+            "label": "Import Apps",
             "path": "leapp.html"
         }
     },
