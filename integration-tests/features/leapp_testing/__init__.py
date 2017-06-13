@@ -74,15 +74,20 @@ class VirtualMachineHelper(object):
             raise ValueError("Unknown VM image: {}".format(definition))
         if destroy:
             self._vm_destroy(name, hostname, as_root=as_root)
-        self._vm_up(name, hostname, as_root=as_root)
-        if destroy:
-            self._resource_manager.callback(self._vm_destroy, name, hostname, as_root=as_root)
-        else:
-            self._resource_manager.callback(self._vm_halt, name, hostname, as_root=as_root)
+        if self._vm_up(name, hostname, as_root=as_root):
+            # Previously unknown VM, so register it for cleanup
+            if destroy:
+                self._resource_manager.callback(self._vm_destroy, name, hostname, as_root=as_root)
+            else:
+                self._resource_manager.callback(self._vm_halt, name, hostname, as_root=as_root)
 
     def get_hostname(self, name):
         """Return the expected hostname for the named machine"""
         return self.machines[name]
+
+    def get_ip_address(self, name):
+        """Return the expected IP address for the named machine"""
+        return self._get_vm_ip_address(self.get_hostname(name))
 
     def close(self):
         """Halt or destroy all created VMs"""
@@ -99,14 +104,28 @@ class VirtualMachineHelper(object):
         cmd.extend(args)
         return _run_command(cmd, vm_dir, ignore_errors)
 
+    @classmethod
+    def _get_vm_ip_address(cls, hostname):
+        vm_details = cls._run_vagrant(hostname, "ssh-config")
+        for line in vm_details.splitlines():
+            __, hostname_line, vm_ip = line.partition("HostName")
+            if hostname_line:
+                return vm_ip.strip()
+        raise RuntimeError("No HostName entry found in 'vagrant ssh-config' output")
+
     def _vm_up(self, name, hostname, *, as_root=False):
-        """Ensures given VM is running and runs Ansible provisioning playbook"""
+        """Ensures given VM is running and runs Ansible provisioning playbook
+
+        Return True if the VM was not previously registered, False otherwise.
+        """
         up_result = self._run_vagrant(hostname, "up", as_root=as_root)
         print("Started {} VM instance".format(hostname))
         provision_result = self._run_vagrant(hostname, "provision", as_root=as_root)
         print("Provisioned {} VM instance".format(hostname))
-        self.machines[name] = hostname
-        return up_result, provision_result
+        new_vm = name not in self.machines
+        if new_vm:
+            self.machines[name] = hostname
+        return new_vm
 
     def _vm_halt(self, name, hostname, *, as_root=False):
         """Ensures given VM is suspended (if not already destroyed)"""
@@ -186,6 +205,7 @@ class MigrationInfo(object):
         return cls(vm_count, source_ip, target_ip)
 
 
+
 class ClientHelper(object):
     """Test step helper to invoke the LeApp CLI
 
@@ -212,8 +232,8 @@ class ClientHelper(object):
 
         Returns the contents of stdout as a string.
         """
-        start = time.monotonic()
         is_migrate = 'migrate-machine' in cmd_args
+        start = time.monotonic()
         if use_default_password:
             cmd_output = self._run_leapp_with_askpass(cmd_args, is_migrate=is_migrate)
         else:
@@ -276,11 +296,18 @@ class ClientHelper(object):
         return _run_command(cmd)
 
     @staticmethod
-    def _run_leapp(cmd_args, *,
+    def _requires_sudo(cmd_args):
+        # These commands always require privileged access for nmap port scans
+        needs_privileged_access = ("migrate-machine", "port-inspect")
+        return any(cmd in cmd_args for cmd in needs_privileged_access)
+
+    @classmethod
+    def _run_leapp(cls, cmd_args, *,
                    add_default_user=False,
                    add_default_identity=False,
                    is_migrate=False,
                    as_sudo=False):
+        as_sudo = as_sudo or cls._requires_sudo(cmd_args)
         cmd = [_LEAPP_TOOL]
         cmd.extend(cmd_args)
         if add_default_user:
@@ -303,9 +330,6 @@ class ClientHelper(object):
 
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host, migration_opt):
-        # migrate-machine currently always requires root, as otherwise nmap fails
-        # with "You requested a scan type which requires root privileges."
-        as_sudo = True
         cmd_args = ["migrate-machine", "--tcp-port", "80:80"]
         if migration_opt == 'rsync':
             cmd_args.append('--use-rsync')
@@ -313,8 +337,7 @@ class ClientHelper(object):
         result = cls._run_leapp(cmd_args,
                                 add_default_user=True,
                                 add_default_identity=True,
-                                is_migrate=True,
-                                as_sudo=as_sudo)
+                                is_migrate=True)
         msg = "Redeployed {} as macrocontainer on {}"
         print(msg.format(source_host, target_host))
         return result
