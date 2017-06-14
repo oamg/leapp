@@ -1,4 +1,4 @@
-Feature: Checking usability of target virtual machine 
+Feature: Checking usability of target virtual machine
 
 Scenario: Checking for already used names on target VM
    Given the local virtual machines:
