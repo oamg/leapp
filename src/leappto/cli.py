@@ -248,7 +248,7 @@ def main():
                 machine_context = self.TARGET
             machine = getattr(self, machine_context, None)
             if isinstance(machine, Machine) and machine.is_local:
-                return Popen(shlex.split(cmd))
+                return Popen(shlex.split(cmd), **kwargs)
             addr, cfg, use_sshpass = self.__get_machine_opt_by_context(machine_context)
             ssh_cmd = self._ssh_base(addr, cfg)
             if reuse_ssh_conn:
