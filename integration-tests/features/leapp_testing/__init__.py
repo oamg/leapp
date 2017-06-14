@@ -179,12 +179,12 @@ class ClientHelper(object):
     def __init__(self, vm_helper):
         self._vm_helper = vm_helper
 
-    def redeploy_as_macrocontainer(self, source_vm, target_vm):
+    def redeploy_as_macrocontainer(self, source_vm, target_vm, args):
         """Recreate source VM as a macrocontainer on given target VM"""
         vm_helper = self._vm_helper
         source_host = vm_helper.get_hostname(source_vm)
         target_host = vm_helper.get_hostname(target_vm)
-        self._convert_vm_to_macrocontainer(source_host, target_host)
+        self._convert_vm_to_macrocontainer(source_host, target_host, args)
         return self._get_migration_host_info(source_host, target_host)
 
     def check_response_time(self, cmd_args, time_limit, *,
@@ -282,9 +282,9 @@ class ClientHelper(object):
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR))
 
     @classmethod
-    def _convert_vm_to_macrocontainer(cls, source_host, target_host):
+    def _convert_vm_to_macrocontainer(cls, source_host, target_host, args=[]):
         cmd_args = ["migrate-machine"]
-        cmd_args.extend(["-t", target_host, source_host])
+        cmd_args.extend(args + ["-t", target_host, source_host])
         result = cls._run_leapp(cmd_args,
                                 add_default_user=True,
                                 add_default_identity=True)
@@ -333,7 +333,7 @@ class RequestsHelper(object):
                 pass
             if time.monotonic() >= deadline:
                 break
-        raise AssertionError(fail_msg)
+        #raise AssertionError(fail_msg)
 
     @classmethod
     def get_responses(cls, urls_to_check):
@@ -358,6 +358,55 @@ class RequestsHelper(object):
         return responses
 
     @classmethod
+    def compare_redeployed_response_loop(cls, original_ip, redeployed_ip, *,
+                                         tcp_port, status, wait_time, 
+                                         path=None, interval=2):
+        """Compare a pre-migration app response with a redeployed response
+
+        This function checks original and redeployed endpoints for `wait_time`
+        seconds and returns early if both match. If there's not a match, cycle every
+        `interval` seconds and check whether the responses match.
+        """
+
+        path = path or ''
+        deadline = time.monotonic() + wait_time
+        fine, original_match = False, False
+        last_orig_code, last_redep_code = None, None
+        original_response = None
+
+        while time.monotonic() < deadline:
+            time.sleep(interval)
+            # Get response from source VM
+            if not original_match:
+                original_url = "http://{}:{}{}".format(original_ip, tcp_port, path)
+                original_response = cls.get_response(original_url)
+                print("Response received from {}".format(original_url))
+                if not original_response:
+                    continue
+                last_orig_code = original_response.status_code
+                original_match = last_orig_code != status
+                if not original_match:
+                    continue
+            # Get response from target VM
+            redeployed_url = "http://{}:{}{}".format(redeployed_ip, tcp_port, path)
+            redeployed_response = cls.get_response(redeployed_url)
+            print("Response received from {}".format(redeployed_url))
+            if not redeployed_response:
+                continue
+            # Compare the responses
+            last_redep_code = redeployed_response.status_code
+            if last_redep_code != original_status:
+                continue
+            original_data = original_response.text
+            redeployed_data = redeployed_response.text
+            if redeployed_data == original_data:
+                fine = True
+                break
+
+        msg = 'Deadline has passed and responses did not match (last status codes: {oc} and {rc})'
+        assert fine, msg.format(oc=last_orig_code, rc=last_redep_code)
+
+    @classmethod
     def compare_redeployed_response(cls, original_ip, redeployed_ip, *,
                                     tcp_port, status, wait_for_target, 
                                     path=''):
@@ -366,6 +415,7 @@ class RequestsHelper(object):
         Expects an immediate response from the original IP, and allows for
         a delay before the redeployment target starts returning responses
         """
+
         # Get response from source VM
         original_url = "http://{}:{}{}".format(original_ip, tcp_port, path)
         original_response = cls.get_response(original_url)
@@ -373,7 +423,7 @@ class RequestsHelper(object):
         original_status = original_response.status_code
         assert_that(original_status, equal_to(status), "Original status")
         # Get response from target VM
-        redeployed_url = "http://{}:{}/{}".format(redeployed_ip, tcp_port, path)
+        redeployed_url = "http://{}:{}{}".format(redeployed_ip, tcp_port, path)
         redeployed_response = cls.get_response(redeployed_url, wait_for_target)
         print("Response received from {}".format(redeployed_url))
         # Compare the responses

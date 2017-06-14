@@ -37,6 +37,27 @@ def create_local_machines(context):
 # Leapp commands
 ##############################
 
+@when("{source_vm} is redeployed to {target_vm} as a macrocontainer with ports {ports} forwarded")
+def redeploy_vm_as_macrocontainer_with_ports(context, source_vm, target_vm, ports):
+    """Uses leapp-tool.py to redeploy the given source VM
+
+    Both *source_vm* and *target_vm* must be named in a previous local
+    virtual machine creation table.
+    """
+    context.redeployment_source = source_vm
+    context.redeployment_target = target_vm
+    ports = ports.split(',')
+    args = ['{}={}'.format(*spec) 
+            for spec in zip(['--tcp-port'] * len(ports), 
+                            ['{}:{}'.format(p, p) for p in ports])]
+    result = context.cli_helper.redeploy_as_macrocontainer(source_vm, target_vm, list(args))
+    assert_that(result.local_vm_count, greater_than(1), "At least 2 local VMs")
+    assert_that(result.source_ip, not_none(), "Valid source IP")
+    assert_that(result.target_ip, not_none(), "Valid target IP")
+    context.redeployment_source_ip = result.source_ip
+    context.redeployment_target_ip = result.target_ip
+
+
 @when("{source_vm} is redeployed to {target_vm} as a macrocontainer")
 def redeploy_vm_as_macrocontainer(context, source_vm, target_vm):
     """Uses leapp-tool.py to redeploy the given source VM
@@ -87,7 +108,7 @@ def check_http_response_match_by_path(context, tcp_port, path, status, time_limi
     redeployed_ip = context.redeployment_target_ip
     assert_that(original_ip, not_none(), "Valid original IP")
     assert_that(redeployed_ip, not_none(), "Valid redeployment IP")
-    context.http_helper.compare_redeployed_response(
+    context.http_helper.compare_redeployed_response_loop(
         original_ip,
         redeployed_ip,
         tcp_port=tcp_port,
