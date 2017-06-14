@@ -528,8 +528,6 @@ def main():
                 rsync_dir = container_dir
 
                 try:
-                    # temporary, after task with different names for containers rmtree should be removed
-                    shutil.rmtree(rsync_dir, ignore_errors=True)
                     os.makedirs(rsync_dir)
                 except OSError as exc:
                     if exc.errno != errno.EEXIST:  # raise exception if it's different than FileExists
