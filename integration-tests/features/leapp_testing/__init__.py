@@ -260,9 +260,10 @@ class ClientHelper(object):
                                             add_default_identity=use_default_identity,
                                             is_migrate=is_migrate,
                                             as_sudo=as_sudo)
-            except subprocess.CalledProcessError:
+            except subprocess.CalledProcessError as exc:
                 if not expect_failure:
                     raise
+                cmd_output = exc.stdout
             else:
                 if expect_failure:
                     raise AssertionError("Command succeeded unexpectedly")
