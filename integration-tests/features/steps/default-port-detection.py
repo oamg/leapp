@@ -1,7 +1,7 @@
 """Steps to test the "scan-ports" subcommand"""
 from behave import then, when
 from hamcrest import assert_that
-from hamcrest import equal_to 
+from hamcrest import equal_to
 from json import loads
 import subprocess
 
@@ -9,7 +9,7 @@ def _sort_ports(ports):
     return sorted(ports, key = lambda x: x[0])
 
 def _get_hostname(context, name):
-    return context.vm_helper.get_hostname(name) 
+    return context.vm_helper.get_hostname(name)
 
 def _assert_discovered_ports(ports, expected_ports):
     ports = _sort_ports(loads(ports))
@@ -31,7 +31,7 @@ def check_specific_ports_used_by_vm(context, vm_source_name, vm_target_name):
     )
     expected_ports = "[[9022,22],[80,80],[112,111]]"
     _assert_discovered_ports(ports, expected_ports)
-     
+
 @then("get list of discovered ports on {vm_source_name} which will be forwarded to {vm_target_name} and override port {source_port} to {target_port}")
 def check_specific_ports_used_by_vm_with_override(context, vm_source_name, vm_target_name, source_port, target_port):
     """check if ports 22,80,111 are open and forwarded to 9022,8080,112"""
@@ -110,10 +110,10 @@ def collision_detect_source_target(context, vm_source_name, vm_target_name, sour
             time_limit=60
         )
     except subprocess.CalledProcessError as e:
-        return_code = e.returncode 
-     
+        return_code = e.returncode
+
     context.return_code = return_code
-     
+
 @when("A manually mapped {vm_target_name} port {target_port} is used multiple times for different {vm_source_name} port")
 def collision_detect_target_target(context, vm_source_name, vm_target_name, target_port):
     return_code = 0
@@ -123,11 +123,11 @@ def collision_detect_target_target(context, vm_source_name, vm_target_name, targ
             time_limit=60
         )
     except subprocess.CalledProcessError as e:
-        return_code = e.returncode 
-     
+        return_code = e.returncode
+
     context.return_code = return_code
 
 @then("An exception will be raised and tool will exit")
 def colision_detect_result(context):
    assert_that(context.return_code, not equal_to(0))
-   
+
