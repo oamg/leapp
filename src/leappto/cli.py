@@ -603,9 +603,17 @@ def main():
 
         def destroy_containers(self):
             storage_dir = MACROCONTAINER_STORAGE_DIR
-            return self._ssh_sudo(
-                'docker rm -fv container 2>/dev/null 1>/dev/null; '
-                'rm -rf {}/*'.format(storage_dir))
+            rc, containers = self.check_target()
+            if rc:
+                return rc
+            for c in containers:
+                rc = self._ssh_sudo(
+                    'docker rm -fv {0} 2>/dev/null 1>/dev/null; '
+                    'rm -rf {1}/{0}'.format(c, storage_dir)
+                )
+                if rc:
+                    break
+            return rc
 
         def start_container(self, img, init):
             container_name = self._get_container_name()
