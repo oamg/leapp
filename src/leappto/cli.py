@@ -72,6 +72,7 @@ def _make_argument_parser():
 
     list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
+    check_target_cmd = parser.add_parser('check-target', help='check for claimed names on target container host')
     destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
     scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
@@ -95,7 +96,7 @@ def _make_argument_parser():
         return host_port, container_port
 
     migrate_cmd.add_argument('machine', help='source machine to migrate')
-    migrate_cmd.add_argument('-t', '--target', default=None, help='target VM name')
+    migrate_cmd.add_argument('-t', '--target', default='localhost', help='target VM name')
     migrate_cmd.add_argument(
         '--tcp-port',
         default=None,
@@ -130,6 +131,9 @@ def _make_argument_parser():
     migrate_cmd.add_argument('--container-name', '-n', default=None, help='Name of new container created on target host')
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
+
+    check_target_cmd.add_argument('target', help='target VM name')
+    _add_identity_options(check_target_cmd)
 
     destroy_cmd.add_argument('target', help='target VM name')
     _add_identity_options(destroy_cmd)
@@ -177,10 +181,10 @@ def main():
 
     class PortScanException(Exception):
         pass
-    
+
     class PortCollisionException(Exception):
         pass
-    
+
     class PortList(OrderedDict):
         PROTO_TCP = "tcp"
         PROTO_UDP = "udp"
@@ -221,7 +225,7 @@ def main():
 
         def list_tcp_ports(self):
             return self.list_ports(self.PROTO_TCP)
-        
+
         def has_port(self, protocol, source):
             self._raise_for_protocol(protocol)
 
@@ -229,13 +233,13 @@ def main():
                 return False
 
             return True
-        
+
         def has_tcp_port(self, source):
-            return self.has_port(self.PROTO_TCP, source) 
+            return self.has_port(self.PROTO_TCP, source)
 
         def get_port(self, protocol, source):
             if not self.has_port(protocol, source):
-                raise ValueError("Port {} is not mapped".format(str(source))) 
+                raise ValueError("Port {} is not mapped".format(str(source)))
 
             return self[protocol][source]
 
@@ -243,7 +247,7 @@ def main():
             return self.get_port(self.PROTO_TCP, source)
 
         def get_protocols(self):
-            return self.keys() 
+            return self.keys()
 
     class PortMap(PortList):
         def set_port(self, protocol, source, target = None):
@@ -256,14 +260,14 @@ def main():
             for _, used_tport in self[protocol].items():
                 if used_tport == target:
                     raise PortCollisionException("Target port {} has been already mapped".format(target))
-            
+
             super(PortMap, self).set_port(protocol, source, int(target))
 
 
 
     def _port_scan(ip, port_range = None, shallow = False):
         scan_args = '-sS' if shallow else '-sV'
-        
+
         port_scanner = nmap.PortScanner()
         port_scanner.scan(ip, port_range, arguments=scan_args)
         scan_info = port_scanner.scaninfo()
@@ -273,7 +277,7 @@ def main():
         elif ip not in port_scanner.all_hosts():
             raise PortScanException("Machine {} not found".format(ip))
 
-        ports = PortList() 
+        ports = PortList()
 
         for proto in port_scanner[ip].all_protocols():
             for port in sorted(port_scanner[ip][proto]):
@@ -323,8 +327,8 @@ def main():
         """
         remapped_ports = {
             PortMap.PROTO_TCP: [],
-            PortMap.PROTO_UDP: [] 
-        } 
+            PortMap.PROTO_UDP: []
+        }
 
         ## add user ports which was not discovered
         for protocol in user_mapped_ports.get_protocols():
@@ -336,7 +340,7 @@ def main():
 
                 ## Add dummy port to sources
                 if not source_ports.has_port(protocol, port):
-                    source_ports.set_port(protocol, port) 
+                    source_ports.set_port(protocol, port)
 
         ## Static (default) mapping applied only when the source service is available
         if not user_mapped_ports.has_tcp_port(22):
@@ -347,13 +351,13 @@ def main():
             for port in user_excluded_ports.list_ports(protocol):
                 if source_ports.has_port(protocol, port):
                     ## remove port from sources
-                    source_ports.unset_port(protocol, port) 
-                    
+                    source_ports.unset_port(protocol, port)
+
         ## remap ports
         for protocol in source_ports.get_protocols():
             for port in source_ports.list_ports(protocol):
                 target_port = source_port = port
-                
+
                 ## remap port if user defined it
                 if  user_mapped_ports.has_port(protocol, port):
                     target_port = user_mapped_ports.get_port(protocol, port)
@@ -374,7 +378,7 @@ def main():
                 remapped_ports[protocol].append((target_port, source_port))
 
         return remapped_ports
-        
+
 
     def _set_ssh_config(username, identity, use_sshpass=False):
         settings = {
@@ -440,17 +444,12 @@ def main():
                 return []
             return ['ssh'] + cfg + ['-4', addr]
 
-        def _exec_cmd(self, cmd, **kwargs):
-            p = Popen(cmd, stdout=PIPE, **kwargs)
-            cmd_stdout, _ = p.communicate()
-            return p.returncode, cmd_stdout
-
-        def _ssh(self, cmd, machine_context=None, reuse_ssh_conn=False, **kwargs):
+        def _ssh_make_child(self, cmd, machine_context=None, reuse_ssh_conn=False, **kwargs):
             if machine_context is None:
                 machine_context = self.TARGET
             machine = getattr(self, machine_context, None)
             if isinstance(machine, Machine) and machine.is_local:
-                return self._exec_cmd(shlex.split(cmd), **kwargs)
+                return Popen(shlex.split(cmd))
             addr, cfg, use_sshpass = self.__get_machine_opt_by_context(machine_context)
             ssh_cmd = self._ssh_base(addr, cfg)
             if reuse_ssh_conn:
@@ -458,7 +457,10 @@ def main():
             ssh_cmd += [cmd]
             if use_sshpass:
                 return self._sshpass(ssh_cmd, **kwargs)
-            return self._exec_cmd(ssh_cmd, **kwargs)
+            return Popen(ssh_cmd, **kwargs)
+
+        def _ssh(self, cmd, **kwargs):
+            return self._ssh_make_child(cmd, **kwargs).wait()
 
         def _open_permanent_ssh_conn(self, machine_context):
             addr, cfg, _ = self.__get_machine_opt_by_context(machine_context)
@@ -484,14 +486,28 @@ def main():
                 kwargs = kwargs.copy()
                 kwargs['pass_fds'] = (read_pwd,)
             sshpass_cmd = ['sshpass', '-d'+str(read_pwd)] + ssh_cmd
+            child = Popen(sshpass_cmd, **kwargs)
             ssh_password = self._cached_ssh_password
             if ssh_password is None:
                 ssh_password = self._cached_ssh_password = getpass("SSH password:").encode()
             os.write(write_pwd, ssh_password  + b'\n')
-            return self._exec_cmd(sshpass_cmd, **kwargs)
+            return child
 
         def _ssh_sudo(self, cmd, **kwargs):
-            return self._ssh("sudo bash -c '{}'".format(cmd), **kwargs)
+            sudo_cmd = "sudo bash -c '{}'".format(cmd)
+            return self._ssh(sudo_cmd, **kwargs)
+
+        def _ssh_out(self, cmd, machine_context=None, **kwargs):
+            """Capture SSH command output in addition to return code"""
+            child = self._ssh_make_child(cmd, reuse_ssh_conn=False, stdout=PIPE, stderr=PIPE)
+            output, err_output = child.communicate()
+            if err_output:
+                sys.stderr.write(err_output + b"\n")
+            return child.returncode, output
+
+        def _ssh_sudo_out(self, cmd, **kwargs):
+            sudo_cmd = "sudo bash -c '{}'".format(cmd)
+            return self._ssh_out(sudo_cmd, **kwargs)
 
         def _get_container_name(self):
             if self.container_name:
@@ -512,6 +528,8 @@ def main():
                 rsync_dir = container_dir
 
                 try:
+                    # temporary, after task with different names for containers rmtree should be removed
+                    shutil.rmtree(rsync_dir, ignore_errors=True)
                     os.makedirs(rsync_dir)
                 except OSError as exc:
                     if exc.errno != errno.EEXIST:  # raise exception if it's different than FileExists
@@ -543,9 +561,6 @@ def main():
                                  .format(rsync_dir, ' '.join(self.target_cfg), self.target_addr)
                     Popen(shlex.split(target_cmd)).wait()
 
-                    # temporary, after task with different names for containers should be removed
-                    shutil.rmtree(rsync_dir)
-
             def _virt_tar_out():
                 try:
                     print('! ', self.source.suspend())
@@ -573,22 +588,25 @@ def main():
                 return _rsync()
             return _virt_tar_out()
 
-        def destroy_all_containers(self):
-            # TODO: Replace this subcommand with a "check-access" subcommand
+        def check_target(self):
             storage_dir = MACROCONTAINER_STORAGE_DIR
-            ret_code, ps_out = self._ssh_sudo('docker ps -a --format=\'{{.Names}}\'')
-            if ret_code != 0:
-                return
-            containers = [i.strip() for i in ps_out.split('\n') if i.strip()]
-            for c in containers:
-                ret_code, _ = self._ssh_sudo(
-                    'docker rm -fv {0} 2>/dev/null 1>/dev/null && '
-                    'rm -rf {1}/{0}'.format(c, storage_dir)
-                )
+            ps_containers = 'docker ps -a --format "{{.Names}}"'
+            rc, containers = self._ssh_sudo_out(ps_containers)
+            if rc:
+                return rc, []
+            names = containers.splitlines()
+            ls_storage_directories = 'ls -1 "{}"'.format(storage_dir)
+            rc, dirs = self._ssh_sudo_out(ls_storage_directories)
+            if rc:
+                return rc, []
+            names.extend(dirs.splitlines())
+            return 0, sorted(set(names))
 
-                if ret_code != 0:
-                    break
-            return ret_code
+        def destroy_containers(self):
+            storage_dir = MACROCONTAINER_STORAGE_DIR
+            return self._ssh_sudo(
+                'docker rm -fv container 2>/dev/null 1>/dev/null; '
+                'rm -rf {}/*'.format(storage_dir))
 
         def start_container(self, img, init):
             container_name = self._get_container_name()
@@ -646,115 +664,127 @@ def main():
                 print(text)
 
 
-        if not parsed.target:
-            print('! no target specified, creating leappto container package in current directory')
-            # TODO: not really for now
-            raise NotImplementedError
-            
-        else:
-            source = parsed.machine
-            target = parsed.target
+        source = parsed.machine
+        target = parsed.target
 
 
-            print_migrate_info('! looking up "{}" as source and "{}" as target'.format(source, target))
+        print_migrate_info('! looking up "{}" as source and "{}" as target'.format(source, target))
 
-            lmp = LibvirtMachineProvider()
-            machines = lmp.get_machines()
-            source_user = parsed.source_user or 'root'
-            target_user = parsed.target_user or 'root'
+        lmp = LibvirtMachineProvider()
+        machines = lmp.get_machines()
+        source_user = parsed.source_user or 'root'
+        target_user = parsed.target_user or 'root'
 
-            machine_src = _find_machine(machines, source, user=source_user)
+        machine_src = _find_machine(machines, source, user=source_user)
 
-            if not machine_src:
-                print("Source machine is not ready: " + source)
-                exit(-1)
+        if not machine_src:
+            print("Source machine is not ready: " + source)
+            exit(-1)
 
-            machine_dst = _find_machine(machines, target, user=target_user)
+        machine_dst = _find_machine(machines, target, user=target_user)
 
-            if not machine_dst:
-                print("Target machine is not ready: " + target)
-                exit(-1)
+        if not machine_dst:
+            print("Target machine is not ready: " + target)
+            exit(-1)
 
-            src_ip = machine_src.ip[0]
-            dst_ip = machine_dst.ip[0]
+        src_ip = machine_src.ip[0]
+        dst_ip = machine_dst.ip[0]
 
-            user_mapped_ports = PortMap()
-            user_excluded_ports = PortList()
+        user_mapped_ports = PortMap()
+        user_excluded_ports = PortList()
 
-            tcp_mapping = None
-            #udp_mapping = None
+        tcp_mapping = None
+        #udp_mapping = None
 
-            try:
-                if parsed.forwarded_tcp_ports:
-                    for target_port, source_port in parsed.forwarded_tcp_ports:
-                        user_mapped_ports.set_tcp_port(source_port, target_port)
+        try:
+            if parsed.forwarded_tcp_ports:
+                for target_port, source_port in parsed.forwarded_tcp_ports:
+                    user_mapped_ports.set_tcp_port(source_port, target_port)
 
-                if parsed.excluded_tcp_ports:
-                    for target_port, source_port in parsed.excluded_tcp_ports:
-                        user_excluded_ports.set_tcp_port(source_port)
+            if parsed.excluded_tcp_ports:
+                for target_port, source_port in parsed.excluded_tcp_ports:
+                    user_excluded_ports.set_tcp_port(source_port)
 
-
-                if not parsed.ignore_default_port_map:
-                    print_migrate_info('! Scanning source ports')
-                    src_ports = _port_scan(src_ip, shallow=True)
-                else:
-                    src_ports = PortList() 
-            
-                print_migrate_info('! Scanning target ports')
-                dst_ports = _port_scan(dst_ip, shallow=True)
-
-                tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
-
-            except PortCollisionException as e:
-                print(str(e))
-                exit(-1)
-            except PortScanException as e:
-                print("An error occured during port scan: {}".format(str(e)))
-                exit(-1)
-                
-       
-            if parsed.print_port_map:
-                print(dumps(tcp_mapping, indent=3))
-                exit(0)
-
-            print_migrate_info("! Detected port mapping:\n")
-            print_migrate_info("! +-------------+-------------+")
-            print_migrate_info("! | Target port | Source port |")
-            print_migrate_info("! +=============+=============+")
-
-            for pmap in tcp_mapping:
-                print_migrate_info("! | {:11d} | {:11d} |".format(pmap[0], pmap[1]))
-
-            print_migrate_info("! +-------------+-------------+")
-            
-    
-            print_migrate_info('! configuring SSH keys')
-
-            mc = MigrationContext(
-                machine_dst,
-                _set_ssh_config(parsed.target_user, parsed.target_identity, parsed.target_ask_pass),
-                None if parsed.use_rsync else machine_src.disks[0].host_path,
-                machine_src,
-                _set_ssh_config(parsed.source_user, parsed.source_identity, parsed.source_ask_pass),
-                tcp_mapping,
-                parsed.use_rsync,
-                parsed.container_name
-            )
-            print_migrate_info('! copying over')
-            mc.copy()
-            print_migrate_info('! provisioning ...')
-
-            # if el7 then use systemd
-            if machine_src.installation.os.version.startswith('7'):
-                result = mc.start_container('centos:7', '/usr/lib/systemd/systemd --system')
-                print_migrate_info('! starting services')
-                mc.fix_systemd()
+            if not parsed.ignore_default_port_map:
+                print_migrate_info('! Scanning source ports')
+                src_ports = _port_scan(src_ip, shallow=True)
             else:
-                result = mc.start_container('centos:6', '/sbin/init')
-                print_migrate_info('! starting services')
-                mc.fix_upstart()
-            print_migrate_info('! done')
-            sys.exit(result)
+                src_ports = PortList()
+
+            print_migrate_info('! Scanning target ports')
+            dst_ports = _port_scan(dst_ip, shallow=True)
+
+            tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
+
+        except PortCollisionException as e:
+            print(str(e))
+            exit(-1)
+        except PortScanException as e:
+            print("An error occured during port scan: {}".format(str(e)))
+            exit(-1)
+
+
+        if parsed.print_port_map:
+            print(dumps(tcp_mapping, indent=3))
+            exit(0)
+
+        print_migrate_info("! Detected port mapping:\n")
+        print_migrate_info("! +-------------+-------------+")
+        print_migrate_info("! | Target port | Source port |")
+        print_migrate_info("! +=============+=============+")
+
+        for pmap in tcp_mapping:
+            print_migrate_info("! | {:11d} | {:11d} |".format(pmap[0], pmap[1]))
+
+        print_migrate_info("! +-------------+-------------+")
+
+
+        print_migrate_info('! configuring SSH keys')
+
+        mc = MigrationContext(
+            machine_dst,
+            _set_ssh_config(parsed.target_user, parsed.target_identity, parsed.target_ask_pass),
+            None if parsed.use_rsync else machine_src.disks[0].host_path,
+            machine_src,
+            _set_ssh_config(parsed.source_user, parsed.source_identity, parsed.source_ask_pass),
+            tcp_mapping,
+            parsed.use_rsync
+        )
+        print_migrate_info('! copying over')
+        mc.copy()
+        print_migrate_info('! provisioning ...')
+
+        # if el7 then use systemd
+        if machine_src.installation.os.version.startswith('7'):
+            result = mc.start_container('centos:7', '/usr/lib/systemd/systemd --system')
+            print_migrate_info('! starting services')
+            mc.fix_systemd()
+        else:
+            result = mc.start_container('centos:6', '/sbin/init')
+            print_migrate_info('! starting services')
+            mc.fix_upstart()
+        print_migrate_info('! done')
+        sys.exit(result)
+
+    elif parsed.action == 'check-target':
+        target = parsed.target
+
+        lmp = LibvirtMachineProvider()
+        machines = lmp.get_machines()
+
+        machine_dst = _find_machine(machines, target)
+
+        mc = MigrationContext(
+            machine_dst,
+            _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
+            None
+        )
+
+        return_code, claimed_names = mc.check_target()
+        for name in sorted(claimed_names):
+            print(name)
+
+        sys.exit(return_code)
 
     elif parsed.action == 'destroy-containers':
         target = parsed.target
@@ -773,9 +803,10 @@ def main():
         )
 
         print('! destroying containers on "{}" VM'.format(target))
-        result = mc.destroy_all_containers()
+        result = mc.destroy_containers()
         print('! done')
         sys.exit(result)
+
 
     elif parsed.action == 'port-inspect':
         _ERR_STATE = "error"
@@ -786,7 +817,7 @@ def main():
             "err_msg": "",
             "ports": None
         }
-        
+
         try:
             result["ports"] = _port_scan(parsed.address, parsed.range, parsed.shallow)
 
@@ -796,6 +827,6 @@ def main():
             print(dumps(result, indent=3))
 
             exit(-1)
-            
+
 
         print(dumps(result, indent=3))

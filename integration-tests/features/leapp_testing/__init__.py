@@ -93,6 +93,12 @@ class VirtualMachineHelper(object):
         """Halt or destroy all created VMs"""
         self._resource_manager.close()
 
+    def run_remote_command(self, name, *cmd, ignore_errors=False):
+        """Run the given command on the named machine"""
+        hostname = self.machines[name]
+        return self._run_vagrant(hostname, "ssh", "--", *cmd,
+                                 ignore_errors=ignore_errors)
+
     @staticmethod
     def _run_vagrant(hostname, *args, as_root=False, ignore_errors=False):
         # TODO: explore https://pypi.python.org/pypi/python-vagrant
@@ -185,6 +191,8 @@ class MigrationInfo(object):
     *local_vm_count*: Total number of local VMs found during migration
     *source_ip*: host accessible IP address found for source VM
     *target_ip*: host accessible IP address found for target VM
+    *command_succeeded*: True if the command return code was 0
+    *command_failed*: logical inverse of command_succeeded
     """
     local_vm_count = attrib()
     source_ip = attrib()
@@ -215,6 +223,13 @@ class ClientHelper(object):
     def __init__(self, vm_helper):
         self._vm_helper = vm_helper
 
+    def make_migration_command(self, source_vm, target_vm, migration_opt=None):
+        """Get command to recreate source VM as a macrocontainer on given target VM"""
+        vm_helper = self._vm_helper
+        source_host = vm_helper.get_hostname(source_vm)
+        target_host = vm_helper.get_hostname(target_vm)
+        return self._make_redeployment_command(source_host, target_host, migration_opt)
+
     def redeploy_as_macrocontainer(self, source_vm, target_vm, migration_opt=None):
         """Recreate source VM as a macrocontainer on given target VM"""
         vm_helper = self._vm_helper
@@ -227,7 +242,8 @@ class ClientHelper(object):
                             specify_default_user=False,
                             use_default_identity=False,
                             use_default_password=False,
-                            as_sudo=False):
+                            as_sudo=False,
+                            expect_failure=False):
         """Check given command completes within the specified time limit
 
         Returns the contents of stdout as a string.
@@ -238,11 +254,18 @@ class ClientHelper(object):
             cmd_output = self._run_leapp_with_askpass(cmd_args, is_migrate=is_migrate)
         else:
             add_default_user = specify_default_user or use_default_identity
-            cmd_output = self._run_leapp(cmd_args,
-                                         add_default_user=add_default_user,
-                                         add_default_identity=use_default_identity,
-                                         is_migrate=is_migrate,
-                                         as_sudo=as_sudo)
+            try:
+                cmd_output = self._run_leapp(cmd_args,
+                                            add_default_user=add_default_user,
+                                            add_default_identity=use_default_identity,
+                                            is_migrate=is_migrate,
+                                            as_sudo=as_sudo)
+            except subprocess.CalledProcessError:
+                if not expect_failure:
+                    raise
+            else:
+                if expect_failure:
+                    raise AssertionError("Command succeeded unexpectedly")
         response_time = time.monotonic() - start
         assert_that(response_time, less_than_or_equal_to(time_limit))
         return cmd_output
@@ -329,11 +352,19 @@ class ClientHelper(object):
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR))
 
     @classmethod
-    def _convert_vm_to_macrocontainer(cls, source_host, target_host, migration_opt):
+    def _make_redeployment_command(cls, source_host, target_host, migration_opt):
         cmd_args = ["migrate-machine", "--tcp-port", "80:80"]
         if migration_opt == 'rsync':
             cmd_args.append('--use-rsync')
         cmd_args.extend(["-t", target_host, source_host])
+        return cmd_args
+
+    @classmethod
+    def _convert_vm_to_macrocontainer(cls, source_host, target_host, migration_opt):
+        as_sudo = False
+        cmd_args = cls._make_redeployment_command(source_host, target_host, migration_opt)
+        if '--use-rsync' in cmd_args:
+            as_sudo = True
         result = cls._run_leapp(cmd_args,
                                 add_default_user=True,
                                 add_default_identity=True,
