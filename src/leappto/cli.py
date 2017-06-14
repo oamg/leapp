@@ -20,7 +20,6 @@ import sys
 import socket
 import nmap
 import shlex
-import shutil
 import errno
 
 
@@ -128,6 +127,7 @@ def _make_argument_parser():
         action='store_true',
         help='use rsync as backend for filesystem migration, otherwise virt-tar-out'
     )
+    migrate_cmd.add_argument('--container-name', '-n', default=None, help='Name of new container created on target host')
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
 
@@ -408,7 +408,7 @@ def main():
         _SSH_CONTROL_PATH = '-o ControlPath="{}/%L-%r@%h:%p"'.format(_SSH_CTL_PATH)
 
         def __init__(self, target, target_ssh_cfg, disk, source=None, source_ssh_cfg=None, forwarded_ports=None,
-                    rsync_cp_backend=False):
+                    rsync_cp_backend=False, container_name=None):
             self.source = source
             self.target = target
             self.source_use_sshpass, self.source_cfg = (None, None) if source_ssh_cfg is None else source_ssh_cfg
@@ -416,6 +416,7 @@ def main():
             self._cached_ssh_password = None
             self.disk = disk
             self.rsync_cp_backend = rsync_cp_backend
+            self.container_name = container_name
             self.forwarded_ports = list(forwarded_ports or ())
 
         def __get_machine_opt_by_context(self, machine_context):
@@ -507,20 +508,25 @@ def main():
             sudo_cmd = "sudo bash -c '{}'".format(cmd)
             return self._ssh_out(sudo_cmd, **kwargs)
 
+        def _get_container_name(self):
+            if self.container_name:
+                return self.container_name
+
+            name_list = ["container", self.source.hostname]
+            return '_'.join(name_list)
+
         def _get_container_dir(self):
-            # TODO: Derive container name from source host name
-            container_name = "container"
+            container_name = self._get_container_name()
             return os.path.join(MACROCONTAINER_STORAGE_DIR, container_name)
 
         def copy(self):
+            container_name = self._get_container_name()
             container_dir = self._get_container_dir()
 
             def _rsync():
                 rsync_dir = container_dir
 
                 try:
-                    # temporary, after task with different names for containers rmtree should be removed
-                    shutil.rmtree(rsync_dir, ignore_errors=True)
                     os.makedirs(rsync_dir)
                 except OSError as exc:
                     if exc.errno != errno.EEXIST:  # raise exception if it's different than FileExists
@@ -572,8 +578,8 @@ def main():
                 finally:
                     print('! ', self.source.resume())
 
-            self._ssh_sudo('docker rm -fv container 2>/dev/null 1>/dev/null; '
-                           'mkdir -p "{}"'.format(container_dir))
+            self._ssh_sudo('docker rm -fv {} 2>/dev/null 1>/dev/null; '
+                           'mkdir -p {}'.format(container_name, container_dir))
             if self.rsync_cp_backend:
                 return _rsync()
             return _virt_tar_out()
@@ -594,11 +600,20 @@ def main():
 
         def destroy_containers(self):
             storage_dir = MACROCONTAINER_STORAGE_DIR
-            return self._ssh_sudo(
-                'docker rm -fv container 2>/dev/null 1>/dev/null; '
-                'rm -rf {}/*'.format(storage_dir))
+            rc, containers = self.check_target()
+            if rc:
+                return rc
+            for c in containers:
+                rc = self._ssh_sudo(
+                    'docker rm -fv {0} 2>/dev/null 1>/dev/null; '
+                    'rm -rf {1}/{0}'.format(c, storage_dir)
+                )
+                if rc:
+                    break
+            return rc
 
         def start_container(self, img, init):
+            container_name = self._get_container_name()
             container_dir = self._get_container_dir()
             command = 'docker run -tid -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
             good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
@@ -609,11 +624,12 @@ def main():
                     command += ' -p {:d}'.format(container_port)  # docker will select random port for host
                 else:
                     command += ' -p {:d}:{:d}'.format(host_port, container_port)
-            command += ' --name container ' + img + ' ' + init
+            command += ' --name ' + container_name + ' ' + img + ' ' + init
             return self._ssh_sudo(command)
 
         def _fix_container(self, fix_str):
-            return self._ssh_sudo('docker exec -t container {}'.format(fix_str))
+            container_name = self._get_container_name()
+            return self._ssh_sudo('docker exec -t {} {}'.format(container_name, fix_str))
 
         def fix_upstart(self):
             fixer = 'bash -c "echo ! waiting ; ' + \
@@ -690,7 +706,6 @@ def main():
             if parsed.excluded_tcp_ports:
                 for target_port, source_port in parsed.excluded_tcp_ports:
                     user_excluded_ports.set_tcp_port(source_port)
-
 
             if not parsed.ignore_default_port_map:
                 print_migrate_info('! Scanning source ports')
