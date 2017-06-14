@@ -576,9 +576,18 @@ def main():
         def destroy_all_containers(self):
             # TODO: Replace this subcommand with a "check-access" subcommand
             storage_dir = MACROCONTAINER_STORAGE_DIR
-            ret_code, _ = self._ssh_sudo(
-                'docker rm -fv container 2>/dev/null 1>/dev/null; '
-                'rm -rf {}/*'.format(storage_dir))
+            ret_code, ps_out = self._ssh_sudo('docker ps -a --format=\'{{.Names}}\'')
+            if ret_code != 0:
+                return
+            containers = [i.strip() for i in ps_out.split('\n') if i.strip()]
+            for c in containers:
+                ret_code, _ = self._ssh_sudo(
+                    'docker rm -fv {0} 2>/dev/null 1>/dev/null && '
+                    'rm -rf {1}/{0}'.format(c, storage_dir)
+                )
+
+                if ret_code != 0:
+                    break
             return ret_code
 
         def start_container(self, img, init):
