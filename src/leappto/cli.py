@@ -537,7 +537,7 @@ def main():
 
                 self._open_permanent_ssh_conn(self.SOURCE)
                 try:
-                    ret_code, _ = self._ssh_sudo('sync && fsfreeze -f /', machine_context=self.SOURCE, reuse_ssh_conn=True)
+                    ret_code = self._ssh_sudo('sync && fsfreeze -f /', machine_context=self.SOURCE, reuse_ssh_conn=True)
                     if ret_code != 0:
                         sys.exit(ret_code)
 
@@ -569,7 +569,7 @@ def main():
                     proc = Popen(['sudo', 'bash', '-c', 'LIBGUESTFS_BACKEND=direct virt-tar-out -a {} / -' \
                                 .format(self.disk)], stdout=PIPE)
                     assert SOURCE_APP_EXPORT_DIR
-                    ret_code, _ = self._ssh_sudo(
+                    return self._ssh_sudo(
                         ('mkdir -p {0}/ && cat > {0}/exported_app.tar.gz && '
                          'tar xf {0}/exported_app.tar.gz -C {1} && '
                          'rm {0}/exported_app.tar.gz').format(
@@ -578,7 +578,6 @@ def main():
                         ),
                         stdin=proc.stdout
                     )
-                    return ret_code
                 finally:
                     print('! ', self.source.resume())
 
@@ -621,13 +620,11 @@ def main():
                 else:
                     command += ' -p {:d}:{:d}'.format(host_port, container_port)
             command += ' --name ' + container_name + ' ' + img + ' ' + init
-            ret_code, _ = self._ssh_sudo(command)
-            return ret_code
+            return self._ssh_sudo(command)
 
         def _fix_container(self, fix_str):
             container_name = self._get_container_name()
-            ret_code, _ = self._ssh_sudo('docker exec -t {} {}'.format(container_name, fix_str))
-            return ret_code
+            return self._ssh_sudo('docker exec -t {} {}'.format(container_name, fix_str))
 
         def fix_upstart(self):
             fixer = 'bash -c "echo ! waiting ; ' + \
