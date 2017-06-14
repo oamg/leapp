@@ -20,7 +20,6 @@ import sys
 import socket
 import nmap
 import shlex
-import shutil
 import errno
 
 
