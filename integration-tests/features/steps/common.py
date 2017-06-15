@@ -67,7 +67,7 @@ def redeploy_vm_as_macrocontainer(context, source_vm, target_vm):
     """
     context.redeployment_source = source_vm
     context.redeployment_target = target_vm
-    result = context.cli_helper.redeploy_as_macrocontainer(source_vm, target_vm)
+    result = context.cli_helper.redeploy_as_macrocontainer(source_vm, target_vm, [])
     assert_that(result.local_vm_count, greater_than(1), "At least 2 local VMs")
     assert_that(result.source_ip, not_none(), "Valid source IP")
     assert_that(result.target_ip, not_none(), "Valid target IP")
@@ -112,7 +112,7 @@ def check_http_response_match_by_path(context, tcp_port, path, status, time_limi
         original_ip,
         redeployed_ip,
         tcp_port=tcp_port,
-        wait_for_target=time_limit,
+        wait_limit=time_limit,
         status=status,
         path=path
     )
