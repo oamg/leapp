@@ -112,7 +112,7 @@ def check_http_response_match_by_path(context, tcp_port, path, status, time_limi
         original_ip,
         redeployed_ip,
         tcp_port=tcp_port,
-        wait_limit=time_limit,
+        wait_time=time_limit,
         status=status,
         path=path
     )
