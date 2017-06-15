@@ -493,10 +493,9 @@
         function cmd_stdout(data) {
             let split = data.split(/\r?\n/);
             for (let line of split) {
-                if (line.length < 1 || line[0] != "!") {
-                    continue;
+                if (line) {
+                    out("> " + line);
                 }
-                out("> " + line.substring(2));
             }
         }
 
