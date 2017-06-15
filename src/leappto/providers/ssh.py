@@ -7,10 +7,10 @@ from leappto import AbstractMachineProvider, MachineType, Machine, Disk, \
 
 
 def inspect_machine(driver, shallow):
-    cmd = """python -c 'import platform; print chr(0xa).join(platform.linux_distribution()[:2])'"""
+    cmd = """python -c 'import platform; print(chr(0xa).join(platform.linux_distribution()[:2]))'"""
     _, output, _ = driver.exec_command(cmd)
     distro, version = output.read().strip().replace('\r', '').split('\n', 1)
-    cmd = """python -c 'import socket; print socket.gethostname()'"""
+    cmd = """python -c 'import socket; print(socket.gethostname())'"""
     _, output, _ = driver.exec_command(cmd)
     hostname = output.read().strip()
     cmd = "bash -c \"/sbin/ip -4 -o addr list | grep -E '(wlp|e(th|n[np]))' | sed 's/.*inet \\([0-9\\.]\\+\\)\\/.*$/\\1/g'\""
@@ -18,9 +18,9 @@ def inspect_machine(driver, shallow):
     ips = [i.strip() for i in output.read().split('\n') if i.strip()]
     packages = []
     if not shallow:
-        cmd = "python -c \"import rpm, json; print json.dumps([(app['name'], " + \
+        cmd = "python -c \"import rpm, json; print(json.dumps([(app['name'], " + \
                 "'{e}:{v}-{r}.{a}'.format(e=app['epoch'] or 0, v=app['version'], " + \
-                "a=app['arch'], r=app['release'])) for app in rpm.ts().dbMatch()])\""
+                "a=app['arch'], r=app['release'])) for app in rpm.ts().dbMatch()]))\""
         _, output, _ = driver.exec_command(cmd)
         packages = [Package(e[0], e[1]) for e in json.loads(output.read())]
     return (ips, hostname, Installation(OperatingSystem(distro, version), packages))
