@@ -539,7 +539,8 @@ def main():
             None if parsed.use_rsync else machine_src.disks[0].host_path,
             machine_src,
             _set_ssh_config(parsed.source_user, parsed.source_identity, parsed.source_ask_pass),
-            parsed.use_rsync
+            parsed.use_rsync,
+            parsed.container_name
         )
 
         if not parsed.print_port_map:
