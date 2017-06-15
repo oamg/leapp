@@ -104,6 +104,14 @@
             margin-top: 0px;
             margin-bottom: 0px;
         }
+
+        #target-container-list {
+            padding-top: 1em;
+        }
+
+        #target-container-list ul li {
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -153,6 +161,16 @@
             </div>
             <div class="col-md-6 col-sm-12">
                 <!-- Application/Target container name... -->
+                <h3>Application name</h3>
+                <div class="col-sm-10 col-sm-offset-1">
+                    <input id="application-name" type="text" class=" form-control ui-lockable">
+                </div>
+                <div id="target-container-list" style="display: none;" class="col-sm-12">
+                    <h4 class="text-center">Application names already in use:</h4>
+                    <ul>
+                        <li></li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -264,6 +282,25 @@
             );
         }
 
+        function set_app_list(args) {
+            cmd_success(args);
+            $("#target-container-list ul li").remove();
+            $("#target-container-list").hide();
+            var containers = args.split('\n');
+            containers.forEach(function(e) {
+                $("#target-container-list ul").append(`<li>${e}</li>`);
+            });
+            if (containers.length > 0) {
+                $("#target-container-list").fadeIn();
+            }
+        }
+
+        function load_target_container_names() {
+            var proc = call_leapp(["check-target", "127.0.0.1"]);
+            proc.done(set_app_list);
+            proc.fail(cmd_fail);
+        }
+
         function override_identity(cmd_args) {
             // Appends any defined identity override settings to a command
             if ("override-username" in LEAPP_CONF) {
@@ -294,6 +331,10 @@
             import_args.push("--tcp-port");
             Array.prototype.push.apply(import_args, mapped_ports)
             import_args.push("-t", target, source)
+
+            if ($("#application-name").val()) {
+                import_args.push("--container-name", $("#application-name").val());
+            }
 
             //output.empty();
             var proc = call_leapp(import_args);
@@ -424,6 +465,7 @@
             }
             loader.hide();
             release_lock_cmd();
+            load_target_container_names();
          }
 
          function map_target_ports() {
