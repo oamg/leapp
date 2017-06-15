@@ -192,7 +192,7 @@
         </div>
         <div class="row section">
             <div class="col-sm-12">
-                <pre class="leapp-progress">
+                <pre class="leapp-progress" style="display: none;">
                     <h2>Progress</h2>
                     <div id="output"></div>
                 </pre>
@@ -222,7 +222,7 @@
         });
 
         $("#scan-source-btn").click(function(){
-            scan_ports($("#source-address").val(), get_source_ports, null, true);
+            get_target_ports();
             $(".analyze").fadeIn();
         });
 
@@ -247,7 +247,6 @@
                 },
             }).then(function() {
                 $("#leapp-version").text("Le-App - " + LEAPP_CONF["version"]);
-                get_target_ports();
             });
         });
 
@@ -260,6 +259,7 @@
         }
 
         function out(line, is_command) {
+            $(".leapp-progress").fadeIn();
             var stamp = (new Date()).toISOString();
             var style = '';
             if (is_command === true) {
@@ -293,6 +293,7 @@
             if (containers.length > 0) {
                 $("#target-container-list").fadeIn();
             }
+            scan_ports($("#source-address").val(), get_source_ports, null, true);
         }
 
         function load_target_container_names() {
