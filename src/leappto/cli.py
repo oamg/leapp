@@ -393,9 +393,8 @@ def main():
             names = containers.splitlines()
             ls_storage_directories = 'ls -1 "{}"'.format(storage_dir)
             rc, dirs = self._ssh_sudo_out(ls_storage_directories)
-            if rc:
-                return rc, []
-            names.extend(dirs.splitlines())
+            if not rc:
+                names.extend(dirs.splitlines())
             return 0, sorted(set(names))
 
         def map_ports(self, use_default_port_map=True, forwarded_tcp_ports=None, excluded_tcp_ports=None, print_info=print):
