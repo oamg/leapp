@@ -84,8 +84,7 @@ popd
 jq -r ".\"tool-path\" = \"/usr/bin/leapp-tool\" | \
        .\"tool-workdir\" = \"/usr/bin\" | \
        .version = \"%{version}-%{release}\" | \
-       del(.\"override-user\") | \
-       del(.\"override-identity\")" \
+       del(.\"override-user\")" \
        cockpit/config.json > tmp_config.json && \
        mv tmp_config.json cockpit/config.json
 

@@ -314,10 +314,6 @@
                 cmd_args.push("--target-user", LEAPP_CONF["override-username"])
                 cmd_args.push("--source-user", LEAPP_CONF["override-username"])
             }
-            if ("override-identity" in LEAPP_CONF) {
-                cmd_args.push("--target-identity", LEAPP_CONF["override-identity"])
-                cmd_args.push("--source-identity", LEAPP_CONF["override-identity"])
-            }
         }
 
         function import_to_host(event) {

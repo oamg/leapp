@@ -100,7 +100,10 @@ class DemoCockpitUser(object):
         temp = pathlib.Path(tempfile.gettempdir())
         self.BASE_DIR = base_dir = temp / _token_hex(8)
         self.USER_DIR = base_dir / username
+        self.BASE_REPO_DIR = context.BASE_REPO_DIR
         context.scenario_cleanup.callback(self.destroy)
+        self._ssh_dir = self.USER_DIR / '.ssh'
+        self._user_key_path = str(self._ssh_dir / 'id_rsa')
 
     def create(self):
         """Create a local user with required permissions to run the demo"""
@@ -116,7 +119,16 @@ class DemoCockpitUser(object):
         # We create the home directory manually, as asking useradd to do it
         # triggers an SELinux error (presumably due to the use of tmpfs)
         self.USER_DIR.mkdir()
+        self._ssh_dir.mkdir()
         self._fix_dir_permissions()
+        self._setup_ssh_key()
+
+    def _setup_ssh_key(self):
+        key_path = self.BASE_REPO_DIR / 'integration-tests' / 'config' / 'leappto_testing_key'
+        ssh_dir = str(self._ssh_dir)
+        _run_command("sudo", "cp", str(key_path), self._user_key_path)
+        _run_command("sudo", "chown", "-R", self.username, ssh_dir)
+        _run_command("sudo", "chmod", "-R", "600", ssh_dir)
 
     def _fix_dir_permissions(self, dir_to_fix=None):
         # Ensure all the user's files are owned by the demo user,
