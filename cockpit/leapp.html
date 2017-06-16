@@ -204,6 +204,11 @@
     </div>
 
     <script>
+        var AGENT_AUTH_SOCK='';
+        cockpit.spawn(['/bin/bash', '-c', 'echo $SSH_AUTH_SOCK']).done(function(e){
+            AGENT_AUTH_SOCK = (e || '').trim();
+        });
+
         function scan_source() {
             scan_ports($('#source-address').val(), callback, ports=null, shallow=true);
         }
@@ -276,8 +281,9 @@
                 cmd_line,
                 {
                     "directory": LEAPP_CONF["tool-workdir"],
+                    "environ": ["SSH_AUTH_SOCK=" + AGENT_AUTH_SOCK],
                     "superuser": "required",
-                    "err": "out"
+                    "err": "out",
                 }
             );
         }
