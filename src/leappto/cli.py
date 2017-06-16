@@ -607,6 +607,9 @@ def main():
         machines = lmp.get_machines()
 
         machine_dst = _find_machine(machines, target)
+        if not machine_dst:
+            print("Target machine is not ready: " + target)
+            exit(-1)
 
         mc = MigrationContext(
             machine_dst,
@@ -627,6 +630,9 @@ def main():
         machines = lmp.get_machines()
 
         machine_dst = _find_machine(machines, target)
+        if not machine_dst:
+            print("Target machine is not ready: " + target)
+            exit(-1)
 
         print('! looking up "{}" as target'.format(target))
         print('! configuring SSH keys')
