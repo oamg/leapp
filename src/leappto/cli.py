@@ -615,11 +615,13 @@ def main():
             None
         )
 
-        return_code, claimed_names = mc.check_target()
+        _, claimed_names = mc.check_target()
         for name in sorted(claimed_names):
             print(name)
 
-        sys.exit(return_code)
+        # Even if failed to find any container this can be a normal run on new
+        # target machines, so do not return an error code
+        sys.exit()
 
     elif parsed.action == 'destroy-containers':
         target = parsed.target
