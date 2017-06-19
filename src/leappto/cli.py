@@ -397,7 +397,8 @@ def main():
                 "success" if not rc else "error"))
 
             return rc
-        def check_target(self):
+
+        def check_target_containers(self):
             storage_dir = MACROCONTAINER_STORAGE_DIR
             ps_containers = 'docker ps -a --format "{{.Names}}"'
             rc, containers = self._ssh_sudo_out(ps_containers,
@@ -452,7 +453,7 @@ def main():
         def destroy_container(self, container_name):
             """Destroy the specified container (if it exists)"""
             storage_dir = MACROCONTAINER_STORAGE_DIR
-            rc, containers = self.check_target()
+            rc, containers = self.check_target_containers()
             if rc or container_name not in containers:
                 return rc
             return self._ssh_sudo(
@@ -558,7 +559,7 @@ def main():
         if not parsed.print_port_map:
             # If we're doing an actual migration, check we have access to the
             # target, and the desired container name is available
-            check_result, claimed_names = mc.check_target()
+            check_result, claimed_names = mc.check_target_containers()
             if check_result != 0:
                 print("! Checking target access failed")
                 sys.exit(check_result)
@@ -639,7 +640,8 @@ def main():
         _ = mc.check_service_status("docker", "docker info > /dev/null")
         _ = mc.check_service_status("rsync", "rsync --version > /dev/null")
 
-        return_code, claimed_names = mc.check_target()
+        print("! Check existing target containers:")
+        return_code, claimed_names = mc.check_target_containers()
         for name in sorted(claimed_names):
             print(name)
 
