@@ -389,6 +389,14 @@ def main():
                 return _rsync()
             return _virt_tar_out()
 
+        def check_service_status(self, name, check_cmd):
+            rc = self._ssh_sudo(check_cmd)
+            print("! Check {} availability at {}: {}".format(
+                name,
+                self.target.hostname,
+                "success" if not rc else "error"))
+
+            return rc
         def check_target(self):
             storage_dir = MACROCONTAINER_STORAGE_DIR
             ps_containers = 'docker ps -a --format "{{.Names}}"'
@@ -627,6 +635,9 @@ def main():
             _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
             None
         )
+
+        _ = mc.check_service_status("docker", "docker info > /dev/null")
+        _ = mc.check_service_status("rsync", "rsync --version > /dev/null")
 
         return_code, claimed_names = mc.check_target()
         for name in sorted(claimed_names):
