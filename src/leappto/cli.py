@@ -155,7 +155,7 @@ def main():
     if not _user_has_required_permissions():
         msg = "Run leapp-tool as root, or as a member of all these groups: "
         print(msg + ",".join(_REQUIRED_GROUPS))
-        exit(-1)
+        sys.exit(-1)
 
     ap = _make_argument_parser()
 
@@ -519,13 +519,13 @@ def main():
 
         if not machine_src:
             print("Source machine is not ready: " + source)
-            exit(-1)
+            sys.exit(-1)
 
         machine_dst = _find_machine(machines, target, user=target_user)
 
         if not machine_dst:
             print("Target machine is not ready: " + target)
-            exit(-1)
+            sys.exit(-1)
 
         src_ip = machine_src.ip[0]
         dst_ip = machine_dst.ip[0]
@@ -568,7 +568,7 @@ def main():
         if parsed.print_port_map:
             # If we're only printing the port map, skip the full migration
             print(dumps(tcp_mapping, indent=3))
-            exit(0)
+            sys.exit(0)
 
         print_migrate_info("! Detected port mapping:\n")
         print_migrate_info("! +-------------+-------------+")
@@ -609,7 +609,7 @@ def main():
         machine_dst = _find_machine(machines, target)
         if not machine_dst:
             print("Target machine is not ready: " + target)
-            exit(-1)
+            sys.exit(-1)
 
         mc = MigrationContext(
             machine_dst,
@@ -632,7 +632,7 @@ def main():
         machine_dst = _find_machine(machines, target)
         if not machine_dst:
             print("Target machine is not ready: " + target)
-            exit(-1)
+            sys.exit(-1)
 
         print('! looking up "{}" as target'.format(target))
         print('! configuring SSH keys')
@@ -666,7 +666,7 @@ def main():
             result["err_msg"] = str(e)
             print(dumps(result, indent=3))
 
-            exit(-1)
+            sys.exit(-1)
 
 
         print(dumps(result, indent=3))
