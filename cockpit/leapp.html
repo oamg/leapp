@@ -200,6 +200,9 @@
     <script>
         const MIN_PORT = 1;
         const MAX_PORT = 65535;
+
+        var target_ports = [];
+
         var AGENT_AUTH_SOCK='';
         cockpit.spawn(['/bin/bash', '-c', 'echo $SSH_AUTH_SOCK']).done(function(e){
             AGENT_AUTH_SOCK = (e || '').trim();
@@ -277,17 +280,30 @@
         }
 
         function add_mapping_handler(element) {
-            element.on('change', function() {
-                var new_port = parseInt($(this).val());
-                var old_port = $(this).data('prev');
+            $(element).on('change', function() {
+                var changed = $(this);
+                var new_port = parseInt(changed.val(), 10);
+                var dups = $('input.mapped-ports').filter(function(){
+                    return $(this).attr('id') != changed.attr('id') && $(this).val() == changed.val();
+                });
 
-                $(this).removeClass('invalid');
-                if (target_ports.indexOf(new_port) > -1 || new_port < MIN_PORT || new_port > MAX_PORT) {
-                    $(this).addClass('invalid');
+                var valid = Number.isInteger(new_port)
+                    && target_ports.indexOf(changed.val()) == -1
+                    && new_port >= MIN_PORT
+                    && new_port <= MAX_PORT
+                    && dups.length == 0
+                ;
+
+                if (!valid) {
                     $("#import-button").attr("disabled", true);
+                    dups.parent("li").addClass("has-error");
+                    changed.parent("li").addClass("has-error");
+                } else {
+                    $(this).parent("li").removeClass("has-error");
+                    $("li.has-error input.mapped-ports").trigger("change");
                 }
 
-                if ($("input.mapped-ports").filter('.invalid').length === 0) {
+                if ($("#mapped-ports ul li.has-error").length === 0) {
                     $("#import-button").removeAttr("disabled");
                 }
             });
@@ -298,7 +314,7 @@
             if (has_tooltip) {
                 tooltip_content = `data-toggle="tooltip" data-placement="bottom" title="loading..."`;
             }
-            var element = $("#mapped-ports ul").append(`
+            var element = $(`
                 <li class="checkbox">
                     <label>
                         <input type="checkbox" data-target="#mapped-port-${source_port}" checked>
@@ -309,10 +325,10 @@
                     </label>
                     <span style="font-size: 2em;">&rarr;</span>
                     <input type="text" size="6" id="mapped-port-${source_port}" value="${mapped_port}"
-                           data-source="${source_port}" data-prev="${mapped_port}"
-                           class="form-control mapped-ports ui-lockable"/>
+                           data-source="${source_port}" class="form-control mapped-ports ui-lockable"/>
                 </li>
             `);
+            $("#mapped-ports ul").append(element);
             add_mapping_handler(element.children("input.mapped-ports"));
             return element;
         }
