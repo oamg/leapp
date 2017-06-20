@@ -21,6 +21,7 @@ import socket
 import nmap
 import shlex
 import errno
+import json
 
 
 VERSION='leapp-tool {0}'.format(__version__)
@@ -138,6 +139,7 @@ def _make_argument_parser():
 
     check_target_cmd.add_argument('target', help='target VM name')
     _add_identity_options(check_target_cmd)
+    check_target_cmd.add_argument("-s", "--status", default=False, help='Check for services status on target machine', action="store_true")
 
     destroy_cmd.add_argument('target', help='target VM name')
     destroy_cmd.add_argument('container', help='container to destroy (if it exists)')
@@ -389,14 +391,9 @@ def main():
                 return _rsync()
             return _virt_tar_out()
 
-        def check_service_status(self, name, check_cmd):
-            rc = self._ssh_sudo(check_cmd)
-            print("! Check {} availability at {}: {}".format(
-                name,
-                self.target.hostname,
-                "success" if not rc else "error"))
-
-            return rc
+        def check_target_service(self, check_cmd):
+            cmd = check_cmd + ' > /dev/null 2> /dev/null'
+            return self._ssh_sudo(cmd)
 
         def check_target_containers(self):
             storage_dir = MACROCONTAINER_STORAGE_DIR
@@ -637,12 +634,26 @@ def main():
             None
         )
 
-        _ = mc.check_service_status("docker", "docker info > /dev/null")
-        _ = mc.check_service_status("rsync", "rsync --version > /dev/null")
+        check_result = dict()
+        return_code, check_result['containers'] = mc.check_target_containers()
 
-        print("! Check existing target containers:")
-        return_code, claimed_names = mc.check_target_containers()
-        for name in sorted(claimed_names):
+        if parsed.status:
+            check_commands = dict()
+            check_commands['docker'] = 'docker info'
+            check_commands['rsync'] = 'rsync --version'
+
+            for service in check_commands.keys():
+                rc = mc.check_target_service(check_commands[service])
+                if rc:
+                    check_result[service] = 'error'
+                    return_code = rc
+                else:
+                    check_result[service] = 'ok'
+
+            print(json.dumps(check_result))
+            sys.exit(return_code)
+
+        for name in sorted(check_result['containers']):
             print(name)
 
         sys.exit(return_code)
