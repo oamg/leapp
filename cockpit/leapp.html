@@ -24,6 +24,8 @@
 
         input[type=text].mapped-ports {
             margin-left: 10px;
+            display: inline-block;
+            width: auto;
         }
         .source-port-font {
             font-weight: bold;
@@ -317,7 +319,7 @@
                             <span style="font-size: 2em;">&rarr;</span>
                             <input type="text" size="6" id="mapped-port-${source_port}" value="${mapped_port}"
                                    data-source="${source_port}" data-prev="${mapped_port}"
-                                   class="mapped-ports ui-lockable"/>
+                                   class="form-control mapped-ports ui-lockable"/>
                         </li>
                     `);
                     add_mapping_handler(element.children("input.mapped-ports"));
