@@ -9,8 +9,8 @@ from pwd import getpwuid
 from subprocess import Popen, PIPE
 from collections import OrderedDict
 from leappto import Machine
-from leappto.driver.ssh import SSHConnectionError
-from leappto.providers.libvirt import LibvirtMachineProvider
+from leappto.driver import LocalDriver
+from leappto.driver.ssh import SSHDriver, SSHConnectionError
 from leappto.providers.ssh import SSHMachine
 from leappto.providers.local import LocalMachine
 from leappto.version import __version__
@@ -683,7 +683,6 @@ def main():
 
         print_migrate_info('! looking up "{}" as source and "{}" as target'.format(source, target))
 
-        lmp = LibvirtMachineProvider()
         source_user = parsed.source_user or 'root'
         target_user = parsed.target_user or 'root'
 
@@ -805,8 +804,6 @@ def main():
     elif parsed.action == 'check-target':
         target = parsed.target
 
-        lmp = LibvirtMachineProvider()
-
         machine_dst = _inspect_machine(target)
         if not machine_dst:
             print("Target machine is not ready: " + target)
@@ -831,8 +828,6 @@ def main():
 
     elif parsed.action == 'destroy-container':
         target = parsed.target
-
-        lmp = LibvirtMachineProvider()
 
         machine_dst = _inspect_machine(target)
         if not machine_dst:
