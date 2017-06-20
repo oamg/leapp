@@ -128,6 +128,11 @@ def _make_argument_parser():
         help='use rsync as backend for filesystem migration, otherwise virt-tar-out'
     )
     migrate_cmd.add_argument('--container-name', '-n', default=None, help='Name of new container created on target host')
+    migrate_cmd.add_argument(
+        '--force-create',
+        action='store_true',
+        help='force creation of new target container, even if one already exists'
+    )
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
 
@@ -313,9 +318,7 @@ def main():
         def get_target_container_name(self):
             if self.container_name:
                 return self.container_name
-
-            name_list = ["container", self.source.hostname]
-            return '_'.join(name_list)
+            return "container_" + self.source.hostname
 
         def _get_container_dir(self):
             container_name = self.get_target_container_name()
@@ -554,8 +557,14 @@ def main():
 
             container_name = mc.get_target_container_name()
             if container_name in claimed_names:
-                print("! Container name {} is not available".format(container_name))
-                sys.exit(-10)
+                if not parsed.force_create:
+                    print("! Container name {} is not available".format(container_name))
+                    sys.exit(-10)
+                print_migrate_info('! destroying pre-existing container')
+                destroy_result = mc.destroy_container(container_name)
+                if destroy_result != 0:
+                    print("! Destroying pre-existing container failed")
+                    sys.exit(destroy_result)
 
         port_map_result, tcp_mapping = mc.map_ports(
             use_default_port_map = not parsed.ignore_default_port_map,
