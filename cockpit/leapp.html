@@ -22,10 +22,6 @@
             border-left: 2px dashed #ddd;
         }
 
-        input[name=target-ports] {
-            text-align: center;
-        }
-
         input[type=text].mapped-ports {
             margin-left: 10px;
         }
@@ -145,10 +141,6 @@
             <div class="col-md-6 col-sm-12">
                 <h3>Externally visible TCP ports</h3>
                 <div class="row">
-                    <div id="source-ports" class="hidden col-sm-6">
-                        <ul>
-                        </ul>
-                    </div>
                     <div id="mapped-ports" class="col-sm-6">
                         <ul>
                         </ul>
@@ -204,20 +196,17 @@
     </div>
 
     <script>
+        const MIN_PORT = 1;
+        const MAX_PORT = 65535;
         var AGENT_AUTH_SOCK='';
         cockpit.spawn(['/bin/bash', '-c', 'echo $SSH_AUTH_SOCK']).done(function(e){
             AGENT_AUTH_SOCK = (e || '').trim();
         });
 
-        function scan_source() {
-            scan_ports($('#source-address').val(), callback, ports=null, shallow=true);
-        }
-
         $(function () {
           $('.analyze').hide();
           $('[data-toggle="tooltip"]').tooltip()
         });
-
 
         // Handle enter key press in the ip/fqdn field and submit
         $("#source-address").keypress(function(e) {
@@ -238,9 +227,6 @@
         var wait_for_result_msg = false;
 
         $("#import-button").on("click", import_to_host);
-
-        var target_ports = null;
-
 
         $(document).ready(function() {
             // First load the configuration and then start running all other tasks
@@ -288,6 +274,60 @@
             );
         }
 
+        function add_mapping_handler(element) {
+            element.on('change', function() {
+                var new_port = parseInt($(this).val());
+                var old_port = $(this).data('prev');
+
+                $(this).removeClass('invalid');
+                if (target_ports.indexOf(new_port) > -1 || new_port < MIN_PORT || new_port > MAX_PORT) {
+                    $(this).addClass('invalid');
+                    $("#import-button").attr("disabled", true);
+                }
+
+                if ($("input.mapped-ports").filter('.invalid').length === 0) {
+                    $("#import-button").removeAttr("disabled");
+                }
+            });
+        }
+
+        function get_port_mapping() {
+            out("Loading default port mapping....");
+            var proc = call_leapp(override_identity([
+                'migrate-machine', '-p', '--use-rsync', '-t', '127.0.0.1', $("#source-address").val()]));
+            proc.done(function(data){
+                cmd_success(data, true);
+                var mapping = JSON.parse(data);
+                var source_ports = [];
+                $("#mapped-ports ul li").remove();
+                mapping.forEach(function(entry) {
+                    var mapped_port = entry[0];
+                    var source_port = entry[1];
+                    source_ports.push(source_port);
+                    var element = $("#mapped-ports ul").append(`
+                        <li class="checkbox">
+                            <label>
+                                <input type="checkbox" data-target="#mapped-port-${source_port}" checked>
+                                Port
+                                <span class="source-port-font mapped-port-info" data-toggle="tooltip"
+                                      data-placement="bottom" title="loading..." data-port="${source_port}">
+                                    ${source_port}
+                                </span>
+                            </label>
+                            <span style="font-size: 2em;">&rarr;</span>
+                            <input type="text" size="6" id="mapped-port-${source_port}" value="${mapped_port}"
+                                   data-source="${source_port}" data-prev="${mapped_port}"
+                                   class="mapped-ports ui-lockable"/>
+                        </li>
+                    `);
+                    add_mapping_handler(element.children("input.mapped-ports"));
+                });
+                $('.mapped-port-info').tooltip();
+                scan_ports($("#source-address").val(), add_ports_product_info, source_ports, false);
+            });
+            proc.fail(cmd_fail);
+        }
+
         function set_app_list(args) {
             cmd_success(args);
             $("#target-container-list ul li").remove();
@@ -299,7 +339,7 @@
             if (containers.length > 0) {
                 $("#target-container-list").fadeIn();
             }
-            scan_ports($("#source-address").val(), get_source_ports, null, true);
+            get_port_mapping();
         }
 
         function load_target_container_names() {
@@ -314,6 +354,7 @@
                 cmd_args.push("--target-user", LEAPP_CONF["override-username"])
                 cmd_args.push("--source-user", LEAPP_CONF["override-username"])
             }
+            return cmd_args;
         }
 
         function import_to_host(event) {
@@ -322,11 +363,13 @@
             var source = $("#source-address").val();
             var target = "127.0.0.1";
 
-            var mapped_ports = $("input.source-ports:checked").map(function() {
-                var target_port = $("#port-mapping .mapped-ports input[name=" + this.value + "]").val();
-                if (target_port)
-                    return target_port + ':' + this.value;  // host:container
-            }).toArray();
+            var mapped_ports = [];
+            $("#mapped-ports ul li label input[type=checkbox]:checked").each(function(i, element) {
+                var target = $($(element).data("target"));
+                if (target.val()) {
+                    mapped_ports.push(target.val() + ":" + target.data("source"));
+                }
+            });
 
             var import_args = ["migrate-machine"]
             import_args.push("--use-rsync");
@@ -369,41 +412,12 @@
             loader.show();
         }
 
-        function get_source_ports(data) {
-            $("#source-ports ul li").remove();
-            $("#mapped-ports ul li").remove();
-            var data = JSON.parse(data);
-            // get all protocols not only tcp
-            if (typeof(data.ports.tcp) !== undefined) {
-                for (port in data.ports.tcp) {
-                    $("#source-ports ul").append(`
-                        <li>
-                            <input type="checkbox" name="${port}" value="${port}"
-                            checked="checked" class="source-ports" />
-                            Port: <span class="source-port-font">${port}</span> - used by: ${data.ports.tcp[port].name}
-                            <span class="service-info"></span>
-                        </li>
-                    `)
-                }
-            }
-
-            let source_ip = $("#source-address").val();
-            let source_ports = $("input.source-ports:checked").map(function() {
-                return this.value;
-            }).toArray();
-            source_ports = source_ports.filter(function(value, index){ return this.indexOf(value) == index },
-                                               source_ports);
-            map_target_ports();
-            scan_ports(source_ip, show_source_products_info, source_ports);
-            out("Getting info about products which are listening on discovered ports");
-        }
-
         function add_ports_product_info(data) {
+            cmd_success(data, true);
+            data = JSON.parse(data);
             if (typeof(data.ports.tcp) !== undefined) {
-                console.log(`add_ports_product_info: `, data.ports);
                 $('.mapped-port-info').each(function(i,e) {
                     var p = $(e).data('port');
-                    console.log(`Checking for port ${p}`);
                     if (p in data.ports.tcp) {
                         $(e).attr('data-original-title',
                                   `Port ${p} is used by ${data.ports.tcp[p].product || data.ports.tcp[p].name}`);
@@ -413,51 +427,12 @@
             }
         }
 
-        function show_source_products_info(data) {
-            add_ports_product_info(JSON.parse(data));
-            loader.hide();
-            release_lock_cmd();
-        }
-
-        function map_ports(selected_ports, busy_ports) {
-            const MAX_ATTEMPTS = 65535;
-
-            var mapped_ports = {};
-
-            function get_free_port(port, busy_ports, attempt) {
-                if (attempt > MAX_ATTEMPTS) {
-                    throw 'Max attempts reached - could not find free port';
-                }
-                attempt++;
-
-                if (busy_ports.indexOf(parseInt(port)) > -1) {
-                    port = parseInt(port) + 1;
-                    return get_free_port(port.toString(), busy_ports, attempt)
-                }
-
-                busy_ports.push(parseInt(port));
-                return port;
-            }
-
-            try {
-                selected_ports.forEach(function(selected_port) {
-                    mapped_ports[selected_port] = get_free_port(selected_port, busy_ports, 0);
-                });
-            } catch (e) {
-                console.log(e);
-            }
-
-            return mapped_ports;
-        }
-
         function get_target_ports() {
             scan_ports("127.0.0.1", show_target_ports, null, true);  // scan target machine
         }
 
         function show_target_ports(data) {
-            const MAX_PORT = 65535;
-            const MIN_PORT = 1;
-
+            cmd_success(data, true);
             var data = JSON.parse(data);
             target_ports = [];
             if (typeof(data.ports.tcp) !== undefined) {
@@ -466,73 +441,7 @@
                 }
                 $("#target-ports-field span").text(target_ports.join(", "));
             }
-            loader.hide();
-            release_lock_cmd();
             load_target_container_names();
-         }
-
-         function map_target_ports() {
-            out("Mapping target ports");
-
-            var selected_ports = $("input.source-ports:checked").map(function() {
-                return parseInt(this.value);
-            }).toArray();
-
-            var mapped_ports = map_ports(selected_ports, target_ports);
-
-            for (source_port in mapped_ports) {
-                $("#mapped-ports ul").append(`
-                    <li class="checkbox">
-                        <label>
-                            <input type="checkbox" name="mapped-port" checked>
-                            Port
-                            <span class="source-port-font mapped-port-info" data-toggle="tooltip"
-                                  data-placement="bottom" title="loading..." data-port="${source_port}">
-                                ${source_port}
-                            </span>
-                        </label>
-                        <span style="font-size: 2em;">&rarr;</span>
-                        <input type="text" size="6" name="${source_port}" value="${mapped_ports[source_port]}"
-                        class="mapped-ports ui-lockable" data-prev="${mapped_ports[source_port]}" disabled/>
-                    </li>
-                `)
-            }
-            $('.mapped-port-info').tooltip();
-
-            function update_busy_ports(busy_ports, old_port, new_port) {
-                busy_ports.splice(busy_ports.indexOf(old_port), 1);
-                busy_ports.push(new_port);
-            }
-
-            $("input.mapped-ports").on('change', function() {
-                var new_port = parseInt($(this).val());
-                var old_port = $(this).data('prev');
-                $(this).data("prev", new_port);
-
-                if (target_ports.indexOf(new_port) > -1 || new_port < MIN_PORT
-                    || new_port > MAX_PORT) {
-                    $(this).addClass('invalid');
-                    $("#import-button").attr("disabled", true);
-                    update_busy_ports(target_ports, old_port, new_port);
-                    return;
-                }
-
-                update_busy_ports(target_ports, old_port, new_port);
-                $(this).removeClass('invalid');
-
-                let obj = $("input.mapped-ports").filter(function() {
-                    return parseInt($(this).val()) == old_port;
-                });
-
-                if (typeof obj.get(0) !== undefined)
-                    $(obj.get(0)).removeClass('invalid');
-
-                if ($("input.mapped-ports").filter('.invalid').length < 1) {
-                    $("#import-button").removeAttr("disabled");
-                }
-            });
-
-            //output.empty();
         }
 
         function cmd_stdout(data) {
@@ -544,9 +453,10 @@
             }
         }
 
-        function cmd_success(data) {
-            //output.empty();
-            cmd_stdout(data);
+        function cmd_success(data, no_data=false) {
+            if (no_data !== true) {
+                cmd_stdout(data);
+            }
             out("Command completed successfully");
             if (wait_for_result_msg) {
                 out("\n\nImported service is now starting, please wait about 2 minutes to see results..");
