@@ -634,7 +634,7 @@ def main():
             None
         )
 
-        check_result = dict()
+        check_result = {}
         return_code, check_result['containers'] = mc.check_target_containers()
 
         if parsed.status:
@@ -642,8 +642,8 @@ def main():
             check_commands['docker'] = 'docker info'
             check_commands['rsync'] = 'rsync --version'
 
-            for service in check_commands.keys():
-                rc = mc.check_target_service(check_commands[service])
+            for service, cmd in check_commands.items():
+                rc = mc.check_target_service(cmd)
                 if rc:
                     check_result[service] = 'error'
                     return_code = rc
