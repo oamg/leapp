@@ -4,7 +4,7 @@ from hamcrest import assert_that, equal_to, not_, is_in
 
 
 @then("destroying {container} on {target} should take less than {time_limit:g} seconds")
-def check_destroy_containers(context, container, target, time_limit):
+def check_destroy_container(context, container, target, time_limit):
     """Destroy named container on named VM"""
     claimed_names = getattr(context, "_claimed_names")
     if not claimed_names:

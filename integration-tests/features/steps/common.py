@@ -58,7 +58,8 @@ def migrate_vm_as_macrocontainer(context, source_vm, target_vm, migration_opt=No
     context.migration_target = target_vm
     context.migration_migration_opt = migration_opt
     migrate_app = context.cli_helper.migrate_as_macrocontainer
-    assert_that(migrate_app(source_vm, target_vm, migration_opt), equal_to(0))
+    output = migrate_app(source_vm, target_vm, migration_opt)
+    # TODO: Assert specifics regarding expected output
 
 @then("attempting another migration should fail within {time_limit:g} seconds")
 def repeat_previous_migration(context, time_limit):
@@ -72,6 +73,7 @@ def repeat_previous_migration(context, time_limit):
                                         use_default_identity=True,
                                         expect_failure=True)
     assert_that(output, is_not(equal_to("")))
+    # TODO: Assert specifics regarding expected output
 
 @then('migrating {source_vm} to {target_vm} as "{app_name}" should fail within {time_limit:g} seconds')
 def expect_failed_migration(context, source_vm, target_vm, app_name, time_limit):
@@ -86,6 +88,7 @@ def expect_failed_migration(context, source_vm, target_vm, app_name, time_limit)
                                         use_default_identity=True,
                                         expect_failure=True)
     assert_that(output, is_not(equal_to("")))
+    # TODO: Assert specifics regarding expected output
 
 @then("attempting another migration with forced creation should succeed within {time_limit:g} seconds")
 def force_app_migration(context, time_limit):
@@ -98,6 +101,7 @@ def force_app_migration(context, time_limit):
                                              container_name=app_name,
                                              force_create=True)
     output = helper.check_response_time(cmd_args, time_limit, use_default_identity=True)
+    # TODO: Assert specifics regarding expected output
 
 
 ##############################
