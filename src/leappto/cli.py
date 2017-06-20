@@ -400,9 +400,9 @@ def main():
             ls_storage_directories = 'ls -1 "{}"'.format(storage_dir)
             rc, dirs = self._ssh_sudo_out(ls_storage_directories,
                                           machine_context=self.TARGET)
-            if rc:
-                return rc, []
-            names.extend(dirs.splitlines())
+            # Ignore remote ls failures, as migrate-machine will create the dir if needed
+            if rc == 0:
+                names.extend(dirs.splitlines())
             return 0, sorted(set(names))
 
         def map_ports(self, use_default_port_map=True, forwarded_tcp_ports=None, excluded_tcp_ports=None, print_info=print):
