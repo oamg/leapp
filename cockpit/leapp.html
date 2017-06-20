@@ -293,6 +293,30 @@
             });
         }
 
+        function add_port_entry(source_port, mapped_port, has_tooltip=false) {
+            var tooltip_content = "";
+            if (has_tooltip) {
+                tooltip_content = `data-toggle="tooltip" data-placement="bottom" title="loading..."`;
+            }
+            var element = $("#mapped-ports ul").append(`
+                <li class="checkbox">
+                    <label>
+                        <input type="checkbox" data-target="#mapped-port-${source_port}" checked>
+                        Port
+                        <span class="source-port-font mapped-port-info" ${tooltip_content} data-port="${source_port}">
+                            ${source_port}
+                        </span>
+                    </label>
+                    <span style="font-size: 2em;">&rarr;</span>
+                    <input type="text" size="6" id="mapped-port-${source_port}" value="${mapped_port}"
+                           data-source="${source_port}" data-prev="${mapped_port}"
+                           class="form-control mapped-ports ui-lockable"/>
+                </li>
+            `);
+            add_mapping_handler(element.children("input.mapped-ports"));
+            return element;
+        }
+
         function get_port_mapping() {
             out("Loading default port mapping....");
             var proc = call_leapp(override_identity([
@@ -306,23 +330,7 @@
                     var mapped_port = entry[0];
                     var source_port = entry[1];
                     source_ports.push(source_port);
-                    var element = $("#mapped-ports ul").append(`
-                        <li class="checkbox">
-                            <label>
-                                <input type="checkbox" data-target="#mapped-port-${source_port}" checked>
-                                Port
-                                <span class="source-port-font mapped-port-info" data-toggle="tooltip"
-                                      data-placement="bottom" title="loading..." data-port="${source_port}">
-                                    ${source_port}
-                                </span>
-                            </label>
-                            <span style="font-size: 2em;">&rarr;</span>
-                            <input type="text" size="6" id="mapped-port-${source_port}" value="${mapped_port}"
-                                   data-source="${source_port}" data-prev="${mapped_port}"
-                                   class="form-control mapped-ports ui-lockable"/>
-                        </li>
-                    `);
-                    add_mapping_handler(element.children("input.mapped-ports"));
+                    add_port_entry(source_port, mapped_port, true);
                 });
                 $('.mapped-port-info').tooltip();
                 scan_ports($("#source-address").val(), add_ports_product_info, source_ports, false);
