@@ -22,11 +22,32 @@
             border-left: 2px dashed #ddd;
         }
 
+        input[name=target-ports] {
+            text-align: center;
+            width: auto;
+            display: inline
+        }
+
         input[type=text].mapped-ports {
             margin-left: 10px;
             display: inline-block;
             width: auto;
         }
+
+        label.source-ports {
+             min-width: 11em
+        }
+
+        input[type=text].map-new-port-right {
+            margin-left: 10px;
+            margin-right: 1em;
+        }
+
+        form#map-new-port-form input[type=text]{
+            display: inline;
+            width: auto;
+        }
+
         .source-port-font {
             font-weight: bold;
             color: #398fff;
@@ -114,6 +135,8 @@
         input[type=checkbox] {
             margin-top: 6px;
         }
+
+
     </style>
 </head>
 <body>
@@ -147,9 +170,41 @@
             <div class="col-md-6 col-sm-12">
                 <h3>Externally visible TCP ports</h3>
                 <div class="row">
-                    <div id="mapped-ports" class="col-sm-6">
-                        <ul>
-                        </ul>
+                    <div class="col-sm-6">
+                        <div id="mapped-ports">
+                            <ul id="map-discovered">
+                            </ul>
+                        </div>
+                        <div id="add-new-port">
+                            <button class="btn btn-info ui-lockable" style="margin-left: 5em;" id="map-new-port-show">
+                                Map new port
+                            </button>
+                            <ul id="map-new-port-add-form" class="hidden">
+                                <li class="checkbox form-group">
+                                    <form action="#" id="map-new-port-form">
+                                        <label class="source-ports" id="map-new-port-src-form-group">
+                                            Port
+                                            <input type="text" size="6" name="add_port_src" id="add-port-src"
+                                            class="ui-lockable form-control">
+                                        </label>
+                                        <span style="font-size: 2em;">&rarr;</span>
+
+                                        <div style="display: inline" id="map-new-port-dst-form-group">
+                                            <input type="text" size="6" name="add_port_dst" id="add-port-dst"
+                                            class="map-new-port-right ui-lockable form-control" />
+                                        </div>
+
+                                        <input type="submit" id="confirm-add-port-btn" class="btn btn-primary
+                                        ui-lockable" style="vertical-align: baseline !important" value="&#x2714;">
+
+                                        <button id="cancel-add-port-btn" class="btn btn-default ui-lockable"
+                                        style="vertical-align: baseline !important" type="button">
+                                            &#x2716;
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     <div id="target-ports-field" class="col-sm-6">
                         <h4>Ports already in use:</h4>
@@ -239,6 +294,61 @@
         $("#scan-source-btn").click(function(){
             get_target_ports();
             $(".analyze").fadeIn();
+        });
+
+        $("#map-new-port-show").click(function(){
+            $("#map-new-port-form").find("input[type=text]").val("")
+            $("#map-new-port-form").find("input[type=text]").parent().removeClass("has-error")
+
+            $(this).addClass("hidden")
+            $("#map-new-port-add-form").removeClass("hidden")
+
+            $("#add-port-src").focus()
+        });
+
+        $("#map-new-port-form").submit(function(event){
+            event.preventDefault()
+            $("#map-new-port-form").find("input[type=text]").parent().removeClass("has-error")
+
+            src_element = $("#add-port-src")
+            tgt_element = $("#add-port-dst")
+
+            source_port = parseInt(src_element.val())
+            target_port = parseInt(tgt_element.val())
+
+            if(isNaN(source_port) || isNaN(target_port)){
+                //show error
+                var field
+                var msg
+
+                if(isNaN(source_port)){
+                    field = $("#map-new-port-src-form-group")
+                    msg = "Invalid source port"
+                }
+                else if(isNaN(target_port)){
+                    field = $("#map-new-port-dst-form-group")
+                    msg = "Invalid target port"
+                }
+
+                field.addClass("has-error") 
+                field.find("input").first().focus()
+
+                //showError(msg)
+                console.log(msg)
+            }
+            else {
+                var element = add_port_entry(source_port, target_port)
+                $(element).children("input.mapped-ports").trigger("change");
+
+                $("#map-new-port-show").removeClass("hidden")
+                $("#map-new-port-add-form").addClass("hidden")
+                release_lock_cmd()
+            }
+        });
+
+        $("#cancel-add-port-btn").click(function(){
+            $("#map-new-port-show").removeClass("hidden")
+            $("#map-new-port-add-form").addClass("hidden")
         });
 
         var output = $("#output");
@@ -332,7 +442,7 @@
             }
             var element = $(`
                 <li class="checkbox">
-                    <label>
+                    <label class="source-ports">
                         <input type="checkbox" data-target="#mapped-port-${source_port}" checked>
                         Port
                         <span class="source-port-font mapped-port-info" ${tooltip_content} data-port="${source_port}">
@@ -493,7 +603,7 @@
             let split = data.split(/\r?\n/);
             for (let line of split) {
                 if (line) {
-                    out("> " + line);
+                    out("> " + line)
                 }
             }
         }
