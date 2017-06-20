@@ -184,35 +184,6 @@ def install_client():
     # Ensure private SSH key is only readable by the current user
     os.chmod(_SSH_IDENTITY, 0o600)
 
-@attributes
-class MigrationInfo(object):
-    """Details of local hosts involved in an app migration command
-
-    *local_vm_count*: Total number of local VMs found during migration
-    *source_ip*: host accessible IP address found for source VM
-    *target_ip*: host accessible IP address found for target VM
-    *command_succeeded*: True if the command return code was 0
-    *command_failed*: logical inverse of command_succeeded
-    """
-    local_vm_count = attrib()
-    source_ip = attrib()
-    target_ip = attrib()
-
-    @classmethod
-    def from_vm_list(cls, machines, source_host, target_host):
-        """Build a result given a local VM listing and migration hostnames"""
-        vm_count = len(machines)
-        source_ip = target_ip = None
-        for machine in machines:
-            if machine["hostname"] == source_host:
-                source_ip = machine["ip"][0]
-            if machine["hostname"] == target_host:
-                target_ip = machine["ip"][0]
-            if source_ip is not None and target_ip is not None:
-                break
-        return cls(vm_count, source_ip, target_ip)
-
-
 
 class ClientHelper(object):
     """Test step helper to invoke the LeApp CLI
@@ -223,20 +194,42 @@ class ClientHelper(object):
     def __init__(self, vm_helper):
         self._vm_helper = vm_helper
 
-    def make_migration_command(self, source_vm, target_vm, migration_opt=None):
+    def make_migration_command(self, source_vm, target_vm,
+                               migration_opt=None,
+                               force_create=False,
+                               container_name=None):
         """Get command to recreate source VM as a macrocontainer on given target VM"""
         vm_helper = self._vm_helper
         source_host = vm_helper.get_hostname(source_vm)
         target_host = vm_helper.get_hostname(target_vm)
-        return self._make_redeployment_command(source_host, target_host, migration_opt)
+        return self._make_migration_command(
+            source_host,
+            target_host,
+            migration_opt,
+            force_create,
+            container_name
+        )
 
-    def redeploy_as_macrocontainer(self, source_vm, target_vm, migration_opt=None):
+    def migrate_as_macrocontainer(self, source_vm, target_vm, migration_opt=None):
         """Recreate source VM as a macrocontainer on given target VM"""
         vm_helper = self._vm_helper
         source_host = vm_helper.get_hostname(source_vm)
         target_host = vm_helper.get_hostname(target_vm)
-        self._convert_vm_to_macrocontainer(source_host, target_host, migration_opt)
-        return self._get_migration_host_info(source_host, target_host)
+        return self._convert_vm_to_macrocontainer(
+            source_host,
+            target_host,
+            migration_opt
+        )
+
+    def check_target(self, target_vm, time_limit=10):
+        """Check viability of target VM and report currently unavailable names"""
+        command_output = self.check_response_time(
+            ["check-target", self._vm_helper.get_hostname(target_vm)],
+            time_limit,
+            use_default_identity=True
+        )
+        return command_output.splitlines()
+
 
     def check_response_time(self, cmd_args, time_limit, *,
                             specify_default_user=False,
@@ -353,32 +346,32 @@ class ClientHelper(object):
         return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR))
 
     @classmethod
-    def _make_redeployment_command(cls, source_host, target_host, migration_opt):
+    def _make_migration_command(cls, source_host, target_host, migration_opt,
+                                force_create=False,
+                                container_name=None):
         cmd_args = ["migrate-machine", "--tcp-port", "80:80"]
         if migration_opt == 'rsync':
             cmd_args.append('--use-rsync')
-        cmd_args.extend(["-t", target_host, source_host])
+        if force_create:
+            cmd_args.append('--force-create')
+        if container_name is not None:
+            cmd_args.extend(('--container-name', container_name))
+        cmd_args.extend(("-t", target_host, source_host))
         return cmd_args
 
     @classmethod
     def _convert_vm_to_macrocontainer(cls, source_host, target_host, migration_opt):
         as_sudo = False
-        cmd_args = cls._make_redeployment_command(source_host, target_host, migration_opt)
+        cmd_args = cls._make_migration_command(source_host, target_host, migration_opt)
         if '--use-rsync' in cmd_args:
             as_sudo = True
         result = cls._run_leapp(cmd_args,
                                 add_default_user=True,
                                 add_default_identity=True,
                                 is_migrate=True)
-        msg = "Redeployed {} as macrocontainer on {}"
+        msg = "Migrated {} as macrocontainer on {}"
         print(msg.format(source_host, target_host))
         return result
-
-    @classmethod
-    def _get_migration_host_info(cls, source_host, target_host):
-        leapp_output = cls._run_leapp(["list-machines", "--shallow"])
-        machines = json.loads(leapp_output)["machines"]
-        return MigrationInfo.from_vm_list(machines, source_host, target_host)
 
 
 ##############################
@@ -440,12 +433,12 @@ class RequestsHelper(object):
         return responses
 
     @classmethod
-    def compare_redeployed_response(cls, original_ip, redeployed_ip, *,
+    def compare_migrated_response(cls, original_ip, migrated_ip, *,
                                     tcp_port, status, wait_for_target):
-        """Compare a pre-migration app response with a redeployed response
+        """Compare a pre-migration app response with a post-migration response
 
         Expects an immediate response from the original IP, and allows for
-        a delay before the redeployment target starts returning responses
+        a delay before the migration target starts returning responses
         """
         # Get response from source VM
         original_url = "http://{}:{}".format(original_ip, tcp_port)
@@ -454,11 +447,13 @@ class RequestsHelper(object):
         original_status = original_response.status_code
         assert_that(original_status, equal_to(status), "Original status")
         # Get response from target VM
-        redeployed_url = "http://{}:{}".format(redeployed_ip, tcp_port)
-        redeployed_response = cls.get_response(redeployed_url, wait_for_target)
-        print("Response received from {}".format(redeployed_url))
+        migrated_url = "http://{}:{}".format(migrated_ip, tcp_port)
+        migrated_response = cls.get_response(migrated_url, wait_for_target)
+        print("Response received from {}".format(migrated_url))
         # Compare the responses
-        assert_that(redeployed_response.status_code, equal_to(original_status), "Redeployed status")
+        assert_that(migrated_response.status_code,
+                    equal_to(original_status),
+                    "Post-migration status code didn't match original")
         original_data = original_response.text
-        redeployed_data = redeployed_response.text
-        assert_that(redeployed_data, equal_to(original_data), "Same response")
+        migrated_data = migrated_response.text
+        assert_that(migrated_data, equal_to(original_data), "Same response")

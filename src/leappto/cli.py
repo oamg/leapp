@@ -72,7 +72,7 @@ def _make_argument_parser():
     list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
     check_target_cmd = parser.add_parser('check-target', help='check for claimed names on target container host')
-    destroy_cmd = parser.add_parser('destroy-containers', help='destroy existing containers on virtual machine')
+    destroy_cmd = parser.add_parser('destroy-container', help='destroy named container on virtual machine')
     scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
     list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
     list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
@@ -128,6 +128,11 @@ def _make_argument_parser():
         help='use rsync as backend for filesystem migration, otherwise virt-tar-out'
     )
     migrate_cmd.add_argument('--container-name', '-n', default=None, help='Name of new container created on target host')
+    migrate_cmd.add_argument(
+        '--force-create',
+        action='store_true',
+        help='force creation of new target container, even if one already exists'
+    )
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
 
@@ -135,6 +140,7 @@ def _make_argument_parser():
     _add_identity_options(check_target_cmd)
 
     destroy_cmd.add_argument('target', help='target VM name')
+    destroy_cmd.add_argument('container', help='container to destroy (if it exists)')
     _add_identity_options(destroy_cmd)
 
     scan_ports_cmd.add_argument('address', help='virtual machine address')
@@ -298,7 +304,8 @@ def main():
 
         def _ssh_out(self, cmd, machine_context=None, **kwargs):
             """Capture SSH command output in addition to return code"""
-            child = self._ssh_make_child(cmd, reuse_ssh_conn=False, stdout=PIPE, stderr=PIPE)
+            child = self._ssh_make_child(cmd, machine_context=machine_context,
+                                         reuse_ssh_conn=False, stdout=PIPE, stderr=PIPE)
             output, err_output = child.communicate()
             if err_output:
                 sys.stderr.write(err_output + b"\n")
@@ -311,9 +318,7 @@ def main():
         def get_target_container_name(self):
             if self.container_name:
                 return self.container_name
-
-            name_list = ["container", self.source.hostname]
-            return '_'.join(name_list)
+            return "container_" + self.source.hostname
 
         def _get_container_dir(self):
             container_name = self.get_target_container_name()
@@ -387,13 +392,16 @@ def main():
         def check_target(self):
             storage_dir = MACROCONTAINER_STORAGE_DIR
             ps_containers = 'docker ps -a --format "{{.Names}}"'
-            rc, containers = self._ssh_sudo_out(ps_containers)
+            rc, containers = self._ssh_sudo_out(ps_containers,
+                                                machine_context=self.TARGET)
             if rc:
                 return rc, []
             names = containers.splitlines()
             ls_storage_directories = 'ls -1 "{}"'.format(storage_dir)
-            rc, dirs = self._ssh_sudo_out(ls_storage_directories)
-            if not rc:
+            rc, dirs = self._ssh_sudo_out(ls_storage_directories,
+                                          machine_context=self.TARGET)
+            # Ignore remote ls failures, as migrate-machine will create the dir if needed
+            if rc == 0:
                 names.extend(dirs.splitlines())
             return 0, sorted(set(names))
 
@@ -433,19 +441,16 @@ def main():
                 return -1, None
             return 0, tcp_mapping
 
-        def destroy_containers(self):
+        def destroy_container(self, container_name):
+            """Destroy the specified container (if it exists)"""
             storage_dir = MACROCONTAINER_STORAGE_DIR
             rc, containers = self.check_target()
-            if rc:
+            if rc or container_name not in containers:
                 return rc
-            for c in containers:
-                rc = self._ssh_sudo(
-                    'docker rm -fv {0} 2>/dev/null 1>/dev/null; '
-                    'rm -rf {1}/{0}'.format(c, storage_dir)
-                )
-                if rc:
-                    break
-            return rc
+            return self._ssh_sudo(
+                'docker rm -fv {0} 2>/dev/null 1>/dev/null; '
+                'rm -rf {1}/{0}'.format(container_name, storage_dir)
+            )
 
         def start_container(self, img, init, forwarded_ports=None):
             if forwarded_ports is None:
@@ -552,8 +557,14 @@ def main():
 
             container_name = mc.get_target_container_name()
             if container_name in claimed_names:
-                print("! Container name {} is not available".format(container_name))
-                sys.exit(-10)
+                if not parsed.force_create:
+                    print("! Container name {} is not available".format(container_name))
+                    sys.exit(-10)
+                print_migrate_info('! destroying pre-existing container')
+                destroy_result = mc.destroy_container(container_name)
+                if destroy_result != 0:
+                    print("! Destroying pre-existing container failed")
+                    sys.exit(destroy_result)
 
         port_map_result, tcp_mapping = mc.map_ports(
             use_default_port_map = not parsed.ignore_default_port_map,
@@ -623,7 +634,7 @@ def main():
 
         sys.exit(return_code)
 
-    elif parsed.action == 'destroy-containers':
+    elif parsed.action == 'destroy-container':
         target = parsed.target
 
         lmp = LibvirtMachineProvider()
@@ -642,8 +653,9 @@ def main():
             None
         )
 
-        print('! destroying containers on "{}" VM'.format(target))
-        result = mc.destroy_containers()
+        container_name = parsed.container
+        print('! destroying "{}" on "{}" VM'.format(container_name, target))
+        result = mc.destroy_container(container_name)
         print('! done')
         sys.exit(result)
 

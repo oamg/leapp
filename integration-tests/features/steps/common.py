@@ -1,4 +1,4 @@
-"""Common steps for macrocontainer redeployment testing
+"""Common steps for macrocontainer migration testing
 
 All steps in this file should only assume access to the LeApp CLI client,
 to allow testing of behaviour without the DBus service running.
@@ -46,37 +46,62 @@ def create_local_machines(context, user=None):
 # Leapp commands
 ##############################
 
-@when("{source_vm} is redeployed to {target_vm} as a macrocontainer")
-@when("{source_vm} is redeployed to {target_vm} as a macrocontainer and {migration_opt} is used for fs migration")
-def redeploy_vm_as_macrocontainer(context, source_vm, target_vm, migration_opt=None):
-    """Uses leapp-tool.py to redeploy the given source VM
+@when("{source_vm} is migrated to {target_vm} as a macrocontainer")
+@when("{source_vm} is migrated to {target_vm} as a macrocontainer and {migration_opt} is used for fs migration")
+def migrate_vm_as_macrocontainer(context, source_vm, target_vm, migration_opt=None):
+    """Uses leapp-tool.py to migrate the given source VM
 
     Both *source_vm* and *target_vm* must be named in a previous local
     virtual machine creation table.
     """
-    context.redeployment_source = source_vm
-    context.redeployment_target = target_vm
-    context.redeployment_migration_opt = migration_opt
-    redeploy_app = context.cli_helper.redeploy_as_macrocontainer
-    vm_info = redeploy_app(source_vm, target_vm, migration_opt)
-    assert_that(vm_info.local_vm_count, greater_than(1), "At least 2 local VMs")
-    assert_that(vm_info.source_ip, not_none(), "Valid source IP")
-    assert_that(vm_info.target_ip, not_none(), "Valid target IP")
-    context.redeployment_source_ip = vm_info.source_ip
-    context.redeployment_target_ip = vm_info.target_ip
+    context.migration_source = source_vm
+    context.migration_target = target_vm
+    context.migration_migration_opt = migration_opt
+    migrate_app = context.cli_helper.migrate_as_macrocontainer
+    output = migrate_app(source_vm, target_vm, migration_opt)
+    # TODO: Assert specifics regarding expected output
 
-@then("attempting another redeployment should fail within {time_limit:g} seconds")
-def repeat_previous_redeployment(context, time_limit):
-    """Attempts to repeat a previously executed redeployment command"""
-    source_vm = context.redeployment_source
-    target_vm = context.redeployment_target
-    migration_opt = context.redeployment_migration_opt
+@then("attempting another migration should fail within {time_limit:g} seconds")
+def repeat_previous_migration(context, time_limit):
+    """Attempts to repeat a previously executed migration command"""
+    source_vm = context.migration_source
+    target_vm = context.migration_target
+    migration_opt = context.migration_migration_opt
     helper = context.cli_helper
     cmd_args = helper.make_migration_command(source_vm, target_vm, migration_opt)
     output = helper.check_response_time(cmd_args, time_limit,
                                         use_default_identity=True,
                                         expect_failure=True)
     assert_that(output, is_not(equal_to("")))
+    # TODO: Assert specifics regarding expected output
+
+@then('migrating {source_vm} to {target_vm} as "{app_name}" should fail within {time_limit:g} seconds')
+def expect_failed_migration(context, source_vm, target_vm, app_name, time_limit):
+    context.migration_source = source_vm
+    context.migration_target = target_vm
+    context.migrated_app = app_name
+    context.migration_migration_opt = migration_opt = "rsync"
+    helper = context.cli_helper
+    cmd_args = helper.make_migration_command(source_vm, target_vm, migration_opt,
+                                             container_name=app_name)
+    output = helper.check_response_time(cmd_args, time_limit,
+                                        use_default_identity=True,
+                                        expect_failure=True)
+    assert_that(output, is_not(equal_to("")))
+    # TODO: Assert specifics regarding expected output
+
+@then("attempting another migration with forced creation should succeed within {time_limit:g} seconds")
+def force_app_migration(context, time_limit):
+    source_vm = context.migration_source
+    target_vm = context.migration_target
+    app_name = context.migrated_app
+    migration_opt = context.migration_migration_opt
+    helper = context.cli_helper
+    cmd_args = helper.make_migration_command(source_vm, target_vm, migration_opt,
+                                             container_name=app_name,
+                                             force_create=True)
+    output = helper.check_response_time(cmd_args, time_limit, use_default_identity=True)
+    # TODO: Assert specifics regarding expected output
 
 
 ##############################
@@ -88,15 +113,18 @@ def check_http_responses_match(context, tcp_port, status, time_limit):
     """Checks a macrocontainer response matches the original VM's response
 
     The source and target VM are inferred from the most recent preceding
-    redeployment step.
+    migration step.
     """
-    original_ip = context.redeployment_source_ip
-    redeployed_ip = context.redeployment_target_ip
+    source_vm = context.migration_source
+    target_vm = context.migration_target
+
+    original_ip = context.vm_helper.get_ip_address(source_vm)
+    migrated_ip = context.vm_helper.get_ip_address(target_vm)
     assert_that(original_ip, not_none(), "Valid original IP")
-    assert_that(redeployed_ip, not_none(), "Valid redeployment IP")
-    context.http_helper.compare_redeployed_response(
+    assert_that(migrated_ip, not_none(), "Valid migration IP")
+    context.http_helper.compare_migrated_response(
         original_ip,
-        redeployed_ip,
+        migrated_ip,
         tcp_port=tcp_port,
         status=status,
         wait_for_target=time_limit
