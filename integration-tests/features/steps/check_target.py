@@ -62,12 +62,7 @@ def claim_names_on_target_vm(context, target):
 @then("checking {target} usability should take less than {time_limit:g} seconds")
 def run_check_target(context, target, time_limit):
     """Retrieve claimed names from designated target"""
-    command_output = context.cli_helper.check_response_time(
-        ["check-target", context.vm_helper.get_hostname(target)],
-        time_limit,
-        use_default_identity=True
-    )
-    context._reported_names = command_output.splitlines()
+    context._reported_names = context.cli_helper.check_target(target, time_limit)
 
 @then("all claimed names should be reported exactly once")
 def check_claimed_names(context):

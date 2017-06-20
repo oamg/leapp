@@ -238,6 +238,16 @@ class ClientHelper(object):
         self._convert_vm_to_macrocontainer(source_host, target_host, migration_opt)
         return self._get_migration_host_info(source_host, target_host)
 
+    def check_target(self, target_vm, time_limit=10):
+        """Check viability of target VM and report currently unavailable names"""
+        command_output = self.check_response_time(
+            ["check-target", self._vm_helper.get_hostname(target_vm)],
+            time_limit,
+            use_default_identity=True
+        )
+        return command_output.splitlines()
+
+
     def check_response_time(self, cmd_args, time_limit, *,
                             specify_default_user=False,
                             use_default_identity=False,
