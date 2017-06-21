@@ -1,6 +1,6 @@
 Feature: Redeploy stateless HTTP services
 
-Scenario: HTTP default server page
+Scenario: Migrate between remote hosts using virt-tar-out
    Given the local virtual machines:
          | name       | definition          | ensure_fresh |
          | app-source | centos6-guest-httpd | no           |
@@ -9,7 +9,7 @@ Scenario: HTTP default server page
     Then the HTTP 403 response on port 80 should match within 120 seconds
      And attempting another migration should fail within 10 seconds
 
-Scenario: HTTP default server page - migrated by using rsync
+Scenario: Migrate between remote hosts using rsync
    Given the local virtual machines:
          | name       | definition          | ensure_fresh |
          | app-source | centos6-guest-httpd | no           |
@@ -29,3 +29,13 @@ Scenario: Forced migration overwriting an existing container
    Then migrating app-source to target as "migrated" should fail within 10 seconds
     And attempting another migration with forced creation should succeed within 120 seconds
     And the HTTP 403 response on port 80 should match within 120 seconds
+
+@wip
+Scenario: Importing an application to the current host using rsync & forced creation
+   Given Docker is installed on the testing host
+     And the local virtual machines:
+         | name       | definition          | ensure_fresh |
+         | app-source | centos6-guest-httpd | no           |
+    When app-source is imported as a macrocontainer
+    Then the HTTP 403 response on port 80 should match within 120 seconds
+     And attempting another migration should fail within 10 seconds
