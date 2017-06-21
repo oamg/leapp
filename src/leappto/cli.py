@@ -9,18 +9,17 @@ from pwd import getpwuid
 from subprocess import Popen, PIPE
 from collections import OrderedDict
 from leappto import Machine
-from leappto.driver import LocalDriver
-from leappto.driver.ssh import SSHDriver, SSHConnectionError
-from leappto.providers.libvirt import LibvirtMachineProvider, LibvirtMachine
+from leappto.driver.ssh import SSHConnectionError
+from leappto.providers.libvirt import LibvirtMachineProvider
 from leappto.providers.ssh import SSHMachine
 from leappto.providers.local import LocalMachine
 from leappto.version import __version__
 import os
 import sys
-import socket
 import nmap
 import shlex
 import errno
+import psutil
 
 
 VERSION='leapp-tool {0}'.format(__version__)
@@ -28,6 +27,8 @@ VERSION='leapp-tool {0}'.format(__version__)
 MACROCONTAINER_STORAGE_DIR = '/var/lib/leapp/macrocontainers/'
 SOURCE_APP_EXPORT_DIR = '/var/lib/leapp/source_export/'
 _LOCALHOST='localhost'
+_MIN_PORT = 1
+_MAX_PORT = 65535
 
 # Python 2/3 compatibility
 try:
@@ -424,12 +425,13 @@ def main():
 
                 if use_default_port_map:
                     print_info('! Scanning source ports')
-                    src_ports = _port_scan(src_ip, shallow=True)
+                    src_ports = _port_scan(self.source_addr, shallow=True)
                 else:
                     src_ports = PortList()
 
+
                 print_info('! Scanning target ports')
-                dst_ports = _port_scan(dst_ip, shallow=True)
+                dst_ports = _port_scan(self.target_addr, shallow=True)
 
                 tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
 
@@ -531,9 +533,6 @@ def main():
         if not machine_dst:
             print("Target machine is not ready: " + target)
             sys.exit(-1)
-
-        src_ip = machine_src.ip[0]
-        dst_ip = machine_dst.ip[0]
 
         print_migrate_info('! configuring SSH keys')
 
@@ -773,28 +772,40 @@ class PortMap(PortList):
 
 
 
-def _port_scan(ip, port_range = None, shallow = False):
-    scan_args = '-sS' if shallow else '-sV'
+def _port_scan(ip, port_range=None, shallow=False, force_nmap=False):
 
-    port_scanner = nmap.PortScanner()
-    port_scanner.scan(ip, port_range, arguments=scan_args)
-    scan_info = port_scanner.scaninfo()
+    def _nmap(port_list, ip, port_range=None, shallow=False):
+        if shallow and port_range is None:
+            port_range = '{}-{}'.format(_MIN_PORT, _MAX_PORT)
+        scan_args = '-sS' if shallow else '-sV'
 
-    if scan_info.get('error', False):
-        raise PortScanException(scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error'])
-    elif ip not in port_scanner.all_hosts():
-        raise PortScanException("Machine {} not found".format(ip))
+        port_scanner = nmap.PortScanner()
+        port_scanner.scan(ip, port_range, scan_args)
+        scan_info = port_scanner.scaninfo()
 
-    ports = PortList()
+        if scan_info.get('error', False):
+            raise PortScanException(
+                scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error']
+            )
 
-    for proto in port_scanner[ip].all_protocols():
-        for port in sorted(port_scanner[ip][proto]):
-            if port_scanner[ip][proto][port]['state'] != 'open':
-                continue
+        for proto in port_scanner[ip].all_protocols():
+            for port in sorted(port_scanner[ip][proto]):
+                if port_scanner[ip][proto][port]['state'] in ('open', 'filtered'):
+                    port_list.set_port(proto, port, port_scanner[ip][proto][port])
+        return port_list
 
-            ports.set_port(proto, port, port_scanner[ip][proto][port])
+    def _net_util(port_list):
+        sconns = psutil.net_connections(kind=port_list.PROTO_TCP)
+        for sconn in sconns:
+            addr, port = sconn.laddr
+            if not port_list.has_port(port_list.PROTO_TCP, port):
+                port_list.set_port(port_list.PROTO_TCP, port, {})
+        return port_list
 
-    return ports
+    port_list = PortList()
+    if ip == _LOCALHOST and not force_nmap:
+        return _net_util(port_list)
+    return _nmap(port_list, ip, port_range, shallow)
 
 
 def _port_remap(source_ports, target_ports, user_mapped_ports = PortMap(), user_excluded_ports = PortMap()):
@@ -817,9 +828,6 @@ def _port_remap(source_ports, target_ports, user_mapped_ports = PortMap(), user_
         raise TypeError("User mapped ports must be PortMap")
     if not isinstance(user_excluded_ports, PortList):
         raise TypeError("User excluded ports must be PortMap")
-
-    PORT_MAX = 65535
-
 
     """
         remapped_ports structure:
@@ -870,9 +878,9 @@ def _port_remap(source_ports, target_ports, user_mapped_ports = PortMap(), user_
             if  user_mapped_ports.has_port(protocol, port):
                 target_port = user_mapped_ports.get_port(protocol, port)
 
-            while target_port <= PORT_MAX:
+            while target_port <= _MAX_PORT:
                 if target_ports.has_port(protocol, target_port):
-                    if target_port == PORT_MAX:
+                    if target_port == _MAX_PORT:
                         raise PortCollisionException("Automatic port collision resolve failed, please use --tcp-port SELECTED_TARGET_PORT:{} to solve the issue".format(source_port))
 
                     target_port = target_port + 1
@@ -886,3 +894,6 @@ def _port_remap(source_ports, target_ports, user_mapped_ports = PortMap(), user_
             remapped_ports[protocol].append((target_port, source_port))
 
     return remapped_ports
+
+if __name__ == '__main__':
+    main()
