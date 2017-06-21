@@ -13,7 +13,7 @@ def inspect_machine(driver, shallow):
     cmd = """python -c 'import socket; print(socket.gethostname())'"""
     _, output, _ = driver.exec_command(cmd)
     hostname = output.read().strip()
-    cmd = "bash -c \"/sbin/ip -4 -o addr list | grep -E '(wl(o|p)|e(th|n|m))' | sed 's/.*inet \\([0-9\\.]\\+\\)\\/.*$/\\1/g'\""
+    cmd = "bash -c \"/sbin/ip -4 -o addr list | grep -E '(wl|e(th|n|m))' | sed 's/.*inet \\([0-9\\.]\\+\\)\\/.*$/\\1/g'\""
     _, output, stderr = driver.exec_command(cmd)
     ips = [i.strip() for i in output.read().split('\n') if i.strip()]
     packages = []
@@ -35,5 +35,3 @@ class SSHMachine(Machine):
         ips, hostname, installation = inspect_machine(self._driver, shallow_scan)
         super(SSHMachine, self).__init__(hostname, hostname, ips, 'x86_64', MachineType.SSH, [], hostname,
                                          installation, None)
-
-
