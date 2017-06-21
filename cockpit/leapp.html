@@ -110,6 +110,10 @@
         #target-container-list ul li {
             text-align: center;
         }
+
+        input[type=checkbox] {
+            margin-top: 6px;
+        }
     </style>
 </head>
 <body>
@@ -170,18 +174,30 @@
 
         <div class="row section border-top-dashed analyze">
             <div class="import-info col-xs-12">
-                <div class="row col-xs-12">
+                <div class="col-xs-12">
                     <span class="pull-right">
                         The application will be put into a container and run on this machine.
                     </span>
                 </div>
-                <div class="row col-xs-12">
+                <div class="col-xs-12">
                     <span class="pull-right">The orignal application will stay intact.</span>
                 </div>
             </div>
-            <div class="row col-xs-12">
-                <button translatable="yes" class="btn btn-default btn-primary btn-lg ui-lockable pull-right"
-                        id="import-button" disabled>Import</button>
+            <div class="col-xs-12">
+                <div class="pull-right">
+                    <div class="text-center">
+                        <button translatable="yes" class="col-xs-12 btn btn-default btn-primary btn-lg ui-lockable pull-right"
+                                id="import-button" disabled>Import</button>
+                        <div class="checkbox col-xs-12">
+                            <label data-toggle="tooltip" data-placement="bottom"
+                                   title="If checked, any existing container of the same name will be replaced by this
+                                          application.">
+                                <input type="checkbox" id="force-creation" class="ui-lockable" checked>
+                                Force creation
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="row section">
@@ -406,6 +422,9 @@
 
             if ($("#application-name").val()) {
                 import_args.push("--container-name", $("#application-name").val());
+            }
+            if ($("#force-creation")[0].checked) {
+                import_args.push("--force-create");
             }
 
             //output.empty();
