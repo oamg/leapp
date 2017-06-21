@@ -894,6 +894,3 @@ def _port_remap(source_ports, target_ports, user_mapped_ports = PortMap(), user_
             remapped_ports[protocol].append((target_port, source_port))
 
     return remapped_ports
-
-if __name__ == '__main__':
-    main()
