@@ -1,1 +1,2 @@
 macrocontainer_storage_path: '/var/lib/leapp/macrocontainers/'
+macrocontainer_storage_user: 'vagrant'
