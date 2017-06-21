@@ -18,17 +18,21 @@ of kernel modernization attempts given different starting scenarios.
 Setting up
 ----------
 
-Install `vagrant` and `vagrant-libvirt`: ::
+Install `docker`, `vagrant`, and `vagrant-libvirt`: ::
 
-    sudo dnf install vagrant vagrant-libvirt
+    sudo dnf install docker vagrant vagrant-libvirt
 
-And allow yourself passwordless access to VM management operations: ::
+And allow yourself passwordless access to container and VM management
+operations: ::
 
-    sudo usermod -aG vagrant,libvirt $USER
+    sudo usermod -aG docker,vagrant,libvirt $USER
 
 You will need to log out and back in again, or start a new user
 session with `su $USER`, to get the new group memberships to take
 effect.
+
+Note: running `docker` without `sudo` can bypass audit controls, so if that's
+a potential problem, set up a dedicated system for running the LeApp tests
 
 Install `pipenv` and the `pew` environment management tool: ::
 
@@ -173,7 +177,8 @@ the initial ``Vagrantfile`` for a new VM definition, but can also be beneficial
 when attempting to determine if a test failure may be due to a missing cleanup
 step in the Ansible provisioning playbook.
 
-
+Most test helpers that accept a declared VM name as input also accept
+`"localhost"` to refer to the machine actually running the tests.
 
 Adding new steps to the steps catalog
 -------------------------------------
@@ -190,6 +195,8 @@ available for passing data from test scenarios to the individual step functions.
 
 The following step categories are currently defined:
 
+* `check_target.py`: Steps related specifically to testing the target suitability
+  checks
 * `cockpit_demo.py`: Steps related specifically to testing the demonstration
   Cockpit plugin
 * `destroy_containers.py`: Steps related specifically to the `destroy-container`
