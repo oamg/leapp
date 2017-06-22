@@ -41,6 +41,14 @@ def _run_command(cmd, work_dir=None, ignore_errors=False, as_sudo=False):
             raise
     return output
 
+# assert helper
+def freezer(item):
+    if isinstance(item, list):
+        return frozenset(map(freezer, item))
+    if isinstance(item, dict):
+        return frozenset({freezer(k): freezer(v) for k, v in item.items()}.items())
+    return item
+
 
 ##############################
 # Local VM management
