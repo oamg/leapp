@@ -308,6 +308,11 @@
 
         $("#map-new-port-form").submit(function(event){
             event.preventDefault();
+
+            function validate_port(port){
+                return (port >= MIN_PORT && port <= MAX_PORT)
+            }
+
             $("#map-new-port-form input[type=text]").parent().removeClass("has-error");
 
             var $src_element = $("#add-port-src");
@@ -316,16 +321,15 @@
             source_port = parseInt($src_element.val());
             target_port = parseInt($tgt_element.val());
 
-            if(isNaN(source_port) || isNaN(target_port)){
-                //show error
+            if(!validate_port(source_port) || !validate_port(target_port)){
                 var $field;
                 var msg;
 
-                if(isNaN(source_port)){
+                if(!validate_port(source_port)){
                     $field = $("#map-new-port-src-form-group");
                     msg = "Invalid source port";
                 }
-                else if(isNaN(target_port)){
+                else if(!validate_port(target_port)){
                     $field = $("#map-new-port-dst-form-group");
                     msg = "Invalid target port";
                 }
