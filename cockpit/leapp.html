@@ -414,7 +414,7 @@
                 var changed = $(this);
                 var new_port = parseInt(changed.val(), 10);
                 var dups = $('input.mapped-ports').filter(function(){
-                    return $(this).attr('id') != changed.attr('id') && $(this).val() == changed.val();
+                    return $(this).val() == changed.val() && this != changed[0];
                 });
 
                 var valid = Number.isInteger(new_port)
@@ -447,14 +447,14 @@
             var element = $(`
                 <li class="checkbox">
                     <label class="source-ports">
-                        <input type="checkbox" data-target="#mapped-port-${source_port}" checked>
+                        <input type="checkbox" checked>
                         Port
                         <span class="source-port-font mapped-port-info" ${tooltip_content} data-port="${source_port}">
                             ${source_port}
                         </span>
                     </label>
                     <span style="font-size: 2em;">&rarr;</span>
-                    <input type="text" size="6" id="mapped-port-${source_port}" value="${mapped_port}"
+                    <input type="text" size="6" value="${mapped_port}"
                            data-source="${source_port}" class="form-control mapped-ports ui-lockable"/>
                 </li>
             `);
@@ -521,7 +521,7 @@
 
             var mapped_ports = [];
             $("#mapped-ports ul li label input[type=checkbox]:checked").each(function(i, element) {
-                var target = $($(element).data("target"));
+                var target = $(element).parents("li").find("input.mapped-ports[type=text]")
                 if (target.val()) {
                     mapped_ports.push(target.val() + ":" + target.data("source"));
                 }
