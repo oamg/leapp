@@ -15,6 +15,11 @@ from leappto.providers.ssh import SSHMachine
 from leappto.providers.local import LocalMachine
 from leappto.version import __version__
 from sets import Set
+
+import logging
+import json
+from wowp.actors import FuncActor
+
 import os
 import sys
 import socket
@@ -764,27 +769,112 @@ def main():
         sys.exit(result)
 
     elif parsed.action == 'check-target':
-        target = parsed.target
+                logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
+                            level=logging.CRITICAL,
+                            datefmt='%d/%m/%Y %H:%M:%S')
 
-        lmp = LibvirtMachineProvider()
-        machines = lmp.get_machines()
+        def __get_ssh_option(username, identity):
+            """ Generate SSH options string based on data provided """
+            settings = {
+                'StrictHostKeyChecking': 'no',
+                'PasswordAuthentication': 'no'
+            }
 
-        machine_dst = _find_machine(machines, target)
-        if not machine_dst:
-            print("Target machine is not ready: " + target)
-            sys.exit(-1)
+            if username is not None:
+                if not isinstance(username, str):
+                    raise TypeError("username should be str")
+                settings['User'] = username
 
-        mc = MigrationContext(
-            machine_dst,
-            _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
-            None
-        )
+            if identity is not None:
+                if not isinstance(identity, str):
+                    raise TypeError("identity should be str")
+                settings['IdentityFile'] = identity
 
-        return_code, claimed_names = mc.check_target()
-        for name in sorted(claimed_names):
-            print(name)
+            ssh_opt = ['-o {}={}'.format(k, v) for k, v in settings.items()]
+            logging.debug("LeApp: SSH Options: {}".format(ssh_opt))
+            return ssh_opt
 
-        sys.exit(return_code)
+        def __get_target_machine(target):
+            """ Check if access will be provided by LibVirt, SSH or Local """
+            logging.debug("check provider for {}".format(target))
+            libvirt_provider = LibvirtMachineProvider()
+            for machine in libvirt_provider.get_machines():
+                if machine.hostname == target:
+                    logging.debug("LeApp: {} provided by libvirt"
+                                  .format(target))
+                    return machine
+
+            if target in ('localhost', '127.0.0.1'):
+                logging.debug("LeApp: {} should be accessed as local machine"
+                              .format(target))
+                return LocalMachine(shallow_scan=True)
+
+            try:
+                logging.debug("LeApp: {} should be accessed via SSH"
+                              .format(target))
+                return SSHMachine(target, user='root', shallow_scan=True)
+            except SSHConnectionError as e:
+                logging.warning("LeApp: SSHConnectionError: {}".format(e))
+                return None
+            except Exception as e:
+                logging.warning("LeApp: Exception: {}".format(e))
+                return None
+
+        def __run_command_on_target(cmd, machine, ssh_option):
+            """ Connect if necessary and execute command on target machine """
+            if isinstance(machine, Machine) and machine.is_local:
+                child = Popen(shlex.split(cmd), stdout=PIPE, stderr=PIPE)
+                output, err_output = child.communicate()
+                return child.returncode, output, err_output
+            else:
+                sudo_cmd = "sudo bash -c '{}'".format(cmd)
+                addr = machine.ip[0]
+                ssh_cmd = ['ssh'] + ssh_option + ['-4', addr]
+                ssh_cmd += [sudo_cmd]
+                child = Popen(ssh_cmd, stdout=PIPE, stderr=PIPE)
+                output, err_output = child.communicate()
+                return child.returncode, output, err_output
+
+        ssh_option_actor = FuncActor(__get_ssh_option,
+                                     outports=('ssh_option'))
+        machine_actor = FuncActor(__get_target_machine,
+                                  outports=('target_machine'))
+        run_cmd_actor = FuncActor(__run_command_on_target,
+                                  outports=('rc', 'output', 'err_output'))
+
+        run_cmd_actor.inports['machine'] += machine_actor.outports['target_machine']
+        run_cmd_actor.inports['ssh_option'] += ssh_option_actor.outports['ssh_option']
+
+        wf = run_cmd_actor.get_workflow()
+
+        check_result = {'machine': parsed.target}
+
+        ret = wf(cmd='uname -a',
+                 target=parsed.target,
+                 username=parsed.user,
+                 identity=parsed.identity)
+        check_result['access_check'] = 'OK' if not ret['rc'].pop() else 'ERROR'
+
+        ret = wf(cmd='docker info',
+                 target=parsed.target,
+                 username=parsed.user,
+                 identity=parsed.identity)
+        check_result['docker_check'] = 'OK' if not ret['rc'].pop() else 'ERROR'
+
+        ret = wf(cmd='rsync --version',
+                 target=parsed.target,
+                 username=parsed.user,
+                 identity=parsed.identity)
+        check_result['rsync_check'] = 'OK' if not ret['rc'].pop() else 'ERROR'
+
+        ret = wf(cmd='docker ps -a --format "{{.Names}}"',
+                 target=parsed.target,
+                 username=parsed.user,
+                 identity=parsed.identity)
+        check_result['containers'] = (ret['rc'].pop(), ret['output'].pop())
+
+        print(json.dumps(check_result))
+        sys.exit(0)
 
     elif parsed.action == 'destroy-container':
         target = parsed.target

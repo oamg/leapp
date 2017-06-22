@@ -62,6 +62,9 @@ setup(
         "paramiko",
         "python-nmap==0.6.1",
         "psutil==5.2.2"
+        "wowp",
+        "ipyparallel",
+        "mpi4py",
     ],
 
     # Extras:
