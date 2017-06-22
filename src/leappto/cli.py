@@ -35,7 +35,7 @@ except AttributeError:
     _set_inheritable = None
 
 # Checking for required permissions
-_REQUIRED_GROUPS = ["vagrant", "libvirt"]
+_REQUIRED_GROUPS = ["vagrant"]
 def _user_has_required_permissions():
     """Check user has necessary permissions to reliably run leapp-tool"""
     uid = os.getuid()
