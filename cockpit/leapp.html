@@ -670,6 +670,10 @@
         }
 
         function import_to_host(event) {
+
+            set_lock_cmd();
+            loader.show();
+
             var source = $("#source-address").val();
             var target = "127.0.0.1";
 
@@ -702,6 +706,10 @@
             ctx.log("This can take a while, do not close this page ... ");
             ctx.done(function(){
                 ctx.log("\n\nImported service is now starting, please wait about 2 minutes to see results..");
+            });
+            ctx.then(function() {
+                loader.hide();
+                release_lock_cmd();
             });
         }
 
