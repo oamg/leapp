@@ -6,6 +6,8 @@ to allow testing of behaviour without the DBus service running.
 from behave import given, when, then, step
 from hamcrest import assert_that, equal_to, is_not, not_none, greater_than
 
+import shutil
+
 ##############################
 # Local VM management
 ##############################
@@ -43,6 +45,17 @@ def create_local_machines(context, user=None):
 
 
 ##############################
+# Local container management
+##############################
+
+@given("Docker is installed on the testing host")
+def check_docker_is_installed(context):
+    """Checks for the `docker` command"""
+    if shutil.which("docker") is None:
+        context.scenario.skip("Unable to locate `docker` command")
+
+
+##############################
 # Leapp commands
 ##############################
 
@@ -59,6 +72,21 @@ def migrate_vm_as_macrocontainer(context, source_vm, target_vm, migration_opt=No
     context.migration_migration_opt = migration_opt
     migrate_app = context.cli_helper.migrate_as_macrocontainer
     output = migrate_app(source_vm, target_vm, migration_opt)
+    # TODO: Assert specifics regarding expected output
+
+@when("{source_vm} is imported as a macrocontainer")
+def import_vm_as_macrocontainer(context, source_vm):
+    """Uses leapp-tool.py to migrate the given source VM to the local system
+
+    *source_vm* must be named in a previous local virtual machine creation table.
+    """
+    # For simplicity, always uses rsync and forced creation
+    # (the latter makes it easier to run the tests multiple times locally)
+    context.migration_source = source_vm
+    context.migration_target = target_vm = "localhost"
+    context.migration_migration_opt = migration_opt = "rsync"
+    migrate_app = context.cli_helper.migrate_as_macrocontainer
+    output = migrate_app(source_vm, target_vm, migration_opt, force_create=True)
     # TODO: Assert specifics regarding expected output
 
 @then("attempting another migration should fail within {time_limit:g} seconds")

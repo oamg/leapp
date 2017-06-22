@@ -2,8 +2,8 @@
   file:
     path: '{{ macrocontainer_storage_path }}'
     state: directory
-    owner: vagrant
-    group: vagrant
+    owner: '{{ macrocontainer_storage_user }}'
+    group: '{{ macrocontainer_storage_user }}'
 
   # with_fileglob doesn't work for subdirectories, so use `ls` directly
 - name: Get list of previously migrated macrocontainers

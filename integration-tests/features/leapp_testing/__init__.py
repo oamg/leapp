@@ -59,7 +59,7 @@ class VirtualMachineHelper(object):
     """
 
     def __init__(self):
-        self.machines = {}
+        self.machines = {"localhost": "localhost"}
         self._resource_manager = contextlib.ExitStack()
 
     def ensure_local_vm(self, name, definition, destroy=False, *, as_root=False):
@@ -112,6 +112,8 @@ class VirtualMachineHelper(object):
 
     @classmethod
     def _get_vm_ip_address(cls, hostname):
+        if hostname == "localhost":
+            return "127.0.0.1"
         vm_details = cls._run_vagrant(hostname, "ssh-config")
         for line in vm_details.splitlines():
             __, hostname_line, vm_ip = line.partition("HostName")
@@ -210,7 +212,8 @@ class ClientHelper(object):
             container_name
         )
 
-    def migrate_as_macrocontainer(self, source_vm, target_vm, migration_opt=None):
+    def migrate_as_macrocontainer(self, source_vm, target_vm,
+                                  migration_opt=None, force_create=False):
         """Recreate source VM as a macrocontainer on given target VM"""
         vm_helper = self._vm_helper
         source_host = vm_helper.get_hostname(source_vm)
@@ -218,7 +221,8 @@ class ClientHelper(object):
         return self._convert_vm_to_macrocontainer(
             source_host,
             target_host,
-            migration_opt
+            migration_opt,
+            force_create
         )
 
     def check_target(self, target_vm, time_limit=10):
@@ -360,9 +364,11 @@ class ClientHelper(object):
         return cmd_args
 
     @classmethod
-    def _convert_vm_to_macrocontainer(cls, source_host, target_host, migration_opt):
+    def _convert_vm_to_macrocontainer(cls, source_host, target_host,
+                                      migration_opt, force_create):
         as_sudo = False
-        cmd_args = cls._make_migration_command(source_host, target_host, migration_opt)
+        cmd_args = cls._make_migration_command(source_host, target_host,
+                                               migration_opt, force_create)
         if '--use-rsync' in cmd_args:
             as_sudo = True
         result = cls._run_leapp(cmd_args,
