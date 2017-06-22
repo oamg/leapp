@@ -297,58 +297,58 @@
         });
 
         $("#map-new-port-show").click(function(){
-            $("#map-new-port-form").find("input[type=text]").val("")
-            $("#map-new-port-form").find("input[type=text]").parent().removeClass("has-error")
+            $("#map-new-port-form input[type=text]").val("");
+            $("#map-new-port-form input[type=text]").parent().removeClass("has-error");
 
-            $(this).addClass("hidden")
-            $("#map-new-port-add-form").removeClass("hidden")
+            $(this).addClass("hidden");
+            $("#map-new-port-add-form").removeClass("hidden");
 
-            $("#add-port-src").focus()
+            $("#add-port-src").focus();
         });
 
         $("#map-new-port-form").submit(function(event){
-            event.preventDefault()
-            $("#map-new-port-form").find("input[type=text]").parent().removeClass("has-error")
+            event.preventDefault();
+            $("#map-new-port-form input[type=text]").parent().removeClass("has-error");
 
-            src_element = $("#add-port-src")
-            tgt_element = $("#add-port-dst")
+            var $src_element = $("#add-port-src");
+            var $tgt_element = $("#add-port-dst");
 
-            source_port = parseInt(src_element.val())
-            target_port = parseInt(tgt_element.val())
+            source_port = parseInt($src_element.val());
+            target_port = parseInt($tgt_element.val());
 
             if(isNaN(source_port) || isNaN(target_port)){
                 //show error
-                var field
-                var msg
+                var $field;
+                var msg;
 
                 if(isNaN(source_port)){
-                    field = $("#map-new-port-src-form-group")
-                    msg = "Invalid source port"
+                    $field = $("#map-new-port-src-form-group");
+                    msg = "Invalid source port";
                 }
                 else if(isNaN(target_port)){
-                    field = $("#map-new-port-dst-form-group")
-                    msg = "Invalid target port"
+                    $field = $("#map-new-port-dst-form-group");
+                    msg = "Invalid target port";
                 }
 
-                field.addClass("has-error") 
-                field.find("input").first().focus()
+                $field.addClass("has-error");
+                $field.find("input").first().focus();
 
                 //showError(msg)
-                console.log(msg)
+                console.log(msg);
             }
             else {
-                var element = add_port_entry(source_port, target_port)
+                var element = add_port_entry(source_port, target_port);
                 $(element).children("input.mapped-ports").trigger("change");
 
-                $("#map-new-port-show").removeClass("hidden")
-                $("#map-new-port-add-form").addClass("hidden")
-                release_lock_cmd()
+                $("#map-new-port-show").removeClass("hidden");
+                $("#map-new-port-add-form").addClass("hidden");
+                release_lock_cmd();
             }
         });
 
         $("#cancel-add-port-btn").click(function(){
-            $("#map-new-port-show").removeClass("hidden")
-            $("#map-new-port-add-form").addClass("hidden")
+            $("#map-new-port-show").removeClass("hidden");
+            $("#map-new-port-add-form").addClass("hidden");
         });
 
         var output = $("#output");
