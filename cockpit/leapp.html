@@ -362,7 +362,7 @@
 
             var write_log = function(data) {
                 var stamp = (new Date()).toISOString();
-                data = stamp + ' - ' + data;
+                data = `<div>${stamp} - <span class="progress-line">${data}</span></div>`;
                 var $entry = $log_entry.children("pre")
                 if ($entry.length) {
                     $entry.append(data + '\n');
