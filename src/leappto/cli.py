@@ -15,6 +15,7 @@ from leappto.providers.libvirt import LibvirtMachineProvider, LibvirtMachine
 from leappto.providers.ssh import SSHMachine
 from leappto.providers.local import LocalMachine
 from leappto.version import __version__
+from sets import Set
 import os
 import sys
 import socket
@@ -765,11 +766,18 @@ class PortMap(PortList):
             target = source
 
         # Check if there isn't map colision on right side
-        for _, used_tport in self[protocol].items():
-            if used_tport == target:
+        for used_source, used_tport_set in self[protocol].items():
+            if used_source != source and target in used_tport_set:
                 raise PortCollisionException("Target port {} has been already mapped".format(target))
 
-        super(PortMap, self).set_port(protocol, source, int(target))
+        if not self.has_port(protocol, source):
+            data = Set()
+        else:
+            data = self.get_port(protocol, source)
+
+        data.add(int(target))
+
+        super(PortMap, self).set_port(protocol, source, data)
 
 
 
@@ -841,10 +849,9 @@ def _port_remap(source_ports, target_ports, user_mapped_ports = PortMap(), user_
     ## add user ports which was not discovered
     for protocol in user_mapped_ports.get_protocols():
         for port in user_mapped_ports.list_ports(protocol):
-            user_target_port = user_mapped_ports.get_port(protocol, port)
-
-            if target_ports.has_port(protocol, user_target_port):
-                raise PortCollisionException("Specified mapping is in conflict with target {} -> {}".format(port, user_target_port))
+            for user_target_port in user_mapped_ports.get_port(protocol, port):
+                if target_ports.has_port(protocol, user_target_port):
+                    raise PortCollisionException("Specified mapping is in conflict with target {} -> {}".format(port, user_target_port))
 
             ## Add dummy port to sources
             if not source_ports.has_port(protocol, port):
@@ -864,25 +871,28 @@ def _port_remap(source_ports, target_ports, user_mapped_ports = PortMap(), user_
     ## remap ports
     for protocol in source_ports.get_protocols():
         for port in source_ports.list_ports(protocol):
-            target_port = source_port = port
+            source_port = port
 
             ## remap port if user defined it
             if  user_mapped_ports.has_port(protocol, port):
-                target_port = user_mapped_ports.get_port(protocol, port)
+                user_mapped_target_ports = user_mapped_ports.get_port(protocol, port)
+            else:
+                user_mapped_target_ports = Set([port])
 
-            while target_port <= PORT_MAX:
-                if target_ports.has_port(protocol, target_port):
-                    if target_port == PORT_MAX:
-                        raise PortCollisionException("Automatic port collision resolve failed, please use --tcp-port SELECTED_TARGET_PORT:{} to solve the issue".format(source_port))
+            for target_port in user_mapped_target_ports:
+                while target_port <= PORT_MAX:
+                    if target_ports.has_port(protocol, target_port):
+                        if target_port == PORT_MAX:
+                            raise PortCollisionException("Automatic port collision resolve failed, please use --tcp-port SELECTED_TARGET_PORT:{} to solve the issue".format(source_port))
 
-                    target_port = target_port + 1
-                else:
-                    break
+                        target_port = target_port + 1
+                    else:
+                        break
 
-            ## add newly mapped port to target ports so we can track collisions
-            target_ports.set_port(protocol, target_port)
+                ## add newly mapped port to target ports so we can track collisions
+                target_ports.set_port(protocol, target_port)
 
-            ## create mapping array
-            remapped_ports[protocol].append((target_port, source_port))
+                ## create mapping array
+                remapped_ports[protocol].append((target_port, source_port))
 
     return remapped_ports
