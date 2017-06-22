@@ -464,11 +464,8 @@
             var names = load_target_container_names();
             var target = get_target_ports();
             mapping.then(function(){
-                console.log("Mapping finished");
                 names.then(function(){
-                    console.log("Names finished");
                     target.then(function(){
-                        console.log("target finished");
                         loader.hide();
                         $(".analyze").fadeIn();
                         release_lock_cmd();
