@@ -201,8 +201,6 @@ The following step categories are currently defined:
   Cockpit plugin
 * `destroy_containers.py`: Steps related specifically to the `destroy-container`
   subcommand
-* `list_machines.py`: Steps related specifically to the `list-machines`
-  subcommand
 * `port_inspect.py`: Steps related specifically to the `port-inspect`
   subcommand
 * `remote_authentication.py`: Steps related specifically to testing the
