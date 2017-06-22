@@ -1,7 +1,6 @@
 """Steps to test the "scan-ports" subcommand"""
 from behave import then, when
-from hamcrest import assert_that
-from hamcrest import contains, equal_to
+from hamcrest import assert_that, equal_to, has_items
 from json import loads
 import subprocess
 
@@ -18,7 +17,7 @@ def _assert_discovered_ports(ports, expected_ports):
     print(expected_ports)
     print(ports)
 
-    assert_that(ports, contains(expected_ports))
+    assert_that(ports, has_items(*expected_ports))
 
 
 @then("get list of discovered ports from {vm_source_name} which will be forwarded to {vm_target_name}")
