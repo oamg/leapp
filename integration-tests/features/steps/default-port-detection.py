@@ -1,24 +1,21 @@
 """Steps to test the "scan-ports" subcommand"""
 from behave import then, when
-from hamcrest import assert_that
-from hamcrest import equal_to
+from hamcrest import assert_that, equal_to, has_items
 from json import loads
 import subprocess
 
-def _sort_ports(ports):
-    return sorted(ports, key = lambda x: x[0])
 
 def _get_hostname(context, name):
     return context.vm_helper.get_hostname(name)
 
 def _assert_discovered_ports(ports, expected_ports):
-    ports = _sort_ports(loads(ports))
-    expected_ports = _sort_ports(loads(expected_ports))
+    ports = loads(ports)
+    expected_ports = loads(expected_ports)
 
     print(expected_ports)
     print(ports)
 
-    assert_that(ports, equal_to(expected_ports))
+    assert_that(ports, has_items(*expected_ports))
 
 
 @then("get list of discovered ports from {vm_source_name} which will be forwarded to {vm_target_name}")

@@ -61,6 +61,7 @@ setup(
         "libvirt-python",
         "paramiko",
         "python-nmap==0.6.1",
+        "psutil==5.2.2"
     ],
 
     # Extras:

@@ -32,7 +32,7 @@ class SSHAuthenticationError(SSHError):
 
 
 class ParamikoConnection(object):
-    def __init__(self, hostname, username=None, port=22, strict_host_key=True):
+    def __init__(self, hostname, username=None, port=22, strict_host_key=False):
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self._socket.connect((hostname, port))

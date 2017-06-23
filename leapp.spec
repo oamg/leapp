@@ -50,6 +50,7 @@ Requires:   python-enum34
 Requires:   python2
 Requires:   python2-nmap
 Requires:   python2-paramiko
+Requires:   python2-psutil
 
 %description -n python2-%{name}
 LeApp is a "Minimum Viable Migration" utility that aims to decouple virtualized
