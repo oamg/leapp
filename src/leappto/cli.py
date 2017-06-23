@@ -442,8 +442,8 @@ def main():
                 return -1, None
             return 0, tcp_mapping
 
-
-        def _port_remap(self, source_ports, target_ports, user_mapped_ports = PortMap(), user_excluded_ports = PortMap()):
+        @staticmethod
+        def _port_remap(source_ports, target_ports, user_mapped_ports = None, user_excluded_ports = None):
             """
             :param source_ports:        ports found by the tool on source machine
             :param target_ports:        ports found by the tool on target machine
@@ -455,6 +455,13 @@ def main():
         
             :param user_excluded_ports: excluded port mapping defined by user
             """
+
+            if not user_mapped_ports:
+                user_mapped_ports = PortMap()
+
+            if not user_excluded_ports:
+                user_mapped_ports = PortList()
+
             if not isinstance(source_ports, PortList):
                 raise TypeError("Source ports must be PortMap")
             if not isinstance(target_ports, PortList):
@@ -462,7 +469,7 @@ def main():
             if not isinstance(user_mapped_ports, PortMap):
                 raise TypeError("User mapped ports must be PortMap")
             if not isinstance(user_excluded_ports, PortList):
-                raise TypeError("User excluded ports must be PortMap")
+                raise TypeError("User excluded ports must be PortList")
         
             PORT_MAX = 65535
         
