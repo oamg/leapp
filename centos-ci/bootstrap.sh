@@ -32,7 +32,8 @@ time_since_begining "step1: install yum deps"
 yum install -y tito
 yum-builddep -y leapp.spec
 yum install -y https://copr-be.cloud.fedoraproject.org/results/evilissimo/leapp/epel-7-x86_64/00547360-python-nmap/python2-nmap-0.6.1-1.el7.centos.noarch.rpm
-TERM=xterm tito build --rpm --test -i || (echo "Failed to build leapp RPM" && exit 1)
+TERM=xterm tito build --rpm --test || (echo "Failed to build leapp RPM" && exit 1)
+yum install -y /tmp/tito/noarch/leapp-tool-*.noarch.rpm /tmp/tito/noarch/python2-leapp-*.noarch.rpm /tmp/tito/noarch/leapp-cockpit-*.noarch.rpm
 # TODO: Actually use that install RPM in the integration tests
 
 time_since_begining "step2: build and install RPM"
