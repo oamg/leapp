@@ -46,12 +46,15 @@ Requires:   libvirt-python
 Requires:   nmap
 Requires:   sshpass
 Requires:   python-enum34
+%if 0%{?el7}
+Requires:   python
+Requires:   python-psutil
+Requires:   python-nmap
+Requires:   python-paramiko
+%else
 Requires:   python2
 Requires:   python2-nmap
 Requires:   python2-paramiko
-%if 0%{?el7}
-Requires:   python-psutil
-%else
 Requires:   python2-psutil
 %endif
 
