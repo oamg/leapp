@@ -772,7 +772,7 @@ def main():
         try:
             result["ports"] = _port_scan(parsed.address, parsed.range, parsed.shallow)
 
-        except PortScanException as e:
+        except Exception as e:
             result["status"] = _ERR_STATE
             result["err_msg"] = str(e)
             print(dumps(result, indent=3))
