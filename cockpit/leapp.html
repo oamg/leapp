@@ -685,6 +685,7 @@
             var import_args = ["migrate-machine"]
             import_args.push("--use-rsync");
             override_identity(import_args);
+            import_args.push("--ignore-default-port-map");
             import_args.push("--tcp-port");
             Array.prototype.push.apply(import_args, mapped_ports)
             import_args.push("-t", target, source)
