@@ -31,8 +31,8 @@ time_since_begining "step1: install yum deps"
 # Check the RPM can be built successfully
 yum install -y tito
 yum-builddep -y leapp.spec
-TERM=xterm tito build --rpm --test || (echo "Failed to build leapp RPM" && exit 1)
-# TODO: Actually install the built RPM & use that in the integration tests
+TERM=xterm tito build --rpm --test -i || (echo "Failed to build leapp RPM" && exit 1)
+# TODO: Actually use that install RPM in the integration tests
 
 time_since_begining "step2: build and install RPM"
 
