@@ -787,8 +787,6 @@ def _port_scan(ip, port_range=None, shallow=False, force_nmap=False):
             raise PortScanException(
                 scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error']
             )
-        elif ip not in port_scanner.all_hosts():
-            raise PortScanException("Machine {} not found".format(ip))
 
         for proto in port_scanner[ip].all_protocols():
             for port in sorted(port_scanner[ip][proto]):
