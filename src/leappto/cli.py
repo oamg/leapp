@@ -16,6 +16,7 @@ from leappto.providers.local import LocalMachine
 from leappto.version import __version__
 import os
 import sys
+import socket
 import nmap
 import shlex
 import errno
@@ -772,7 +773,9 @@ class PortMap(PortList):
 
 
 
-def _port_scan(ip, port_range=None, shallow=False, force_nmap=False):
+def _port_scan(ip_or_fqdn, port_range=None, shallow=False, force_nmap=False):
+
+    ip = socket.gethostbyname(ip_or_fqdn)
 
     def _nmap(port_list, ip, port_range=None, shallow=False):
         if shallow and port_range is None:
