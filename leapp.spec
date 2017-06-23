@@ -9,7 +9,6 @@ URL:        https://github.com/leapp-to/prototype
 Source0:    https://github.com/leapp-to/prototype/archive/master.tar.gz
 BuildArch:  noarch
 
-BuildRequires:   jq
 BuildRequires:   python2-devel
 %if 0%{?el7}
 BuildRequires:   python-setuptools
@@ -81,13 +80,15 @@ pushd src
 %py2_build
 popd
 # When installed via RPM, always rely on ssh-agent for key management
-jq -r ".\"tool-path\" = \"/usr/bin/leapp-tool\" | \
-       .\"tool-workdir\" = \"/usr/bin\" | \
-       .version = \"%{version}-%{release}\" | \
-       del(.\"override-user\")" \
-       cockpit/config.json > tmp_config.json && \
-       mv tmp_config.json cockpit/config.json
+cat <<EOF > cockpit/config.json
+{
+    "tool-path": "/usr/bin/leapp-tool",
+    "tool-workdir" = "/usr/bin"
+    "version" = "%{version}-%{release}"
+}
+EOF
 
+cat cockpit/config.json
 
 %install
 /bin/mkdir -p %{buildroot}/%{_datadir}/cockpit/leapp
