@@ -769,7 +769,7 @@ def main():
         sys.exit(result)
 
     elif parsed.action == 'check-target':
-                logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
+        logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                             level=logging.CRITICAL,
                             datefmt='%d/%m/%Y %H:%M:%S')
 
@@ -835,45 +835,77 @@ def main():
                 output, err_output = child.communicate()
                 return child.returncode, output, err_output
 
+        def __check_connectivity(machine, ssh_option):
+            cmd = 'uname -a'
+            rc, out, err = __run_command_on_target(cmd, machine, ssh_option)
+            result = {'rc': rc, 'stdout': out, 'stderr': err}
+            return result
+
+        def __check_docker(machine, ssh_option):
+            cmd = 'docker info'
+            rc, out, err = __run_command_on_target(cmd, machine, ssh_option)
+            result = {'rc': rc, 'stdout': out, 'stderr': err}
+            return result
+
+        def __check_rsync(machine, ssh_option):
+            cmd = 'rsync --version'
+            rc, out, err = __run_command_on_target(cmd, machine, ssh_option)
+            result = {'rc': rc, 'stdout': out, 'stderr': err}
+            return result
+
+        def __check_containers(machine, ssh_option):
+            cmd = 'docker ps -a --format "{{.Names}}"'
+            rc, out, err = __run_command_on_target(cmd, machine, ssh_option)
+            result = {'rc': rc, 'stdout': out, 'stderr': err}
+            return result
+
+        def __show_result(conn_result, docker_result, rsync_result, containers_result):
+            check_result = {}
+            check_result['conn_check'] = 'OK' if not conn_result['rc'] else 'ERROR'
+            check_result['docker_check'] = 'OK' if not docker_result['rc'] else 'ERROR'
+            check_result['rsync_check'] = 'OK' if not rsync_result['rc'] else 'ERROR'
+            check_result['containers'] = (containers_result['rc'], containers_result['stdout'])
+
+            print(json.dumps(check_result))
+
         ssh_option_actor = FuncActor(__get_ssh_option,
                                      outports=('ssh_option'))
         machine_actor = FuncActor(__get_target_machine,
                                   outports=('target_machine'))
-        run_cmd_actor = FuncActor(__run_command_on_target,
-                                  outports=('rc', 'output', 'err_output'))
+        check_conn_actor = FuncActor(__check_connectivity,
+                                     outports=('result'))
+        check_docker_actor = FuncActor(__check_docker,
+                                       outports=('result'))
+        check_rsync_actor = FuncActor(__check_rsync,
+                                      outports=('result'))
+        check_containers_actor = FuncActor(__check_containers,
+                                           outports=('result'))
 
-        run_cmd_actor.inports['machine'] += machine_actor.outports['target_machine']
-        run_cmd_actor.inports['ssh_option'] += ssh_option_actor.outports['ssh_option']
+        show_result_actor = FuncActor(__show_result)
 
-        wf = run_cmd_actor.get_workflow()
+        check_conn_actor.inports['machine'] += machine_actor.outports['target_machine']
+        check_conn_actor.inports['ssh_option'] += ssh_option_actor.outports['ssh_option']
 
-        check_result = {'machine': parsed.target}
+        check_docker_actor.inports['machine'] += machine_actor.outports['target_machine']
+        check_docker_actor.inports['ssh_option'] += ssh_option_actor.outports['ssh_option']
 
-        ret = wf(cmd='uname -a',
-                 target=parsed.target,
-                 username=parsed.user,
-                 identity=parsed.identity)
-        check_result['access_check'] = 'OK' if not ret['rc'].pop() else 'ERROR'
+        check_rsync_actor.inports['machine'] += machine_actor.outports['target_machine']
+        check_rsync_actor.inports['ssh_option'] += ssh_option_actor.outports['ssh_option']
 
-        ret = wf(cmd='docker info',
-                 target=parsed.target,
-                 username=parsed.user,
-                 identity=parsed.identity)
-        check_result['docker_check'] = 'OK' if not ret['rc'].pop() else 'ERROR'
+        check_containers_actor.inports['machine'] += machine_actor.outports['target_machine']
+        check_containers_actor.inports['ssh_option'] += ssh_option_actor.outports['ssh_option']
 
-        ret = wf(cmd='rsync --version',
-                 target=parsed.target,
-                 username=parsed.user,
-                 identity=parsed.identity)
-        check_result['rsync_check'] = 'OK' if not ret['rc'].pop() else 'ERROR'
+        show_result_actor.inports['conn_result'] += check_conn_actor.outports['result']
+        show_result_actor.inports['docker_result'] += check_docker_actor.outports['result']
+        show_result_actor.inports['rsync_result'] += check_rsync_actor.outports['result']
+        show_result_actor.inports['containers_result'] += check_containers_actor.outports['result']
 
-        ret = wf(cmd='docker ps -a --format "{{.Names}}"',
-                 target=parsed.target,
-                 username=parsed.user,
-                 identity=parsed.identity)
-        check_result['containers'] = (ret['rc'].pop(), ret['output'].pop())
+        wf = show_result_actor.get_workflow()
 
-        print(json.dumps(check_result))
+        wf(target=parsed.target,
+           username=parsed.user,
+           identity=parsed.identity)
+
         sys.exit(0)
 
     elif parsed.action == 'destroy-container':
