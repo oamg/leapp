@@ -189,6 +189,11 @@
             text-align: center;
         }
 
+        span.target-collision {
+            color: #c00;
+            border: 1px solid #c00;
+        }
+
         input[type=checkbox] {
             margin-top: 6px;
         }
@@ -332,6 +337,11 @@
         */
         var new_leapp_call = function(command, options) {
             command = [LEAPP_CONF["tool-path"]].concat(command);
+            return new_generic_call(command, options);
+        }
+
+        var new_generic_call = function(command, options) {
+            //command = [LEAPP_CONF["tool-path"]].concat(command);
             var cmd = command.join(" ");
             var $log_entry = $(`
                 <li class="initial closed">
@@ -474,7 +484,23 @@
             });
         });
 
+        function map_new_port_hide_error(){
+            $("#add-new-port-error-box").remove()
+        }
+
+        function map_new_port_show_error($element, message){
+            map_new_port_hide_error()
+            $element.append($(
+                `
+                <div class="has-error" id="add-new-port-error-box">
+                    <span class="help-block">${message}</span>
+                </div>
+                `
+            ))
+        }
+
         $("#map-new-port-show").click(function(){
+            map_new_port_hide_error()
             $("#map-new-port-form input[type=text]").val("");
             $("#map-new-port-form input[type=text]").parent().removeClass("has-error");
 
@@ -515,10 +541,11 @@
                 $field.addClass("has-error");
                 $field.find("input").first().focus();
 
-                //showError(msg)
-                console.log(msg);
+                map_new_port_show_error($("#map-new-port-form").parent(), msg)
             }
             else {
+                map_new_port_hide_error()
+
                 var element = add_port_entry(source_port, target_port);
                 $(element).children("input.mapped-ports").trigger("change");
 
@@ -562,6 +589,22 @@
 
         function add_mapping_handler(element) {
             $(element).on('change', function() {
+                function hide_error_message($element){
+                    $element.removeClass("has-error");
+                    $element.children("span.help-block").remove()
+                }
+
+                function show_error_message($element, message){
+                    hide_error_message($element);
+
+                    $element.addClass("has-error");
+                    $element.append($(`
+                        <span class="help-block">
+                            ${message}
+                        </span>
+                    `));
+                }
+
                 var changed = $(this);
                 var new_port = parseInt(changed.val(), 10);
                 var dups = $('input.mapped-ports').filter(function(){
@@ -577,11 +620,34 @@
 
                 if (!valid) {
                     $("#import-button").attr("disabled", true);
-                    dups.parent("li").addClass("has-error");
-                    changed.parent("li").addClass("has-error");
+
+                    var message;
+
+                    //invalid user input
+                    if(!(Number.isInteger(new_port) && new_port >= MIN_PORT && new_port <= MAX_PORT))
+                        message = "Given port is invalid"
+                    //collision between user defined port and target port
+                    else if(!dups.length) {
+                        message = "Detected collision with target";
+
+                        $("#target-port-" + $(this).data("collision")).removeClass("target-collision")
+
+                        $("#target-port-" + new_port).addClass("target-collision")
+                        $(this).data("collision", new_port);
+                    }
+                    //collision between multuiple user defined ports
+                    else if(dups.length)
+                        message = "Detected port collision";
+
+                    show_error_message(dups.parent("li"), message)
+                    show_error_message(changed.parent("li"), message)
                 } else {
-                    $(this).parent("li").removeClass("has-error");
+                    hide_error_message($(this).parent("li"))
+
                     $("li.has-error input.mapped-ports").trigger("change");
+
+                    //Clear any error highlighting from target ports
+                    $("#target-port-" + $(this).data("collision")).removeClass("target-collision")
                 }
 
                 if ($("#mapped-ports ul li.has-error").length === 0) {
@@ -748,10 +814,18 @@
             var data = JSON.parse(data);
             target_ports = [];
             if (typeof(data.ports.tcp) !== undefined) {
+                $("#target-ports-field").children("span.target-port-selector").remove();
+
                 for (port in data.ports.tcp) {
+                    if(target_ports.length)
+                        $("#target-ports-field").append('<span class="target-port-selector">, </span>');
+
+                    $("#target-ports-field").append(
+                        $(`<span class="target-port-selector" id="target-port-${port}">${port}</span>`)
+                    );
+
                     target_ports.push(port);
                 }
-                $("#target-ports-field span").text(target_ports.join(", "));
             }
         }
 
