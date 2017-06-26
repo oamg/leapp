@@ -30,7 +30,6 @@ Scenario: Forced migration overwriting an existing container
     And attempting another migration with forced creation should succeed within 120 seconds
     And the HTTP 403 response on port 80 should match within 120 seconds
 
-@wip
 Scenario: Importing an application to the current host using rsync & forced creation
    Given Docker is installed on the testing host
      And the local virtual machines:
