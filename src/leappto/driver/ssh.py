@@ -46,13 +46,18 @@ class ParamikoConnection(object):
             raise SSHConnectionError('SSH negotiation failed while connecting to: {}:{}'.format(hostname, port))
 
         try:
+            global_host_keys = paramiko.util.load_host_keys('/etc/ssh/ssh_known_hosts')
+        except IOError:
+            global_host_keys = paramiko.hostkeys.HostKeys()
+
+        try:
             host_keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
         except IOError:
             host_keys = paramiko.hostkeys.HostKeys()
 
         if strict_host_key:
             remote_key = self._transport.get_remote_server_key()
-            if not host_keys.check(hostname, remote_key):
+            if not global_host_keys.check(hostname, remote_key) and not host_keys.check(hostname, remote_key):
                 raise SSHHostKeyError(
                         'Could not find {} - {} in known hosts for host {}'.format(
                             remote_key.get_name(),
