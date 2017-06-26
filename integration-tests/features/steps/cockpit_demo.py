@@ -36,33 +36,27 @@ def visit_demo_page(context, menu_item):
     session.login()
     session.open_plugin(menu_item)
 
-@then("the local VMs should be listed within {time_limit:g} seconds")
-def check_demo_machine_listing(context, time_limit):
-    """Checks contents and response time for the demo plugin"""
+@when("enters {source_vm}'s IP address as the import source")
+def step_impl(context, source_vm):
     session = context.demo_session
-    expected_machines = context.vm_helper.machines
-    expected_hosts = sorted(host for name, host in expected_machines.items())
-    missing = session.list_missing_machines(expected_hosts, time_limit)
-    assert_that(missing, equal_to([]), "Machines missing from listing")
+    source_ip = context.vm_helper.get_ip_address(source_vm)
+    context.demo_user.register_host_key(source_ip)
+    session.enter_source_ip(source_ip)
+    session.wait_for_active_import_button(10)
 
-@when("the demonstration user redeploys {source_vm} to {target_vm}")
-def redeploy_vm_via_plugin(context, source_vm, target_vm):
+@when('clicks the "Import" button')
+def import_app_via_plugin(context):
     session = context.demo_session
-    gethost = context.vm_helper.get_hostname
-    session.start_vm_redeployment(gethost(source_vm), gethost(target_vm))
-    session.wait_for_redeployment_to_start(10)
+    session.start_app_import()
+    session.wait_for_app_import_to_start(10)
 
-@then("the redeployment should be reported as complete within {time_limit:g} seconds")
-def check_demo_redeployment_result(context, time_limit):
+@then("the app import should be reported as complete within {time_limit:g} seconds")
+def check_app_import_result(context, time_limit):
     session = context.demo_session
-    session.wait_for_successful_redeployment(time_limit)
-
+    session.wait_for_successful_app_import(time_limit)
 
 # Helper functions and classes
-# Note: these are all candidates for moving to the `behave` context
-#       where they can use the shared `_run_command` implementation
-#       rather than the local variant below
-
+# Note: these are all candidates for moving into a `leapp_testing` submodule
 import subprocess
 
 def _run_command(*cmd):
@@ -103,7 +97,8 @@ class DemoCockpitUser(object):
         self.BASE_REPO_DIR = context.BASE_REPO_DIR
         context.scenario_cleanup.callback(self.destroy)
         self._ssh_dir = self.USER_DIR / '.ssh'
-        self._user_key_path = str(self._ssh_dir / 'id_rsa')
+        self._user_key = self._ssh_dir / 'id_rsa'
+        self._user_known_hosts = self._ssh_dir / 'known_hosts'
 
     def create(self):
         """Create a local user with required permissions to run the demo"""
@@ -124,19 +119,35 @@ class DemoCockpitUser(object):
         self._setup_ssh_key()
 
     def _setup_ssh_key(self):
-        key_path = self.BASE_REPO_DIR / 'integration-tests' / 'config' / 'leappto_testing_key'
+        key_path = str(self.BASE_REPO_DIR / 'integration-tests' / 'config' / 'leappto_testing_key')
+        user_key = str(self._user_key)
+        # Copy the testing key in as the user's default key
+        _run_command("sudo", "cp", key_path, user_key)
+        _run_command("sudo", "cp", key_path + ".pub", user_key + ".pub")
+
+        # Make sure the user's SSH directory has the correct permissions
         ssh_dir = str(self._ssh_dir)
-        _run_command("sudo", "cp", str(key_path), self._user_key_path)
         _run_command("sudo", "chown", "-R", self.username, ssh_dir)
-        _run_command("sudo", "chmod", "-R", "600", ssh_dir)
+        _run_command("sudo", "chmod", "-R", "u=Xrw,g=u,o=", ssh_dir)
+        _run_command("sudo", "chmod", "600", user_key)
+        _run_command("sudo", "chmod", "644", user_key + ".pub")
+        # Make sure the user's SSH directory has the correct SELinux labels
+        _run_command("sudo", "chcon", "-R", "unconfined_u:object_r:ssh_home_t:s0", ssh_dir)
 
     def _fix_dir_permissions(self, dir_to_fix=None):
         # Ensure all the user's files are owned by the demo user,
         # but can still be accessed via the gid running the test suite
         if dir_to_fix is None:
             dir_to_fix = str(self.USER_DIR)
-        _run_command("chmod", "-R", "770", dir_to_fix)
+        _run_command("chmod", "-R", "u=Xrw,g=u,o=", dir_to_fix)
         _run_command("sudo", "chown", "-R", self.username, dir_to_fix)
+        # Make sure the user's home directory has the correct SELinux labels
+        _run_command("sudo", "chcon", "-R", "unconfined_u:object_r:user_home_t:s0", dir_to_fix)
+
+    def register_host_key(self, source_ip):
+        host_key_info = _run_command("ssh-keyscan", "-t", "rsa", source_ip)
+        with self._user_known_hosts.open("a") as f:
+            f.write(host_key_info)
 
     def install_plugin(self):
         """Install the Cockpit plugin into the demo user's home directory"""
@@ -151,7 +162,7 @@ class DemoCockpitUser(object):
     def destroy(self):
         """Destroy the created test user"""
         # Allow some time for the browser session to fully close down
-        deadline = 1 + time.monotonic()
+        deadline = time.monotonic() + 2
         while time.monotonic() < deadline:
             time.sleep(0.1)
             try:
@@ -161,7 +172,9 @@ class DemoCockpitUser(object):
                     print("User still in use, waiting 100 ms to try again")
                     continue
             break
-        shutil.rmtree(str(self.BASE_DIR))
+        # Ensure the entire temporary tree gets deleted,
+        # even the parts now owned by the temporary user
+        _run_command("sudo", "rm", "-r", str(self.BASE_DIR))
 
 def _ensure_expected_link(symlink, expected_target):
     """Ensure a symlink resolves to the expected target"""
@@ -235,54 +248,92 @@ class DemoCockpitSession(object):
             raise RuntimeError("Must open app plugin before querying content")
         return result
 
-    def list_missing_machines(self, expected_hostnames, time_limit):
-        """Checks the given machine hostnames are visible on the current page
-
-        Returns a list of hostnames that were NOT found on the page
-        """
-        deadline = time.monotonic() + time_limit
-        missing = set(expected_hostnames)
-        # Query the page state every 100 ms until either all expected
-        # machines are listed or the deadline expires
-        option_found = self.plugin_frame.find_by_value
-        while missing and time.monotonic() < deadline:
-            time.sleep(0.1)
-            for hostname in list(missing):
-                if option_found(hostname):
-                    missing.remove(hostname)
-        return sorted(missing)
-
-    def start_vm_redeployment(self, source_hostname, target_hostname):
-        """Selects source & target machine, then starts a migration"""
+    def enter_source_ip(self, source_ip):
+        """Specifies source IP for application to be imported"""
         frame = self.plugin_frame
-        frame.choose("target-machine", target_hostname)
-        frame.choose("source-machine", source_hostname)
-        assert_that(frame.is_text_present("discovered ports", wait_time=20))
-        migrate = frame.find_by_id("migrate-button").first
+        source_address = frame.find_by_id("source-address").first
+        source_address.fill(source_ip)
+        find_apps = frame.find_by_id("scan-source-btn").first
+        find_apps.click()
+
+    def wait_for_active_import_button(self, time_limit):
+        """Waits for the import button to become active (if it isn't already)"""
+        frame = self.plugin_frame
+        import_app = frame.find_by_id("import-button")
         deadline = time.monotonic() + 60
         while time.monotonic() < deadline:
             time.sleep(0.1)
             # TODO: Switch to a supported public API for this check
             #  RFE: https://github.com/cobrateam/splinter/issues/544
-            if migrate._element.is_enabled():
+            if import_app and import_app.first._element.is_enabled():
                 break
         else:
-            assert_that(False, "Selecting source & target failed to allow migration")
-        migrate.click()
+            assert_that(False, "Specifying source failed to allow migration")
+        self.import_app = import_app
 
-    def wait_for_redeployment_to_start(self, time_limit):
+    def start_app_import(self):
+        """Selects source & target machine, then starts a migration"""
+        self.import_app.click()
+
+    def _dump_failed_command(self):
+        """Dump the progress report from a failed web UI command to stdout
+
+        If there is no failed command, dumps all executed commands
+        """
         frame = self.plugin_frame
-        assert_that(frame.is_text_present("Migrating ", wait_time=time_limit),
-                    "Failed to start migration")
+        failure_log = frame.find_by_css("li.failed")
+        if not failure_log:
+            print("No failed commands reported in UI")
+            commands = frame.find_by_css("li.success")
+            for command in commands:
+                line = command.find_by_css("h4")
+                print("UI Command> {}".format(line.text))
+        else:
+            failure = failure_log.first
+            failure.click()
+            print("Last executed command failed")
+            line = failure.find_by_css("h4")
+            print("UI Command> {}".format(line.text))
+            progress_lines = frame.find_by_css("span.progress-line")
+            for line in progress_lines:
+                if line:
+                    print("UI Log> {}".format(line.text))
+        # Uncomment one of these two lines for live debugging of failures
+        # Note: don't check either of these in, as they will hang in CI
+        # input("Press enter to resume execution") # Just browser exploration
+        # import pdb; pdb.set_trace() # Interactive Python debugging
+
+    def wait_for_app_import_to_start(self, time_limit):
+        frame = self.plugin_frame
+        started = frame.is_text_present("migrate-machine ", wait_time=time_limit)
+        if not started:
+            self._dump_failed_command()
+        assert_that(started, "Failed to start migration")
         time.sleep(0.1) # Immediate check for argument parsing failure
-        assert_that(frame.is_text_not_present("Command failed"),
+        already_failed = frame.find_by_css("li.failed")
+        if already_failed:
+            self._dump_failed_command()
+
+        assert_that(not already_failed,
                     "Migration operation immediately reported failure")
 
-    def wait_for_successful_redeployment(self, time_limit):
+    def wait_for_successful_app_import(self, time_limit):
         frame = self.plugin_frame
-        assert_that(frame.is_text_present("> done", wait_time=time_limit),
-                    "Migration failed to complete within time limit")
-        assert_that(frame.is_text_not_present("Command failed"),
-                    "Migration operation reported failure")
-        assert_that(frame.is_text_present("Command completed successfully"),
-                    "Migration operation did not report success")
+        # Wait for the app import operation to complete
+        deadline = time.monotonic() + time_limit
+        running = frame.find_by_css("li.running")
+        while running and time.monotonic() < deadline:
+            time.sleep(0.1)
+            already_failed = frame.find_by_css("li.failed")
+            if already_failed:
+                self._dump_failed_command()
+                assert_that(not already_failed, "Migration operation failed")
+            running = frame.find_by_css("li.running")
+        # Confirm that the import operation succeeded
+        last_command = frame.find_by_css("li.success")[-1]
+        last_command.click()
+        success_message = "Imported service is now starting"
+        succeeded = frame.is_text_present(success_message)
+        if not succeeded:
+            self._dump_failed_command()
+        assert_that(succeeded, "Migration failed to complete within time limit")

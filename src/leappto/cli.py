@@ -14,12 +14,14 @@ from leappto.driver.ssh import SSHDriver, SSHConnectionError
 from leappto.providers.ssh import SSHMachine
 from leappto.providers.local import LocalMachine
 from leappto.version import __version__
+from sets import Set
 import os
 import sys
 import socket
 import nmap
 import shlex
 import errno
+import psutil
 
 
 VERSION='leapp-tool {0}'.format(__version__)
@@ -27,6 +29,8 @@ VERSION='leapp-tool {0}'.format(__version__)
 MACROCONTAINER_STORAGE_DIR = '/var/lib/leapp/macrocontainers/'
 SOURCE_APP_EXPORT_DIR = '/var/lib/leapp/source_export/'
 _LOCALHOST='localhost'
+_MIN_PORT = 1
+_MAX_PORT = 65535
 
 # Python 2/3 compatibility
 try:
@@ -418,14 +422,15 @@ def main():
 
                 if use_default_port_map:
                     print_info('! Scanning source ports')
-                    src_ports = _port_scan(src_ip, shallow=True)
+                    src_ports = _port_scan(self.source_addr, shallow=True)
                 else:
                     src_ports = PortList()
 
-                print_info('! Scanning target ports')
-                dst_ports = _port_scan(dst_ip, shallow=True)
 
-                tcp_mapping = _port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
+                print_info('! Scanning target ports')
+                dst_ports = _port_scan(self.target_addr, shallow=True)
+
+                tcp_mapping = self._port_remap(src_ports, dst_ports, user_mapped_ports, user_excluded_ports)["tcp"]
 
             except PortCollisionException as e:
                 print(str(e))
@@ -434,6 +439,104 @@ def main():
                 print("An error occured during port scan: {}".format(str(e)))
                 return -1, None
             return 0, tcp_mapping
+
+        @staticmethod
+        def _port_remap(source_ports, target_ports, user_mapped_ports = None, user_excluded_ports = None):
+            """
+            :param source_ports:        ports found by the tool on source machine
+            :param target_ports:        ports found by the tool on target machine
+            :param user_mapped_ports:   port mapping defined by user
+                                        if empty, only the default mapping will aaplied
+        
+                                        DEFAULT RE-MAP:
+                                            22/tcp -> 9022/tcp
+        
+            :param user_excluded_ports: excluded port mapping defined by user
+            """
+
+            if not user_mapped_ports:
+                user_mapped_ports = PortMap()
+
+            if not user_excluded_ports:
+                user_mapped_ports = PortList()
+
+            if not isinstance(source_ports, PortList):
+                raise TypeError("Source ports must be PortMap")
+            if not isinstance(target_ports, PortList):
+                raise TypeError("Target ports must be PortMap")
+            if not isinstance(user_mapped_ports, PortMap):
+                raise TypeError("User mapped ports must be PortMap")
+            if not isinstance(user_excluded_ports, PortList):
+                raise TypeError("User excluded ports must be PortList")
+        
+        
+            """
+                remapped_ports structure:
+                {
+                    tcp: [
+                        [ exposed port on target, source_port ],
+                        .
+                        .
+                        .
+                    ]
+                    udp: [ ... ]
+                }
+            """
+            remapped_ports = {
+                PortMap.PROTO_TCP: [],
+                PortMap.PROTO_UDP: []
+            }
+        
+            ## add user ports which was not discovered
+            for protocol in user_mapped_ports.get_protocols():
+                for port in user_mapped_ports.list_ports(protocol):
+                    for user_target_port in user_mapped_ports.get_port(protocol, port):
+                        if target_ports.has_port(protocol, user_target_port):
+                            raise PortCollisionException("Specified mapping is in conflict with target {} -> {}".format(port, user_target_port))
+        
+                    ## Add dummy port to sources
+                    if not source_ports.has_port(protocol, port):
+                        source_ports.set_port(protocol, port)
+        
+            ## Static (default) mapping applied only when the source service is available
+            if not user_mapped_ports.has_tcp_port(22):
+                user_mapped_ports.set_tcp_port(22, 9022)
+        
+            ## remove unwanted ports
+            for protocol in user_excluded_ports.get_protocols():
+                for port in user_excluded_ports.list_ports(protocol):
+                    if source_ports.has_port(protocol, port):
+                        ## remove port from sources
+                        source_ports.unset_port(protocol, port)
+        
+            ## remap ports
+            for protocol in source_ports.get_protocols():
+                for port in source_ports.list_ports(protocol):
+                    source_port = port
+        
+                    ## remap port if user defined it
+                    if  user_mapped_ports.has_port(protocol, port):
+                        user_mapped_target_ports = user_mapped_ports.get_port(protocol, port)
+                    else:
+                        user_mapped_target_ports = Set([port])
+        
+                    for target_port in user_mapped_target_ports:
+                        while target_port <= _MAX_PORT:
+                            if target_ports.has_port(protocol, target_port):
+                                if target_port == _MAX_PORT:
+                                    raise PortCollisionException("Automatic port collision resolve failed, please use --tcp-port SELECTED_TARGET_PORT:{} to solve the issue".format(source_port))
+        
+                                target_port = target_port + 1
+                            else:
+                                break
+        
+                        ## add newly mapped port to target ports so we can track collisions
+                        target_ports.set_port(protocol, target_port)
+        
+                        ## create mapping array
+                        remapped_ports[protocol].append((target_port, source_port))
+        
+            return remapped_ports
 
         def destroy_container(self, container_name):
             """Destroy the specified container (if it exists)"""
@@ -515,9 +618,6 @@ def main():
         if not machine_dst:
             print("Target machine is not ready: " + target)
             sys.exit(-1)
-
-        src_ip = machine_src.ip[0]
-        dst_ip = machine_dst.ip[0]
 
         print_migrate_info('! configuring SSH keys')
 
@@ -651,7 +751,7 @@ def main():
         try:
             result["ports"] = _port_scan(parsed.address, parsed.range, parsed.shallow)
 
-        except PortScanException as e:
+        except Exception as e:
             result["status"] = _ERR_STATE
             result["err_msg"] = str(e)
             print(dumps(result, indent=3))
@@ -743,124 +843,55 @@ class PortMap(PortList):
             target = source
 
         # Check if there isn't map colision on right side
-        for _, used_tport in self[protocol].items():
-            if used_tport == target:
+        for used_source, used_tport_set in self[protocol].items():
+            if used_source != source and target in used_tport_set:
                 raise PortCollisionException("Target port {} has been already mapped".format(target))
 
-        super(PortMap, self).set_port(protocol, source, int(target))
+        if not self.has_port(protocol, source):
+            data = Set()
+        else:
+            data = self.get_port(protocol, source)
+
+        data.add(int(target))
+
+        super(PortMap, self).set_port(protocol, source, data)
 
 
 
-def _port_scan(ip, port_range = None, shallow = False):
-    scan_args = '-sS' if shallow else '-sV'
+def _port_scan(ip_or_fqdn, port_range=None, shallow=False, force_nmap=False):
 
-    port_scanner = nmap.PortScanner()
-    port_scanner.scan(ip, port_range, arguments=scan_args)
-    scan_info = port_scanner.scaninfo()
+    ip = socket.gethostbyname(ip_or_fqdn)
 
-    if scan_info.get('error', False):
-        raise PortScanException(scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error'])
-    elif ip not in port_scanner.all_hosts():
-        raise PortScanException("Machine {} not found".format(ip))
+    def _nmap(port_list, ip, port_range=None, shallow=False):
+        if shallow and port_range is None:
+            port_range = '{}-{}'.format(_MIN_PORT, _MAX_PORT)
+        scan_args = '-sS' if shallow else '-sV'
 
-    ports = PortList()
+        port_scanner = nmap.PortScanner()
+        port_scanner.scan(ip, port_range, scan_args)
+        scan_info = port_scanner.scaninfo()
 
-    for proto in port_scanner[ip].all_protocols():
-        for port in sorted(port_scanner[ip][proto]):
-            if port_scanner[ip][proto][port]['state'] != 'open':
-                continue
+        if scan_info.get('error', False):
+            raise PortScanException(
+                scan_info['error'][0] if isinstance(scan_info['error'], list) else scan_info['error']
+            )
 
-            ports.set_port(proto, port, port_scanner[ip][proto][port])
+        for proto in port_scanner[ip].all_protocols():
+            for port in sorted(port_scanner[ip][proto]):
+                if port_scanner[ip][proto][port]['state'] in ('open', 'filtered'):
+                    port_list.set_port(proto, port, port_scanner[ip][proto][port])
+        return port_list
 
-    return ports
+    def _net_util(port_list):
+        sconns = psutil.net_connections(kind=port_list.PROTO_TCP)
+        for sconn in sconns:
+            addr, port = sconn.laddr
+            if not port_list.has_port(port_list.PROTO_TCP, port):
+                port_list.set_port(port_list.PROTO_TCP, port, {})
+        return port_list
 
+    port_list = PortList()
+    if ip == _LOCALHOST and not force_nmap:
+        return _net_util(port_list)
+    return _nmap(port_list, ip, port_range, shallow)
 
-def _port_remap(source_ports, target_ports, user_mapped_ports = PortMap(), user_excluded_ports = PortMap()):
-    """
-    :param source_ports:        ports found by the tool on source machine
-    :param target_ports:        ports found by the tool on target machine
-    :param user_mapped_ports:   port mapping defined by user
-                                if empty, only the default mapping will aaplied
-
-                                DEFAULT RE-MAP:
-                                    22/tcp -> 9022/tcp
-
-    :param user_excluded_ports: excluded port mapping defined by user
-    """
-    if not isinstance(source_ports, PortList):
-        raise TypeError("Source ports must be PortMap")
-    if not isinstance(target_ports, PortList):
-        raise TypeError("Target ports must be PortMap")
-    if not isinstance(user_mapped_ports, PortMap):
-        raise TypeError("User mapped ports must be PortMap")
-    if not isinstance(user_excluded_ports, PortList):
-        raise TypeError("User excluded ports must be PortMap")
-
-    PORT_MAX = 65535
-
-
-    """
-        remapped_ports structure:
-        {
-            tcp: [
-                [ exposed port on target, source_port ],
-                .
-                .
-                .
-            ]
-            udp: [ ... ]
-        }
-    """
-    remapped_ports = {
-        PortMap.PROTO_TCP: [],
-        PortMap.PROTO_UDP: []
-    }
-
-    ## add user ports which was not discovered
-    for protocol in user_mapped_ports.get_protocols():
-        for port in user_mapped_ports.list_ports(protocol):
-            user_target_port = user_mapped_ports.get_port(protocol, port)
-
-            if target_ports.has_port(protocol, user_target_port):
-                raise PortCollisionException("Specified mapping is in conflict with target {} -> {}".format(port, user_target_port))
-
-            ## Add dummy port to sources
-            if not source_ports.has_port(protocol, port):
-                source_ports.set_port(protocol, port)
-
-    ## Static (default) mapping applied only when the source service is available
-    if not user_mapped_ports.has_tcp_port(22):
-        user_mapped_ports.set_tcp_port(22, 9022)
-
-    ## remove unwanted ports
-    for protocol in user_excluded_ports.get_protocols():
-        for port in user_excluded_ports.list_ports(protocol):
-            if source_ports.has_port(protocol, port):
-                ## remove port from sources
-                source_ports.unset_port(protocol, port)
-
-    ## remap ports
-    for protocol in source_ports.get_protocols():
-        for port in source_ports.list_ports(protocol):
-            target_port = source_port = port
-
-            ## remap port if user defined it
-            if  user_mapped_ports.has_port(protocol, port):
-                target_port = user_mapped_ports.get_port(protocol, port)
-
-            while target_port <= PORT_MAX:
-                if target_ports.has_port(protocol, target_port):
-                    if target_port == PORT_MAX:
-                        raise PortCollisionException("Automatic port collision resolve failed, please use --tcp-port SELECTED_TARGET_PORT:{} to solve the issue".format(source_port))
-
-                    target_port = target_port + 1
-                else:
-                    break
-
-            ## add newly mapped port to target ports so we can track collisions
-            target_ports.set_port(protocol, target_port)
-
-            ## create mapping array
-            remapped_ports[protocol].append((target_port, source_port))
-
-    return remapped_ports

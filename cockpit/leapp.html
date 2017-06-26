@@ -24,11 +24,30 @@
 
         input[name=target-ports] {
             text-align: center;
+            width: auto;
+            display: inline
         }
 
         input[type=text].mapped-ports {
             margin-left: 10px;
+            display: inline-block;
+            width: auto;
         }
+
+        label.source-ports {
+             min-width: 11em
+        }
+
+        input[type=text].map-new-port-right {
+            margin-left: 10px;
+            margin-right: 1em;
+        }
+
+        form#map-new-port-form input[type=text]{
+            display: inline;
+            width: auto;
+        }
+
         .source-port-font {
             font-weight: bold;
             color: #398fff;
@@ -71,6 +90,14 @@
             margin-top: 10px;
         }
 
+        .leapp-progress {
+            padding: 9.5px;
+            margin: 0 0 10px;
+            background-color: #fafafa;
+            border: 1px solid #ccc;
+            border-radius: 1px;
+        }
+
         .leapp-progress h2 {
             margin: 0px;
             padding: 0px;
@@ -78,12 +105,61 @@
             text-align: center;
         }
 
-        .leapp-progress #output {
-            margin: -20px 20px 0 20px;
-        }
-
         .leapp-progress #output div {
             font-weight: bolder;
+        }
+
+        ul#output {
+            padding: 10px;
+            margin-bottom: 0px;
+        }
+
+        ul#output li > pre {
+            border: 0px;
+            margin: 7px;
+        }
+        ul#output li {
+            border-bottom: 1px dashed #ccc;
+        }
+
+        ul#output li:last-child {
+            border: none;
+        }
+        ul#output li:before {
+            content: "\f107";
+            font-family: FontAwesome;
+            margin-right: 5px;
+            vertical-align: 0;
+        }
+
+        ul#output li.closed:before {
+            content: "\f105";
+            margin-left: 2px;
+            margin-right: 7px;
+        }
+
+        ul#output li.closed pre {
+            display: none;
+        }
+
+        ul#output li h4 {
+            cursor: pointer;
+            font-weight: bolder;
+            color: #398fff;
+            font-size: 13px;
+            display: inline-block;
+        }
+
+        ul#output li h4:hover {
+            text-decoration: underline;
+        }
+
+        ul#output li.success h4 {
+            color: #333;
+        }
+
+        ul#output li.failed h4 {
+            color: #f00;
         }
 
         .leapp .section {
@@ -112,6 +188,12 @@
         #target-container-list ul li {
             text-align: center;
         }
+
+        input[type=checkbox] {
+            margin-top: 6px;
+        }
+
+
     </style>
 </head>
 <body>
@@ -145,13 +227,41 @@
             <div class="col-md-6 col-sm-12">
                 <h3>Externally visible TCP ports</h3>
                 <div class="row">
-                    <div id="source-ports" class="hidden col-sm-6">
-                        <ul>
-                        </ul>
-                    </div>
-                    <div id="mapped-ports" class="col-sm-6">
-                        <ul>
-                        </ul>
+                    <div class="col-sm-6">
+                        <div id="mapped-ports">
+                            <ul id="map-discovered">
+                            </ul>
+                        </div>
+                        <div id="add-new-port">
+                            <button class="btn btn-info ui-lockable" style="margin-left: 5em;" id="map-new-port-show">
+                                Map new port
+                            </button>
+                            <ul id="map-new-port-add-form" class="hidden">
+                                <li class="checkbox form-group">
+                                    <form action="#" id="map-new-port-form">
+                                        <label class="source-ports" id="map-new-port-src-form-group">
+                                            Port
+                                            <input type="text" size="6" name="add_port_src" id="add-port-src"
+                                            class="ui-lockable form-control">
+                                        </label>
+                                        <span style="font-size: 2em;">&rarr;</span>
+
+                                        <div style="display: inline" id="map-new-port-dst-form-group">
+                                            <input type="text" size="6" name="add_port_dst" id="add-port-dst"
+                                            class="map-new-port-right ui-lockable form-control" />
+                                        </div>
+
+                                        <input type="submit" id="confirm-add-port-btn" class="btn btn-primary
+                                        ui-lockable" style="vertical-align: baseline !important" value="&#x2714;">
+
+                                        <button id="cancel-add-port-btn" class="btn btn-default ui-lockable"
+                                        style="vertical-align: baseline !important" type="button">
+                                            &#x2716;
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     <div id="target-ports-field" class="col-sm-6">
                         <h4>Ports already in use:</h4>
@@ -176,48 +286,169 @@
 
         <div class="row section border-top-dashed analyze">
             <div class="import-info col-xs-12">
-                <div class="row col-xs-12">
+                <div class="col-xs-12">
                     <span class="pull-right">
                         The application will be put into a container and run on this machine.
                     </span>
                 </div>
-                <div class="row col-xs-12">
+                <div class="col-xs-12">
                     <span class="pull-right">The orignal application will stay intact.</span>
                 </div>
             </div>
-            <div class="row col-xs-12">
-                <button translatable="yes" class="btn btn-default btn-primary btn-lg ui-lockable pull-right"
-                        id="import-button" disabled>Import</button>
+            <div class="col-xs-12">
+                <div class="pull-right">
+                    <div class="text-center">
+                        <button translatable="yes" class="col-xs-12 btn btn-default btn-primary btn-lg ui-lockable pull-right"
+                                id="import-button" disabled>Import</button>
+                        <div class="checkbox col-xs-12">
+                            <label data-toggle="tooltip" data-placement="bottom"
+                                   title="If checked, any existing container of the same name will be replaced by this
+                                          application.">
+                                <input type="checkbox" id="force-creation" class="ui-lockable" checked>
+                                Force creation
+                            </label>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="row section">
             <div class="col-sm-12">
-                <pre class="leapp-progress" style="display: none;">
+                <div class="leapp-progress" style="display: none;">
                     <h2>Progress</h2>
-                    <div id="output"></div>
-                </pre>
+                    <ul id="output">
+                    </ul>
+                </div>
             </div>
         </div>
         <div>
             <center id="leapp-version"></center>
         </div>
     </div>
-
     <script>
+        /* options: {
+            log_stdout: true
+           }
+        */
+        var new_leapp_call = function(command, options) {
+            command = [LEAPP_CONF["tool-path"]].concat(command);
+            var cmd = command.join(" ");
+            var $log_entry = $(`
+                <li class="initial closed">
+                    <h4>Executing: ${cmd}</h4>
+                </li>
+            `);
+
+            $log_entry.children("h4").click(function(){
+                $log_entry.toggleClass("closed");
+            });
+
+            $("#output").append($log_entry);
+            var state = 'initial';
+            var output = '';
+            var instance = null;
+            var proc = null;
+            var handlers = {
+                done: [],
+                fail: [],
+                then: [],
+            };
+            var append_cb = function(to) {
+                return function(cb) {
+                    to.push(cb);
+                    return instance;
+                }
+            };
+
+            var write_log = function(data) {
+                var stamp = (new Date()).toISOString();
+                data = `<div>${stamp} - <span class="progress-line">${data}</span></div>`;
+                var $entry = $log_entry.children("pre")
+                if ($entry.length) {
+                    $entry.append(data + '\n');
+                } else {
+                    $log_entry.append($(`<pre>${data}\n</pre>`));
+                }
+                $(".leapp-progress").fadeIn();
+            };
+
+            var update_state = function(new_state) {
+                $log_entry.removeClass(state).addClass(new_state);
+                state = new_state;
+            };
+
+            var process_output = function(data, force) {
+                // log_stdout default = true so we only do NOT log if it explicitly is set to false
+                if (force || (!options || options.log_stdout !== false)) {
+                    for (let line of data.split(/\r?\n/)) {
+                        write_log('> ' + line);
+                    }
+                }
+            };
+
+            return instance = {
+                run: function() {
+                    if (proc == null) {
+                        update_state('running');
+                        proc = cockpit.spawn(command, {
+                            directory: LEAPP_CONF["tool-workdir"],
+                            environ: ["SSH_AUTH_SOCK=" + AGENT_AUTH_SOCK],
+                            err: 'out',
+                            superuser: 'require',
+                        });
+                        proc.done(function(data) {
+                            update_state('success');
+                            process_output(data);
+                            output += data;
+                            write_log("Command completed successfully");
+                            instance.done = function(f) { f(output); };
+                            instance.then = function(f) { f(); };
+                            handlers.done.forEach(function(e) { e(output); });
+                            handlers.then.forEach(function(e) { e(output); });
+                        });
+                        proc.fail(function(err, data) {
+                            update_state('failed');
+                            output += data;
+                            process_output(output, true);
+                            write_log(`Command failed with status ${err.exit_status}!`);
+                            instance.fail = function(f) { f(output); };
+                            instance.then = function(f) { f(); };
+                            handlers.fail.forEach(function(e) { e(output); });
+                            handlers.then.forEach(function(e) { e(output); });
+                        });
+                        proc.stream(function(data) {
+                            output += data;
+                            process_output(data);
+                        });
+                    }
+                    return instance;
+                },
+                log: write_log,
+                done: append_cb(handlers.done),
+                fail: append_cb(handlers.fail),
+                then: append_cb(handlers.then),
+
+                state: function() { return state; },
+                command: function() { return command; },
+                options: function() { return options; },
+            };
+        }
+    </script>
+    <script>
+        const MIN_PORT = 1;
+        const MAX_PORT = 65535;
+
+        var target_ports = [];
+
         var AGENT_AUTH_SOCK='';
         cockpit.spawn(['/bin/bash', '-c', 'echo $SSH_AUTH_SOCK']).done(function(e){
             AGENT_AUTH_SOCK = (e || '').trim();
         });
 
-        function scan_source() {
-            scan_ports($('#source-address').val(), callback, ports=null, shallow=true);
-        }
-
         $(function () {
           $('.analyze').hide();
           $('[data-toggle="tooltip"]').tooltip()
         });
-
 
         // Handle enter key press in the ip/fqdn field and submit
         $("#source-address").keypress(function(e) {
@@ -227,20 +458,86 @@
         });
 
         $("#scan-source-btn").click(function(){
-            get_target_ports();
-            $(".analyze").fadeIn();
+            set_lock_cmd();
+            loader.show();
+            var mapping = get_port_mapping();
+            var names = load_target_container_names();
+            var target = get_target_ports();
+            mapping.then(function(){
+                names.then(function(){
+                    target.then(function(){
+                        loader.hide();
+                        $(".analyze").fadeIn();
+                        release_lock_cmd();
+                    });
+                });
+            });
+        });
+
+        $("#map-new-port-show").click(function(){
+            $("#map-new-port-form input[type=text]").val("");
+            $("#map-new-port-form input[type=text]").parent().removeClass("has-error");
+
+            $(this).addClass("hidden");
+            $("#map-new-port-add-form").removeClass("hidden");
+
+            $("#add-port-src").focus();
+        });
+
+        $("#map-new-port-form").submit(function(event){
+            event.preventDefault();
+
+            function validate_port(port){
+                return (port >= MIN_PORT && port <= MAX_PORT)
+            }
+
+            $("#map-new-port-form input[type=text]").parent().removeClass("has-error");
+
+            var $src_element = $("#add-port-src");
+            var $tgt_element = $("#add-port-dst");
+
+            source_port = parseInt($src_element.val());
+            target_port = parseInt($tgt_element.val());
+
+            if(!validate_port(source_port) || !validate_port(target_port)){
+                var $field;
+                var msg;
+
+                if(!validate_port(source_port)){
+                    $field = $("#map-new-port-src-form-group");
+                    msg = "Invalid source port";
+                }
+                else if(!validate_port(target_port)){
+                    $field = $("#map-new-port-dst-form-group");
+                    msg = "Invalid target port";
+                }
+
+                $field.addClass("has-error");
+                $field.find("input").first().focus();
+
+                //showError(msg)
+                console.log(msg);
+            }
+            else {
+                var element = add_port_entry(source_port, target_port);
+                $(element).children("input.mapped-ports").trigger("change");
+
+                $("#map-new-port-show").removeClass("hidden");
+                $("#map-new-port-add-form").addClass("hidden");
+                release_lock_cmd();
+            }
+        });
+
+        $("#cancel-add-port-btn").click(function(){
+            $("#map-new-port-show").removeClass("hidden");
+            $("#map-new-port-add-form").addClass("hidden");
         });
 
         var output = $("#output");
         var loader = $("#loader");
         loader.hide();
-        // flag to show "wait for result" message after command exc - must be removed after summit !
-        var wait_for_result_msg = false;
 
         $("#import-button").on("click", import_to_host);
-
-        var target_ports = null;
-
 
         $(document).ready(function() {
             // First load the configuration and then start running all other tasks
@@ -263,33 +560,84 @@
             $(".ui-lockable").removeAttr("disabled");
         }
 
-        function out(line, is_command) {
-            $(".leapp-progress").fadeIn();
-            var stamp = (new Date()).toISOString();
-            var style = '';
-            if (is_command === true) {
-                style += 'color: #000;';
-            }
-            output.append(`<div>${stamp} - <span style="${style}">${line}</span></div>`);
+        function add_mapping_handler(element) {
+            $(element).on('change', function() {
+                var changed = $(this);
+                var new_port = parseInt(changed.val(), 10);
+                var dups = $('input.mapped-ports').filter(function(){
+                    return $(this).val() == changed.val() && this != changed[0];
+                });
+
+                var valid = Number.isInteger(new_port)
+                    && target_ports.indexOf(changed.val()) == -1
+                    && new_port >= MIN_PORT
+                    && new_port <= MAX_PORT
+                    && dups.length == 0
+                ;
+
+                if (!valid) {
+                    $("#import-button").attr("disabled", true);
+                    dups.parent("li").addClass("has-error");
+                    changed.parent("li").addClass("has-error");
+                } else {
+                    $(this).parent("li").removeClass("has-error");
+                    $("li.has-error input.mapped-ports").trigger("change");
+                }
+
+                if ($("#mapped-ports ul li.has-error").length === 0) {
+                    $("#import-button").removeAttr("disabled");
+                }
+            });
         }
 
-        function call_leapp(cmd_args) {
-            set_lock_cmd();
-            var cmd_line = [LEAPP_CONF["tool-path"]].concat(cmd_args);
-            out(cmd_line.join(' '), true);
-            return cockpit.spawn(
-                cmd_line,
-                {
-                    "directory": LEAPP_CONF["tool-workdir"],
-                    "environ": ["SSH_AUTH_SOCK=" + AGENT_AUTH_SOCK],
-                    "superuser": "required",
-                    "err": "out",
-                }
-            );
+        function add_port_entry(source_port, mapped_port, has_tooltip=false) {
+            var tooltip_content = "";
+            if (has_tooltip) {
+                tooltip_content = `data-toggle="tooltip" data-placement="bottom" title="loading..."`;
+            }
+            var element = $(`
+                <li class="checkbox">
+                    <label class="source-ports">
+                        <input type="checkbox" checked>
+                        Port
+                        <span class="source-port-font mapped-port-info" ${tooltip_content} data-port="${source_port}">
+                            ${source_port}
+                        </span>
+                    </label>
+                    <span style="font-size: 2em;">&rarr;</span>
+                    <input type="text" size="6" value="${mapped_port}"
+                           data-source="${source_port}" class="form-control mapped-ports ui-lockable"/>
+                </li>
+            `);
+            $("#mapped-ports ul").append(element);
+            add_mapping_handler(element.children("input.mapped-ports"));
+            return element;
+        }
+
+        function get_port_mapping() {
+            var ctx = new_leapp_call(
+                override_identity(["migrate-machine", "-p", "--use-rsync", "-t", "127.0.0.1",
+                                  $("#source-address").val()]));
+
+            ctx.log("Loading default port mapping....");
+            ctx.done(function(data){
+                var mapping = JSON.parse(data);
+                var source_ports = [];
+                $("#mapped-ports ul li").remove();
+                mapping.forEach(function(entry) {
+                    var mapped_port = entry[0];
+                    var source_port = entry[1];
+                    source_ports.push(source_port);
+                    add_port_entry(source_port, mapped_port, true);
+                });
+                $('.mapped-port-info').tooltip();
+                scan_ports($("#source-address").val(), add_ports_product_info, source_ports, false);
+            });
+            ctx.run();
+            return ctx;
         }
 
         function set_app_list(args) {
-            cmd_success(args);
             $("#target-container-list ul li").remove();
             $("#target-container-list").hide();
             var containers = args.split('\n');
@@ -299,13 +647,14 @@
             if (containers.length > 0) {
                 $("#target-container-list").fadeIn();
             }
-            scan_ports($("#source-address").val(), get_source_ports, null, true);
         }
 
         function load_target_container_names() {
-            var proc = call_leapp(["check-target", "127.0.0.1"]);
-            proc.done(set_app_list);
-            proc.fail(cmd_fail);
+            var ctx = new_leapp_call(["check-target", "127.0.0.1"]);
+            ctx.log("Loading used applications names from the target...");
+            ctx.done(set_app_list);
+            ctx.run();
+            return ctx;
         }
 
         function override_identity(cmd_args) {
@@ -314,23 +663,29 @@
                 cmd_args.push("--target-user", LEAPP_CONF["override-username"])
                 cmd_args.push("--source-user", LEAPP_CONF["override-username"])
             }
+            return cmd_args;
         }
 
         function import_to_host(event) {
-            wait_for_result_msg = true;
+
+            set_lock_cmd();
+            loader.show();
 
             var source = $("#source-address").val();
             var target = "127.0.0.1";
 
-            var mapped_ports = $("input.source-ports:checked").map(function() {
-                var target_port = $("#port-mapping .mapped-ports input[name=" + this.value + "]").val();
-                if (target_port)
-                    return target_port + ':' + this.value;  // host:container
-            }).toArray();
+            var mapped_ports = [];
+            $("#mapped-ports ul li label input[type=checkbox]:checked").each(function(i, element) {
+                var target = $(element).parents("li").find("input.mapped-ports[type=text]")
+                if (target.val()) {
+                    mapped_ports.push(target.val() + ":" + target.data("source"));
+                }
+            });
 
             var import_args = ["migrate-machine"]
             import_args.push("--use-rsync");
             override_identity(import_args);
+            import_args.push("--ignore-default-port-map");
             import_args.push("--tcp-port");
             Array.prototype.push.apply(import_args, mapped_ports)
             import_args.push("-t", target, source)
@@ -338,21 +693,25 @@
             if ($("#application-name").val()) {
                 import_args.push("--container-name", $("#application-name").val());
             }
+            if ($("#force-creation")[0].checked) {
+                import_args.push("--force-create");
+            }
 
             //output.empty();
-            var proc = call_leapp(import_args);
-
-            proc.done(cmd_success);
-            proc.fail(cmd_fail);
-            proc.stream(cmd_stdout);
-
-            out(`Migrating ${source} to ${target}`);
-            out(`This can take a while, do not close this page ... `);
-            loader.show();
+            var ctx = new_leapp_call(import_args);
+            ctx.log(`Migrating ${source} to ${target}`);
+            ctx.run();
+            ctx.log("This can take a while, do not close this page ... ");
+            ctx.done(function(){
+                ctx.log("\n\nImported service is now starting, please wait about 2 minutes to see results..");
+            });
+            ctx.then(function() {
+                loader.hide();
+                release_lock_cmd();
+            });
         }
 
         function scan_ports(ip_addr, callback, ports=null, shallow=false) {
-
             var scan_args = ['port-inspect', ip_addr];
             if (ports !== null) {
                 scan_args.push('--range', ports);
@@ -360,50 +719,18 @@
             if (shallow) {
                 scan_args.push('--shallow');
             }
-            //output.empty();
-            var proc = call_leapp(scan_args);
-            proc.done(callback);
-            proc.fail(cmd_fail);
-
-            out(`Scanning ports on ${ip_addr}`);
-            loader.show();
-        }
-
-        function get_source_ports(data) {
-            $("#source-ports ul li").remove();
-            $("#mapped-ports ul li").remove();
-            var data = JSON.parse(data);
-            // get all protocols not only tcp
-            if (typeof(data.ports.tcp) !== undefined) {
-                for (port in data.ports.tcp) {
-                    $("#source-ports ul").append(`
-                        <li>
-                            <input type="checkbox" name="${port}" value="${port}"
-                            checked="checked" class="source-ports" />
-                            Port: <span class="source-port-font">${port}</span> - used by: ${data.ports.tcp[port].name}
-                            <span class="service-info"></span>
-                        </li>
-                    `)
-                }
-            }
-
-            let source_ip = $("#source-address").val();
-            let source_ports = $("input.source-ports:checked").map(function() {
-                return this.value;
-            }).toArray();
-            source_ports = source_ports.filter(function(value, index){ return this.indexOf(value) == index },
-                                               source_ports);
-            map_target_ports();
-            scan_ports(source_ip, show_source_products_info, source_ports);
-            out("Getting info about products which are listening on discovered ports");
+            var ctx = new_leapp_call(scan_args);
+            ctx.log(`Scanning ports on ${ip_addr}`);
+            ctx.done(callback);
+            ctx.run();
+            return ctx;
         }
 
         function add_ports_product_info(data) {
+            data = JSON.parse(data);
             if (typeof(data.ports.tcp) !== undefined) {
-                console.log(`add_ports_product_info: `, data.ports);
                 $('.mapped-port-info').each(function(i,e) {
                     var p = $(e).data('port');
-                    console.log(`Checking for port ${p}`);
                     if (p in data.ports.tcp) {
                         $(e).attr('data-original-title',
                                   `Port ${p} is used by ${data.ports.tcp[p].product || data.ports.tcp[p].name}`);
@@ -413,51 +740,11 @@
             }
         }
 
-        function show_source_products_info(data) {
-            add_ports_product_info(JSON.parse(data));
-            loader.hide();
-            release_lock_cmd();
-        }
-
-        function map_ports(selected_ports, busy_ports) {
-            const MAX_ATTEMPTS = 65535;
-
-            var mapped_ports = {};
-
-            function get_free_port(port, busy_ports, attempt) {
-                if (attempt > MAX_ATTEMPTS) {
-                    throw 'Max attempts reached - could not find free port';
-                }
-                attempt++;
-
-                if (busy_ports.indexOf(parseInt(port)) > -1) {
-                    port = parseInt(port) + 1;
-                    return get_free_port(port.toString(), busy_ports, attempt)
-                }
-
-                busy_ports.push(parseInt(port));
-                return port;
-            }
-
-            try {
-                selected_ports.forEach(function(selected_port) {
-                    mapped_ports[selected_port] = get_free_port(selected_port, busy_ports, 0);
-                });
-            } catch (e) {
-                console.log(e);
-            }
-
-            return mapped_ports;
-        }
-
         function get_target_ports() {
-            scan_ports("127.0.0.1", show_target_ports, null, true);  // scan target machine
+            return scan_ports("127.0.0.1", show_target_ports, null, true);  // scan target machine
         }
 
         function show_target_ports(data) {
-            const MAX_PORT = 65535;
-            const MIN_PORT = 1;
-
             var data = JSON.parse(data);
             target_ports = [];
             if (typeof(data.ports.tcp) !== undefined) {
@@ -466,107 +753,9 @@
                 }
                 $("#target-ports-field span").text(target_ports.join(", "));
             }
-            loader.hide();
-            release_lock_cmd();
-            load_target_container_names();
-         }
-
-         function map_target_ports() {
-            out("Mapping target ports");
-
-            var selected_ports = $("input.source-ports:checked").map(function() {
-                return parseInt(this.value);
-            }).toArray();
-
-            var mapped_ports = map_ports(selected_ports, target_ports);
-
-            for (source_port in mapped_ports) {
-                $("#mapped-ports ul").append(`
-                    <li class="checkbox">
-                        <label>
-                            <input type="checkbox" name="mapped-port" checked>
-                            Port
-                            <span class="source-port-font mapped-port-info" data-toggle="tooltip"
-                                  data-placement="bottom" title="loading..." data-port="${source_port}">
-                                ${source_port}
-                            </span>
-                        </label>
-                        <span style="font-size: 2em;">&rarr;</span>
-                        <input type="text" size="6" name="${source_port}" value="${mapped_ports[source_port]}"
-                        class="mapped-ports ui-lockable" data-prev="${mapped_ports[source_port]}" disabled/>
-                    </li>
-                `)
-            }
-            $('.mapped-port-info').tooltip();
-
-            function update_busy_ports(busy_ports, old_port, new_port) {
-                busy_ports.splice(busy_ports.indexOf(old_port), 1);
-                busy_ports.push(new_port);
-            }
-
-            $("input.mapped-ports").on('change', function() {
-                var new_port = parseInt($(this).val());
-                var old_port = $(this).data('prev');
-                $(this).data("prev", new_port);
-
-                if (target_ports.indexOf(new_port) > -1 || new_port < MIN_PORT
-                    || new_port > MAX_PORT) {
-                    $(this).addClass('invalid');
-                    $("#import-button").attr("disabled", true);
-                    update_busy_ports(target_ports, old_port, new_port);
-                    return;
-                }
-
-                update_busy_ports(target_ports, old_port, new_port);
-                $(this).removeClass('invalid');
-
-                let obj = $("input.mapped-ports").filter(function() {
-                    return parseInt($(this).val()) == old_port;
-                });
-
-                if (typeof obj.get(0) !== undefined)
-                    $(obj.get(0)).removeClass('invalid');
-
-                if ($("input.mapped-ports").filter('.invalid').length < 1) {
-                    $("#import-button").removeAttr("disabled");
-                }
-            });
-
-            //output.empty();
         }
 
-        function cmd_stdout(data) {
-            let split = data.split(/\r?\n/);
-            for (let line of split) {
-                if (line) {
-                    out("> " + line);
-                }
-            }
-        }
-
-        function cmd_success(data) {
-            //output.empty();
-            cmd_stdout(data);
-            out("Command completed successfully");
-            if (wait_for_result_msg) {
-                out("\n\nImported service is now starting, please wait about 2 minutes to see results..");
-            }
-            loader.hide();
-
-            release_lock_cmd();
-            wait_for_result_msg = false;
-        }
-
-        function cmd_fail(exc, data) {
-            //output.empty();
-            cmd_stdout(data || '');
-            err_msg = `Command failed with status ${exc.exit_status}!\n`
-            out(err_msg);
-            loader.hide();
-            release_lock_cmd();
-        }
 
     </script>
 </body>
 </html>
-
