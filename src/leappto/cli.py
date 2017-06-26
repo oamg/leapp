@@ -447,10 +447,10 @@ def main():
             :param target_ports:        ports found by the tool on target machine
             :param user_mapped_ports:   port mapping defined by user
                                         if empty, only the default mapping will aaplied
-        
+
                                         DEFAULT RE-MAP:
                                             22/tcp -> 9022/tcp
-        
+
             :param user_excluded_ports: excluded port mapping defined by user
             """
 
@@ -468,8 +468,8 @@ def main():
                 raise TypeError("User mapped ports must be PortMap")
             if not isinstance(user_excluded_ports, PortList):
                 raise TypeError("User excluded ports must be PortList")
-        
-        
+
+
             """
                 remapped_ports structure:
                 {
@@ -486,56 +486,56 @@ def main():
                 PortMap.PROTO_TCP: [],
                 PortMap.PROTO_UDP: []
             }
-        
+
             ## add user ports which was not discovered
             for protocol in user_mapped_ports.get_protocols():
                 for port in user_mapped_ports.list_ports(protocol):
                     for user_target_port in user_mapped_ports.get_port(protocol, port):
                         if target_ports.has_port(protocol, user_target_port):
                             raise PortCollisionException("Specified mapping is in conflict with target {} -> {}".format(port, user_target_port))
-        
+
                     ## Add dummy port to sources
                     if not source_ports.has_port(protocol, port):
                         source_ports.set_port(protocol, port)
-        
+
             ## Static (default) mapping applied only when the source service is available
             if not user_mapped_ports.has_tcp_port(22):
                 user_mapped_ports.set_tcp_port(22, 9022)
-        
+
             ## remove unwanted ports
             for protocol in user_excluded_ports.get_protocols():
                 for port in user_excluded_ports.list_ports(protocol):
                     if source_ports.has_port(protocol, port):
                         ## remove port from sources
                         source_ports.unset_port(protocol, port)
-        
+
             ## remap ports
             for protocol in source_ports.get_protocols():
                 for port in source_ports.list_ports(protocol):
                     source_port = port
-        
+
                     ## remap port if user defined it
                     if  user_mapped_ports.has_port(protocol, port):
                         user_mapped_target_ports = user_mapped_ports.get_port(protocol, port)
                     else:
                         user_mapped_target_ports = Set([port])
-        
+
                     for target_port in user_mapped_target_ports:
                         while target_port <= _MAX_PORT:
                             if target_ports.has_port(protocol, target_port):
                                 if target_port == _MAX_PORT:
                                     raise PortCollisionException("Automatic port collision resolve failed, please use --tcp-port SELECTED_TARGET_PORT:{} to solve the issue".format(source_port))
-        
+
                                 target_port = target_port + 1
                             else:
                                 break
-        
+
                         ## add newly mapped port to target ports so we can track collisions
                         target_ports.set_port(protocol, target_port)
-        
+
                         ## create mapping array
                         remapped_ports[protocol].append((target_port, source_port))
-        
+
             return remapped_ports
 
         def destroy_container(self, container_name):
@@ -860,8 +860,6 @@ class PortMap(PortList):
 
 def _port_scan(ip_or_fqdn, port_range=None, shallow=False, force_nmap=False):
 
-    ip = socket.gethostbyname(ip_or_fqdn)
-
     def _nmap(port_list, ip, port_range=None, shallow=False):
         if shallow and port_range is None:
             port_range = '{}-{}'.format(_MIN_PORT, _MAX_PORT)
@@ -891,7 +889,9 @@ def _port_scan(ip_or_fqdn, port_range=None, shallow=False, force_nmap=False):
         return port_list
 
     port_list = PortList()
-    if ip == _LOCALHOST and not force_nmap:
-        return _net_util(port_list)
-    return _nmap(port_list, ip, port_range, shallow)
 
+    if ip_or_fqdn == _LOCALHOST and not force_nmap:
+        return _net_util(port_list)
+
+    ip = socket.gethostbyname(ip_or_fqdn)
+    return _nmap(port_list, ip, port_range, shallow)
