@@ -54,6 +54,7 @@ def _user_has_required_permissions():
             return False
     return True
 
+
 # Parsing CLI arguments
 def _add_identity_options(cli_cmd, context=''):
     if context:
@@ -66,6 +67,11 @@ def _add_identity_options(cli_cmd, context=''):
         cli_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
         cli_cmd.add_argument('--ask-pass', '-k', action='store_true', help='Ask for SSH password')
         cli_cmd.add_argument('--user', '-u', default=None, help='Connect as this user')
+    if context != 'target':
+        #  if empty or target
+        cli_cmd.add_argument('--no-host-check', default=False, action='store_true',
+                             help='Ignores unknown host key warnings - WARNING: Use at your own risk!')
+
 
 def _make_argument_parser():
     ap = ArgumentParser()
@@ -179,7 +185,7 @@ def main():
         try:
             if host in ('localhost', '127.0.0.1'):
                 return LocalMachine(shallow_scan=shallow)
-            return SSHMachine(host, user=user, shallow_scan=shallow)
+            return SSHMachine(host, user=user, shallow_scan=shallow, strict_host_key=not ap.no_host_check)
         except SSHConnectionError as e:
             print("SSH error: {0}".format(e))
             return None

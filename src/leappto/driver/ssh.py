@@ -88,7 +88,7 @@ class ParamikoConnection(object):
 
 
 class SSHConfig(object):
-    def __init__(self, hostname, username=None, port=22, strict_host_key_checking=False, identity_file=None,
+    def __init__(self, hostname, username=None, port=22, strict_host_key=False, identity_file=None,
                  use_pass=False, control_path=None, options=None):
         self._options = options or {}
         self._add_opt('User', username)
@@ -96,7 +96,7 @@ class SSHConfig(object):
         self._add_opt('Host', hostname)
         self._add_opt('Port', port, int)
         self._add_opt('PasswordAuthentication', 'yes' if use_pass else 'no')
-        self._add_opt('StrictHostKeyChecking', 'yes' if strict_host_key_checking else 'no')
+        self._add_opt('StrictHostKeyChecking', 'yes' if strict_host_key else 'no')
         self._add_opt('ControlPath', control_path)
 
     def ssh_cmd(self, *args, **kwargs):
