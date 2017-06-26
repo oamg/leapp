@@ -88,6 +88,8 @@ pushd src
 %py2_build
 popd
 # When installed via RPM, always rely on ssh-agent for key management
+
+# update version in Cockpit 
 cat <<EOF > cockpit/config.json
 {
     "tool-path": "/usr/bin/leapp-tool",
@@ -95,6 +97,13 @@ cat <<EOF > cockpit/config.json
     "version": "%{version}-%{release}"
 }
 EOF
+
+# update version in CLI 
+cat <<EOF > src/leappto/version.py
+__version__ = '%{version}-%{release}'
+__pkg_name__ = 'leappto'
+EOF
+
 
 cat cockpit/config.json
 
