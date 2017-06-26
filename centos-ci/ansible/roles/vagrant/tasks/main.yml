@@ -11,8 +11,8 @@
   become: true
 
 - name: Install Packages
-  yum: 
-    name: '{{ item }}' 
+  yum:
+    name: '{{ item }}'
     state: present
   become: true
   with_items:
@@ -29,14 +29,14 @@
     - nmap
 
 - name: Run VMs under root
-  lineinfile: 
+  lineinfile:
     dest: /etc/libvirt/qemu.conf
     line: 'user = "root"'
 
 - name: Enable libvirtd service
   service:
     name: libvirtd
-    state: started 
+    state: started
     enabled: yes
 
 - name: Install Pipsi
@@ -57,7 +57,7 @@
     chdir: /root/payload
   become: true
 
-- name: Install `pipenv`
+- name: Install Python-level test dependencies
   shell: '{{ python3_scl_exec }} pipenv install --dev --ignore-hashes'
   args:
     chdir: /root/payload
