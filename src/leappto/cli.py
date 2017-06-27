@@ -127,7 +127,10 @@ def _make_argument_parser():
     migrate_cmd.add_argument("--ignore-default-port-map", default=False, help='Default port mapping detected by leapp toll will be ignored', action="store_true")
     migrate_cmd.add_argument(
         '--use-rsync',
-        action='store_true',
+        type=lambda v: v and v.lower() not in ['no', 'n', '0', 'f', 'false'],
+        default=True,
+        const=True,
+        nargs='?',
         help='use rsync as backend for filesystem migration, otherwise virt-tar-out'
     )
     migrate_cmd.add_argument('--container-name', '-n', default=None, help='Name of new container created on target host')
