@@ -110,6 +110,19 @@ def _make_argument_parser():
         type=_port_spec,
         help='define tcp ports which will be excluded from the mapped ports [[target_port]:source_port>]'
     )
+    def _path_spec(arg):
+        path = os.path.normpath(arg)
+        assert os.path.isabs(path)
+        return path 
+
+    migrate_cmd.add_argument(
+        '--exclude-path',
+        default=None,
+        dest="excluded_paths",
+        nargs='*',
+        type=_path_spec,
+        help='define paths which will be excluded from the source'
+    )
     #migrate_cmd.add_argument(
     #    '--udp-port',
     #    default=None,
@@ -216,7 +229,7 @@ def main():
         _SSH_CONTROL_PATH = '-o ControlPath="{}/%L-%r@%h:%p"'.format(_SSH_CTL_PATH)
 
         def __init__(self, target, target_ssh_cfg, disk, source=None, source_ssh_cfg=None,
-                     rsync_cp_backend=False, container_name=None):
+                     rsync_cp_backend=False, container_name=None, excluded_paths=None):
             self.source = source
             self.target = target
             self.source_use_sshpass, self.source_cfg = (None, None) if source_ssh_cfg is None else source_ssh_cfg
@@ -225,6 +238,11 @@ def main():
             self.disk = disk
             self.rsync_cp_backend = rsync_cp_backend
             self.container_name = container_name
+            self.excluded_paths = [
+                '/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*'
+            ] + [ path + "/*" for path in excluded_paths ]
+
+            print(str(self.excluded_paths))
 
         def __get_machine_opt_by_context(self, machine_context):
             return (getattr(self, '{}_{}'.format(machine_context, opt)) for opt in ['addr', 'cfg', 'use_sshpass'])
@@ -622,7 +640,8 @@ def main():
             machine_src,
             _set_ssh_config(parsed.source_user, parsed.source_identity, parsed.source_ask_pass),
             parsed.use_rsync,
-            parsed.container_name
+            parsed.container_name,
+            parsed.excluded_paths
         )
 
         if not parsed.print_port_map:
