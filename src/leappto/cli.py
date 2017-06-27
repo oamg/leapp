@@ -28,7 +28,7 @@ VERSION='leapp-tool {0}'.format(__version__)
 
 MACROCONTAINER_STORAGE_DIR = '/var/lib/leapp/macrocontainers/'
 SOURCE_APP_EXPORT_DIR = '/var/lib/leapp/source_export/'
-_LOCALHOST='localhost'
+_LOCALHOST = ('localhost', '127.0.0.1')
 _MIN_PORT = 1
 _MAX_PORT = 65535
 
@@ -243,7 +243,7 @@ def main():
             return self.__get_machine_addr(self.source)
 
         def _ssh_base(self, addr, cfg):
-            if addr == _LOCALHOST:
+            if addr in _LOCALHOST:
                 return []
             return ['ssh'] + cfg + ['-4', addr]
 
@@ -879,7 +879,7 @@ def _port_scan(ip_or_fqdn, port_range=None, shallow=False, force_nmap=False):
 
     port_list = PortList()
 
-    if ip_or_fqdn == _LOCALHOST and not force_nmap:
+    if ip_or_fqdn in _LOCALHOST and not force_nmap:
         return _net_util(port_list)
 
     ip = socket.gethostbyname(ip_or_fqdn)
