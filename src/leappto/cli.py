@@ -118,7 +118,7 @@ def _make_argument_parser():
     def _path_spec(arg):
         path = os.path.normpath(arg)
         if not os.path.isabs(path):
-            raise TypeError("Path '{}' is not absoulute or valid.".format(str(arg)))
+            raise ValueError("Path '{}' is not absoulute or valid.".format(str(arg)))
 
         return path 
 
@@ -376,8 +376,8 @@ def main():
                         sys.exit(ret_code)
 
                     source_cmd = 'sudo rsync --rsync-path="sudo rsync" -aAX -r'
-                    for exd in self.excluded_paths:
-                        source_cmd += ' --exclude=' + exd
+                    for excluded in self.excluded_paths:
+                        source_cmd += ' --exclude=' + excluded
                     source_cmd += ' -e "ssh {} {}" {}:/ {}'.format(
                         self._SSH_CONTROL_PATH, ' '.join(self.source_cfg), self.source_addr, rsync_dir
                     )
