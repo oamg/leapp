@@ -118,7 +118,7 @@ def _make_argument_parser():
     def _path_spec(arg):
         path = os.path.normpath(arg)
         if not os.path.isabs(path):
-            raise TypeError("Path '{}' is not absoulute or valid.".format(str(path)))
+            raise TypeError("Path '{}' is not absoulute or valid.".format(str(arg)))
 
         return path 
 
@@ -242,9 +242,17 @@ def main():
             self.disk = disk
             self.rsync_cp_backend = rsync_cp_backend
             self.container_name = container_name
-            self.excluded_paths = [
-                '/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*'
-            ] + [ path + "/*" for path in excluded_paths ]
+
+            # Always excluded paths (FS related files etc.)
+            self.excluded_paths = ['/lost+found/*']
+
+            if not excluded_paths:
+                # Default excluded paths used only when --exclude-path wasn't used
+                self.excluded_paths = [
+                    '/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*'
+                ] + self.excluded_paths
+            else:
+                self.excluded_paths = [ path + "/*" for path in excluded_paths ] + self.excluded_paths
 
         def __get_machine_opt_by_context(self, machine_context):
             return (getattr(self, '{}_{}'.format(machine_context, opt)) for opt in ['addr', 'cfg', 'use_sshpass'])
