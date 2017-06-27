@@ -47,6 +47,7 @@ Requires:   nmap
 Requires:   sshpass
 Requires:   python-enum34
 Requires:   docker 
+Requires:   rsync
 %if 0%{?el7}
 Requires:   python
 Requires:   python-psutil
