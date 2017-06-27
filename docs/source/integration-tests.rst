@@ -15,10 +15,10 @@ of kernel modernization attempts given different starting scenarios.
 * The integration testing environment itself is configured using
   `pipenv <https://pypi.python.org/pypi/pipenv>`_
 
-Setting up
-----------
+Setting up the host system
+--------------------------
 
-Install `docker`, `vagrant`, and `vagrant-libvirt`: ::
+Install `ansible`, `docker`, `vagrant`, and `vagrant-libvirt`: ::
 
     sudo dnf install docker vagrant vagrant-libvirt
 
@@ -33,6 +33,9 @@ effect.
 
 Note: running `docker` without `sudo` can bypass audit controls, so if that's
 a potential problem, set up a dedicated system for running the LeApp tests
+
+Setting up a local Python environment
+-------------------------------------
 
 Install `pipenv` and the `pew` environment management tool: ::
 
@@ -69,6 +72,36 @@ directory: ::
 The tests require passwordless access to `vagrant`, and passwordless `sudo`
 access to `leapp-tool` (alternatively, they will require interactive
 password entry during the test).
+
+Running the tests without `pipenv`
+----------------------------------
+
+Using a dedicated Python virtual environment may not be necessary if some other
+form of environment separation is already in use (e.g. the use of the Python
+3.5 SCL in the CI configuration).
+
+For such cases, a generated `requirements.txt` file is kept in the
+`integrations-tests` directory, allowing a testing environment to be configured
+with the following commands::
+
+    pip install --user pipsi
+    pip install -r integration-tests/requirements.txt
+
+Adding new test suite dependencies
+----------------------------------
+
+Test suite dependencies are listed under `[dev-packages]` in `Pipfile`. When
+the dependencies are updated, then both `Pipfile.lock` and
+`integration-tests/requirements.txt` need to be regenerated:
+
+    pipenv lock
+    pipenv lock --requirements | sort > integration-tests/requirements.txt
+
+Note: due to a current pipenv limitation, regenerating the lock files currently
+reformats `Pipfile`, stripping all comments in the process. As a workaround,
+it's advisable to check in the `Pipfile` changes, regenerate the lock files,
+checkout the previously commited `Pipfile`, and then amend the commit to include
+the regenerated lock files.
 
 Writing new test scenarios
 --------------------------

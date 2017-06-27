@@ -39,26 +39,12 @@
     state: started
     enabled: yes
 
-- name: Install Pipsi
+- name: Install Pipsi into the Python 3 SCL
   shell: '{{ python3_scl_exec }} pip3.5 install pipsi'
   become: true
 
-- name: Install Pew
-  shell: '{{ python3_scl_exec }} pipsi --bin-dir=/usr/bin install pew'
-  become: true
-
-- name: Install Pipenv
-  shell: '{{ python3_scl_exec }} pipsi --bin-dir=/usr/bin install pipenv'
-  become: true
-
-- name: Prepare `pipenv`
-  shell: '{{ python3_scl_exec }} pipenv --three'
-  args:
-    chdir: /root/payload
-  become: true
-
 - name: Install Python-level test dependencies
-  shell: '{{ python3_scl_exec }} pipenv install --dev --ignore-hashes'
+  shell: '{{ python3_scl_exec }} pip3.5 install -r integration-tests/requirements.txt'
   args:
     chdir: /root/payload
   become: true
