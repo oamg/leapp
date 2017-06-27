@@ -577,15 +577,6 @@ def main():
             container_name = self.get_target_container_name()
             return self._ssh_sudo('docker exec -t {} {}'.format(container_name, fix_str))
 
-        def fix_upstart(self):
-            fixer = 'bash -c "echo ! waiting ; ' + \
-                    'sleep 2 ; ' + \
-                    'mkdir -p /var/log/httpd && ' + \
-                    '(service mysqld start && ' + \
-                    'service httpd start) 2>/dev/null ;' + \
-                    '(service drools stop ; service drools start) 2>/dev/null 1>&2"'
-            return self._fix_container(fixer)
-
         def fix_systemd(self):
             # systemd cleans /var/log/ and mariadb & httpd can't handle that, might be a systemd bug
             fixer = 'bash -c "echo ! waiting ; ' + \
@@ -705,8 +696,6 @@ def main():
             result = mc.start_container('centos:6',
                                         '/sbin/init',
                                         tcp_mapping)
-            print_migrate_info('! starting services')
-            mc.fix_upstart()
         print_migrate_info('! done')
         sys.exit(result)
 
