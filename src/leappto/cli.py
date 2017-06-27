@@ -112,7 +112,9 @@ def _make_argument_parser():
     )
     def _path_spec(arg):
         path = os.path.normpath(arg)
-        assert os.path.isabs(path)
+        if not os.path.isabs(path):
+            raise TypeError("Path '{}' is not absoulute or valid.".format(str(path)))
+
         return path 
 
     migrate_cmd.add_argument(
@@ -242,8 +244,6 @@ def main():
                 '/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*'
             ] + [ path + "/*" for path in excluded_paths ]
 
-            print(str(self.excluded_paths))
-
         def __get_machine_opt_by_context(self, machine_context):
             return (getattr(self, '{}_{}'.format(machine_context, opt)) for opt in ['addr', 'cfg', 'use_sshpass'])
 
@@ -363,7 +363,7 @@ def main():
                         sys.exit(ret_code)
 
                     source_cmd = 'sudo rsync --rsync-path="sudo rsync" -aAX -r'
-                    for exd in ['/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*']:
+                    for exd in self.excluded_paths:
                         source_cmd += ' --exclude=' + exd
                     source_cmd += ' -e "ssh {} {}" {}:/ {}'.format(
                         self._SSH_CONTROL_PATH, ' '.join(self.source_cfg), self.source_addr, rsync_dir
