@@ -46,16 +46,19 @@ Requires:   libvirt-python
 Requires:   nmap
 Requires:   sshpass
 Requires:   python-enum34
+Requires:   docker 
 %if 0%{?el7}
 Requires:   python
 Requires:   python-psutil
 Requires:   python-nmap
 Requires:   python-paramiko
+Requires:   python-setuptools
 %else
 Requires:   python2
 Requires:   python2-nmap
 Requires:   python2-paramiko
 Requires:   python2-psutil
+Requires:   python2-setuptools
 %endif
 
 %description -n python2-%{name}
