@@ -782,7 +782,7 @@ def main():
 
         wf.add_actor(CheckActor(check_name='docker_list',
                                 check_cmd='docker ps -a --format "{{.Names}}"',
-                                requires='docker'))
+                                requires='has_docker'))
 
         wf.add_actor(CheckActor(check_name='has_rsync',
                                 check_cmd='which rsync'))

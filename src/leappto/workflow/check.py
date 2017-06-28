@@ -110,20 +110,20 @@ class CheckWorkflow(object):
                 if inport.name == CheckActor.DEFAULT_IN:
                     inport += start_actor.outports['out']
                 else:
-                    input_dict[inport.name] = actor
+                    input_dict[actor] = inport.name
 
             for outport in actor.outports:
-                output_dict[outport.name] = actor
+                output_dict[actor] = outport.name
 
-        for port, actor in input_dict.iteritems():
+        for actor, port in input_dict.iteritems():
             if port in self._actors:
                 actor.inports[port] += self._actors[port].outports[port + '_out']
             else:
                 print("Missing requirement ({}) for actor ({})".format(port, actor.check_name))
 
-        dict_actor = DictionaryMerge(inport_names=output_dict.keys(), outport_name='out')
+        dict_actor = DictionaryMerge(inport_names=output_dict.values(), outport_name='out')
 
-        for port, actor in output_dict.iteritems():
+        for actor, port in output_dict.iteritems():
             dict_actor.inports[port] += actor.outports[port]
 
         workflow = dict_actor.get_workflow()
