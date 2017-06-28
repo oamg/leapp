@@ -5,8 +5,8 @@ Summary:    leapp tool rpm
 
 Group:      Unspecified
 License:    LGPLv2+
-URL:        https://github.com/leapp-to/prototype
-Source0:    https://github.com/leapp-to/prototype/archive/master.tar.gz
+URL:        https://github.com/leapp-to/leapp
+Source0:    https://github.com/leapp-to/leapp/archive/master.tar.gz
 BuildArch:  noarch
 
 BuildRequires:   python2-devel
@@ -80,7 +80,7 @@ management tools, configuration files, etc), but use the kernel of the
 container host rather than providing their own.
 
 %prep
-%setup -qn prototype-master
+%setup -qn leapp-master
 sed -i "s/install_requires=/install_requires=[],__fake=/g" src/setup.py
 
 %build

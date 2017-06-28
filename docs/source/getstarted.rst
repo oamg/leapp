@@ -1,17 +1,17 @@
 Getting started
 ===============
 
-Migration prototype
+Migration leapp
 ^^^^^^^^^^^^^^^^^^^
 
-The migration prototype currently handles exactly two cases:
+leapp v0.1 currently handles exactly two cases:
 
 * migrating from a CentOS 6 VM to a macrocontainer running on
   a CentOS 7 container host.
 * migrating from a CentOS 7 VM to a macrocontainer running on
   a CentOS 7 container host.
 
-Setting up to run the prototype demonstration
+Setting up to run leapp demonstration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Installation - CentOS 7
