@@ -13,8 +13,8 @@ principles.
 Submitting Issues
 ^^^^^^^^^^^^^^^^^
 
-* All elements of the current prototype (documentation, CLI, demonstration Cockpit plugin, 
-  integration tests) are maintained in the `prototype repo <https://github.com/leapp-to/prototype>`_, 
+* All elements of the current version (documentation, CLI, demonstration Cockpit plugin, 
+  integration tests) are maintained in the `leapp repo <https://github.com/leapp-to/leapp>`_, 
   so any issues should be filed there regardless of the component they relate to
 
 Submitting a Pull Request

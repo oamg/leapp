@@ -73,7 +73,7 @@ password entry during the test).
 Writing new test scenarios
 --------------------------
 
-New feature and scenario definitions go in the `"features" <https://github.com/leapp-to/prototype/tree/master/integration-tests/features>`_
+New feature and scenario definitions go in the `"features" <https://github.com/leapp-to/leapp/tree/master/integration-tests/features>`_
 subdirectory.
 
 Refer to the
@@ -183,7 +183,7 @@ Most test helpers that accept a declared VM name as input also accept
 Adding new steps to the steps catalog
 -------------------------------------
 
-New step definitions go in the `"features/steps" <https://github.com/leapp-to/prototype/integrations-tests/features/steps>`_
+New step definitions go in the `"features/steps" <https://github.com/leapp-to/leapp/integrations-tests/features/steps>`_
 subdirectory, and use the
 `"hamcrest" <https://pyhamcrest.readthedocs.io/en/latest/tutorial/>`_
 library to define behavioural expectations.
@@ -213,11 +213,11 @@ Test context helpers for writing step definitions
 -------------------------------------------------
 
 All step definitions receive the current `behave` context as their first
-parameter, and the `environment file <https://github.com/leapp-to/prototype/tree/master/integration-tests/features/environment.py>`_ adds a few
+parameter, and the `environment file <https://github.com/leapp-to/leapp/tree/master/integration-tests/features/environment.py>`_ adds a few
 useful attributes for use in step implementations:
 
 * `BASE_REPO_DIR`: a `pathlib.Path` instance referring to the base of the
-  prototype repo
+  leapp repo
 
 * `BASE_TEST_DIR`: a `pathlib.Path` instance referring to the directory
   containing the integration tests
@@ -242,9 +242,9 @@ Helper functions and classes for a single set of steps can be included
 directly in the Python file defining the steps.
 
 Helpers that are shared amongst multiple sets of steps should be defined in
-the `"features/leapp_testing" <https://github.com/leapp-to/prototype/tree/master/integration-tests/features/leapp_testing>`_ package, and then
+the `"features/leapp_testing" <https://github.com/leapp-to/leapp/tree/master/integration-tests/features/leapp_testing>`_ package, and then
 added to the test context using one of the hooks in the
-`environment file <https://github.com/leapp-to/prototype/tree/master/integration-tests/features/environment.py>`_.
+`environment file <https://github.com/leapp-to/leapp/tree/master/integration-tests/features/environment.py>`_.
 
 
 Debugging the test VMs

@@ -1,8 +1,8 @@
-Name:       prototype-deps
+Name:       leapp-deps
 Version:    0.1
 Release:    1%{?dist}
 Summary:    This rpm isn't for real usage and meant to contain only dependencies
-URL:        https://github.com/leapp-to/prototype
+URL:        https://github.com/leapp-to/leapp
 License:    SeeProject
 
 BuildRequires: ansible

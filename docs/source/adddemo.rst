@@ -17,7 +17,7 @@ Enabling boxes
 
 Create symlink of a box from ./available to ./enabled e.g.
 to enable drools app one would do following, note the '../'.
-Make sure you are inside ./prototype/vmdefs while creating symlink, 
+Make sure you are inside ./leapp/vmdefs while creating symlink, 
 since symlink path is relative to the symlink location. ::
 
     cd ./vmdefs/

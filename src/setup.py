@@ -9,15 +9,15 @@ from setuptools import setup, find_packages
 
 here = path.abspath(path.dirname(__file__))
 
-_VERSION=None
-_NAME=None
+_VERSION = None
+_NAME = None
 
 # Extract the version and name from the new leappto module
 with open(convert_path('leappto/version.py')) as mod:
-    ns={}
+    ns = {}
     exec(mod.read(), ns)
-    _VERSION=ns['__version__']
-    _NAME=ns['__pkg_name__']
+    _VERSION = ns['__version__']
+    _NAME = ns['__pkg_name__']
 
 # Get the long description from the README file
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
@@ -31,7 +31,7 @@ setup(
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/leapp-to/prototype',
+    url='https://github.com/leapp-to/leapp',
 
     # Author details
     author='Red Hat',

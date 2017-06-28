@@ -1,17 +1,17 @@
 - job:
     name: leapp-integration-tests
     description: |
-      Run integration test suite for the Le-App Prototype
+      Run integration test suite for the Le-App v0.1
       Managed by Jenkins Job Builder, do not edit manually!
     project-type: freestyle
     properties:
       - github:
-          url: https://github.com/leapp-to/prototype
+          url: https://github.com/leapp-to/leapp
     node: leapp
     concurrent: true
     scm:
       - github-scm:
-          git_url: https://github.com/leapp-to/prototype.git
+          git_url: https://github.com/leapp-to/leapp.git
     builders:
       - shell: |
           set +e
