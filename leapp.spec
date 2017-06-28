@@ -46,7 +46,6 @@ Requires:   libvirt-python
 Requires:   nmap
 Requires:   sshpass
 Requires:   python-enum34
-Requires:   docker 
 Requires:   rsync
 %if 0%{?el7}
 Requires:   python
@@ -73,6 +72,7 @@ container host rather than providing their own.
 %package cockpit
 Summary:  Cockpit plugin for LeApp
 Requires: cockpit
+Requires: docker 
 Requires: %{name}-tool = %{version}-%{release}
 
 %description cockpit
