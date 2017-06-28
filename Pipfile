@@ -13,9 +13,6 @@ pylint = "*"
 requests = "*"
 attrs = "*"
 PyHamcrest = "*"
-ansible = ">= 2.0"
-pipsi = "*"
-pipenv = ">= 3.6.0"
 splinter = "*"
 # We restrict ourselves to older versions of Selenium for the Cockpit plugin
 # testing as:
