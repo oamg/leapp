@@ -65,6 +65,7 @@ setup(
         "wowp",
         "ipyparallel",
         "mpi4py",
+        "pyyaml",
     ],
 
     # Extras:

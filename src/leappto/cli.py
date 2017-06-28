@@ -24,6 +24,8 @@ import nmap
 import shlex
 import errno
 import psutil
+import glob
+import yaml
 
 
 VERSION='leapp-tool {0}'.format(__version__)
@@ -773,29 +775,23 @@ def main():
                            user=parsed.user,
                            identity=parsed.identity)
 
-        wf.add_actor(CheckActor(check_name='connectivity',
-                                check_script=os.path.join(scripts_path,
-                                                          "connectivity.sh")))
+        actors = {}
+        for f in glob.glob(os.path.join(scripts_path, '*.yaml')):
+            with open(f, 'r') as stream:
+                try:
+                    actors = yaml.load(stream)
+                except yaml.YAMLError as e:
+                    print(e)
 
-        wf.add_actor(CheckActor(check_name='has_docker',
-                                check_script=os.path.join(scripts_path,
-                                                          "has_docker.sh")))
-        wf.add_actor(CheckActor(check_name='docker',
-                                check_script=os.path.join(scripts_path,
-                                                          "docker.sh"),
-                                requires='has_docker'))
-        wf.add_actor(CheckActor(check_name='docker_list',
-                                check_script=os.path.join(scripts_path,
-                                                          "docker_list.sh"),
-                                requires='has_docker'))
+        for actor in actors['actors']:
+            requires = None
+            if 'requires' in actor:
+                requires = actor['requires']
 
-        wf.add_actor(CheckActor(check_name='has_rsync',
-                                check_script=os.path.join(scripts_path,
-                                                          "has_rsync.sh")))
-        wf.add_actor(CheckActor(check_name='rsync',
-                                check_script=os.path.join(scripts_path,
-                                                          "rsync.sh"),
-                                requires='has_rsync'))
+            wf.add_actor(CheckActor(check_name=actor['name'],
+                                    check_script=os.path.join(scripts_path,
+                                                              actor['script']),
+                                    requires=requires))
         wf.run()
         sys.exit(0)
 
