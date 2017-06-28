@@ -766,32 +766,37 @@ def main():
         sys.exit(result)
 
     elif parsed.action == 'check-target':
+        leapp_path = os.path.dirname(os.path.abspath(__file__))
+        scripts_path = os.path.join(leapp_path, 'scripts')
+
         wf = CheckWorkflow(hostname=parsed.target,
                            user=parsed.user,
                            identity=parsed.identity)
 
         wf.add_actor(CheckActor(check_name='connectivity',
-                                check_cmd='uname -a'))
+                                check_script=os.path.join(scripts_path,
+                                                          "connectivity.sh")))
 
         wf.add_actor(CheckActor(check_name='has_docker',
-                                check_cmd='which docker'))
-
+                                check_script=os.path.join(scripts_path,
+                                                          "has_docker.sh")))
         wf.add_actor(CheckActor(check_name='docker',
-                                check_cmd='docker info',
+                                check_script=os.path.join(scripts_path,
+                                                          "docker.sh"),
                                 requires='has_docker'))
-
         wf.add_actor(CheckActor(check_name='docker_list',
-                                check_cmd='docker ps -a --format "{{.Names}}"',
+                                check_script=os.path.join(scripts_path,
+                                                          "docker_list.sh"),
                                 requires='has_docker'))
 
         wf.add_actor(CheckActor(check_name='has_rsync',
-                                check_cmd='which rsync'))
-
+                                check_script=os.path.join(scripts_path,
+                                                          "has_rsync.sh")))
         wf.add_actor(CheckActor(check_name='rsync',
-                                check_cmd='rsync --version',
+                                check_script=os.path.join(scripts_path,
+                                                          "rsync.sh"),
                                 requires='has_rsync'))
         wf.run()
-
         sys.exit(0)
 
     elif parsed.action == 'destroy-container':

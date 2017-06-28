@@ -77,21 +77,22 @@ class CheckWorkflow(object):
         ssh_opt = ['-o {}={}'.format(k, v) for k, v in settings.items()]
         return ssh_opt
 
-    def __get_exec_cmd(self, cmd):
+    def __get_exec_cmd(self):
         """ Return command line that should be executed on target machine """
-        sudo_cmd = "sudo bash -c '{}'".format(cmd)
+        local_sudo_cmd = "sudo bash"
         if self.is_local_machine:
-            return shlex.split(sudo_cmd)
+            return shlex.split(local_sudo_cmd)
 
+        remote_sudo_cmd = "cat | sudo bash /dev/stdin"
         ssh_cmd = ['ssh']
         ssh_cmd += self.__get_ssh_options()
         ssh_cmd += ['-4', self.target_ip]
-        ssh_cmd += [sudo_cmd]
+        ssh_cmd += [remote_sudo_cmd]
         return ssh_cmd
 
     def add_actor(self, actor):
         """ Add actor to workflow """
-        actor.set_target_cmd(self.__get_exec_cmd(actor.check_cmd))
+        actor.set_target_cmd(self.__get_exec_cmd())
         self._actors[actor.check_name] = actor
 
     def run(self):

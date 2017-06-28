@@ -10,9 +10,9 @@ class CheckActor(FuncActor):
     """ A check actor that can be part of our workflow """
     DEFAULT_IN = 'default_in'
 
-    def __init__(self, check_name, check_cmd, requires=None):
+    def __init__(self, check_name, check_script, requires=None):
         self._check_name = check_name
-        self._check_cmd = check_cmd
+        self._check_script = check_script
         self._requires = requires
 
         self._target_cmd = None
@@ -33,9 +33,9 @@ class CheckActor(FuncActor):
         return self._check_name
 
     @property
-    def check_cmd(self):
-        """ Return command that should be executed """
-        return self._check_cmd
+    def check_script(self):
+        """ Return script that should be executed """
+        return self._check_script
 
     @property
     def requires(self):
@@ -44,7 +44,8 @@ class CheckActor(FuncActor):
 
     def __func(self, _):
         """ Method that should be executed by actor without requires"""
-        child = Popen(self._target_cmd, stdout=PIPE, stderr=PIPE)
+        script_input = open(self.check_script)
+        child = Popen(self._target_cmd, stdin=script_input, stdout=PIPE, stderr=PIPE)
         out, err = child.communicate()
         return (child.returncode, out, err)
 
@@ -54,7 +55,8 @@ class CheckActor(FuncActor):
         if req_rc:
             return(1, "", "REQUIREMENT ERROR: " + req_err)
 
-        child = Popen(self._target_cmd, stdout=PIPE, stderr=PIPE)
+        script_input = open(self.check_script)
+        child = Popen(self._target_cmd, stdin=script_input, stdout=PIPE, stderr=PIPE)
         out, err = child.communicate()
         return (child.returncode, out, err)
 
