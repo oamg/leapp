@@ -130,6 +130,7 @@ popd
 %files cockpit
 %doc README.md AUTHORS COPYING
 %dir %attr (755,root,root) %{_datadir}/cockpit/%{name}
+%dir %attr (755,root,root) /var/lib/leapp/macrocontainers
 %attr(644, root, root) %{_datadir}/cockpit/%{name}/*
 
 
