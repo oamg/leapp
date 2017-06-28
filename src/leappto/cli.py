@@ -246,16 +246,14 @@ def main():
             self.rsync_cp_backend = rsync_cp_backend
             self.container_name = container_name
 
-            # Always excluded paths (FS related files etc.)
-            self.excluded_paths = ['/lost+found/*']
-
-            if not excluded_paths:
+            if excluded_paths is None:
                 # Default excluded paths used only when --exclude-path wasn't used
                 self.excluded_paths = [
-                    '/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*'
-                ] + self.excluded_paths
+                    '/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*'
+                ]
             else:
-                self.excluded_paths = [ path + "/*" for path in excluded_paths ] + self.excluded_paths
+                self.excluded_paths = excluded_paths
+
 
         def __get_machine_opt_by_context(self, machine_context):
             return (getattr(self, '{}_{}'.format(machine_context, opt)) for opt in ['addr', 'cfg', 'use_sshpass'])
