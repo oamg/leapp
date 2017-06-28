@@ -14,12 +14,9 @@ from leappto.providers.libvirt import LibvirtMachineProvider
 from leappto.providers.ssh import SSHMachine
 from leappto.providers.local import LocalMachine
 from leappto.version import __version__
+from leappto.workflow.check import CheckWorkflow
+from leappto.workflow.actor import CheckActor
 from sets import Set
-
-import logging
-import json
-from wowp.actors import FuncActor
-
 import os
 import sys
 import socket
@@ -769,142 +766,31 @@ def main():
         sys.exit(result)
 
     elif parsed.action == 'check-target':
-        logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
-                            level=logging.CRITICAL,
-                            datefmt='%d/%m/%Y %H:%M:%S')
+        wf = CheckWorkflow(hostname=parsed.target,
+                           user=parsed.user,
+                           identity=parsed.identity)
 
-        def __get_ssh_option(username, identity):
-            """ Generate SSH options string based on data provided """
-            settings = {
-                'StrictHostKeyChecking': 'no',
-                'PasswordAuthentication': 'no'
-            }
+        wf.add_actor(CheckActor(check_name='connectivity',
+                                check_cmd='uname -a'))
 
-            if username is not None:
-                if not isinstance(username, str):
-                    raise TypeError("username should be str")
-                settings['User'] = username
+        wf.add_actor(CheckActor(check_name='has_docker',
+                                check_cmd='which docker'))
 
-            if identity is not None:
-                if not isinstance(identity, str):
-                    raise TypeError("identity should be str")
-                settings['IdentityFile'] = identity
+        wf.add_actor(CheckActor(check_name='docker',
+                                check_cmd='docker info',
+                                requires='has_docker'))
 
-            ssh_opt = ['-o {}={}'.format(k, v) for k, v in settings.items()]
-            logging.debug("LeApp: SSH Options: {}".format(ssh_opt))
-            return ssh_opt
+        wf.add_actor(CheckActor(check_name='docker_list',
+                                check_cmd='docker ps -a --format "{{.Names}}"',
+                                requires='docker'))
 
-        def __get_target_machine(target):
-            """ Check if access will be provided by LibVirt, SSH or Local """
-            logging.debug("check provider for {}".format(target))
-            libvirt_provider = LibvirtMachineProvider()
-            for machine in libvirt_provider.get_machines():
-                if machine.hostname == target:
-                    logging.debug("LeApp: {} provided by libvirt"
-                                  .format(target))
-                    return machine
+        wf.add_actor(CheckActor(check_name='has_rsync',
+                                check_cmd='which rsync'))
 
-            if target in ('localhost', '127.0.0.1'):
-                logging.debug("LeApp: {} should be accessed as local machine"
-                              .format(target))
-                return LocalMachine(shallow_scan=True)
-
-            try:
-                logging.debug("LeApp: {} should be accessed via SSH"
-                              .format(target))
-                return SSHMachine(target, user='root', shallow_scan=True)
-            except SSHConnectionError as e:
-                logging.warning("LeApp: SSHConnectionError: {}".format(e))
-                return None
-            except Exception as e:
-                logging.warning("LeApp: Exception: {}".format(e))
-                return None
-
-        def __run_command_on_target(cmd, machine, ssh_option):
-            """ Connect if necessary and execute command on target machine """
-            if isinstance(machine, Machine) and machine.is_local:
-                child = Popen(shlex.split(cmd), stdout=PIPE, stderr=PIPE)
-                output, err_output = child.communicate()
-                return child.returncode, output, err_output
-            else:
-                sudo_cmd = "sudo bash -c '{}'".format(cmd)
-                addr = machine.ip[0]
-                ssh_cmd = ['ssh'] + ssh_option + ['-4', addr]
-                ssh_cmd += [sudo_cmd]
-                child = Popen(ssh_cmd, stdout=PIPE, stderr=PIPE)
-                output, err_output = child.communicate()
-                return child.returncode, output, err_output
-
-        def __check_connectivity(machine, ssh_option):
-            cmd = 'uname -a'
-            rc, out, err = __run_command_on_target(cmd, machine, ssh_option)
-            result = {'rc': rc, 'stdout': out, 'stderr': err}
-            return result
-
-        def __check_docker(machine, ssh_option):
-            cmd = 'docker info'
-            rc, out, err = __run_command_on_target(cmd, machine, ssh_option)
-            result = {'rc': rc, 'stdout': out, 'stderr': err}
-            return result
-
-        def __check_rsync(machine, ssh_option):
-            cmd = 'rsync --version'
-            rc, out, err = __run_command_on_target(cmd, machine, ssh_option)
-            result = {'rc': rc, 'stdout': out, 'stderr': err}
-            return result
-
-        def __check_containers(machine, ssh_option):
-            cmd = 'docker ps -a --format "{{.Names}}"'
-            rc, out, err = __run_command_on_target(cmd, machine, ssh_option)
-            result = {'rc': rc, 'stdout': out, 'stderr': err}
-            return result
-
-        def __show_result(conn_result, docker_result, rsync_result, containers_result):
-            check_result = {}
-            check_result['conn_check'] = 'OK' if not conn_result['rc'] else 'ERROR'
-            check_result['docker_check'] = 'OK' if not docker_result['rc'] else 'ERROR'
-            check_result['rsync_check'] = 'OK' if not rsync_result['rc'] else 'ERROR'
-            check_result['containers'] = (containers_result['rc'], containers_result['stdout'])
-
-            print(json.dumps(check_result))
-
-        ssh_option_actor = FuncActor(__get_ssh_option,
-                                     outports=('ssh_option'))
-        machine_actor = FuncActor(__get_target_machine,
-                                  outports=('target_machine'))
-        check_conn_actor = FuncActor(__check_connectivity,
-                                     outports=('result'))
-        check_docker_actor = FuncActor(__check_docker,
-                                       outports=('result'))
-        check_rsync_actor = FuncActor(__check_rsync,
-                                      outports=('result'))
-        check_containers_actor = FuncActor(__check_containers,
-                                           outports=('result'))
-
-        show_result_actor = FuncActor(__show_result)
-
-        check_conn_actor.inports['machine'] += machine_actor.outports['target_machine']
-        check_conn_actor.inports['ssh_option'] += ssh_option_actor.outports['ssh_option']
-
-        check_docker_actor.inports['machine'] += machine_actor.outports['target_machine']
-        check_docker_actor.inports['ssh_option'] += ssh_option_actor.outports['ssh_option']
-
-        check_rsync_actor.inports['machine'] += machine_actor.outports['target_machine']
-        check_rsync_actor.inports['ssh_option'] += ssh_option_actor.outports['ssh_option']
-
-        check_containers_actor.inports['machine'] += machine_actor.outports['target_machine']
-        check_containers_actor.inports['ssh_option'] += ssh_option_actor.outports['ssh_option']
-
-        show_result_actor.inports['conn_result'] += check_conn_actor.outports['result']
-        show_result_actor.inports['docker_result'] += check_docker_actor.outports['result']
-        show_result_actor.inports['rsync_result'] += check_rsync_actor.outports['result']
-        show_result_actor.inports['containers_result'] += check_containers_actor.outports['result']
-
-        wf = show_result_actor.get_workflow()
-
-        wf(target=parsed.target,
-           username=parsed.user,
-           identity=parsed.identity)
+        wf.add_actor(CheckActor(check_name='rsync',
+                                check_cmd='rsync --version',
+                                requires='has_rsync'))
+        wf.run()
 
         sys.exit(0)
 
