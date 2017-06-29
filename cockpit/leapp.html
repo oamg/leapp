@@ -842,6 +842,9 @@
             if ($("#force-creation")[0].checked) {
                 import_args.push("--force-create");
             }
+            if ($("#start-container")[0].checked === false) {
+                import_args.push("--disable-start");
+            }
 
             var exclude_paths = parse_exclude_paths();
             if(exclude_paths.length){
