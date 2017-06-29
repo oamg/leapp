@@ -141,6 +141,7 @@ def _make_argument_parser():
 
     check_target_cmd.add_argument('target', help='target VM name')
     _add_identity_options(check_target_cmd)
+    check_target_cmd.add_argument("-s", "--status", default=False, help='Check for services status on target machine', action="store_true")
 
     destroy_cmd.add_argument('target', help='target VM name')
     destroy_cmd.add_argument('container', help='container to destroy (if it exists)')
@@ -392,7 +393,11 @@ def main():
                 return _rsync()
             return _virt_tar_out()
 
-        def check_target(self):
+        def check_target_service(self, check_cmd):
+            cmd = check_cmd + ' > /dev/null 2> /dev/null'
+            return self._ssh_sudo(cmd)
+
+        def check_target_containers(self):
             storage_dir = MACROCONTAINER_STORAGE_DIR
             ps_containers = 'docker ps -a --format "{{.Names}}"'
             rc, containers = self._ssh_sudo_out(ps_containers,
@@ -546,7 +551,7 @@ def main():
         def destroy_container(self, container_name):
             """Destroy the specified container (if it exists)"""
             storage_dir = MACROCONTAINER_STORAGE_DIR
-            rc, containers = self.check_target()
+            rc, containers = self.check_target_containers()
             if rc or container_name not in containers:
                 return rc
             return self._ssh_sudo(
@@ -649,7 +654,7 @@ def main():
         if not parsed.print_port_map:
             # If we're doing an actual migration, check we have access to the
             # target, and the desired container name is available
-            check_result, claimed_names = mc.check_target()
+            check_result, claimed_names = mc.check_target_containers()
             if check_result != 0:
                 print("! Checking target access failed")
                 sys.exit(check_result)
@@ -727,8 +732,26 @@ def main():
             None
         )
 
-        return_code, claimed_names = mc.check_target()
-        for name in sorted(claimed_names):
+        check_result = {}
+        return_code, check_result['containers'] = mc.check_target_containers()
+
+        if parsed.status:
+            check_commands = dict()
+            check_commands['docker'] = 'docker info'
+            check_commands['rsync'] = 'rsync --version'
+
+            for service, cmd in check_commands.items():
+                rc = mc.check_target_service(cmd)
+                if rc:
+                    check_result[service] = 'error'
+                    return_code = rc
+                else:
+                    check_result[service] = 'ok'
+
+            print(dumps(check_result))
+            sys.exit(return_code)
+
+        for name in sorted(check_result['containers']):
             print(name)
 
         sys.exit(return_code)
