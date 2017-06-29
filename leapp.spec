@@ -113,6 +113,7 @@ cat cockpit/config.json
 
 %install
 /bin/mkdir -p %{buildroot}/%{_datadir}/cockpit/leapp
+/bin/mkdir -p %{buildroot}/%{_sharedstatedir}/leapp/macrocontainers
 /bin/cp -a cockpit/* %{buildroot}/%{_datadir}/cockpit/leapp/
 
 pushd src
@@ -130,7 +131,7 @@ popd
 %files cockpit
 %doc README.md AUTHORS COPYING
 %dir %attr (755,root,root) %{_datadir}/cockpit/%{name}
-%dir %attr (755,root,root) /var/lib/leapp/macrocontainers
+%dir %attr (755,root,root) %{_sharedstatedir}/leapp/macrocontainers
 %attr(644, root, root) %{_datadir}/cockpit/%{name}/*
 
 
