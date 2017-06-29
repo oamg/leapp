@@ -26,6 +26,17 @@ import psutil
 
 VERSION='leapp-tool {0}'.format(__version__)
 
+UPSTART_SERVICE_BLACKLIST = (
+    'cloud-config',
+    'cloud-final',
+    'cloud-init',
+    'cloud-init-local',
+    'ip6tables',
+    'iptables',
+    'lvm2-monitor',
+    'network',
+)
+
 MACROCONTAINER_STORAGE_DIR = '/var/lib/leapp/macrocontainers/'
 SOURCE_APP_EXPORT_DIR = '/var/lib/leapp/source_export/'
 _LOCALHOST='localhost'
@@ -604,6 +615,18 @@ def main():
             container_name = self.get_target_container_name()
             return self._ssh_sudo('docker exec -t {} {}'.format(container_name, fix_str))
 
+        def post_configure_upstart(self):
+            container_dir = self._get_container_dir()
+            for level in range(0, 7):
+                p = os.path.join(container_dir, 'etc', 'rc{}.d'.format(level))
+                for entry in os.listdir(p):
+                    link = os.path.join(p, entry)
+                    name = os.path.basename(os.readlink(link))
+                    if name in UPSTART_SERVICE_BLACKLIST:
+                        os.unlink(link)
+            with open(os.path.join(container_dir, 'etc', 'init', 'rcS-emergency.conf'), 'w') as f:
+                f.write('exit 0\n')
+
         def fix_systemd(self):
             # systemd cleans /var/log/ and mariadb & httpd can't handle that, might be a systemd bug
             fixer = 'bash -c "echo ! waiting ; ' + \
@@ -721,6 +744,7 @@ def main():
             print_migrate_info('! starting services')
             mc.fix_systemd()
         else:
+            mc.post_configure_upstart()
             result = mc.start_container('centos:6',
                                         '/sbin/init',
                                         tcp_mapping)
