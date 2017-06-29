@@ -592,14 +592,18 @@ def main():
                 'rm -rf {1}/{0}'.format(container_name, storage_dir)
             )
 
-        def start_container(self, img, init, forwarded_ports=None):
+        def start_container(self, img, init, forwarded_ports=None, extra_arg=None, pre_cmd=None):
             if forwarded_ports is None:
                 port_map_result, forwarded_ports = self.map_ports()
                 if port_map_result != 0:
                     return port_map_result
             container_name = self.get_target_container_name()
             container_dir = self._get_container_dir()
-            command = 'docker run -tid -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
+            if pre_cmd is None:
+                command = ''
+            else:
+                command = pre_cmd
+            command += 'docker run -tid -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
             good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
             for mount in good_mounts:
                 command += ' -v {d}/{m}:/{m}:Z'.format(d=container_dir, m=mount)
@@ -608,6 +612,8 @@ def main():
                     command += ' -p {:d}'.format(container_port)  # docker will select random port for host
                 else:
                     command += ' -p {:d}:{:d}'.format(host_port, container_port)
+            if not(extra_arg is None):
+                command += ' ' + extra_arg
             command += ' --name ' + container_name + ' ' + img + ' ' + init
             return self._ssh_sudo(command)
 
@@ -745,9 +751,18 @@ def main():
             mc.fix_systemd()
         else:
             mc.post_configure_upstart()
+            # create some empty files and mount them in the container
+            container_dir = mc._get_container_dir()
+            addfiles = ['fastboot', '.nolvm']
+            fullfiles = ['{d}/{f}'.format(d=container_dir, f=f) for f in addfiles]
+            pre_command = 'touch ' + ' '.join(fullfiles) + ' && '
+            vol_commands = ['-v {d}/{f}:/{f}:ro,Z'.format(d=container_dir, f=f) for f in addfiles]
+            vol_command = ' '.join(vol_commands)
             result = mc.start_container('centos:6',
                                         '/sbin/init',
-                                        tcp_mapping)
+                                        tcp_mapping,
+                                        vol_command,
+                                        pre_command)
         print_migrate_info('! done')
         sys.exit(result)
 
