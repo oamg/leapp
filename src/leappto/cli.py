@@ -120,7 +120,7 @@ def _make_argument_parser():
         if not os.path.isabs(path):
             raise ValueError("Path '{}' is not absoulute or valid.".format(str(arg)))
 
-        return path 
+        return path
 
     migrate_cmd.add_argument(
         '--exclude-path',
@@ -922,7 +922,7 @@ def _port_scan(ip_or_fqdn, port_range=None, shallow=False, force_nmap=False):
         sconns = psutil.net_connections(kind=port_list.PROTO_TCP)
         for sconn in sconns:
             addr, port = sconn.laddr
-            if not port_list.has_port(port_list.PROTO_TCP, port):
+            if sconn.status == 'LISTEN' and not port_list.has_port(port_list.PROTO_TCP, port):
                 port_list.set_port(port_list.PROTO_TCP, port, {})
         return port_list
 
