@@ -160,6 +160,7 @@ def _make_argument_parser():
         action='store_true',
         help='force creation of new target container, even if one already exists'
     )
+    migrate_cmd.add_argument('--freeze-fs', default=False, action="store_true", help='Freeze filesystem on source machine')
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
 
@@ -252,6 +253,8 @@ def main():
             self.rsync_cp_backend = rsync_cp_backend
             self.container_name = container_name
 
+            self.freeze = False
+
             if excluded_paths is None:
                 # Default excluded paths used only when --exclude-path wasn't used
                 self.excluded_paths = [
@@ -260,6 +263,8 @@ def main():
             else:
                 self.excluded_paths = excluded_paths
 
+        def freeze_fs(self, enabled = True):
+            self.freeze = enabled
 
         def __get_machine_opt_by_context(self, machine_context):
             return (getattr(self, '{}_{}'.format(machine_context, opt)) for opt in ['addr', 'cfg', 'use_sshpass'])
@@ -375,7 +380,11 @@ def main():
 
                 self._open_permanent_ssh_conn(self.SOURCE)
                 try:
-                    ret_code = self._ssh_sudo('sync && fsfreeze -f /', machine_context=self.SOURCE, reuse_ssh_conn=True)
+                    sync_cmd = 'sync'
+                    if self.freeze:
+                        sync_cmd += ' && fsfreeze -f /'
+
+                    ret_code = self._ssh_sudo(sync_cmd, machine_context=self.SOURCE, reuse_ssh_conn=True)
                     if ret_code != 0:
                         sys.exit(ret_code)
 
@@ -388,7 +397,8 @@ def main():
 
                     Popen(shlex.split(source_cmd)).wait()
                 finally:
-                    self._ssh_sudo('fsfreeze -u /', machine_context=self.SOURCE, reuse_ssh_conn=True)
+                    if self.freeze:
+                        self._ssh_sudo('fsfreeze -u /', machine_context=self.SOURCE, reuse_ssh_conn=True)
                     self._close_permanent_ssh_conn(self.SOURCE)
 
                 # if it's localhost this should not be executed
@@ -672,6 +682,8 @@ def main():
             parsed.container_name,
             parsed.excluded_paths
         )
+
+        mc.freeze_fs(parsed.freeze_fs)
 
         if not parsed.print_port_map:
             # If we're doing an actual migration, check we have access to the
