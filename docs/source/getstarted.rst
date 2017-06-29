@@ -63,7 +63,7 @@ Note: replace source.myapp.com with IP/FQDN of your VM
 Importing apps  via the Cockpit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-[ YOUTUBE EMBED HERE ]
+YouTube Video: https://youtu.be/s4RY1PysHM4 
 
 First add your private key to your ssh-agent to enable passwordless authentificatoin::
 
