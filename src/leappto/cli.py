@@ -115,6 +115,21 @@ def _make_argument_parser():
         type=_port_spec,
         help='define tcp ports which will be excluded from the mapped ports [[target_port]:source_port>]'
     )
+    def _path_spec(arg):
+        path = os.path.normpath(arg)
+        if not os.path.isabs(path):
+            raise ValueError("Path '{}' is not absoulute or valid.".format(str(arg)))
+
+        return path 
+
+    migrate_cmd.add_argument(
+        '--exclude-path',
+        default=None,
+        dest="excluded_paths",
+        nargs='*',
+        type=_path_spec,
+        help='define paths which will be excluded from the source'
+    )
     #migrate_cmd.add_argument(
     #    '--udp-port',
     #    default=None,
@@ -127,7 +142,10 @@ def _make_argument_parser():
     migrate_cmd.add_argument("--ignore-default-port-map", default=False, help='Default port mapping detected by leapp toll will be ignored', action="store_true")
     migrate_cmd.add_argument(
         '--use-rsync',
-        action='store_true',
+        type=lambda v: v and v.lower() not in ['no', 'n', '0', 'f', 'false'],
+        default=True,
+        const=True,
+        nargs='?',
         help='use rsync as backend for filesystem migration, otherwise virt-tar-out'
     )
     migrate_cmd.add_argument('--container-name', '-n', default=None, help='Name of new container created on target host')
@@ -219,7 +237,7 @@ def main():
         _SSH_CONTROL_PATH = '-o ControlPath="{}/%L-%r@%h:%p"'.format(_SSH_CTL_PATH)
 
         def __init__(self, target, target_ssh_cfg, disk, source=None, source_ssh_cfg=None,
-                     rsync_cp_backend=False, container_name=None):
+                     rsync_cp_backend=False, container_name=None, excluded_paths=None):
             self.source = source
             self.target = target
             self.source_use_sshpass, self.source_cfg = (None, None) if source_ssh_cfg is None else source_ssh_cfg
@@ -228,6 +246,15 @@ def main():
             self.disk = disk
             self.rsync_cp_backend = rsync_cp_backend
             self.container_name = container_name
+
+            if excluded_paths is None:
+                # Default excluded paths used only when --exclude-path wasn't used
+                self.excluded_paths = [
+                    '/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*'
+                ]
+            else:
+                self.excluded_paths = excluded_paths
+
 
         def __get_machine_opt_by_context(self, machine_context):
             return (getattr(self, '{}_{}'.format(machine_context, opt)) for opt in ['addr', 'cfg', 'use_sshpass'])
@@ -348,8 +375,8 @@ def main():
                         sys.exit(ret_code)
 
                     source_cmd = 'sudo rsync --rsync-path="sudo rsync" -aAX -r'
-                    for exd in ['/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*']:
-                        source_cmd += ' --exclude=' + exd
+                    for excluded in self.excluded_paths:
+                        source_cmd += ' --exclude=' + excluded
                     source_cmd += ' -e "ssh {} {}" {}:/ {}'.format(
                         self._SSH_CONTROL_PATH, ' '.join(self.source_cfg), self.source_addr, rsync_dir
                     )
@@ -582,15 +609,6 @@ def main():
             container_name = self.get_target_container_name()
             return self._ssh_sudo('docker exec -t {} {}'.format(container_name, fix_str))
 
-        def fix_upstart(self):
-            fixer = 'bash -c "echo ! waiting ; ' + \
-                    'sleep 2 ; ' + \
-                    'mkdir -p /var/log/httpd && ' + \
-                    '(service mysqld start && ' + \
-                    'service httpd start) 2>/dev/null ;' + \
-                    '(service drools stop ; service drools start) 2>/dev/null 1>&2"'
-            return self._fix_container(fixer)
-
         def fix_systemd(self):
             # systemd cleans /var/log/ and mariadb & httpd can't handle that, might be a systemd bug
             fixer = 'bash -c "echo ! waiting ; ' + \
@@ -648,7 +666,8 @@ def main():
             machine_src,
             _set_ssh_config(parsed.source_user, parsed.source_identity, parsed.source_ask_pass),
             parsed.use_rsync,
-            parsed.container_name
+            parsed.container_name,
+            parsed.excluded_paths
         )
 
         if not parsed.print_port_map:
@@ -710,8 +729,6 @@ def main():
             result = mc.start_container('centos:6',
                                         '/sbin/init',
                                         tcp_mapping)
-            print_migrate_info('! starting services')
-            mc.fix_upstart()
         print_migrate_info('! done')
         sys.exit(result)
 
@@ -934,7 +951,7 @@ def _port_scan(ip_or_fqdn, port_range=None, shallow=False, force_nmap=False):
 
     port_list = PortList()
 
-    if ip_or_fqdn == _LOCALHOST and not force_nmap:
+    if ip_or_fqdn in ('localhost', '127.0.0.1') and not force_nmap:
         return _net_util(port_list)
 
     ip = socket.gethostbyname(ip_or_fqdn)

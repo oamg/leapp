@@ -51,5 +51,5 @@ export DISPLAY=:19
 
 
 echo "$(print_date): running integration tests"
-time scl enable rh-python35 sclo-vagrant1 -- sh -xc "cd ../.. && pipenv shell 'cd integration-tests && behave --no-color --junit; exit \\\$?'"
+time scl enable rh-python35 sclo-vagrant1 -- sh -xc 'cd ../../integration-tests && behave --no-color --junit; exit \$?'
 time_since_begining "step4: run integration tests"

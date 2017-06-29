@@ -5,8 +5,8 @@ Summary:    leapp tool rpm
 
 Group:      Unspecified
 License:    LGPLv2+
-URL:        https://github.com/leapp-to/prototype
-Source0:    https://github.com/leapp-to/prototype/archive/master.tar.gz
+URL:        https://github.com/leapp-to/leapp
+Source0:    https://github.com/leapp-to/leapp/archive/master.tar.gz
 BuildArch:  noarch
 
 BuildRequires:   python2-devel
@@ -46,16 +46,19 @@ Requires:   libvirt-python
 Requires:   nmap
 Requires:   sshpass
 Requires:   python-enum34
+Requires:   rsync
 %if 0%{?el7}
 Requires:   python
 Requires:   python-psutil
 Requires:   python-nmap
 Requires:   python-paramiko
+Requires:   python-setuptools
 %else
 Requires:   python2
 Requires:   python2-nmap
 Requires:   python2-paramiko
 Requires:   python2-psutil
+Requires:   python2-setuptools
 %endif
 
 %description -n python2-%{name}
@@ -69,6 +72,7 @@ container host rather than providing their own.
 %package cockpit
 Summary:  Cockpit plugin for LeApp
 Requires: cockpit
+Requires: docker 
 Requires: %{name}-tool = %{version}-%{release}
 
 %description cockpit
@@ -80,7 +84,7 @@ management tools, configuration files, etc), but use the kernel of the
 container host rather than providing their own.
 
 %prep
-%setup -qn prototype-master
+%setup -qn leapp-master
 sed -i "s/install_requires=/install_requires=[],__fake=/g" src/setup.py
 
 %build
@@ -126,6 +130,7 @@ popd
 %files cockpit
 %doc README.md AUTHORS COPYING
 %dir %attr (755,root,root) %{_datadir}/cockpit/%{name}
+%dir %attr (755,root,root) /var/lib/leapp/macrocontainers
 %attr(644, root, root) %{_datadir}/cockpit/%{name}/*
 
 
