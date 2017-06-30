@@ -58,8 +58,10 @@ def before_all(context):
     subprocess.check_output(["sudo", "echo", "Elevated permissions needed"])
 
     # Install the CLI for use in the tests
-    if not use_rpm:
-        install_client()
+    if use_rpm:
+        context.LEAPP_TOOL_PATH = "/usr/bin/leapp-tool"
+    else:
+        context.LEAPP_TOOL_PATH = install_client()
 
     # Use contextlib.ExitStack to manage global resources
     context._global_cleanup = contextlib.ExitStack()
@@ -87,7 +89,8 @@ def before_scenario(context, scenario):
     context.scenario_cleanup = contextlib.ExitStack()
 
     # Each scenario gets a ClientHelper instance
-    context.cli_helper = cli_helper = ClientHelper(context.vm_helper)
+    context.cli_helper = cli_helper = ClientHelper(context.vm_helper,
+                                                   context.LEAPP_TOOL_PATH)
 
     # Each scenario gets a RequestsHelper instance
     context.http_helper = RequestsHelper()
