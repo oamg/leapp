@@ -1,10 +1,10 @@
 - name: Update Yum
-  yum: 
+  yum:
     name: '*'
     state: latest
 
 - name: Install nano, git, etc
-  yum: 
+  yum:
     name: '{{ item }}'
     state: installed
   with_items:
@@ -19,12 +19,15 @@
      - unzip
 
 - name: Install SELinux bindings for Ansible
-  yum: 
-    name: libselinux-python 
+  yum:
+    name: libselinux-python
     state: installed
 
 - name: Add the predefined SSH key
   authorized_key:
-    user: vagrant
+    user: '{{ item }}'
     state: present
     key: "{{ lookup('file', '{{ key_path }}') }}"
+  with_items:
+    - vagrant
+    - root
