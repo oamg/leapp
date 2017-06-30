@@ -56,11 +56,15 @@ class VirtualMachineHelper(object):
     """Test step helper to launch and manage VMs
 
     Currently based specifically on local Vagrant VMs
+
+    Set *keep_vms* to True to disable the automatic halting/destruction
+    of VMs at the end of the test run.
     """
 
-    def __init__(self):
+    def __init__(self, keep_vms=False):
         self.machines = {"localhost": "localhost"}
         self._resource_manager = contextlib.ExitStack()
+        self._keep_vms = keep_vms
 
     def ensure_local_vm(self, name, definition, destroy=False, *, as_root=False):
         """Ensure a local VM exists based on the given definition
@@ -74,7 +78,7 @@ class VirtualMachineHelper(object):
             raise ValueError("Unknown VM image: {}".format(definition))
         if destroy:
             self._vm_destroy(name, hostname, as_root=as_root)
-        if self._vm_up(name, hostname, as_root=as_root):
+        if self._vm_up(name, hostname, as_root=as_root) and not self._keep_vms:
             # Previously unknown VM, so register it for cleanup
             if destroy:
                 self._resource_manager.callback(self._vm_destroy, name, hostname, as_root=as_root)
@@ -161,8 +165,8 @@ class VirtualMachineHelper(object):
 ##############################
 
 _LEAPP_SRC_DIR = REPO_DIR / "src"
-_LEAPP_BIN_DIR = REPO_DIR / "bin"
-_LEAPP_TOOL = str(_LEAPP_BIN_DIR / "leapp-tool")
+_PIPSI_BIN_DIR = REPO_DIR / "bin"
+_PIPSI_LEAPP_TOOL_PATH = str(_PIPSI_BIN_DIR / "leapp-tool")
 
 _SSH_USER = "vagrant"
 _SSH_IDENTITY = str(REPO_DIR / "integration-tests/config/leappto_testing_key")
@@ -175,8 +179,8 @@ _DEFAULT_LEAPP_MIGRATE_IDENTITY = ['--target-identity', _SSH_IDENTITY, '--source
 def install_client():
     """Install the CLI and its dependencies into a Python 2.7 environment"""
     py27 = shutil.which("python2.7")
-    base_cmd = ["pipsi", "--bin-dir", str(_LEAPP_BIN_DIR)]
-    if pathlib.Path(_LEAPP_TOOL).exists():
+    base_cmd = ["pipsi", "--bin-dir", str(_PIPSI_BIN_DIR)]
+    if pathlib.Path(_PIPSI_LEAPP_TOOL_PATH).exists():
         # For some reason, `upgrade` returns 1 even though it appears to work
         # so we instead do a full uninstall/reinstall before the test run
         uninstall = base_cmd + ["uninstall", "--yes", "leappto"]
@@ -185,6 +189,7 @@ def install_client():
     print(_run_command(install, work_dir=str(REPO_DIR), ignore_errors=False))
     # Ensure private SSH key is only readable by the current user
     os.chmod(_SSH_IDENTITY, 0o600)
+    return _PIPSI_LEAPP_TOOL_PATH
 
 
 class ClientHelper(object):
@@ -193,8 +198,9 @@ class ClientHelper(object):
     Requires a VirtualMachineHelper instance
     """
 
-    def __init__(self, vm_helper):
+    def __init__(self, vm_helper, leapp_tool_path):
         self._vm_helper = vm_helper
+        self._leapp_tool_path = leapp_tool_path
 
     def make_migration_command(self, source_vm, target_vm,
                                migration_opt=None,
@@ -322,35 +328,33 @@ class ClientHelper(object):
         needs_privileged_access = ("migrate-machine", "port-inspect")
         return any(cmd in cmd_args for cmd in needs_privileged_access)
 
-    @classmethod
-    def _run_leapp(cls, cmd_args, *,
+    def _run_leapp(self, cmd_args, *,
                    add_default_user=False,
                    add_default_identity=False,
                    is_migrate=False,
                    as_sudo=False):
-        as_sudo = as_sudo or cls._requires_sudo(cmd_args)
-        cmd = [_LEAPP_TOOL]
+        as_sudo = as_sudo or self._requires_sudo(cmd_args)
+        cmd = [self._leapp_tool_path]
         cmd.extend(cmd_args)
         if add_default_user:
             cmd.extend(_DEFAULT_LEAPP_MIGRATE_USER if is_migrate else _DEFAULT_LEAPP_USER)
         if add_default_identity:
             cmd.extend(_DEFAULT_LEAPP_MIGRATE_IDENTITY if is_migrate else _DEFAULT_LEAPP_IDENTITY)
-        return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR), as_sudo=as_sudo)
+        return _run_command(cmd, work_dir=str(REPO_DIR), as_sudo=as_sudo)
 
-    @staticmethod
-    def _run_leapp_with_askpass(cmd_args, is_migrate=False):
+    def _run_leapp_with_askpass(self, cmd_args, is_migrate=False):
         # Helper specifically for --ask-pass testing with default credentials
         if os.getuid() != 0:
             err = "sshpass TTY emulation is incompatible with sudo credential caching"
             raise RuntimeError(err)
-        cmd = ["sshpass", "-p"+_SSH_PASSWORD, _LEAPP_TOOL]
+        cmd = ["sshpass", "-p"+_SSH_PASSWORD, self._leapp_tool_path]
         cmd.extend(cmd_args)
         cmd.extend(_DEFAULT_LEAPP_MIGRATE_USER if is_migrate else _DEFAULT_LEAPP_USER)
         cmd.append("--ask-pass")
-        return _run_command(cmd, work_dir=str(_LEAPP_BIN_DIR))
+        return _run_command(cmd, work_dir=str(REPO_DIR))
 
-    @classmethod
-    def _make_migration_command(cls, source_host, target_host, migration_opt,
+    @staticmethod
+    def _make_migration_command(source_host, target_host, migration_opt,
                                 force_create=False,
                                 container_name=None):
         cmd_args = ["migrate-machine", "--tcp-port", "80:80"]
@@ -363,15 +367,14 @@ class ClientHelper(object):
         cmd_args.extend(("-t", target_host, source_host))
         return cmd_args
 
-    @classmethod
-    def _convert_vm_to_macrocontainer(cls, source_host, target_host,
+    def _convert_vm_to_macrocontainer(self, source_host, target_host,
                                       migration_opt, force_create):
         as_sudo = False
-        cmd_args = cls._make_migration_command(source_host, target_host,
+        cmd_args = self._make_migration_command(source_host, target_host,
                                                migration_opt, force_create)
         if '--use-rsync' in cmd_args:
             as_sudo = True
-        result = cls._run_leapp(cmd_args,
+        result = self._run_leapp(cmd_args,
                                 add_default_user=True,
                                 add_default_identity=True,
                                 is_migrate=True)
