@@ -56,11 +56,15 @@ class VirtualMachineHelper(object):
     """Test step helper to launch and manage VMs
 
     Currently based specifically on local Vagrant VMs
+
+    Set *keep_vms* to True to disable the automatic halting/destruction
+    of VMs at the end of the test run.
     """
 
-    def __init__(self):
+    def __init__(self, keep_vms=False):
         self.machines = {"localhost": "localhost"}
         self._resource_manager = contextlib.ExitStack()
+        self._keep_vms = keep_vms
 
     def ensure_local_vm(self, name, definition, destroy=False, *, as_root=False):
         """Ensure a local VM exists based on the given definition
@@ -74,7 +78,7 @@ class VirtualMachineHelper(object):
             raise ValueError("Unknown VM image: {}".format(definition))
         if destroy:
             self._vm_destroy(name, hostname, as_root=as_root)
-        if self._vm_up(name, hostname, as_root=as_root):
+        if self._vm_up(name, hostname, as_root=as_root) and not self._keep_vms:
             # Previously unknown VM, so register it for cleanup
             if destroy:
                 self._resource_manager.callback(self._vm_destroy, name, hostname, as_root=as_root)

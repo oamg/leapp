@@ -216,6 +216,11 @@ not only between test scenarios, but also between different test *runs*, saving
 around 3-5 minutes of test execution time for each VM destruction and recreation
 cycle avoided.
 
+By default, VMs are still *halted* after a test run, even with ``ensure_fresh=no``.
+To further speed up test execution, set ``LEAPP_TEST_KEEPS_VMS=1`` in the
+environment: this will leave the VMs running, saving additional time when you
+expect to be using them again in a subsequent test run.
+
 For development and test debugging purposes, the ``ensure_fresh` setting can be
 changed to ``yes``. This means that instead of just re-running the Ansible
 provisioning playbook when a suitable VM instance already exists and halting

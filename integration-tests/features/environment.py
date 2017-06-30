@@ -50,7 +50,10 @@ def before_all(context):
     # Basic info about the test repository
     context.BASE_REPO_DIR = REPO_DIR
     context.BASE_TEST_DIR = TEST_DIR
+
+    # Read test config settings from the environment
     context.TESTING_RPM = use_rpm = bool(os.environ.get("LEAPP_TEST_RPM"))
+    context.KEEP_VMS = bool(os.environ.get("LEAPP_TEST_KEEP_VMS"))
 
     # Some steps require sudo, so for convenience in interactive use,
     # we ensure we prompt for elevated permissions immediately,
@@ -78,7 +81,7 @@ def before_feature(context, feature):
     # or destroying them to the end of the overall test run
     # Scenario steps can still opt in to eagerly cleaning up a scenario's VMs
     # by doing `context.scenario_cleanup.callback(context.vm_helper.close)`
-    context.vm_helper = vm_helper = VirtualMachineHelper()
+    context.vm_helper = vm_helper = VirtualMachineHelper(context.KEEP_VMS)
     context._global_cleanup.callback(vm_helper.close)
 
 def before_scenario(context, scenario):

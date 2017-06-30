@@ -46,12 +46,14 @@ time ansible-playbook -i 'localhost,' -c local playbook.yml
 time_since_begining "step3: run ansible roles scl, vagrant, cockpit-integration"
 
 echo "$(print_date): running basic remote authentication tests with pipsi"
-time scl enable rh-python35 sclo-vagrant1 -- sh -xc 'cd ../../integration-tests && behave --no-color --junit -i remote-authentication; exit \$?'
+time scl enable rh-python35 sclo-vagrant1 -- sh -xc \
+    'export LEAPP_TEST_KEEP_VMS=1; cd ../../integration-tests && behave --no-color --junit -i remote-authentication; exit \$?'
 time_since_begining "step4: run basic remote authentication tests with pipsi"
 
 
 echo "$(print_date): running full integration tests with installed RPM"
 Xvfb :19 -screen 0 1024x768x16 &
 export DISPLAY=:19
-time scl enable rh-python35 sclo-vagrant1 -- sh -xc 'export LEAPP_TEST_RPM=1; cd ../../integration-tests && behave --no-color --junit; exit \$?'
+time scl enable rh-python35 sclo-vagrant1 -- sh -xc \
+    'export LEAPP_TEST_RPM=1; cd ../../integration-tests && behave --no-color --junit; exit \$?'
 time_since_begining "step5: run full integration tests with installed RPM"
