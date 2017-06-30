@@ -16,3 +16,7 @@ for more infomation and documenation.
 ## Contributing
 If you are looking for information about contributing into this project, kindly 
 visit: [Contributing to LeApp](http://leapp.readthedocs.io/en/latest/contributing.html).
+
+
+## Demo
+![Demo](http://i.imgur.com/LwrIrM5.gif)
