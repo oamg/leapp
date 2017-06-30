@@ -1,8 +1,8 @@
 Integration tests
 =================
 
-Kernel modernization integration tests
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Legacy Application import integration tests
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This directory contains integration tests that check the expected results
 of kernel modernization attempts given different starting scenarios.
@@ -86,6 +86,22 @@ with the following commands::
 
     pip install --user pipsi
     pip install -r integration-tests/requirements.txt
+
+Running the tests against an already installed RPM
+--------------------------------------------------
+
+By default, the tests use `pipsi` and automatically generated symlinks to
+test against the CLI and Cockpit plugin located in the git clone containing
+the test suite.
+
+This behaviour can be overridden by setting the ``LEAPP_TEST_RPM`` environment
+variable when running the tests::
+
+    LEAPP_TEST_RPM=1 behave
+
+Any non-empty string will cause the tests to expect LeApp to already be
+installed, and to run against that installed version.
+
 
 Adding new test suite dependencies
 ----------------------------------
