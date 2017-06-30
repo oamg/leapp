@@ -6,11 +6,13 @@ Summary:    leapp tool rpm
 Group:      Unspecified
 License:    LGPLv2+
 URL:        https://github.com/leapp-to/leapp
-Source0:    https://github.com/leapp-to/leapp/archive/master.tar.gz
+# git clone https://github.com/leapp-to/leapp
+# tito build --tgz --tag=%{version}
+Source0:    %{name}-%{version}.tar.gz
 BuildArch:  noarch
 
 BuildRequires:   python2-devel
-%if 0%{?el7}
+%if 0%{?rhel} && 0%{?rhel} <= 7
 BuildRequires:   python-setuptools
 BuildRequires:   epel-rpm-macros
 %else
@@ -47,14 +49,12 @@ Requires:   nmap
 Requires:   sshpass
 Requires:   python-enum34
 Requires:   rsync
-%if 0%{?el7}
-Requires:   python
+%if 0%{?rhel} && 0%{?rhel} <= 7
 Requires:   python-psutil
 Requires:   python-nmap
 Requires:   python-paramiko
 Requires:   python-setuptools
 %else
-Requires:   python2
 Requires:   python2-nmap
 Requires:   python2-paramiko
 Requires:   python2-psutil
@@ -84,7 +84,7 @@ management tools, configuration files, etc), but use the kernel of the
 container host rather than providing their own.
 
 %prep
-%setup -qn leapp-master
+%autosetup
 sed -i "s/install_requires=/install_requires=[],__fake=/g" src/setup.py
 
 %build
@@ -112,9 +112,9 @@ EOF
 cat cockpit/config.json
 
 %install
-/bin/mkdir -p %{buildroot}/%{_datadir}/cockpit/leapp
-/bin/mkdir -p %{buildroot}/%{_sharedstatedir}/leapp/macrocontainers
-/bin/cp -a cockpit/* %{buildroot}/%{_datadir}/cockpit/leapp/
+mkdir -p %{buildroot}%{_datadir}/cockpit/leapp
+mkdir -p %{buildroot}%{_sharedstatedir}/leapp/macrocontainers
+cp -a cockpit/* %{buildroot}%{_datadir}/cockpit/leapp/
 
 pushd src
 %py2_install
