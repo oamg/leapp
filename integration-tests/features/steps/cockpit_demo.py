@@ -22,7 +22,7 @@ def ensure_demo_plugin_is_installed(context):
     if context.TESTING_RPM:
         # Plugin should be installed globally
         assert_that(os.path.exists("/usr/bin/leapp-tool"), "LeApp CLI not installed")
-        assert_that(os.path.exists("/var/lib/cockpit/leapp"), "LeApp plugin not installed")
+        assert_that(os.path.exists("/usr/share/cockpit/leapp"), "LeApp plugin not installed")
     else:
         # Copy the demo plugin to the demo user's home directory
         demo_user = context.demo_user
