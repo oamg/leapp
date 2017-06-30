@@ -50,6 +50,7 @@ def before_all(context):
     # Basic info about the test repository
     context.BASE_REPO_DIR = REPO_DIR
     context.BASE_TEST_DIR = TEST_DIR
+    context.TESTING_RPM = use_rpm = bool(os.environ.get("LEAPP_TEST_RPM"))
 
     # Some steps require sudo, so for convenience in interactive use,
     # we ensure we prompt for elevated permissions immediately,
@@ -57,7 +58,8 @@ def before_all(context):
     subprocess.check_output(["sudo", "echo", "Elevated permissions needed"])
 
     # Install the CLI for use in the tests
-    install_client()
+    if not use_rpm:
+        install_client()
 
     # Use contextlib.ExitStack to manage global resources
     context._global_cleanup = contextlib.ExitStack()

@@ -18,16 +18,20 @@ def create_demonstration_user(context):
 
 @given("the demonstration plugin is installed")
 def ensure_demo_plugin_is_installed(context):
-    """Ensures expected symlinks into the testing repo exist"""
-    # Copy the demo plugin to the demo user's home directory
-    demo_user = context.demo_user
-    demo_user.install_plugin()
-    user_plugin_dir = str(demo_user.USER_DIR / ".local/share/cockpit/leapp")
-    assert_that(os.path.exists(user_plugin_dir), "User plugin not installed")
-    # Check the rest of the repo is linked where the plugin will find it
-    leapp_dir_link = pathlib.Path("/opt/leapp")
-    desired_leapp_target = context.BASE_REPO_DIR
-    _ensure_expected_link(leapp_dir_link, desired_leapp_target)
+    """Ensures demo plugin is available to demo user"""
+    if context.TESTING_RPM:
+        # Plugin should be installed globally
+        assert_that(os.path.exists("/var/lib/cockpit/leapp"), "Plugin RPM not installed")
+    else:
+        # Copy the demo plugin to the demo user's home directory
+        demo_user = context.demo_user
+        demo_user.install_plugin()
+        user_plugin_dir = str(demo_user.USER_DIR / ".local/share/cockpit/leapp")
+        assert_that(os.path.exists(user_plugin_dir), "User plugin not installed")
+        # Check the rest of the repo is linked where the plugin will find it
+        leapp_dir_link = pathlib.Path("/opt/leapp")
+        desired_leapp_target = context.BASE_REPO_DIR
+        _ensure_expected_link(leapp_dir_link, desired_leapp_target)
 
 @when("the demonstration user visits the {menu_item} page")
 def visit_demo_page(context, menu_item):

@@ -28,13 +28,12 @@ yum install -y sshpass
 time_since_begining "step1: install yum deps"
 
 
-# Check the RPM can be built successfully
+# Check the RPM can be built & installed successfully
 yum install -y tito
 yum-builddep -y leapp.spec
 yum install -y https://copr-be.cloud.fedoraproject.org/results/evilissimo/leapp/epel-7-x86_64/00547360-python-nmap/python2-nmap-0.6.1-1.el7.centos.noarch.rpm
 TERM=xterm tito build --rpm --test || (echo "Failed to build leapp RPM" && exit 1)
 yum install -y /tmp/tito/noarch/leapp-tool-*.noarch.rpm /tmp/tito/noarch/python2-leapp-*.noarch.rpm /tmp/tito/noarch/leapp-cockpit-*.noarch.rpm
-# TODO: Actually use that install RPM in the integration tests
 
 time_since_begining "step2: build and install RPM"
 
@@ -46,10 +45,13 @@ cd centos-ci/ansible/
 time ansible-playbook -i 'localhost,' -c local playbook.yml
 time_since_begining "step3: run ansible roles scl, vagrant, cockpit-integration"
 
+echo "$(print_date): running basic remote authentication tests with pipsi"
+time scl enable rh-python35 sclo-vagrant1 -- sh -xc 'cd ../../integration-tests && behave --no-color --junit -i remote-authentication; exit \$?'
+time_since_begining "step4: run basic remote authentication tests with pipsi"
+
+
+echo "$(print_date): running full integration tests with installed RPM"
 Xvfb :19 -screen 0 1024x768x16 &
 export DISPLAY=:19
-
-
-echo "$(print_date): running integration tests"
-time scl enable rh-python35 sclo-vagrant1 -- sh -xc 'cd ../../integration-tests && behave --no-color --junit; exit \$?'
-time_since_begining "step4: run integration tests"
+time scl enable rh-python35 sclo-vagrant1 -- sh -xc 'export LEAPP_TEST_RPM=1; cd ../../integration-tests && behave --no-color --junit; exit \$?'
+time_since_begining "step5: run full integration tests with installed RPM"
