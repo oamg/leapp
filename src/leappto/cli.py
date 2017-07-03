@@ -770,6 +770,7 @@ def main():
     elif parsed.action == 'check-target':
         leapp_path = os.path.dirname(os.path.abspath(__file__))
         scripts_path = os.path.join(leapp_path, 'scripts')
+        output_path = os.path.join(scripts_path, 'output')
 
         wf = CheckWorkflow(hostname=parsed.target,
                            user=parsed.user,
@@ -791,6 +792,7 @@ def main():
             wf.add_actor(CheckActor(check_name=actor['name'],
                                     check_script=os.path.join(scripts_path,
                                                               actor['script']),
+                                    output_path=output_path,
                                     requires=requires))
         wf.run()
         sys.exit(0)
