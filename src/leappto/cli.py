@@ -9,8 +9,8 @@ from pwd import getpwuid
 from subprocess import Popen, PIPE
 from collections import OrderedDict
 from leappto import Machine
-from leappto.driver.ssh import SSHConnectionError
-from leappto.providers.libvirt import LibvirtMachineProvider
+from leappto.driver import LocalDriver
+from leappto.driver.ssh import SSHDriver, SSHConnectionError
 from leappto.providers.ssh import SSHMachine
 from leappto.providers.local import LocalMachine
 from leappto.version import __version__
@@ -50,7 +50,7 @@ except AttributeError:
     _set_inheritable = None
 
 # Checking for required permissions
-_REQUIRED_GROUPS = ["vagrant", "libvirt"]
+_REQUIRED_GROUPS = ["vagrant"]
 def _user_has_required_permissions():
     """Check user has necessary permissions to reliably run leapp-tool"""
     uid = os.getuid()
@@ -83,15 +83,10 @@ def _make_argument_parser():
     ap.add_argument('-v', '--version', action='version', version=VERSION, help='display version information')
     parser = ap.add_subparsers(help='sub-command', dest='action')
 
-    list_cmd = parser.add_parser('list-machines', help='list running virtual machines and some information')
     migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
     check_target_cmd = parser.add_parser('check-target', help='check for claimed names on target container host')
     destroy_cmd = parser.add_parser('destroy-container', help='destroy named container on virtual machine')
     scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
-    list_cmd.add_argument('--shallow', action='store_true', help='Skip detailed scans of VM contents')
-    list_cmd.add_argument('pattern', nargs='*', default=['*'], help='list machines matching pattern')
-    list_cmd.add_argument('--user', '-u', default=None, help='Username to to be used by the scan')
-    list_cmd.add_argument('--ip', nargs='*', default=None, help='list of IPs to scan')
 
     def _port_spec(arg):
         """Converts a port forwarding specifier to a (host_port, container_port) tuple
@@ -649,15 +644,7 @@ def main():
 
 
     parsed = ap.parse_args()
-    if parsed.action == 'list-machines':
-        if not parsed.ip:
-            lmp = LibvirtMachineProvider(parsed.shallow)
-            machines = lmp.get_machines()
-        else:
-            machines = [_inspect_machine(m, shallow=parsed.shallow, user=parsed.user or 'root') for m in parsed.ip]
-        print(dumps({'machines': [m._to_dict() for m in machines if m]}, indent=3))
-
-    elif parsed.action == 'migrate-machine':
+    if parsed.action == 'migrate-machine':
         def print_migrate_info(text):
             if not parsed.print_port_map:
                 print(text)
@@ -668,18 +655,16 @@ def main():
 
         print_migrate_info('! looking up "{}" as source and "{}" as target'.format(source, target))
 
-        lmp = LibvirtMachineProvider()
-        machines = lmp.get_machines()
         source_user = parsed.source_user or 'root'
         target_user = parsed.target_user or 'root'
 
-        machine_src = _find_machine(machines, source, user=source_user)
+        machine_src = _inspect_machine(source, user=source_user)
 
         if not machine_src:
             print("Source machine is not ready: " + source)
             sys.exit(-1)
 
-        machine_dst = _find_machine(machines, target, user=target_user)
+        machine_dst = _inspect_machine(target, user=target_user)
 
         if not machine_dst:
             print("Target machine is not ready: " + target)
@@ -766,10 +751,7 @@ def main():
     elif parsed.action == 'check-target':
         target = parsed.target
 
-        lmp = LibvirtMachineProvider()
-        machines = lmp.get_machines()
-
-        machine_dst = _find_machine(machines, target)
+        machine_dst = _inspect_machine(target)
         if not machine_dst:
             print("Target machine is not ready: " + target)
             sys.exit(-1)
@@ -789,10 +771,7 @@ def main():
     elif parsed.action == 'destroy-container':
         target = parsed.target
 
-        lmp = LibvirtMachineProvider()
-        machines = lmp.get_machines()
-
-        machine_dst = _find_machine(machines, target)
+        machine_dst = _inspect_machine(target)
         if not machine_dst:
             print("Target machine is not ready: " + target)
             sys.exit(-1)
