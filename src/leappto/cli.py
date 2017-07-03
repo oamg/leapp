@@ -26,6 +26,17 @@ import psutil
 
 VERSION='leapp-tool {0}'.format(__version__)
 
+UPSTART_SERVICE_BLACKLIST = (
+    'cloud-config',
+    'cloud-final',
+    'cloud-init',
+    'cloud-init-local',
+    'ip6tables',
+    'iptables',
+    'lvm2-monitor',
+    'network',
+)
+
 MACROCONTAINER_STORAGE_DIR = '/var/lib/leapp/macrocontainers/'
 SOURCE_APP_EXPORT_DIR = '/var/lib/leapp/source_export/'
 _LOCALHOST='localhost'
@@ -154,6 +165,7 @@ def _make_argument_parser():
         action='store_true',
         help='force creation of new target container, even if one already exists'
     )
+    migrate_cmd.add_argument('--freeze-fs', default=False, action="store_true", help='Freeze filesystem on source machine')
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
 
@@ -247,6 +259,8 @@ def main():
             self.rsync_cp_backend = rsync_cp_backend
             self.container_name = container_name
 
+            self.freeze = False
+
             if excluded_paths is None:
                 # Default excluded paths used only when --exclude-path wasn't used
                 self.excluded_paths = [
@@ -255,6 +269,8 @@ def main():
             else:
                 self.excluded_paths = excluded_paths
 
+        def freeze_fs(self, enabled = True):
+            self.freeze = enabled
 
         def __get_machine_opt_by_context(self, machine_context):
             return (getattr(self, '{}_{}'.format(machine_context, opt)) for opt in ['addr', 'cfg', 'use_sshpass'])
@@ -370,7 +386,11 @@ def main():
 
                 self._open_permanent_ssh_conn(self.SOURCE)
                 try:
-                    ret_code = self._ssh_sudo('sync && fsfreeze -f /', machine_context=self.SOURCE, reuse_ssh_conn=True)
+                    sync_cmd = 'sync'
+                    if self.freeze:
+                        sync_cmd += ' && fsfreeze -f /'
+
+                    ret_code = self._ssh_sudo(sync_cmd, machine_context=self.SOURCE, reuse_ssh_conn=True)
                     if ret_code != 0:
                         sys.exit(ret_code)
 
@@ -383,7 +403,8 @@ def main():
 
                     Popen(shlex.split(source_cmd)).wait()
                 finally:
-                    self._ssh_sudo('fsfreeze -u /', machine_context=self.SOURCE, reuse_ssh_conn=True)
+                    if self.freeze:
+                        self._ssh_sudo('fsfreeze -u /', machine_context=self.SOURCE, reuse_ssh_conn=True)
                     self._close_permanent_ssh_conn(self.SOURCE)
 
                 # if it's localhost this should not be executed
@@ -609,6 +630,18 @@ def main():
             container_name = self.get_target_container_name()
             return self._ssh_sudo('docker exec -t {} {}'.format(container_name, fix_str))
 
+        def post_configure_upstart(self):
+            container_dir = self._get_container_dir()
+            for level in range(0, 7):
+                p = os.path.join(container_dir, 'etc', 'rc{}.d'.format(level))
+                for entry in os.listdir(p):
+                    link = os.path.join(p, entry)
+                    name = os.path.basename(os.readlink(link))
+                    if name in UPSTART_SERVICE_BLACKLIST:
+                        os.unlink(link)
+            with open(os.path.join(container_dir, 'etc', 'init', 'rcS-emergency.conf'), 'w') as f:
+                f.write('exit 0\n')
+
         def fix_systemd(self):
             # systemd cleans /var/log/ and mariadb & httpd can't handle that, might be a systemd bug
             fixer = 'bash -c "echo ! waiting ; ' + \
@@ -670,6 +703,8 @@ def main():
             parsed.excluded_paths
         )
 
+        mc.freeze_fs(parsed.freeze_fs)
+
         if not parsed.print_port_map:
             # If we're doing an actual migration, check we have access to the
             # target, and the desired container name is available
@@ -726,6 +761,7 @@ def main():
             print_migrate_info('! starting services')
             mc.fix_systemd()
         else:
+            mc.post_configure_upstart()
             result = mc.start_container('centos:6',
                                         '/sbin/init',
                                         tcp_mapping)
