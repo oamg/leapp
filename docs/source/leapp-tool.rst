@@ -2,21 +2,6 @@ LeApp tool
 ==========
 
 
-list-machines
-^^^^^^^^^^^^^
-
-    **usage:** 
-        leapp-tool list-machines [-h] [--shallow] [pattern [pattern ...]]
-    
-    positional arguments:
-        +-------------+--------------------------------+
-        | pattern     | list machines matching pattern |
-        +-------------+--------------------------------+
-    
-    optional arguments:
-        -h, --help    Show this help message and exit
-        --shallow     Skip detailed scans of VM contents
-
 check-target
 ^^^^^^^^^^^^
 
@@ -38,7 +23,6 @@ check-target
         --user USER, -u USER    Connect as this user
         -s, --status            Check for services status on target machine
         ======================  ================================================
-
 
 
 migrate-machine
