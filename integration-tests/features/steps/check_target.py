@@ -2,6 +2,7 @@
 from behave import given, then
 from hamcrest import assert_that, equal_to
 from functools import partial
+from json import loads
 
 class ClaimHelper(object):
     """Helper to claim names on a target VM in ways check-target will detect"""
@@ -64,7 +65,22 @@ def run_check_target(context, target, time_limit):
     """Retrieve claimed names from designated target"""
     context._reported_names = context.cli_helper.check_target(target, time_limit)
 
+@then("checking {target} services status should take less than {time_limit:g} seconds")
+def run_check_target_status(context, target, time_limit):
+    """Retrieve services status from designated target"""
+    status = context.cli_helper.check_target_status(target, time_limit)
+    print(status)
+    context._target_status = loads(status[0])
+
 @then("all claimed names should be reported exactly once")
 def check_claimed_names(context):
     """Check claimed names match those in the expected list"""
     assert_that(context._reported_names, equal_to(context._claimed_names))
+
+@then("all status reported are correct")
+def check_reported_status(context):
+    """Check reported status match those expected"""
+    assert_that(len(context._target_status), equal_to(3))
+    assert_that(context._target_status['docker'], equal_to('ok'))
+    assert_that(context._target_status['rsync'], equal_to('ok'))
+    assert_that(context._target_status['containers'], equal_to(context._claimed_names))
