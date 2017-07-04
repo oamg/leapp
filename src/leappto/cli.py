@@ -643,17 +643,6 @@ def main():
             with open(os.path.join(container_dir, 'etc', 'init', 'rcS-emergency.conf'), 'w') as f:
                 f.write('exit 0\n')
 
-        def fix_systemd(self):
-            # systemd cleans /var/log/ and mariadb & httpd can't handle that, might be a systemd bug
-            fixer = 'bash -c "echo ! waiting ; ' + \
-                    'sleep 2 ; ' + \
-                    'mkdir -p /var/log/{httpd,mariadb} && ' + \
-                    'chown mysql:mysql /var/log/mariadb && ' + \
-                    'systemctl enable httpd mariadb ; ' + \
-                    'systemctl start httpd mariadb"'
-            return self._fix_container(fixer)
-
-
     parsed = ap.parse_args()
     if parsed.action == 'list-machines':
         if not parsed.ip:
@@ -756,11 +745,24 @@ def main():
 
         # if el7 then use systemd
         if machine_src.installation.os.version.startswith('7'):
-            result = mc.start_container('centos:7',
-                                        '/usr/lib/systemd/systemd --system',
-                                        tcp_mapping)
+            opts = [
+                # Required for docker 1.13
+                "--cap-add", "SYS_ADMIN",
+                # Implemented in default command
+                #"-v", "/sys/fs/cgroup:/sys/fs/cgroup:ro",
+                "--tmpfs", "/run", 
+                "--tmpfs", "/tmp",
+                "-e", "container=docker"
+                
+            ]
+
+            result = mc.start_container('centos/systemd',
+                                        #'/usr/lib/systemd/systemd --system',
+                                        '/sbin/init',
+                                        tcp_mapping,
+                                        " ".join(opts))
+
             print_migrate_info('! starting services')
-            mc.fix_systemd()
         else:
             mc.post_configure_upstart()
             # create some empty files and mount them in the container
