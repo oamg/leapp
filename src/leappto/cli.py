@@ -441,9 +441,24 @@ def main():
                 return _rsync()
             return _virt_tar_out()
 
-        def check_target_service(self, check_cmd):
-            cmd = check_cmd + ' > /dev/null 2> /dev/null'
-            return self._ssh_sudo(cmd)
+        def check_target(self):
+            check_commands = {
+                'docker': 'docker info',
+                'rsync': 'rsync --version'
+            }
+
+            check_result = {}
+            return_code, check_result['containers'] = self.check_target_containers()
+
+            for service, check_cmd in check_commands.items():
+                rc = self._ssh_sudo(check_cmd + ' > /dev/null 2> /dev/null')
+                if rc:
+                    check_result[service] = 'error'
+                    return_code = rc
+                else:
+                    check_result[service] = 'ok'
+
+            return (return_code, check_result)
 
         def check_target_containers(self):
             storage_dir = MACROCONTAINER_STORAGE_DIR
@@ -800,26 +815,13 @@ def main():
             None
         )
 
-        check_result = {}
-        return_code, check_result['containers'] = mc.check_target_containers()
-
         if parsed.status:
-            check_commands = dict()
-            check_commands['docker'] = 'docker info'
-            check_commands['rsync'] = 'rsync --version'
-
-            for service, cmd in check_commands.items():
-                rc = mc.check_target_service(cmd)
-                if rc:
-                    check_result[service] = 'error'
-                    return_code = rc
-                else:
-                    check_result[service] = 'ok'
-
-            print(dumps(check_result))
+            return_code, target_status = mc.check_target()
+            print(dumps(target_status))
             sys.exit(return_code)
 
-        for name in sorted(check_result['containers']):
+        return_code, claimed_names = mc.check_target_containers()
+        for name in sorted(claimed_names):
             print(name)
 
         sys.exit(return_code)
