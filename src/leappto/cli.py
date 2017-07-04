@@ -729,13 +729,13 @@ def main():
         if not parsed.print_port_map:
             # If we're doing an actual migration, check we have access to the
             # target, and the desired container name is available
-            check_result, claimed_names = mc.check_target_containers()
+            check_result, target_status = mc.check_target()
             if check_result != 0:
                 print("! Checking target access failed")
                 sys.exit(check_result)
 
             container_name = mc.get_target_container_name()
-            if container_name in claimed_names:
+            if container_name in target_status['containers']:
                 if not parsed.force_create:
                     print("! Container name {} is not available".format(container_name))
                     sys.exit(-10)
