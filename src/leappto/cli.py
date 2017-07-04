@@ -14,6 +14,8 @@ from leappto.providers.libvirt import LibvirtMachineProvider
 from leappto.providers.ssh import SSHMachine
 from leappto.providers.local import LocalMachine
 from leappto.version import __version__
+from leappto.workflow.check import CheckWorkflow
+from leappto.workflow.actor import CheckActor
 from sets import Set
 import os
 import sys
@@ -22,6 +24,8 @@ import nmap
 import shlex
 import errno
 import psutil
+import glob
+import yaml
 
 
 VERSION='leapp-tool {0}'.format(__version__)
@@ -779,27 +783,34 @@ def main():
         sys.exit(result)
 
     elif parsed.action == 'check-target':
-        target = parsed.target
+        leapp_path = os.path.dirname(os.path.abspath(__file__))
+        scripts_path = os.path.join(leapp_path, 'scripts')
+        output_path = os.path.join(scripts_path, 'output')
 
-        lmp = LibvirtMachineProvider()
-        machines = lmp.get_machines()
+        wf = CheckWorkflow(hostname=parsed.target,
+                           user=parsed.user,
+                           identity=parsed.identity)
 
-        machine_dst = _find_machine(machines, target)
-        if not machine_dst:
-            print("Target machine is not ready: " + target)
-            sys.exit(-1)
+        actors = {}
+        for f in glob.glob(os.path.join(scripts_path, '*.yaml')):
+            with open(f, 'r') as stream:
+                try:
+                    actors = yaml.load(stream)
+                except yaml.YAMLError as e:
+                    print(e)
 
-        mc = MigrationContext(
-            machine_dst,
-            _set_ssh_config(parsed.user, parsed.identity, parsed.ask_pass),
-            None
-        )
+        for actor in actors['actors']:
+            requires = None
+            if 'requires' in actor:
+                requires = actor['requires']
 
-        return_code, claimed_names = mc.check_target()
-        for name in sorted(claimed_names):
-            print(name)
-
-        sys.exit(return_code)
+            wf.add_actor(CheckActor(check_name=actor['name'],
+                                    check_script=os.path.join(scripts_path,
+                                                              actor['script']),
+                                    output_path=output_path,
+                                    requires=requires))
+        wf.run()
+        sys.exit(0)
 
     elif parsed.action == 'destroy-container':
         target = parsed.target

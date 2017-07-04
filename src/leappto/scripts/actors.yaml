@@ -1,0 +1,21 @@
+actors:
+    - name     : connectivity
+      script   : connectivity.sh
+
+    - name     : has_docker
+      script   : has_docker.sh
+
+    - name     : docker
+      script   : docker.sh
+      requires : has_docker
+
+    - name     : docker_list
+      script   : docker_list.sh
+      requires : has_docker
+
+    - name     : has_rsync
+      script   : has_rsync.sh
+
+    - name     : rsync
+      script   : rsync.sh
+      requires : has_rsync

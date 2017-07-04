@@ -61,7 +61,11 @@ setup(
         "libvirt-python",
         "paramiko",
         "python-nmap==0.6.1",
-        "psutil==5.2.2"
+        "psutil==5.2.2",
+        "wowp",
+        "ipyparallel",
+        "mpi4py",
+        "pyyaml",
     ],
 
     # Extras:
@@ -73,7 +77,7 @@ setup(
     },
 
     # No bundled package data yet
-    package_data={},
+    package_data={'leappto': ['scripts/*']},
 
     # Install `leapp-tool` command
     entry_points={
