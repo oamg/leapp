@@ -63,7 +63,7 @@ def claim_names_on_target_vm(context, target):
 @then("checking {target} usability should take less than {time_limit:g} seconds")
 def run_check_target(context, target, time_limit):
     """Retrieve claimed names from designated target"""
-    context._reported_names = context.cli_helper.check_target(target, time_limit)
+    context._check_result = {'containers': context.cli_helper.check_target(target, time_limit)}
 
 @then("checking {target} services status should take less than {time_limit:g} seconds")
 def run_check_target_status(context, target, time_limit):
@@ -75,12 +75,9 @@ def run_check_target_status(context, target, time_limit):
 @then("all claimed names should be reported exactly once")
 def check_claimed_names(context):
     """Check claimed names match those in the expected list"""
-    assert_that(context._reported_names, equal_to(context._claimed_names))
+    assert_that(context._check_result['containers'], equal_to(context._claimed_names))
 
-@then("all status reported are correct")
-def check_reported_status(context):
+@then("{service} should be reported as \"{result}\"")
+def check_reported_status(context, service, result):
     """Check reported status match those expected"""
-    assert_that(len(context._target_status), equal_to(3))
-    assert_that(context._target_status['docker'], equal_to('ok'))
-    assert_that(context._target_status['rsync'], equal_to('ok'))
-    assert_that(context._target_status['containers'], equal_to(context._claimed_names))
+    assert_that(context._target_status[service], equal_to(result))

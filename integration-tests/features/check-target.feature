@@ -28,4 +28,6 @@ Scenario: Checking for available services on target VM
          | storage1   | macrocontainer dir  |
          | storage2   | macrocontainer dir  |
     Then checking target services status should take less than 10 seconds
-     And all status reported are correct
+     And docker should be reported as "ok"
+     And rsync should be reported as "ok"
+     And all claimed names should be reported exactly once
