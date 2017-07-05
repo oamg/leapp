@@ -171,6 +171,7 @@ def _make_argument_parser():
 
     check_target_cmd.add_argument('target', help='target VM name')
     _add_identity_options(check_target_cmd)
+    check_target_cmd.add_argument("-s", "--status", default=False, help='Check for services status on target machine', action="store_true")
 
     destroy_cmd.add_argument('target', help='target VM name')
     destroy_cmd.add_argument('container', help='container to destroy (if it exists)')
@@ -441,6 +442,25 @@ def main():
             return _virt_tar_out()
 
         def check_target(self):
+            check_commands = {
+                'docker': 'docker info',
+                'rsync': 'rsync --version'
+            }
+
+            check_result = {}
+            return_code, check_result['containers'] = self.check_target_containers()
+
+            for service, check_cmd in check_commands.items():
+                rc = self._ssh_sudo(check_cmd + ' > /dev/null 2> /dev/null')
+                if rc:
+                    check_result[service] = 'error'
+                    return_code = rc
+                else:
+                    check_result[service] = 'ok'
+
+            return (return_code, check_result)
+
+        def check_target_containers(self):
             storage_dir = MACROCONTAINER_STORAGE_DIR
             ps_containers = 'docker ps -a --format "{{.Names}}"'
             rc, containers = self._ssh_sudo_out(ps_containers,
@@ -594,7 +614,7 @@ def main():
         def destroy_container(self, container_name):
             """Destroy the specified container (if it exists)"""
             storage_dir = MACROCONTAINER_STORAGE_DIR
-            rc, containers = self.check_target()
+            rc, containers = self.check_target_containers()
             if rc or container_name not in containers:
                 return rc
             return self._ssh_sudo(
@@ -709,13 +729,13 @@ def main():
         if not parsed.print_port_map:
             # If we're doing an actual migration, check we have access to the
             # target, and the desired container name is available
-            check_result, claimed_names = mc.check_target()
+            check_result, target_status = mc.check_target()
             if check_result != 0:
                 print("! Checking target access failed")
                 sys.exit(check_result)
 
             container_name = mc.get_target_container_name()
-            if container_name in claimed_names:
+            if container_name in target_status['containers']:
                 if not parsed.force_create:
                     print("! Container name {} is not available".format(container_name))
                     sys.exit(-10)
@@ -795,7 +815,12 @@ def main():
             None
         )
 
-        return_code, claimed_names = mc.check_target()
+        if parsed.status:
+            return_code, target_status = mc.check_target()
+            print(dumps(target_status))
+            sys.exit(return_code)
+
+        return_code, claimed_names = mc.check_target_containers()
         for name in sorted(claimed_names):
             print(name)
 
