@@ -169,10 +169,10 @@ def _make_argument_parser():
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
 
-    check_target_cmd.add_argument('target', help='target VM name')
+    check_target_cmd.add_argument('-t', '--target', default='localhost', help='Target running docker')
     _add_identity_options(check_target_cmd)
 
-    destroy_cmd.add_argument('target', help='target VM name')
+    destroy_cmd.add_argument('-t', '--target', default='localhost', help='Target running docker')
     destroy_cmd.add_argument('container', help='container to destroy (if it exists)')
     _add_identity_options(destroy_cmd)
 
