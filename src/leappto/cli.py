@@ -15,6 +15,7 @@ from leappto.providers.ssh import SSHMachine
 from leappto.providers.local import LocalMachine
 from leappto.version import __version__
 from sets import Set
+import argcomplete
 import os
 import sys
 import socket
@@ -663,6 +664,7 @@ def main():
             with open(os.path.join(container_dir, 'etc', 'init', 'rcS-emergency.conf'), 'w') as f:
                 f.write('exit 0\n')
 
+    argcomplete.autocomplete(ap)
     parsed = ap.parse_args()
     if parsed.action == 'list-machines':
         if not parsed.ip:

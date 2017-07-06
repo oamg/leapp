@@ -54,11 +54,13 @@ Requires:   python-psutil
 Requires:   python-nmap
 Requires:   python-paramiko
 Requires:   python-setuptools
+Requires:   python-argcomplete
 %else
 Requires:   python2-nmap
 Requires:   python2-paramiko
 Requires:   python2-psutil
 Requires:   python2-setuptools
+Requires:   python2-argcomplete
 %endif
 
 %description -n python2-%{name}
@@ -76,6 +78,30 @@ Requires: docker
 Requires: %{name}-tool = %{version}-%{release}
 
 %description cockpit
+LeApp is a "Minimum Viable Migration" utility that aims to decouple virtualized
+applications from the operating system kernel included in their VM image by
+migrating them into macro-containers that include all of the traditional
+components of a stateful VM (operating system user space, application run-time,
+management tools, configuration files, etc), but use the kernel of the
+container host rather than providing their own.
+
+%package -n %{name}-bash-completion
+Summary:  Bash completion files for LeApp
+Requires: %{name}-tool = %{version}-%{release}
+
+%description -n %{name}-bash-completion
+LeApp is a "Minimum Viable Migration" utility that aims to decouple virtualized
+applications from the operating system kernel included in their VM image by
+migrating them into macro-containers that include all of the traditional
+components of a stateful VM (operating system user space, application run-time,
+management tools, configuration files, etc), but use the kernel of the
+container host rather than providing their own.
+
+%package -n %{name}-zsh-completion
+Summary:  Zsh completion files for LeApp
+Requires: %{name}-tool = %{version}-%{release}
+
+%description -n %{name}-zsh-completion
 LeApp is a "Minimum Viable Migration" utility that aims to decouple virtualized
 applications from the operating system kernel included in their VM image by
 migrating them into macro-containers that include all of the traditional
@@ -114,7 +140,11 @@ cat cockpit/config.json
 %install
 mkdir -p %{buildroot}%{_datadir}/cockpit/leapp
 mkdir -p %{buildroot}%{_sharedstatedir}/leapp/macrocontainers
+mkdir -p %{buildroot}%{_sysconfdir}/bash_completion.d
+mkdir -p %{buildroot}%{_datadir}/zsh/site-functions/
 cp -a cockpit/* %{buildroot}%{_datadir}/cockpit/leapp/
+cp -a autocomplete/%{name}-autocomplete.sh %{buildroot}%{_sysconfdir}/bash_completion.d/%{name}-autocomplete.sh
+cp -a autocomplete/%{name}-autocomplete.zsh %{buildroot}%{_datadir}/zsh/site-functions/_%{name}-autocomplete
 
 pushd src
 %py2_install
@@ -134,6 +164,11 @@ popd
 %dir %attr (755,root,root) %{_sharedstatedir}/leapp/macrocontainers
 %attr(644, root, root) %{_datadir}/cockpit/%{name}/*
 
+%files -n %{name}-bash-completion
+%attr (644, root, root) %{_sysconfdir}/bash_completion.d/%{name}-autocomplete.sh
+
+%files -n %{name}-zsh-completion
+%attr (644, root, root) %{_datadir}/zsh/site-functions/_%{name}-autocomplete
 
 %changelog
 * Fri Jun 30 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.1-33
