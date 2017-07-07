@@ -244,7 +244,7 @@ class ClientHelper(object):
     def check_target_status(self, target_vm, time_limit=10):
         """Check services status of target VM and report results"""
         command_output = self.check_response_time(
-            ["check-target", "--status", self._vm_helper.get_hostname(target_vm)],
+            ["check-target", "--status", "-t", self._vm_helper.get_hostname(target_vm)],
             time_limit,
             use_default_identity=True
         )
