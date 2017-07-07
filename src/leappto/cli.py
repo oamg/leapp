@@ -759,7 +759,7 @@ def main():
             # centos/systemd doesn't have any other tag than latest
             # but it is derived from centos:7 image
             result = mc.start_container('centos/systemd:latest',
-                                        # This is not relict from CentOS6, it will execute systemd properly 
+                                        # This is not a relict from CentOS6, it will execute systemd properly
                                         '/sbin/init',
                                         tcp_mapping,
                                         " ".join(opts))
