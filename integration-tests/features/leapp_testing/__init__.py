@@ -234,7 +234,7 @@ class ClientHelper(object):
     def check_target(self, target_vm, time_limit=10):
         """Check viability of target VM and report currently unavailable names"""
         command_output = self.check_response_time(
-            ["check-target", self._vm_helper.get_hostname(target_vm)],
+            ["check-target", "-t", self._vm_helper.get_hostname(target_vm)],
             time_limit,
             use_default_identity=True
         )

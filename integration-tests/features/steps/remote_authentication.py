@@ -11,7 +11,7 @@ def skip_unless_running_as_root(context):
 
 def _make_auth_test_command(context, target):
     """Create a leapp-to command to test remote authentication"""
-    return ["check-target", context.vm_helper.get_hostname(target)]
+    return ["check-target", "-t", context.vm_helper.get_hostname(target)]
 
 @given("ssh-agent is running")
 def ensure_ssh_agent_is_running(context):

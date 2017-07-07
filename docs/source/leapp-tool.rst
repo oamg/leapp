@@ -38,7 +38,7 @@ migrate-machine
     optional arguments:
         ==================================================  =======================================================
         -h, --help                                          Show this help message and exit
-        -t TARGET, --target TARGET                          target VM name
+        -t TARGET, --target TARGET                          Target container host 
         --tcp-port [FORWARDED_PORTS [FORWARDED_PORTS ...]]  Target ports to forward to macrocontainer (temporary!)
         --source-identity IDENTITY                          Path to private SSH key for the source machine
         --source-ask-pass                                   Ask for SSH password for the source machine
@@ -53,23 +53,25 @@ migrate-machine
 destroy-containers
 ^^^^^^^^^^^^^^^^^^
     **usage:**
-        leapp-tool destroy-containers [-h] [--identity IDENTITY] [--ask-pass]
-                                      [--user USER]
-                                      target
+        leapp-tool destroy-container [-h] [-t TARGET] [--identity IDENTITY]
+                                    [--ask-pass] [--user USER]
+                                    container
+                                      
     
     positional arguments:
         +-------------+---------------------------+
-        | target      | target VM name            |
+        | container   | container name            |
         +-------------+---------------------------+
 
     
     optional arguments:
-        ========================  =============================== 
-        -h, --help                Show this help message and exit
-        --identity IDENTITY       Path to private SSH key
-        --ask-pass, -k            Ask for SSH password
-        --user USER, -u USER      Connect as this user
-        ========================  =============================== 
+        ==========================  =============================== 
+        -h, --help                  Show this help message and exit
+        -t TARGET, --target TARGET  Target container host 
+        --identity IDENTITY         Path to private SSH key
+        --ask-pass, -k              Ask for SSH password
+        --user USER, -u USER        Connect as this user
+        ==========================  =============================== 
 
 
 port-inspect

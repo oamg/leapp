@@ -789,7 +789,7 @@
         }
 
         function load_target_container_names() {
-            var ctx = new_leapp_call(["check-target", "127.0.0.1"]);
+            var ctx = new_leapp_call(["check-target", "-t", "127.0.0.1"]);
             ctx.log("Loading used applications names from the target...");
             ctx.done(set_app_list);
             ctx.run();

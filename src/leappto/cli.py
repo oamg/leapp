@@ -169,11 +169,11 @@ def _make_argument_parser():
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
 
-    check_target_cmd.add_argument('target', help='target VM name')
+    check_target_cmd.add_argument('-t', '--target', default='localhost', help='Target container host')
     _add_identity_options(check_target_cmd)
     check_target_cmd.add_argument("-s", "--status", default=False, help='Check for services status on target machine', action="store_true")
 
-    destroy_cmd.add_argument('target', help='target VM name')
+    destroy_cmd.add_argument('-t', '--target', default='localhost', help='Target container host')
     destroy_cmd.add_argument('container', help='container to destroy (if it exists)')
     _add_identity_options(destroy_cmd)
 
