@@ -795,11 +795,12 @@ def main():
             fullfiles = ['{d}/{f}'.format(d=container_dir, f=f) for f in addfiles]
             pre_command = 'touch ' + ' '.join(fullfiles) + ' && '
             vol_commands = ['-v {d}/{f}:/{f}:ro,Z'.format(d=container_dir, f=f) for f in addfiles]
-            vol_command = ' '.join(vol_commands)
+            shutdown_command = ['--stop-signal', 'SIGINT']
+            opts = vol_commands + shutdown_command
             result = mc.start_container('centos:6',
                                         '/sbin/init',
                                         tcp_mapping,
-                                        vol_command,
+                                        " ".join(opts),
                                         pre_command)
         print_migrate_info('! done')
         sys.exit(result)
