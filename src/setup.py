@@ -58,7 +58,6 @@ setup(
     # Runtime dependencies
     install_requires=[
         "enum34",
-        "libvirt-python",
         "paramiko",
         "python-nmap==0.6.1",
         "psutil==5.2.2",

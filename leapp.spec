@@ -43,8 +43,6 @@ container host rather than providing their own.
 %package -n python2-%{name}
 Summary:    Python libraries of LeApp
 Requires:   libguestfs-tools-c
-Requires:   libvirt-client
-Requires:   libvirt-python
 Requires:   nmap
 Requires:   sshpass
 Requires:   python-enum34

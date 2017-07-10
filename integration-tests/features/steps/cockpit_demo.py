@@ -110,7 +110,7 @@ class DemoCockpitUser(object):
         base_dir = self.BASE_DIR
         base_dir.mkdir(exist_ok=True)
         _run_command("sudo", "useradd",
-                     "--groups", "libvirt,wheel",
+                     "--groups", "wheel",
                      "--password", crypt(self.password),
                      "-M", "--base-dir", str(base_dir),
                      self.username)
