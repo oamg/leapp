@@ -189,6 +189,11 @@
             text-align: center;
         }
 
+        span.target-collision {
+            color: #c00;
+            border: 1px solid #c00;
+        }
+
         input[type=checkbox] {
             margin-top: 6px;
         }
@@ -287,6 +292,26 @@
         <div class="row section border-top-dashed analyze">
             <div class="import-info col-xs-12">
                 <div class="col-xs-12">
+                    <h3 class="pull-left">
+                        Exclude paths
+                        <a tabindex="0" role="button" data-toggle="popover" data-trigger="focus"
+                        data-html="true" title="" data-content="Override a list of paths which will not be
+                        copied from source." data-placement="top">
+                            <span class="fa fa-info-circle"></span>
+                        </a>
+                    </h3>
+                </div>
+                <div class="col-xs-12">
+                    <input type="text" value="" id="exclude-paths-input" class="form-control"
+                    placeholder="Comma-separated list of absolute paths in the source filesystem">
+                    </input>
+                </div>
+            </div>
+        </div>
+
+        <div class="row section border-top-dashed analyze">
+            <div class="import-info col-xs-12">
+                <div class="col-xs-12">
                     <span class="pull-right">
                         The application will be put into a container and run on this machine.
                     </span>
@@ -332,6 +357,10 @@
         */
         var new_leapp_call = function(command, options) {
             command = [LEAPP_CONF["tool-path"]].concat(command);
+            return new_generic_call(command, options);
+        }
+
+        var new_generic_call = function(command, options) {
             var cmd = command.join(" ");
             var $log_entry = $(`
                 <li class="initial closed">
@@ -450,6 +479,18 @@
           $('[data-toggle="tooltip"]').tooltip()
         });
 
+
+        function parse_exclude_paths(){
+            var $exp = $("#exclude-paths-input")
+
+            if($exp.val() == ""){
+                return []
+            }
+            else {
+                return $exp.val().split(",");
+            }
+        }
+
         // Handle enter key press in the ip/fqdn field and submit
         $("#source-address").keypress(function(e) {
             if (e.which == 13) {
@@ -474,7 +515,62 @@
             });
         });
 
+        /**
+         * This will do preliminary check which should catch common issues and warn user before the CLI will be
+         * executed.
+         */
+        $("#exclude-paths-input").on("change", function(){
+            var $changed = $(this);
+
+            function hide_error(){
+                var $par = $changed.parent("div");
+
+                $par.removeClass("has-error");
+                $par.find(".help-block").remove();
+                $("#import-button").removeAttr("disabled");
+            }
+
+            function show_error(message){
+                var $par = $changed.parent("div");
+
+                hide_error();
+
+                $par.addClass("has-error");
+                $par.append($(`<span class="help-block">${message}</span>`));
+
+                $("#import-button").attr("disabled", true);
+            }
+
+            var paths = parse_exclude_paths();
+
+            for (key in paths) {
+                // absolute path                              //console special characters
+                if(!/^(?:\/|[a-z]+:\/\/)/.test(paths[key]) || /&|;|\||\(|\)/.test(paths[key])){
+                    show_error("Only absolute paths are allowed: " + paths[key]);
+                    return;
+                }
+            }
+
+            hide_error();
+        });
+
+        function map_new_port_hide_error(){
+            $("#add-new-port-error-box").remove()
+        }
+
+        function map_new_port_show_error($element, message){
+            map_new_port_hide_error()
+            $element.append($(
+                `
+                <div class="has-error" id="add-new-port-error-box">
+                    <span class="help-block">${message}</span>
+                </div>
+                `
+            ))
+        }
+
         $("#map-new-port-show").click(function(){
+            map_new_port_hide_error()
             $("#map-new-port-form input[type=text]").val("");
             $("#map-new-port-form input[type=text]").parent().removeClass("has-error");
 
@@ -515,10 +611,11 @@
                 $field.addClass("has-error");
                 $field.find("input").first().focus();
 
-                //showError(msg)
-                console.log(msg);
+                map_new_port_show_error($("#map-new-port-form").parent(), msg)
             }
             else {
+                map_new_port_hide_error()
+
                 var element = add_port_entry(source_port, target_port);
                 $(element).children("input.mapped-ports").trigger("change");
 
@@ -550,6 +647,9 @@
             }).then(function() {
                 $("#leapp-version").text("Le-App - " + LEAPP_CONF["version"]);
             });
+
+            //popovers
+            $('[data-toggle=popover]').popovers();
         });
 
         function set_lock_cmd() {
@@ -562,6 +662,22 @@
 
         function add_mapping_handler(element) {
             $(element).on('change', function() {
+                function hide_error_message($element){
+                    $element.removeClass("has-error");
+                    $element.children("span.help-block").remove()
+                }
+
+                function show_error_message($element, message){
+                    hide_error_message($element);
+
+                    $element.addClass("has-error");
+                    $element.append($(`
+                        <span class="help-block">
+                            ${message}
+                        </span>
+                    `));
+                }
+
                 var changed = $(this);
                 var new_port = parseInt(changed.val(), 10);
                 var dups = $('input.mapped-ports').filter(function(){
@@ -577,11 +693,34 @@
 
                 if (!valid) {
                     $("#import-button").attr("disabled", true);
-                    dups.parent("li").addClass("has-error");
-                    changed.parent("li").addClass("has-error");
+
+                    var message;
+
+                    //invalid user input
+                    if(!(Number.isInteger(new_port) && new_port >= MIN_PORT && new_port <= MAX_PORT))
+                        message = "Given port is invalid"
+                    //collision between user defined port and target port
+                    else if(!dups.length) {
+                        message = "Detected collision with target";
+
+                        $("#target-port-" + $(this).data("collision")).removeClass("target-collision")
+
+                        $("#target-port-" + new_port).addClass("target-collision")
+                        $(this).data("collision", new_port);
+                    }
+                    //collision between multuiple user defined ports
+                    else if(dups.length)
+                        message = "Detected port collision";
+
+                    show_error_message(dups.parent("li"), message)
+                    show_error_message(changed.parent("li"), message)
                 } else {
-                    $(this).parent("li").removeClass("has-error");
+                    hide_error_message($(this).parent("li"))
+
                     $("li.has-error input.mapped-ports").trigger("change");
+
+                    //Clear any error highlighting from target ports
+                    $("#target-port-" + $(this).data("collision")).removeClass("target-collision")
                 }
 
                 if ($("#mapped-ports ul li.has-error").length === 0) {
@@ -650,7 +789,7 @@
         }
 
         function load_target_container_names() {
-            var ctx = new_leapp_call(["check-target", "127.0.0.1"]);
+            var ctx = new_leapp_call(["check-target", "-t", "127.0.0.1"]);
             ctx.log("Loading used applications names from the target...");
             ctx.done(set_app_list);
             ctx.run();
@@ -695,6 +834,12 @@
             }
             if ($("#force-creation")[0].checked) {
                 import_args.push("--force-create");
+            }
+
+            var exclude_paths = parse_exclude_paths();
+            if(exclude_paths.length){
+                import_args.push("--exclude-path");
+                import_args = import_args.concat(exclude_paths);
             }
 
             //output.empty();
@@ -748,10 +893,18 @@
             var data = JSON.parse(data);
             target_ports = [];
             if (typeof(data.ports.tcp) !== undefined) {
+                $("#target-ports-field").children("span.target-port-selector").remove();
+
                 for (port in data.ports.tcp) {
+                    if(target_ports.length)
+                        $("#target-ports-field").append('<span class="target-port-selector">, </span>');
+
+                    $("#target-ports-field").append(
+                        $(`<span class="target-port-selector" id="target-port-${port}">${port}</span>`)
+                    );
+
                     target_ports.push(port);
                 }
-                $("#target-ports-field span").text(target_ports.join(", "));
             }
         }
 

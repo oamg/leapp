@@ -51,13 +51,20 @@ def before_all(context):
     context.BASE_REPO_DIR = REPO_DIR
     context.BASE_TEST_DIR = TEST_DIR
 
+    # Read test config settings from the environment
+    context.TESTING_RPM = use_rpm = bool(os.environ.get("LEAPP_TEST_RPM"))
+    context.KEEP_VMS = bool(os.environ.get("LEAPP_TEST_KEEP_VMS"))
+
     # Some steps require sudo, so for convenience in interactive use,
     # we ensure we prompt for elevated permissions immediately,
     # rather than potentially halting midway through a test
     subprocess.check_output(["sudo", "echo", "Elevated permissions needed"])
 
     # Install the CLI for use in the tests
-    install_client()
+    if use_rpm:
+        context.LEAPP_TOOL_PATH = "/usr/bin/leapp-tool"
+    else:
+        context.LEAPP_TOOL_PATH = install_client()
 
     # Use contextlib.ExitStack to manage global resources
     context._global_cleanup = contextlib.ExitStack()
@@ -74,7 +81,7 @@ def before_feature(context, feature):
     # or destroying them to the end of the overall test run
     # Scenario steps can still opt in to eagerly cleaning up a scenario's VMs
     # by doing `context.scenario_cleanup.callback(context.vm_helper.close)`
-    context.vm_helper = vm_helper = VirtualMachineHelper()
+    context.vm_helper = vm_helper = VirtualMachineHelper(context.KEEP_VMS)
     context._global_cleanup.callback(vm_helper.close)
 
 def before_scenario(context, scenario):
@@ -85,7 +92,8 @@ def before_scenario(context, scenario):
     context.scenario_cleanup = contextlib.ExitStack()
 
     # Each scenario gets a ClientHelper instance
-    context.cli_helper = cli_helper = ClientHelper(context.vm_helper)
+    context.cli_helper = cli_helper = ClientHelper(context.vm_helper,
+                                                   context.LEAPP_TOOL_PATH)
 
     # Each scenario gets a RequestsHelper instance
     context.http_helper = RequestsHelper()

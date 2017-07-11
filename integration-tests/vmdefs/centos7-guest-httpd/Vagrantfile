@@ -1,0 +1,22 @@
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+    config.vm.box = "centos/7"
+    config.vm.define "leapp-tests"
+    config.vm.hostname = "leapp-tests-centos7-guest-httpd"
+
+    config.vm.network :private_network, ip: "10.0.0.100"
+
+    config.vm.provider :libvirt do |libvirt|
+        libvirt.memory = 512 
+        libvirt.cpus = 1
+    end
+
+    config.vm.provision "ansible" do |ansible|
+        ansible.playbook = "ansible/playbook.yml"
+        ansible.sudo = true
+    end
+
+    config.vm.provision :shell, inline: "echo Good job, now enjoy your new vbox: http://10.0.0.10"
+
+end

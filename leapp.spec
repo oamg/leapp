@@ -1,16 +1,18 @@
 Name:       leapp
-Version:    0.0.1
-Release:    32
+Version:    0.1
+Release:    33
 Summary:    leapp tool rpm
 
 Group:      Unspecified
 License:    LGPLv2+
 URL:        https://github.com/leapp-to/leapp
-Source0:    https://github.com/leapp-to/leapp/archive/master.tar.gz
+# git clone https://github.com/leapp-to/leapp
+# tito build --tgz --tag=%{version}
+Source0:    %{name}-%{version}.tar.gz
 BuildArch:  noarch
 
 BuildRequires:   python2-devel
-%if 0%{?el7}
+%if 0%{?rhel} && 0%{?rhel} <= 7
 BuildRequires:   python-setuptools
 BuildRequires:   epel-rpm-macros
 %else
@@ -47,18 +49,18 @@ Requires:   nmap
 Requires:   sshpass
 Requires:   python-enum34
 Requires:   rsync
-%if 0%{?el7}
-Requires:   python
+%if 0%{?rhel} && 0%{?rhel} <= 7
 Requires:   python-psutil
 Requires:   python-nmap
 Requires:   python-paramiko
 Requires:   python-setuptools
+Requires:   python-argcomplete
 %else
-Requires:   python2
 Requires:   python2-nmap
 Requires:   python2-paramiko
 Requires:   python2-psutil
 Requires:   python2-setuptools
+Requires:   python2-argcomplete
 %endif
 
 %description -n python2-%{name}
@@ -83,8 +85,32 @@ components of a stateful VM (operating system user space, application run-time,
 management tools, configuration files, etc), but use the kernel of the
 container host rather than providing their own.
 
+%package -n %{name}-bash-completion
+Summary:  Bash completion files for LeApp
+Requires: %{name}-tool = %{version}-%{release}
+
+%description -n %{name}-bash-completion
+LeApp is a "Minimum Viable Migration" utility that aims to decouple virtualized
+applications from the operating system kernel included in their VM image by
+migrating them into macro-containers that include all of the traditional
+components of a stateful VM (operating system user space, application run-time,
+management tools, configuration files, etc), but use the kernel of the
+container host rather than providing their own.
+
+%package -n %{name}-zsh-completion
+Summary:  Zsh completion files for LeApp
+Requires: %{name}-tool = %{version}-%{release}
+
+%description -n %{name}-zsh-completion
+LeApp is a "Minimum Viable Migration" utility that aims to decouple virtualized
+applications from the operating system kernel included in their VM image by
+migrating them into macro-containers that include all of the traditional
+components of a stateful VM (operating system user space, application run-time,
+management tools, configuration files, etc), but use the kernel of the
+container host rather than providing their own.
+
 %prep
-%setup -qn leapp-master
+%autosetup
 sed -i "s/install_requires=/install_requires=[],__fake=/g" src/setup.py
 
 %build
@@ -112,9 +138,13 @@ EOF
 cat cockpit/config.json
 
 %install
-/bin/mkdir -p %{buildroot}/%{_datadir}/cockpit/leapp
-/bin/mkdir -p %{buildroot}/%{_sharedstatedir}/leapp/macrocontainers
-/bin/cp -a cockpit/* %{buildroot}/%{_datadir}/cockpit/leapp/
+mkdir -p %{buildroot}%{_datadir}/cockpit/leapp
+mkdir -p %{buildroot}%{_sharedstatedir}/leapp/macrocontainers
+mkdir -p %{buildroot}%{_sysconfdir}/bash_completion.d
+mkdir -p %{buildroot}%{_datadir}/zsh/site-functions/
+cp -a cockpit/* %{buildroot}%{_datadir}/cockpit/leapp/
+cp -a autocomplete/%{name}-autocomplete.sh %{buildroot}%{_sysconfdir}/bash_completion.d/%{name}-autocomplete.sh
+cp -a autocomplete/%{name}-autocomplete.zsh %{buildroot}%{_datadir}/zsh/site-functions/_%{name}-autocomplete
 
 pushd src
 %py2_install
@@ -134,8 +164,127 @@ popd
 %dir %attr (755,root,root) %{_sharedstatedir}/leapp/macrocontainers
 %attr(644, root, root) %{_datadir}/cockpit/%{name}/*
 
+%files -n %{name}-bash-completion
+%attr (644, root, root) %{_sysconfdir}/bash_completion.d/%{name}-autocomplete.sh
+
+%files -n %{name}-zsh-completion
+%attr (644, root, root) %{_datadir}/zsh/site-functions/_%{name}-autocomplete
 
 %changelog
+* Fri Jun 30 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.1-33
+- Version bump for 0.1 (vfeenstr@redhat.com)
+- Added --freeze-fs option into migrate command, freezefs is not used by
+  default (mgazdik@redhat.com)
+- Test Leapp RPM in CI (#253) (ncoghlan@gmail.com)
+- Removed commented part of code (mgazdik@redhat.com)
+- GUI: Port mapping error messaging (mgazdik@redhat.com)
+- NOJIRA: update the getstarted with youtube video (vmindru@redhat.com)
+- cli: Disable interfering init services on el6 (vfeenstr@redhat.com)
+- spec: Fix directory creation (vfeenstr@redhat.com)
+- NOJIRA: create /var/lib/leapp/macrocontainers as part of leapp-cockpit
+  install (vmindru@redhat.com)
+- NOJIRA: udpate getstarted with latest relevant info (vmindru@redhat.com)
+- Update Python level CI dependencies (#229) (ncoghlan@gmail.com)
+- NOJIRA: peer review (vmindru@redhat.com)
+- NOJIRA: right now leapp won't run on a fresh install, it misses docker during
+  setup and python  libs (vmindru@redhat.com)
+- NOJIRA: right now leapp won't run on a fresh install, it misses docker during
+  setup and python  libs (vmindru@redhat.com)
+- excluded paths can be empty array now (mgazdik@redhat.com)
+- Changed error type and variable name (mgazdik@redhat.com)
+- --exclude-path overrides default list (mgazdik@redhat.com)
+- CLI: Added support for exclude paths (mgazdik@redhat.com)
+- Add excĺuded paths - initial commit (mgazdik@redhat.com)
+- NOJIRA: rename repo to leapp (vmindru@redhat.com)
+- fix: Use rsync backend by default (podvody@redhat.com)
+- stop using _LOCALHOST, simple check if ip is in (127.0.0.1, localhost)
+  (mfranczy@redhat.com)
+- add 127.0.0.1 to _LOCALHOST const (mfranczy@redhat.com)
+- Remove the fix_upstart function, turns out that it was not needed (and
+  actually there has been no service named mysqld, only mysql55-mysqld, so the
+  mysqld part never did anything). (pcahyna@redhat.com)
+- bugfix - do not resolve localhost to ip (mfranczy@redhat.com)
+- NOJIRA: update CLI version during RPM build (vmindru@redhat.com)
+- NOJIRA: add new tox file with line length (vmindru@redhat.com)
+- Clarify purpose of "pipenv install" task (ncoghlan@gmail.com)
+- Restore Cockpit plugin test (ncoghlan@gmail.com)
+- catch all Exceptions.* (mfranczy@redhat.com)
+- resolve fqdn to ip (mfranczy@redhat.com)
+- spec: Fix json output (vfeenstr@redhat.com)
+- remove unnecessary PortsException - do not raise if hostname is not in
+  scan.all_hosts, check only error value (mfranczy@redhat.com)
+- integration-tests: Install tito build rpm (vfeenstr@redhat.com)
+- integration-tests: Add python2-nmap rpm directly (vfeenstr@redhat.com)
+- spec: Fix el7 deps (vfeenstr@redhat.com)
+- integration-tests: Install the tito built RPM (vfeenstr@redhat.com)
+- spec: Fix psutil dependency (vfeenstr@redhat.com)
+- spec: Fix cockpit config generation (vfeenstr@redhat.com)
+- Disabled default port mapping for migration executed from UI
+  (mgazdik@redhat.com)
+- restore previous assertion for port-mapping int-tests (mfranczy@redhat.com)
+- instead of using has_items from hamcrest, use more explicit assertion
+  (mfranczy@redhat.com)
+- fix integration tests (mfranczy@redhat.com)
+- check if port-mapping result contains expected ports (mfranczy@redhat.com)
+- add missed port - port mapping integration tests (mfranczy@redhat.com)
+- psutil package for setup.py (mfranczy@redhat.com)
+- psutil package (mfranczy@redhat.com)
+- restore PortScanException (mfranczy@redhat.com)
+- clean code (mfranczy@redhat.com)
+- use psutil.net_connections when it comes to scan localhost
+  (mfranczy@redhat.com)
+- cli: By default do not check host keys as a workaround (vfeenstr@redhat.com)
+- _port_remap is static now, removed default parameters for _port_remap
+  (mgazdik@redhat.com)
+- ui: Using blue for running commands instead of orange (vfeenstr@redhat.com)
+- _port_remap moved into MigrationContext since it is being used by map_ports
+  method directly (mgazdik@redhat.com)
+- port map can now handle set of target ports per a source port
+  (mgazdik@redhat.com)
+- ui: Remove debug logging (vfeenstr@redhat.com)
+- ui: Add back release and lock for import (vfeenstr@redhat.com)
+- ui: Refactor call_leapp to be usable concurrently and add exandable logs
+  (vfeenstr@redhat.com)
+- Removed checkbox ID port list (mgazdik@redhat.com)
+- corrected input port verification (mgazdik@redhat.com)
+- Implemented changes suggested in comments (mgazdik@redhat.com)
+- Polishing of the code (mgazdik@redhat.com)
+- ui: Add custom port mapping form (mgazdik@redhat.com)
+- TRELLO-163: adding callback profile to see time details (vmindru@redhat.com)
+- TRELLO-163: peer review         add step description         fix date alias
+  add time since begining reporting         add timestamps and command  time
+  duration execution reporting (vmindru@redhat.com)
+- Remove list-machines tests & helpers (ncoghlan@gmail.com)
+- Override correct variable name (ncoghlan@gmail.com)
+- Configure correct user for host macrocontainer storage (ncoghlan@gmail.com)
+- Simplify network interface regex (ncoghlan@gmail.com)
+- Update test documentation (ncoghlan@gmail.com)
+- Add CLI test case for local machine imports (ncoghlan@gmail.com)
+- Fix interface regex on Fedora (ncoghlan@gmail.com)
+- Add Docker to CI testing host (ncoghlan@gmail.com)
+- ui: Fix visual port collission handling in UI (vfeenstr@redhat.com)
+- ui: refactor port adding into separate function for easier reuse
+  (vfeenstr@redhat.com)
+- ui: Use patternfly compatible classes (vfeenstr@redhat.com)
+- ui: Implement port mapping from CLI (vfeenstr@redhat.com)
+- cli: Fix target IP list (vfeenstr@redhat.com)
+- ui: Add a tooltip to the force create checkbox (vfeenstr@redhat.com)
+- ui: Force creation checkbox checked by default (vfeenstr@redhat.com)
+- ui: Force create command implementation (vfeenstr@redhat.com)
+- Use sys.exit instead of exit (amello@redhat.com)
+- Restore handling of missing storage directories (ncoghlan@gmail.com)
+- Fix step function name (ncoghlan@gmail.com)
+- Add --force-create option to migrate-machine (ncoghlan@gmail.com)
+- Add selective destroy-container subcommand (ncoghlan@gmail.com)
+- integration-tests: Use ssh-agent in cockpit test (vfeenstr@redhat.com)
+- ui: Forward the agent socket (vfeenstr@redhat.com)
+- Verify return value of find_machine preventing app to show a bt to user
+  (amello@redhat.com)
+- enable concurrent runs (kbsingh@karan.org)
+- During check-target do not fail if storage dir is missing on target machine
+  (amello@redhat.com)
+- bugfix: pass container name var into MigrateContext (mfranczy@redhat.com)
+
 * Thu Jun 15 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.0.1-32
 - ui: Start displaying progress after 'Find apps' was clicked
   (vfeenstr@redhat.com)

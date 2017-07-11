@@ -15,6 +15,7 @@ from leappto.providers.ssh import SSHMachine
 from leappto.providers.local import LocalMachine
 from leappto.version import __version__
 from sets import Set
+import argcomplete
 import os
 import sys
 import socket
@@ -25,6 +26,17 @@ import psutil
 
 
 VERSION='leapp-tool {0}'.format(__version__)
+
+UPSTART_SERVICE_BLACKLIST = (
+    'cloud-config',
+    'cloud-final',
+    'cloud-init',
+    'cloud-init-local',
+    'ip6tables',
+    'iptables',
+    'lvm2-monitor',
+    'network',
+)
 
 MACROCONTAINER_STORAGE_DIR = '/var/lib/leapp/macrocontainers/'
 SOURCE_APP_EXPORT_DIR = '/var/lib/leapp/source_export/'
@@ -154,13 +166,15 @@ def _make_argument_parser():
         action='store_true',
         help='force creation of new target container, even if one already exists'
     )
+    migrate_cmd.add_argument('--freeze-fs', default=False, action="store_true", help='Freeze filesystem on source machine')
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
 
-    check_target_cmd.add_argument('target', help='target VM name')
+    check_target_cmd.add_argument('-t', '--target', default='localhost', help='Target container host')
     _add_identity_options(check_target_cmd)
+    check_target_cmd.add_argument("-s", "--status", default=False, help='Check for services status on target machine', action="store_true")
 
-    destroy_cmd.add_argument('target', help='target VM name')
+    destroy_cmd.add_argument('-t', '--target', default='localhost', help='Target container host')
     destroy_cmd.add_argument('container', help='container to destroy (if it exists)')
     _add_identity_options(destroy_cmd)
 
@@ -246,6 +260,8 @@ def main():
             self.rsync_cp_backend = rsync_cp_backend
             self.container_name = container_name
 
+            self.freeze = False
+
             if excluded_paths is None:
                 # Default excluded paths used only when --exclude-path wasn't used
                 self.excluded_paths = [
@@ -254,6 +270,8 @@ def main():
             else:
                 self.excluded_paths = excluded_paths
 
+        def freeze_fs(self, enabled = True):
+            self.freeze = enabled
 
         def __get_machine_opt_by_context(self, machine_context):
             return (getattr(self, '{}_{}'.format(machine_context, opt)) for opt in ['addr', 'cfg', 'use_sshpass'])
@@ -369,7 +387,11 @@ def main():
 
                 self._open_permanent_ssh_conn(self.SOURCE)
                 try:
-                    ret_code = self._ssh_sudo('sync && fsfreeze -f /', machine_context=self.SOURCE, reuse_ssh_conn=True)
+                    sync_cmd = 'sync'
+                    if self.freeze:
+                        sync_cmd += ' && fsfreeze -f /'
+
+                    ret_code = self._ssh_sudo(sync_cmd, machine_context=self.SOURCE, reuse_ssh_conn=True)
                     if ret_code != 0:
                         sys.exit(ret_code)
 
@@ -382,7 +404,8 @@ def main():
 
                     Popen(shlex.split(source_cmd)).wait()
                 finally:
-                    self._ssh_sudo('fsfreeze -u /', machine_context=self.SOURCE, reuse_ssh_conn=True)
+                    if self.freeze:
+                        self._ssh_sudo('fsfreeze -u /', machine_context=self.SOURCE, reuse_ssh_conn=True)
                     self._close_permanent_ssh_conn(self.SOURCE)
 
                 # if it's localhost this should not be executed
@@ -420,6 +443,25 @@ def main():
             return _virt_tar_out()
 
         def check_target(self):
+            check_commands = {
+                'docker': 'docker info',
+                'rsync': 'rsync --version'
+            }
+
+            check_result = {}
+            return_code, check_result['containers'] = self.check_target_containers()
+
+            for service, check_cmd in check_commands.items():
+                rc = self._ssh_sudo(check_cmd + ' > /dev/null 2> /dev/null')
+                if rc:
+                    check_result[service] = 'error'
+                    return_code = rc
+                else:
+                    check_result[service] = 'ok'
+
+            return (return_code, check_result)
+
+        def check_target_containers(self):
             storage_dir = MACROCONTAINER_STORAGE_DIR
             ps_containers = 'docker ps -a --format "{{.Names}}"'
             rc, containers = self._ssh_sudo_out(ps_containers,
@@ -573,7 +615,7 @@ def main():
         def destroy_container(self, container_name):
             """Destroy the specified container (if it exists)"""
             storage_dir = MACROCONTAINER_STORAGE_DIR
-            rc, containers = self.check_target()
+            rc, containers = self.check_target_containers()
             if rc or container_name not in containers:
                 return rc
             return self._ssh_sudo(
@@ -581,14 +623,18 @@ def main():
                 'rm -rf {1}/{0}'.format(container_name, storage_dir)
             )
 
-        def start_container(self, img, init, forwarded_ports=None):
+        def start_container(self, img, init, forwarded_ports=None, extra_arg=None, pre_cmd=None):
             if forwarded_ports is None:
                 port_map_result, forwarded_ports = self.map_ports()
                 if port_map_result != 0:
                     return port_map_result
             container_name = self.get_target_container_name()
             container_dir = self._get_container_dir()
-            command = 'docker run -tid -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
+            if pre_cmd is None:
+                command = ''
+            else:
+                command = pre_cmd
+            command += 'docker run -tid -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
             good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
             for mount in good_mounts:
                 command += ' -v {d}/{m}:/{m}:Z'.format(d=container_dir, m=mount)
@@ -597,6 +643,8 @@ def main():
                     command += ' -p {:d}'.format(container_port)  # docker will select random port for host
                 else:
                     command += ' -p {:d}:{:d}'.format(host_port, container_port)
+            if not(extra_arg is None):
+                command += ' ' + extra_arg
             command += ' --name ' + container_name + ' ' + img + ' ' + init
             return self._ssh_sudo(command)
 
@@ -604,17 +652,19 @@ def main():
             container_name = self.get_target_container_name()
             return self._ssh_sudo('docker exec -t {} {}'.format(container_name, fix_str))
 
-        def fix_systemd(self):
-            # systemd cleans /var/log/ and mariadb & httpd can't handle that, might be a systemd bug
-            fixer = 'bash -c "echo ! waiting ; ' + \
-                    'sleep 2 ; ' + \
-                    'mkdir -p /var/log/{httpd,mariadb} && ' + \
-                    'chown mysql:mysql /var/log/mariadb && ' + \
-                    'systemctl enable httpd mariadb ; ' + \
-                    'systemctl start httpd mariadb"'
-            return self._fix_container(fixer)
+        def post_configure_upstart(self):
+            container_dir = self._get_container_dir()
+            for level in range(0, 7):
+                p = os.path.join(container_dir, 'etc', 'rc{}.d'.format(level))
+                for entry in os.listdir(p):
+                    link = os.path.join(p, entry)
+                    name = os.path.basename(os.readlink(link))
+                    if name in UPSTART_SERVICE_BLACKLIST:
+                        os.unlink(link)
+            with open(os.path.join(container_dir, 'etc', 'init', 'rcS-emergency.conf'), 'w') as f:
+                f.write('exit 0\n')
 
-
+    argcomplete.autocomplete(ap)
     parsed = ap.parse_args()
     if parsed.action == 'list-machines':
         if not parsed.ip:
@@ -665,16 +715,18 @@ def main():
             parsed.excluded_paths
         )
 
+        mc.freeze_fs(parsed.freeze_fs)
+
         if not parsed.print_port_map:
             # If we're doing an actual migration, check we have access to the
             # target, and the desired container name is available
-            check_result, claimed_names = mc.check_target()
+            check_result, target_status = mc.check_target()
             if check_result != 0:
                 print("! Checking target access failed")
                 sys.exit(check_result)
 
             container_name = mc.get_target_container_name()
-            if container_name in claimed_names:
+            if container_name in target_status['containers']:
                 if not parsed.force_create:
                     print("! Container name {} is not available".format(container_name))
                     sys.exit(-10)
@@ -715,15 +767,40 @@ def main():
 
         # if el7 then use systemd
         if machine_src.installation.os.version.startswith('7'):
-            result = mc.start_container('centos:7',
-                                        '/usr/lib/systemd/systemd --system',
-                                        tcp_mapping)
+            opts = [
+                # Required for docker 1.13
+                "--cap-add", "SYS_ADMIN",
+                # Implemented in default command
+                #"-v", "/sys/fs/cgroup:/sys/fs/cgroup:ro",
+                "--tmpfs", "/run", 
+                "--tmpfs", "/tmp",
+                "-e", "container=docker"
+                
+            ]
+
+            # centos/systemd doesn't have any other tag than latest
+            # but it is derived from centos:7 image
+            result = mc.start_container('centos/systemd:latest',
+                                        # This is not a relict from CentOS6, it will execute systemd properly
+                                        '/sbin/init',
+                                        tcp_mapping,
+                                        " ".join(opts))
+
             print_migrate_info('! starting services')
-            mc.fix_systemd()
         else:
+            mc.post_configure_upstart()
+            # create some empty files and mount them in the container
+            container_dir = mc._get_container_dir()
+            addfiles = ['fastboot', '.nolvm']
+            fullfiles = ['{d}/{f}'.format(d=container_dir, f=f) for f in addfiles]
+            pre_command = 'touch ' + ' '.join(fullfiles) + ' && '
+            vol_commands = ['-v {d}/{f}:/{f}:ro,Z'.format(d=container_dir, f=f) for f in addfiles]
+            vol_command = ' '.join(vol_commands)
             result = mc.start_container('centos:6',
                                         '/sbin/init',
-                                        tcp_mapping)
+                                        tcp_mapping,
+                                        vol_command,
+                                        pre_command)
         print_migrate_info('! done')
         sys.exit(result)
 
@@ -744,7 +821,12 @@ def main():
             None
         )
 
-        return_code, claimed_names = mc.check_target()
+        if parsed.status:
+            return_code, target_status = mc.check_target()
+            print(dumps(target_status))
+            sys.exit(return_code)
+
+        return_code, claimed_names = mc.check_target_containers()
         for name in sorted(claimed_names):
             print(name)
 

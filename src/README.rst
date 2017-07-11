@@ -23,3 +23,9 @@ Installation
 Installation is currently only supported as part of
 the LeApp Cockpit plugin demo or the LeApp integration
 tests.
+
+SELinux
+-------
+Please enable *container_manage_cgroup* boolean in order to manage cgroups within container.
+
+  semanage boolean -m -1 container_manage_cgroup

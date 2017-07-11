@@ -1,8 +1,8 @@
 Integration tests
 =================
 
-Kernel modernization integration tests
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Legacy Application import integration tests
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This directory contains integration tests that check the expected results
 of kernel modernization attempts given different starting scenarios.
@@ -86,6 +86,22 @@ with the following commands::
 
     pip install --user pipsi
     pip install -r integration-tests/requirements.txt
+
+Running the tests against an already installed RPM
+--------------------------------------------------
+
+By default, the tests use `pipsi` and automatically generated symlinks to
+test against the CLI and Cockpit plugin located in the git clone containing
+the test suite.
+
+This behaviour can be overridden by setting the ``LEAPP_TEST_RPM`` environment
+variable when running the tests::
+
+    LEAPP_TEST_RPM=1 behave
+
+Any non-empty string will cause the tests to expect LeApp to already be
+installed, and to run against that installed version.
+
 
 Adding new test suite dependencies
 ----------------------------------
@@ -199,6 +215,11 @@ scenarios. This allows a single VM instance for each VM definition to be shared
 not only between test scenarios, but also between different test *runs*, saving
 around 3-5 minutes of test execution time for each VM destruction and recreation
 cycle avoided.
+
+By default, VMs are still *halted* after a test run, even with ``ensure_fresh=no``.
+To further speed up test execution, set ``LEAPP_TEST_KEEPS_VMS=1`` in the
+environment: this will leave the VMs running, saving additional time when you
+expect to be using them again in a subsequent test run.
 
 For development and test debugging purposes, the ``ensure_fresh` setting can be
 changed to ``yes``. This means that instead of just re-running the Ansible
