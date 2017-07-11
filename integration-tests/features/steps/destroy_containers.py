@@ -10,7 +10,7 @@ def check_destroy_container(context, container, target, time_limit):
     if not claimed_names:
         raise RuntimeError("Claim names in test scenario setup to use this step")
     context.cli_helper.check_response_time(
-        ["destroy-container", "-t", context.vm_helper.get_hostname(target), container],
+        ["destroy-container", "-t", context.vm_helper.get_ip_address(target), container],
         time_limit,
         use_default_identity=True
     )
