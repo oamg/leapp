@@ -212,8 +212,8 @@ class ClientHelper(object):
                                container_name=None):
         """Get command to recreate source VM as a macrocontainer on given target VM"""
         vm_helper = self._vm_helper
-        source_host = vm_helper.get_hostname(source_vm)
-        target_host = vm_helper.get_hostname(target_vm)
+        source_host = vm_helper.get_ip_address(source_vm)
+        target_host = vm_helper.get_ip_address(target_vm)
         return self._make_migration_command(
             source_host,
             target_host,
@@ -226,8 +226,8 @@ class ClientHelper(object):
                                   migration_opt=None, force_create=False):
         """Recreate source VM as a macrocontainer on given target VM"""
         vm_helper = self._vm_helper
-        source_host = vm_helper.get_hostname(source_vm)
-        target_host = vm_helper.get_hostname(target_vm)
+        source_host = vm_helper.get_ip_address(source_vm)
+        target_host = vm_helper.get_ip_address(target_vm)
         return self._convert_vm_to_macrocontainer(
             source_host,
             target_host,
@@ -238,7 +238,7 @@ class ClientHelper(object):
     def check_target(self, target_vm, time_limit=10):
         """Check viability of target VM and report currently unavailable names"""
         command_output = self.check_response_time(
-            ["check-target", "-t", self._vm_helper.get_hostname(target_vm)],
+            ["check-target", "-t", self._vm_helper.get_ip_address(target_vm)],
             time_limit,
             use_default_identity=True
         )
@@ -248,7 +248,7 @@ class ClientHelper(object):
     def check_target_status(self, target_vm, time_limit=10):
         """Check services status of target VM and report results"""
         command_output = self.check_response_time(
-            ["check-target", "--status", "-t", self._vm_helper.get_hostname(target_vm)],
+            ["check-target", "--status", "-t", self._vm_helper.get_ip_address(target_vm)],
             time_limit,
             use_default_identity=True
         )
