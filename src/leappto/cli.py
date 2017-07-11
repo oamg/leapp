@@ -159,14 +159,6 @@ def _make_argument_parser():
     #)
     migrate_cmd.add_argument("-p", "--print-port-map", default=False, help='List suggested port mapping on target host', action="store_true")
     migrate_cmd.add_argument("--ignore-default-port-map", default=False, help='Default port mapping detected by leapp toll will be ignored', action="store_true")
-    migrate_cmd.add_argument(
-        '--use-rsync',
-        type=lambda v: v and v.lower() not in ['no', 'n', '0', 'f', 'false'],
-        default=True,
-        const=True,
-        nargs='?',
-        help='use rsync as backend for filesystem migration, otherwise virt-tar-out'
-    )
     migrate_cmd.add_argument('--container-name', '-n', default=None, help='Name of new container created on target host')
     migrate_cmd.add_argument(
         '--force-create',
@@ -250,15 +242,14 @@ def main():
         _SSH_CTL_PATH = '{}/.ssh/ctl'.format(os.environ['HOME'])
         _SSH_CONTROL_PATH = '-o ControlPath="{}/%L-%r@%h:%p"'.format(_SSH_CTL_PATH)
 
-        def __init__(self, target, target_ssh_cfg, disk, source=None, source_ssh_cfg=None,
-                     rsync_cp_backend=False, container_name=None, excluded_paths=None):
+        def __init__(self, target, target_ssh_cfg, disk, source=None, source_ssh_cfg=None, container_name=None,
+                     excluded_paths=None):
             self.source = source
             self.target = target
             self.source_use_sshpass, self.source_cfg = (None, None) if source_ssh_cfg is None else source_ssh_cfg
             self.target_use_sshpass, self.target_cfg = target_ssh_cfg
             self._cached_ssh_password = None
             self.disk = disk
-            self.rsync_cp_backend = rsync_cp_backend
             self.container_name = container_name
 
             self.freeze = False
@@ -417,31 +408,9 @@ def main():
                                  .format(rsync_dir, ' '.join(self.target_cfg), self.target_addr)
                     Popen(shlex.split(target_cmd)).wait()
 
-            def _virt_tar_out():
-                try:
-                    print('! ', self.source.suspend())
-                    # Vagrant always uses qemu:///system, so for now, we always run
-                    # virt-tar-out as root, rather than as the current user
-                    proc = Popen(['sudo', 'bash', '-c', 'LIBGUESTFS_BACKEND=direct virt-tar-out -a {} / -' \
-                                .format(self.disk)], stdout=PIPE)
-                    assert SOURCE_APP_EXPORT_DIR
-                    return self._ssh_sudo(
-                        ('mkdir -p {0}/ && cat > {0}/exported_app.tar.gz && '
-                         'tar xf {0}/exported_app.tar.gz -C {1} && '
-                         'rm {0}/exported_app.tar.gz').format(
-                            SOURCE_APP_EXPORT_DIR,
-                            container_dir
-                        ),
-                        stdin=proc.stdout
-                    )
-                finally:
-                    print('! ', self.source.resume())
-
             self._ssh_sudo('docker rm -fv {} 2>/dev/null 1>/dev/null; '
                            'mkdir -p {}'.format(container_name, container_dir))
-            if self.rsync_cp_backend:
-                return _rsync()
-            return _virt_tar_out()
+            return _rsync()
 
         def check_target(self):
             check_commands = {
@@ -708,10 +677,9 @@ def main():
         mc = MigrationContext(
             machine_dst,
             _set_ssh_config(parsed.target_user, parsed.target_identity, parsed.target_ask_pass),
-            None if parsed.use_rsync else machine_src.disks[0].host_path,
+            None,
             machine_src,
             _set_ssh_config(parsed.source_user, parsed.source_identity, parsed.source_ask_pass),
-            parsed.use_rsync,
             parsed.container_name,
             parsed.excluded_paths
         )

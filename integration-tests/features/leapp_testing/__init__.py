@@ -368,8 +368,6 @@ class ClientHelper(object):
                                 force_create=False,
                                 container_name=None):
         cmd_args = ["migrate-machine", "--tcp-port", "80:80"]
-        if migration_opt == 'rsync':
-            cmd_args.append('--use-rsync')
         if force_create:
             cmd_args.append('--force-create')
         if container_name is not None:
@@ -379,15 +377,13 @@ class ClientHelper(object):
 
     def _convert_vm_to_macrocontainer(self, source_host, target_host,
                                       migration_opt, force_create):
-        as_sudo = False
         cmd_args = self._make_migration_command(source_host, target_host,
                                                migration_opt, force_create)
-        if '--use-rsync' in cmd_args:
-            as_sudo = True
         result = self._run_leapp(cmd_args,
                                 add_default_user=True,
                                 add_default_identity=True,
-                                is_migrate=True)
+                                is_migrate=True,
+                                as_sudo=True)
         msg = "Migrated {} as macrocontainer on {}"
         print(msg.format(source_host, target_host))
         return result
