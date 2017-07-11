@@ -14,7 +14,7 @@ Setting up to run leapp import tool
 
 Installation - CentOS 7
 -----------------------
-Install LeApp-To using these steps: ::
+Install LeApp using these steps: ::
 
     sudo yum-config-manager --add-repo https://copr.fedorainfracloud.org/coprs/evilissimo/leapp-stable/repo/epel-7/evilissimo-leapp-stable-epel-7.repo
     sudo yum install epel-release
@@ -22,7 +22,7 @@ Install LeApp-To using these steps: ::
 
 Installation - RHEL 7
 ---------------------
-Install LeApp-To using these steps: ::
+Install LeApp using these steps: ::
 
     sudo curl https://copr.fedorainfracloud.org/coprs/evilissimo/leapp-stable/repo/epel-7/evilissimo-leapp-stable-epel-7.repo -o /etc/yum.repos.d/evilissimo-leapp-stable-epel-7.repo
     sudo yum install http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm
@@ -32,7 +32,7 @@ Install LeApp-To using these steps: ::
 
 Installation - Fedora 25
 ------------------------
-Install LeApp-To using these steps: ::
+Install LeApp using these steps: ::
 
     sudo dnf install dnf-plugins-core
     sudo dnf copr enable evilissimo/leapp-stable
