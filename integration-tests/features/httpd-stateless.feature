@@ -1,14 +1,5 @@
 Feature: Redeploy stateless HTTP services
 
-Scenario: Migrate between remote hosts using virt-tar-out
-   Given the local virtual machines:
-         | name       | definition          | ensure_fresh |
-         | app-source | centos6-guest-httpd | no           |
-         | target     | centos7-target      | no           |
-    When app-source is migrated to target as a macrocontainer
-    Then the HTTP 403 response on port 80 should match within 120 seconds
-     And attempting another migration should fail within 10 seconds
-
 Scenario: Migrate between remote hosts using rsync
    Given the local virtual machines:
          | name       | definition          | ensure_fresh |

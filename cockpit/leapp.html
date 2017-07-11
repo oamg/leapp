@@ -755,7 +755,7 @@
 
         function get_port_mapping() {
             var ctx = new_leapp_call(
-                override_identity(["migrate-machine", "-p", "--use-rsync", "-t", "127.0.0.1",
+                override_identity(["migrate-machine", "-p", "-t", "127.0.0.1",
                                   $("#source-address").val()]));
 
             ctx.log("Loading default port mapping....");
@@ -822,7 +822,6 @@
             });
 
             var import_args = ["migrate-machine"]
-            import_args.push("--use-rsync");
             override_identity(import_args);
             import_args.push("--ignore-default-port-map");
             import_args.push("--tcp-port");

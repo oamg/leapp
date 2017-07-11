@@ -25,7 +25,6 @@
     - libffi-devel
     - openssl-devel
     - patch
-    - libguestfs-tools-c
     - nmap
 
 - name: Run VMs under root

@@ -7,7 +7,6 @@ License:    SeeProject
 
 BuildRequires: ansible
 BuildRequires: gcc
-BuildRequires: libguestfs-tools-c
 BuildRequires: libvirt-client
 BuildRequires: libvirt-devel
 BuildRequires: nmap
