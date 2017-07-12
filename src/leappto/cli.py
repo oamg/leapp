@@ -154,8 +154,14 @@ def _make_argument_parser():
         action='store_true',
         help='force creation of new target container, even if one already exists'
     )
-    migrate_cmd.add_argument('--freeze-fs', default=False, action="store_true", help='Freeze filesystem on source machine')
     migrate_cmd.add_argument('--disable-start', dest='disable_start', default=False, help='Migrated container will not be started immediately', action="store_true")
+    migrate_cmd.add_argument(
+        '--freeze-fs', 
+        type=lambda v: v and v.lower() not in ['no', 'n', '0', 'f', 'false'],
+        nargs='?',
+        default=True, 
+        help='Enable/disable filesystem freezing on source machine (default: true)'
+    )
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
 
@@ -241,7 +247,7 @@ def main():
             self.disk = disk
             self.container_name = container_name
 
-            self.freeze = False
+            self.freeze = True 
 
             if excluded_paths is None:
                 # Default excluded paths used only when --exclude-path wasn't used
