@@ -1,4 +1,6 @@
-_python_argcomplete_leapp_zsh() {
+#compdef leapp-tool
+
+__leapp_tool() {
     local COMP_LINE=$BUFFER
     local COMP_POINT=$(expr "$BUFFER" : ".*")
     #local COMP_TYPE=9
@@ -19,5 +21,8 @@ _python_argcomplete_leapp_zsh() {
     if [[ $? == 0 ]]; then
         compadd -- $COMPREPLY
     fi
+
+    return 0
 }
-compdef _python_argcomplete_leapp_zsh leapp-tool
+
+__leapp_tool
