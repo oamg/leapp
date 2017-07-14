@@ -1,5 +1,13 @@
 #from wowp.components import InPort
 
+class Any(object):
+    """A unique wildcard object
+
+    Note that we cannot use None as this can be used by users
+    """
+
+    def __init__(self):
+        raise Exception('Any cannot be instantiated')
 
 class PortAnnotation(object):
     def __init__(self, msgtype):
@@ -7,8 +15,8 @@ class PortAnnotation(object):
 
 
 class DstPortAnnotation(PortAnnotation):
-    def __init__(self, msgtype, srcname):
-        super().__init__(msgtype)
+    def __init__(self, msgtype, srcname=Any):
+        super(DstPortAnnotation, self).__init__(msgtype)
         self.srcname = srcname
 
 #class AnnotatedInPort(InPort):
@@ -29,16 +37,6 @@ class MsgType(object):
         self.srcname=srcname
         self.errorinfo=errorinfo
         self.payload=payload
-
-class Any(object):
-    """A unique wildcard object
-
-    Note that we cannot use None as this can be used by users
-    """
-
-    def __init__(self):
-        raise Exception('Any cannot be instantiated')
-
 
 def connectactors(actors):
     allinports=[p for a in actors for p in a.inports.values()]
