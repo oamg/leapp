@@ -179,7 +179,7 @@ def _make_argument_parser():
         help='force creation of new target container, even if one already exists'
     )
     migrate_cmd.add_argument('--freeze-fs', default=False, action="store_true", help='Freeze filesystem on source machine')
-    migrate_cmd.add_argument('--disable-start', dest='distable_start', default=False, help='Migrated container will not be started immediately', action="store_true")
+    migrate_cmd.add_argument('--disable-start', dest='disable_start', default=False, help='Migrated container will not be started immediately', action="store_true")
     _add_identity_options(migrate_cmd, context='source')
     _add_identity_options(migrate_cmd, context='target')
 
@@ -777,6 +777,7 @@ def main():
         mc.copy()
         print_migrate_info('! provisioning ...')
 
+        result = 0
         # if el7 then use systemd
         if machine_src.installation.os.version.startswith('7'):
             opts = [

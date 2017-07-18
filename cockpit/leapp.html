@@ -858,7 +858,9 @@
             ctx.run();
             ctx.log("This can take a while, do not close this page ... ");
             ctx.done(function(){
-                ctx.log("\n\nImported service is now starting, please wait about 2 minutes to see results..");
+                if ($("#start-container")[0].checked) {
+                    ctx.log("Imported service is now starting, please wait about 2 minutes to see results..");
+                };
             });
             ctx.then(function() {
                 loader.hide();
