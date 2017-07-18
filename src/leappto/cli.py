@@ -624,7 +624,7 @@ def main():
                 'rm -rf {1}/{0}'.format(container_name, storage_dir)
             )
 
-        def start_container(self, img, init, forwarded_ports=None, extra_arg=None, pre_cmd=None):
+        def create_container(self, img, init, forwarded_ports=None, extra_arg=None, pre_cmd=None):
             if forwarded_ports is None:
                 port_map_result, forwarded_ports = self.map_ports()
                 if port_map_result != 0:
@@ -635,7 +635,7 @@ def main():
                 command = ''
             else:
                 command = pre_cmd
-            command += 'docker run -tid -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
+            command += 'docker create -ti -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
             good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
             for mount in good_mounts:
                 command += ' -v {d}/{m}:/{m}:Z'.format(d=container_dir, m=mount)
@@ -648,6 +648,10 @@ def main():
                 command += ' ' + extra_arg
             command += ' --name ' + container_name + ' ' + img + ' ' + init
             return self._ssh_sudo(command)
+
+        def start_container(self):
+            container_name = self.get_target_container_name()
+            return self._ssh_sudo('docker start {}'.format(container_name))
 
         def _fix_container(self, fix_str):
             container_name = self.get_target_container_name()
@@ -766,7 +770,6 @@ def main():
         mc.copy()
         print_migrate_info('! provisioning ...')
 
-        result = 0
         # if el7 then use systemd
         if machine_src.installation.os.version.startswith('7'):
             opts = [
@@ -782,7 +785,7 @@ def main():
 
             # centos/systemd doesn't have any other tag than latest
             # but it is derived from centos:7 image
-            result = mc.start_container('centos/systemd:latest',
+            result = mc.create_container('centos/systemd:latest',
                                         # This is not a relict from CentOS6, it will execute systemd properly
                                         '/sbin/init',
                                         tcp_mapping,
@@ -799,11 +802,15 @@ def main():
             vol_commands = ['-v {d}/{f}:/{f}:ro,Z'.format(d=container_dir, f=f) for f in addfiles]
             shutdown_command = ['--stop-signal', 'SIGINT']
             opts = vol_commands + shutdown_command
-            result = mc.start_container('centos:6',
+            result = mc.create_container('centos:6',
                                         '/sbin/init',
                                         tcp_mapping,
                                         " ".join(opts),
                                         pre_command)
+
+        if not parsed.disable_start:
+             result = mc.start_container()
+
         print_migrate_info('! done')
         sys.exit(result)
 
