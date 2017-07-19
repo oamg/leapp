@@ -1,11 +1,13 @@
 Feature: End-to-end testing of supported remote authentication models
 
 Scenario: Remote access using the --identity option
-   Given the local virtual machines:
+    Given ssh-agent is running
+      And the local virtual machines:
          | name           | definition          | ensure_fresh |
          | remote-system  | centos7-target      | no           |
     Then remote-system should be accessible using the default identity file
 
+@skip
 Scenario: Remote access using the --ask-pass option
    Given the tests are being run as root
      And the local virtual machines:
