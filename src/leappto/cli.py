@@ -67,6 +67,17 @@ def _user_has_required_permissions():
             return False
     return True
 
+def start_agent_if_not_available():
+    if 'SSH_AUTH_SOCK' in os.environ:
+        return
+    agent_details = subprocess.check_output(["ssh-agent", "-c"], stderr=PIPE).splitlines()
+    agent_socket = agent_details[0].split()[2].rstrip(";")
+    agent_pid = agent_details[1].split()[2].rstrip(";")
+    os.environ["SSH_AUTH_SOCK"] = agent_socket
+    os.environ["SSH_AGENT_PID"] = agent_pid
+
+
+
 # Parsing CLI arguments
 def _add_identity_options(cli_cmd, context=''):
     if context:
@@ -664,6 +675,7 @@ def main():
 
     for identity in ('identity', 'target_identity', 'source_identity'):
         if identity in parsed and getattr(parsed, identity):
+            start_agent_if_not_available()
             subprocess.call(['ssh-add', getattr(parsed, identity)])
 
     if parsed.action == 'list-machines':
