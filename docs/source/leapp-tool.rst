@@ -51,6 +51,7 @@ migrate-machine
                                    [--source-user USER]
                                    [--target-identity IDENTITY] [--target-ask-pass]
                                    [--target-user USER]
+                                   [--disable-start]
                                    machine
     
     positional arguments:
@@ -61,7 +62,7 @@ migrate-machine
     optional arguments:
         ==================================================  =======================================================
         -h, --help                                          Show this help message and exit
-        -t TARGET, --target TARGET                          Target container host 
+        -t TARGET, --target TARGET                          Target container host
         --tcp-port [FORWARDED_PORTS [FORWARDED_PORTS ...]]  Target ports to forward to macrocontainer (temporary!)
         --source-identity IDENTITY                          Path to private SSH key for the source machine
         --source-ask-pass                                   Ask for SSH password for the source machine
@@ -69,6 +70,7 @@ migrate-machine
         --target-identity IDENTITY                          Path to private SSH key for the target machine
         --target-ask-pass                                   Ask for SSH password for the target machine
         --target-user USER                                  Connect as this user to the target machine
+        --disable-start                                     Do not start container after migration
         ==================================================  =======================================================
 
 
