@@ -25,7 +25,7 @@ Installation - RHEL 7
 Install LeApp using these steps: ::
 
     sudo curl https://copr.fedorainfracloud.org/coprs/evilissimo/leapp-stable/repo/epel-7/evilissimo-leapp-stable-epel-7.repo -o /etc/yum.repos.d/evilissimo-leapp-stable-epel-7.repo
-    sudo yum install http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9.noarch.rpm
+    sudo yum install http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-10.noarch.rpm
     sudo subscription-manager --enable rhel-7-server-extras-rpms
     sudo yum install leapp-cockpit
 
