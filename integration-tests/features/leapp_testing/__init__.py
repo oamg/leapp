@@ -300,6 +300,8 @@ class ClientHelper(object):
     @staticmethod
     def _stop_ssh_agent():
         _run_command(["ssh-agent", "-k"])
+        del os.environ["SSH_AUTH_SOCK"]
+        del os.environ["SSH_AGENT_PID"]
 
     @classmethod
     def ensure_ssh_agent_is_running(cls, cleanup_stack):

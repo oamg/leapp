@@ -19,6 +19,7 @@ import argcomplete
 import os
 import sys
 import socket
+import subprocess
 import nmap
 import shlex
 import errno
@@ -659,6 +660,12 @@ def main():
 
     argcomplete.autocomplete(ap)
     parsed = ap.parse_args()
+
+
+    for identity in ('identity', 'target_identity', 'source_identity'):
+        if identity in parsed and getattr(parsed, identity):
+            subprocess.call(['ssh-add', getattr(parsed, identity)])
+
     if parsed.action == 'list-machines':
         if not parsed.ip:
             lmp = LibvirtMachineProvider(parsed.shallow)
