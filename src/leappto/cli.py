@@ -200,13 +200,6 @@ def main():
 
     ap = _make_argument_parser()
 
-    # TODO: Move these helper functions into the leappto library
-    def _find_machine(ms, name, shallow=True, user='root'):
-        for machine in ms:
-            if machine.hostname == name:
-                return machine
-        return _inspect_machine(name, shallow=shallow, user=user)
-
     def _inspect_machine(host, shallow=True, user='root'):
         try:
             if host in ('localhost', '127.0.0.1'):
@@ -686,17 +679,16 @@ def main():
         print_migrate_info('! looking up "{}" as source and "{}" as target'.format(source, target))
 
         lmp = LibvirtMachineProvider()
-        machines = lmp.get_machines()
         source_user = parsed.source_user or 'root'
         target_user = parsed.target_user or 'root'
 
-        machine_src = _find_machine(machines, source, user=source_user)
+        machine_src = _inspect_machine(source, user=source_user)
 
         if not machine_src:
             print("Source machine is not ready: " + source)
             sys.exit(-1)
 
-        machine_dst = _find_machine(machines, target, user=target_user)
+        machine_dst = _inspect_machine(target, user=target_user)
 
         if not machine_dst:
             print("Target machine is not ready: " + target)
@@ -809,9 +801,8 @@ def main():
         target = parsed.target
 
         lmp = LibvirtMachineProvider()
-        machines = lmp.get_machines()
 
-        machine_dst = _find_machine(machines, target)
+        machine_dst = _inspect_machine(target)
         if not machine_dst:
             print("Target machine is not ready: " + target)
             sys.exit(-1)
@@ -837,9 +828,8 @@ def main():
         target = parsed.target
 
         lmp = LibvirtMachineProvider()
-        machines = lmp.get_machines()
 
-        machine_dst = _find_machine(machines, target)
+        machine_dst = _inspect_machine(target)
         if not machine_dst:
             print("Target machine is not ready: " + target)
             sys.exit(-1)

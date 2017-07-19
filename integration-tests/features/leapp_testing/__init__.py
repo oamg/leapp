@@ -87,11 +87,11 @@ class VirtualMachineHelper(object):
 
     def get_hostname(self, name):
         """Return the expected hostname for the named machine"""
-        return self.machines[name]
+        return self.get_ip_address(name)
 
     def get_ip_address(self, name):
         """Return the expected IP address for the named machine"""
-        return self._get_vm_ip_address(self.get_hostname(name))
+        return self._get_vm_ip_address(self.machines[name])
 
     def close(self):
         """Halt or destroy all created VMs"""
