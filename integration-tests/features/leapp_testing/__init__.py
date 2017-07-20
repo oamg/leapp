@@ -201,6 +201,8 @@ class ClientHelper(object):
     def __init__(self, vm_helper, leapp_tool_path):
         self._vm_helper = vm_helper
         self._leapp_tool_path = leapp_tool_path
+        self.ensure_ssh_agent_is_running()
+        self._add_default_ssh_key()
 
     def make_migration_command(self, source_vm, target_vm,
                                migration_opt=None,
@@ -304,7 +306,7 @@ class ClientHelper(object):
         del os.environ["SSH_AGENT_PID"]
 
     @classmethod
-    def ensure_ssh_agent_is_running(cls, cleanup_stack):
+    def ensure_ssh_agent_is_running(cls):
         """Start ssh-agent if it isn't already running
 
         If the agent needed to be started, a shutdown callback is registered
@@ -314,22 +316,16 @@ class ClientHelper(object):
             agent_socket, agent_pid = cls._get_ssh_agent_details()
         except KeyError:
             agent_socket, agent_pid = cls._start_ssh_agent()
-            cleanup_stack.callback(cls._stop_ssh_agent)
         return agent_socket, agent_pid
 
-    @classmethod
-    def add_default_ssh_key(cls, cleanup_stack):
-        """Add default testing key to ssh-agent
-
-        A key removal callback is registered with the given ExitStack instance
-        """
+    @staticmethod
+    def _add_default_ssh_key():
+        """Add default testing key to ssh-agent"""
         cmd = ["ssh-add",  _SSH_IDENTITY]
-        result = _run_command(cmd)
-        cleanup_stack.callback(cls._remove_default_ssh_key)
-        return result
+        return _run_command(cmd)
 
     @staticmethod
-    def _remove_default_ssh_key():
+    def remove_default_ssh_key():
         """Remove default testing key from ssh-agent"""
         cmd = ["ssh-add", "-d", _SSH_IDENTITY + ".pub"]
         return _run_command(cmd)
