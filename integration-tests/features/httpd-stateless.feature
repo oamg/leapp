@@ -37,10 +37,7 @@ Scenario: Restart docker and check that the container is running
          | name       | definition          | ensure_fresh |
          | target     | centos7-target      | no           |
          | app-source | centos6-guest-httpd | no           |
-   And   the following names claimed on target:
-         | name       | kind                |
-         | app1       | idle macrocontainer |
    When app-source is migrated to target as a macrocontainer named container-app
    And  docker is restarted
-   Then container named app1 should be restarted and running
+   Then container named container-app should be restarted and running
 
