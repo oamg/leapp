@@ -52,20 +52,9 @@ except AttributeError:
     _set_inheritable = None
 
 # Checking for required permissions
-_REQUIRED_GROUPS = ["vagrant"]
 def _user_has_required_permissions():
     """Check user has necessary permissions to reliably run leapp-tool"""
-    uid = os.getuid()
-    if uid == 0:
-        # root has the necessary access regardless of group membership
-        return True
-    user_info = getpwuid(uid)
-    user_name = user_info.pw_name
-    user_group = getgrgid(user_info.pw_gid).gr_name
-    for group in _REQUIRED_GROUPS:
-        if group != user_group and user_name not in getgrnam(group).gr_mem:
-            return False
-    return True
+    return os.getuid() == 0
 
 def start_agent_if_not_available():
     if 'SSH_AUTH_SOCK' in os.environ:
