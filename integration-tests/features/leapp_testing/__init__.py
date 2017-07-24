@@ -22,6 +22,8 @@ def _run_command(cmd, work_dir=None, ignore_errors=False, as_sudo=False):
     """Run non-interactive command and return stdout"""
     if as_sudo:
         cmd.insert(0, 'sudo')
+        if 'SSH_AUTH_SOCK' in os.environ:
+            cmd.insert(1, 'SSH_AUTH_SOCK=' + os.environ['SSH_AUTH_SOCK'])
     if work_dir is not None:
         print("  Running {} in {}".format(cmd, work_dir))
     else:
