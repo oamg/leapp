@@ -63,7 +63,7 @@ def check_docker_is_installed(context):
 @when("{source_vm} is migrated to {target_vm} as a macrocontainer")
 @when("{source_vm} is migrated to {target_vm} as a macrocontainer and {migration_opt} is used for fs migration")
 @when("{source_vm} is migrated to {target_vm} as a macrocontainer named {container_name}")
-def migrate_vm_as_macrocontainer(context, source_vm, target_vm, migration_opt=None):
+def migrate_vm_as_macrocontainer(context, source_vm, target_vm, migration_opt=None, container_name=None):
     """Uses leapp-tool.py to migrate the given source VM
 
     Both *source_vm* and *target_vm* must be named in a previous local
@@ -73,7 +73,7 @@ def migrate_vm_as_macrocontainer(context, source_vm, target_vm, migration_opt=No
     context.migration_target = target_vm
     context.migration_migration_opt = migration_opt
     migrate_app = context.cli_helper.migrate_as_macrocontainer
-    output = migrate_app(source_vm, target_vm, migration_opt)  # nopep8
+    output = migrate_app(source_vm, target_vm, migration_opt, container_name=container_name)  # nopep8
     # TODO: Assert specifics regarding expected output
 
 
