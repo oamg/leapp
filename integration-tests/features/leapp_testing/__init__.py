@@ -10,6 +10,7 @@ from attr import attributes, attrib
 from hamcrest import assert_that, equal_to, less_than_or_equal_to
 
 import requests
+import re
 
 ##############################
 # General utilities
@@ -371,6 +372,18 @@ class ClientHelper(object):
             cmd_args.append('--force-create')
         if container_name is not None:
             cmd_args.extend(('--container-name', container_name))
+
+        options = list(filter(None, re.split("[,=\s]+", migration_opt)))
+
+        if "freeze-fs" in options:
+            # Is freeze-fs option complete?
+            i = options.index("freeze-fs") + 1
+            if i < len(options):
+                cmd_args.extend(('--freeze-fs', options[i]))
+            else:
+                raise AttributeError("--freeze-fs specified without parameter")
+
+
         cmd_args.extend(("-t", target_host, source_host))
         return cmd_args
 
