@@ -222,8 +222,8 @@ class ClientHelper(object):
             container_name
         )
 
-    def migrate_as_macrocontainer(self, source_vm, target_vm,
-                                  migration_opt=None, force_create=False):
+    def migrate_as_macrocontainer(self, source_vm, target_vm, migration_opt=None, force_create=False,
+                                  container_name=None):
         """Recreate source VM as a macrocontainer on given target VM"""
         vm_helper = self._vm_helper
         source_host = vm_helper.get_ip_address(source_vm)
@@ -232,7 +232,8 @@ class ClientHelper(object):
             source_host,
             target_host,
             migration_opt,
-            force_create
+            force_create,
+            container_name
         )
 
     def check_target(self, target_vm, time_limit=10):
@@ -364,9 +365,7 @@ class ClientHelper(object):
         return _run_command(cmd, work_dir=str(REPO_DIR))
 
     @staticmethod
-    def _make_migration_command(source_host, target_host, migration_opt,
-                                force_create=False,
-                                container_name=None):
+    def _make_migration_command(source_host, target_host, migration_opt, force_create=False, container_name=None):
         cmd_args = ["migrate-machine", "--tcp-port", "80:80"]
         if force_create:
             cmd_args.append('--force-create')
@@ -376,9 +375,8 @@ class ClientHelper(object):
         return cmd_args
 
     def _convert_vm_to_macrocontainer(self, source_host, target_host,
-                                      migration_opt, force_create):
-        cmd_args = self._make_migration_command(source_host, target_host,
-                                               migration_opt, force_create)
+                                      migration_opt, force_create, container_name):
+        cmd_args = self._make_migration_command(source_host, target_host, migration_opt, force_create, container_name)
         result = self._run_leapp(cmd_args,
                                 add_default_user=True,
                                 add_default_identity=True,
