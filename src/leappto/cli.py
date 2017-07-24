@@ -640,7 +640,7 @@ def main():
                 command = ''
             else:
                 command = pre_cmd
-            command += 'docker create -ti -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
+            command += 'docker create --restart always -ti -v /sys/fs/cgroup:/sys/fs/cgroup:ro'
             good_mounts = ['bin', 'etc', 'home', 'lib', 'lib64', 'media', 'opt', 'root', 'sbin', 'srv', 'usr', 'var']
             for mount in good_mounts:
                 command += ' -v {d}/{m}:/{m}:Z'.format(d=container_dir, m=mount)
