@@ -3,14 +3,15 @@
 All steps in this file should only assume access to the LeApp CLI client,
 to allow testing of behaviour without the DBus service running.
 """
-from behave import given, when, then, step
-from hamcrest import assert_that, equal_to, is_not, not_none, greater_than
+from behave import given, when, then
+from hamcrest import assert_that, equal_to, is_not, not_none
 
 import shutil
 
 ##############################
 # Local VM management
 ##############################
+
 
 @given("the local virtual machines as {user}")
 @given("the local virtual machines")
@@ -61,6 +62,7 @@ def check_docker_is_installed(context):
 
 @when("{source_vm} is migrated to {target_vm} as a macrocontainer")
 @when("{source_vm} is migrated to {target_vm} as a macrocontainer and {migration_opt} is used for fs migration")
+@when("{source_vm} is migrated to {target_vm} as a macrocontainer named {container_name}")
 def migrate_vm_as_macrocontainer(context, source_vm, target_vm, migration_opt=None):
     """Uses leapp-tool.py to migrate the given source VM
 
@@ -71,8 +73,9 @@ def migrate_vm_as_macrocontainer(context, source_vm, target_vm, migration_opt=No
     context.migration_target = target_vm
     context.migration_migration_opt = migration_opt
     migrate_app = context.cli_helper.migrate_as_macrocontainer
-    output = migrate_app(source_vm, target_vm, migration_opt)
+    output = migrate_app(source_vm, target_vm, migration_opt)  # nopep8
     # TODO: Assert specifics regarding expected output
+
 
 @when("{source_vm} is imported as a macrocontainer")
 def import_vm_as_macrocontainer(context, source_vm):
@@ -85,9 +88,10 @@ def import_vm_as_macrocontainer(context, source_vm):
     context.migration_source = source_vm
     context.migration_target = target_vm = "localhost"
     context.migration_migration_opt = migration_opt = "rsync"
-    migrate_app = context.cli_helper.migrate_as_macrocontainer
-    output = migrate_app(source_vm, target_vm, migration_opt, force_create=True)
+    migrate_app = context.cli_helper.migrate_as_macrocontainer  # nopep8
+    output = migrate_app(source_vm, target_vm, migration_opt, force_create=True)  # nopep8
     # TODO: Assert specifics regarding expected output
+
 
 @then("attempting another migration should fail within {time_limit:g} seconds")
 def repeat_previous_migration(context, time_limit):
@@ -102,6 +106,7 @@ def repeat_previous_migration(context, time_limit):
                                         expect_failure=True)
     assert_that(output, is_not(equal_to("")))
     # TODO: Assert specifics regarding expected output
+
 
 @then('migrating {source_vm} to {target_vm} as "{app_name}" should fail within {time_limit:g} seconds')
 def expect_failed_migration(context, source_vm, target_vm, app_name, time_limit):
@@ -118,6 +123,7 @@ def expect_failed_migration(context, source_vm, target_vm, app_name, time_limit)
     assert_that(output, is_not(equal_to("")))
     # TODO: Assert specifics regarding expected output
 
+
 @then("attempting another migration with forced creation should succeed within {time_limit:g} seconds")
 def force_app_migration(context, time_limit):
     source_vm = context.migration_source
@@ -128,7 +134,7 @@ def force_app_migration(context, time_limit):
     cmd_args = helper.make_migration_command(source_vm, target_vm, migration_opt,
                                              container_name=app_name,
                                              force_create=True)
-    output = helper.check_response_time(cmd_args, time_limit, use_default_identity=True)
+    output = helper.check_response_time(cmd_args, time_limit, use_default_identity=True)  # nopep8
     # TODO: Assert specifics regarding expected output
 
 
