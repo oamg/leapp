@@ -115,3 +115,105 @@ Integration tests
 * It should run correctly when used in Firefox on RHEL/CentOS 7 (this
   requirement is not currently checked in the CI environment, but can be
   tested locally by running `behave --wip`)
+
+Setting up a development environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This guide assumes that you are running Fedora. Make sure to translate the commands if you are running a different distribution.
+
+Installing leapp
+----------------
+
+First of all, let's install the `leapp-tool`. By the end of this sub-section, we'll be able to run a migration from the command line.
+
+We start off by cloning the repository. We assume that you keep your source files in `~/src`:
+::
+
+    mkdir ~/src; cd ~/src
+    git clone https://github.com/leapp-to/leapp.git
+    cd ~/src/leapp
+
+Run the following command to install all dependencies needed by the `leapp-tool`:
+::
+
+    sudo dnf builddep leapp.spec
+
+We'll use `pipsi` to install `leapp-tool` from our repository:
+::
+
+    pipsi install --python /usr/bin/python2.7 $PWD/src
+    sudo ln -s $HOME/.local /opt/leapp
+
+Create the directory where the imported macrocontainers will be stored:
+::
+
+    sudo mdkir -p /var/lib/leapp/macrocontainers/
+
+By now you should be able to run the tool successfully:
+::
+
+	$ sudo /opt/leapp/bin/leapp-tool --version
+	leapp-tool 0.1
+
+Running a demo
+-----------------
+
+In this sub-section we'll migrate a virtual machine to a container by using the command line. In order to do that, we first need a running virtual machine.
+
+First, we need to install a set of specific packages to run the virtual machines:
+::
+
+	sudo dnf builddep demo/prototype-deps.spec
+
+Then, chose one of the guest vagrant boxes in `demo/vmdefs/available` and create a symlink to `demo/vmdefs/enabled`. For example, let's assume we are going to migrate the `centos6-guest` box:
+::
+
+	ln -s $PWD/demo/vmdefs/available/centos6-guest $PWD/demo/vmdefs/enabled
+
+Now, start the enabled box with:
+::
+
+	sudo demo/vmctl.sh provision
+
+The last step necessary is to import the private key from the vagrant box. This key is necessary to move files around the source and target:
+::
+
+	ssh-add $PWD/demo/vmdefs/available/centos6-guest/.vagrant/machines/default/libvirt/private_key
+
+Run the following command to make sure everything is set up correctly. Make sure to replace `192.168.121.66` by your box's IP address (tip: you can `vagrant ssh` into your box and check its address):
+::
+
+	sudo SSH_AUTH_SOCK=$SSH_AUTH_SOCK /opt/leapp/bin/leapp-tool migrate-machine -p --use-rsync -t 127.0.0.1 192.168.121.66 --target-user vagrant --source-user vagrant
+	[
+		[
+			9022,
+			22
+		],
+		(...)
+	]
+
+Set up leapp as a Cockpit plugin
+--------------------------------
+
+Make sure Cockpit is installed in your development machine:
+::
+
+	sudo dnf install cockpit
+	sudo systemctl start cockpit
+
+In the `leapp` source directory, run this command to install the plugin:
+::
+
+	ln -s $PWD/cockpit ~/.local/share/cockpit/leapp
+
+Browse to http://localhost:9090 and log in with your user and password.
+
+Just like in your dev machine, we need to import the box's private key, but now within Cockpit. To do that, click ``Terminal`` and execute:
+::
+
+	cd ~/src/leapp
+	ssh-add demo/vmdefs/available/centos6-guest/.vagrant/machines/default/libvirt/private_key
+
+Now you should be able to convert the vagrant box to a container. Click ``Import apps``, type the IP address of you vagrant box and click ``Find apps``. You should see a mapping of ports in the VM to ports in the container. Simply click ``Import`` and wait a few minutes for the process to finish.
+
+You'll be able to see new container in the ``Containers`` link at the left panel.
