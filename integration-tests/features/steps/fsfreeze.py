@@ -51,7 +51,8 @@ def test_migrate_fsfreeze(context, source, target, not_frozen=None):
         _replace_fsfreeze_bin(context, source)
         migration = context.cli_helper.check_response_time(
             cmd, 
-            time_limit=100
+            time_limit=100,
+            use_default_identity=True
         )
         result = _check_if_system_was_locked(context, source) 
     finally:

@@ -373,7 +373,10 @@ class ClientHelper(object):
         if container_name is not None:
             cmd_args.extend(('--container-name', container_name))
 
-        options = list(filter(None, re.split("[,=\s]+", migration_opt)))
+        if migration_opt is None:
+            options = []
+        else:
+            options = list(filter(None, re.split("[,=\s]+", migration_opt)))
 
         if "freeze-fs" in options:
             # Is freeze-fs option complete?
