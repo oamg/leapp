@@ -398,6 +398,7 @@
 
             var write_log = function(data) {
                 var stamp = (new Date()).toISOString();
+                data = data.replace(/^\s+|\s+$/g, '');
                 data = `<div>${stamp} - <span class="progress-line">${data}</span></div>`;
                 var $entry = $log_entry.children("pre")
                 if ($entry.length) {
@@ -417,7 +418,9 @@
                 // log_stdout default = true so we only do NOT log if it explicitly is set to false
                 if (force || (!options || options.log_stdout !== false)) {
                     for (let line of data.split(/\r?\n/)) {
-                        write_log('> ' + line);
+                        if (line) {
+                            write_log('> ' + line);
+                        }
                     }
                 }
             };
@@ -445,7 +448,11 @@
                         proc.fail(function(err, data) {
                             update_state('failed');
                             output += data;
-                            process_output(output, true);
+                            if (!options || options.log_stdout !== false) {
+                                process_output(data);
+                            } else {
+                                process_output(output, true);
+                            }
                             write_log(`Command failed with status ${err.exit_status}!`);
                             instance.fail = function(f) { f(output); };
                             instance.then = function(f) { f(); };
