@@ -733,7 +733,8 @@ def main():
         if machine_src.installation.os.version.startswith('7'):
             opts = [
                 # Required for docker 1.13
-                "--cap-add", "SYS_ADMIN",
+                #"--cap-add", "SYS_ADMIN",
+                "--security-opt", "seccomp:unconfined",
                 # Implemented in default command
                 #"-v", "/sys/fs/cgroup:/sys/fs/cgroup:ro",
                 "--tmpfs", "/run", 
