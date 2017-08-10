@@ -1,27 +1,29 @@
-"""
-    Baseclass defining OS for templating system
-"""
 class ContainerOS(object):
     """
-        tells if the system is using systemd
-
-        @return Boolean     true, if OS is using systemd
+        Baseclass defining OS for templating system
     """
+
     def is_systemd(self):
+        """
+            tells if the system is using systemd
+
+            @return Boolean     true, if OS is using systemd
+        """
         raise NotImplemented()
 
-    """
-        returns the name of base docker image
-
-        @return string
-    """
     def base_image(self):
+        """
+            returns the name of base docker image
+
+            @return string
+        """
         raise NotImplemented()
 
-"""
-    Baseclass for upstart based OS
-"""
+
 class UpstartContainerOS(ContainerOS):
+    """
+        Baseclass for upstart based OS
+    """
     def is_systemd(self):
         return False
 
@@ -29,26 +31,28 @@ class UpstartContainerOS(ContainerOS):
         return "gazdown/leapp-scratch"
 
 
-"""
-    Baseclass for systemd based OS
-"""
 class SystemDContainerOS(ContainerOS):
+    """
+        Baseclass for systemd based OS
+    """
     def is_systemd(self):
         return True
 
     def base_image(self):
         return "gazdown/leapp-scratch"
 
-"""
-    RHEL6/CentOS 6 OS definitions
-"""
+
 class RHEL6ContainerOS(UpstartContainerOS):
+    """
+        RHEL6/CentOS 6 OS definitions
+    """
     def base_image(self):
         return "gazdown/leapp-scratch:6"
 
-"""
-    RHEL7/CentOS 7 OS definitions
-"""
+
 class RHEL7ContainerOS(SystemDContainerOS):
+    """
+        RHEL7/CentOS 7 OS definitions
+    """
     def base_image(self):
         return "gazdown/leapp-scratch:7"
