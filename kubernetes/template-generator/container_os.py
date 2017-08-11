@@ -3,7 +3,7 @@ class ContainerOS(object):
         Baseclass defining OS for templating system
     """
 
-    IMAGE_ROOT = ""
+    IMAGE_ROOT = "leapp"
     IMAGE_BASENAME = "leapp-scratch"
     IMAGE_TAG = "latest"
 
@@ -29,8 +29,6 @@ class UpstartContainerOS(ContainerOS):
         Baseclass for upstart based OS
     """
 
-    IMAGE_ROOT = "gazdown"
-    IMAGE_BASENAME = "leapp-scratch"
     IMAGE_TAG = "6"
 
     def is_systemd(self):
@@ -45,8 +43,6 @@ class SystemDContainerOS(ContainerOS):
         Baseclass for systemd based OS
     """
 
-    IMAGE_ROOT = "gazdown"
-    IMAGE_BASENAME = "leapp-scratch"
     IMAGE_TAG = "7"
 
     def is_systemd(self):
