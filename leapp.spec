@@ -1,6 +1,6 @@
 Name:       leapp
 Version:    0.1
-Release:    33
+Release:    36
 Summary:    leapp tool rpm
 
 Group:      Unspecified
@@ -168,6 +168,82 @@ popd
 %attr (644, root, root) %{_datadir}/zsh/site-functions/_%{name}-autocomplete
 
 %changelog
+* Fri Aug 11 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.1-36
+- docs: Add instructions on how to set up a dev env (fabiojrb@gmail.com)
+- ui: Log output remove duplications and empty lines (vfeenstr@redhat.com)
+- Added identity related parameters into fsfreeze tests steps
+  (mgazdik@redhat.com)
+- Added workaround for: https://bugzilla.redhat.com/show_bug.cgi\?id\=1474726
+  (mgazdik@redhat.com)
+- Added fsfreeze test scenarios (mgazdik@redhat.com)
+- Updated docs (mgazdik@redhat.com)
+- FS freeze enabled by default, updated fs-freeze option behavior
+  (mgazdik@redhat.com)
+- integration-tests: Fully enable the new test (vfeenstr@redhat.com)
+- integration-tests: Implement restart docker functions (vfeenstr@redhat.com)
+- integration-tests: Fixed signature of restart container tests
+  (vfeenstr@redhat.com)
+- integration-tests: Add container-name support (vfeenstr@redhat.com)
+- NOJIRA:  skip for test (vmindru@redhat.com)
+- NOJIRA: attempt manual rebase (vmindru@redhat.com)
+- cli: no more group checks (vfeenstr@redhat.com)
+- all: Drop virt-tar-out usage and libguestfs dependency (vfeenstr@redhat.com)
+- integration-tests: Use IP address for commands (vfeenstr@redhat.com)
+- cli: Remove libvirt code (vfeenstr@redhat.com)
+- remove list-machines from docs (jmikovic@redhat.com)
+- libvirt no longer required (jmikovic@redhat.com)
+- LibvirtMachineProvider is not used anymore (jmikovic@redhat.com)
+- cli: remove list-machines cmd (jmikovic@redhat.com)
+- ZSH autocomplete script correction (mgazdik@redhat.com)
+- update docs with disable-start option (jmikovic@redhat.com)
+- cli: create container (jmikovic@redhat.com)
+- fix log and typo (jmikovic@redhat.com)
+- ui: disable start if checkbox unchecked (jmikovic@redhat.com)
+- ui: add start-container checkbox (jmikovic@redhat.com)
+- cli: add disable-start argument (jmikovic@redhat.com)
+- integration-tests: Pass through auth socket when using sudo
+  (vfeenstr@redhat.com)
+- integrationt-tests: Add remote access check for CentOS 6 too
+  (vfeenstr@redhat.com)
+- integration-tests: facilitate the ssh agent by default with identity
+  (vfeenstr@redhat.com)
+- cli: Start SSH Agent if not available and an identity has been passed
+  explicitly (vfeenstr@redhat.com)
+- cli: Add key to ssh-agent if identity file passed (vfeenstr@redhat.com)
+- cli: Drop _find_machine to avoid libvirt errors (vfeenstr@redhat.com)
+- integration-tests: Fix new epel release number (vfeenstr@redhat.com)
+- Let Docker send SIGINT to Upstart to let it shutdown the services properly.
+  Upstart interprets SIGINT as Ctrl-Alt-Del and runs the shutdown scripts.
+  (pcahyna@redhat.com)
+- CLI: Added support for autocompletion in BASH & ZSH (mgazdik@redhat.com)
+- Docs: added check-target command to leapp-tool page (mgazdik@redhat.com)
+- Set proper target in test (mgazdik@redhat.com)
+- Typo corretions (mgazdik@redhat.com)
+- Minor help & docs corrections (mgazdik@redhat.com)
+- updated docs (mgazdik@redhat.com)
+- Updated UI to respect new target option (mgazdik@redhat.com)
+- updated tests to follow the option changes (mgazdik@redhat.com)
+- Set default target for destroy-container and check-target
+  (mgazdik@redhat.com)
+- Add: ansible boolean container_manage_cgroup, better comments
+  (mgazdik@redhat.com)
+- Added UI screenshots and content of Cockpit UI page (#259)
+  (GAZDOWN@users.noreply.github.com)
+- spec: trivial fixes (#255) (ignatenko@redhat.com)
+- Added systemd source & migration test (mgazdik@redhat.com)
+- Enable systemd based source machine migration (mgazdik@redhat.com)
+- Enable check-target to show availability of docker/rsync on target machine
+  (#196) (amello@redhat.com)
+- Added preliminary error handling, code refactoring (mgazdik@redhat.com)
+- docs: Update repo links to use the stable repo (vfeenstr@redhat.com)
+- NOJIRA: new demo gif (vmindru@redhat.com)
+- WIP - Adde help button (mgazdik@redhat.com)
+- WIP: UI: Add exclude paths input (mgazdik@redhat.com)
+- Prevent fsck from running. (pcahyna@users.noreply.github.com)
+- Remove references to LeApp-To in the docs (replace by LeApp). Leave only
+  "LeApp-To Organization on Github" as the organization is indeed still called
+  leapp-to. (pcahyna@users.noreply.github.com)
+
 * Fri Jun 30 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.1-33
 - Version bump for 0.1 (vfeenstr@redhat.com)
 - Added --freeze-fs option into migrate command, freezefs is not used by
