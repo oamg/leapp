@@ -37,31 +37,22 @@ def parse_params():
     multi = subparser.add_parser("multivolume", help="test")
     macro = subparser.add_parser("macroimage", help="test2")
 
-    # selectors = []
     mandatory_groups = []
 
-    for p in multi, macro:
-        p.add_argument("--tcp", "-t", type=_parse_port, nargs="*", help="Exposed TCP ports")
-        p.add_argument("--ip", "-i", type=_parse_ip, nargs="+", help="IP address on which the ports will be exposed")
-        p.add_argument("--dest", "-e", default=os.getcwd(), help="Generate service template (default: true)")
+    for param in multi, macro:
+        param.add_argument("--tcp", "-t", type=_parse_port, nargs="*", help="Exposed TCP ports")
+        param.add_argument("--ip", "-i", type=_parse_ip, nargs="+",
+                           help="IP address on which the ports will be exposed")
+        param.add_argument("--dest", "-e", default=os.getcwd(), help="Generate service template (default: true)")
 
-        mandatory = p.add_argument_group("Mandatory arguments")
+        mandatory = param.add_argument_group("Mandatory arguments")
         mandatory.add_argument("--container-name", "-c", help="A name of macrocontainer", required=True)
         mandatory_groups.extend([mandatory])
-
-        # selector = p.add_argument_group("Template selectors (optional)")
-        # selector.add_argument("--pod", "-p", action="store_true", default=None,
-        #   help="Generate pod template (default: true)")
-        # selector.add_argument("--service", "-s", action="store_true", default=None,
-        #   help="Generate service template (default: true)")
-        # selectors.extend([selector])
 
     # multivolume specific
     mandatory_groups[0].add_argument("--image-url", "-m", help="URL to machine tar image", required=True)
 
     # macro specific
-    # selectors[1].add_argument("--docker", "-d", action="store_true", default=None,
-    #   help="Generate dockerfile (default: true)")
     macro.add_argument("--local-image", "-l", action="store_true",
                        help="Disable pulling images on node (Default: false)",
                        default=False)
@@ -72,18 +63,12 @@ def parse_params():
 def write_file(path, content):
     with open(path, "w") as f:
         f.write(content)
-    f.close()
 
 
-def main():
-    params = parse_params()
-
-    path = "{}/{}".format(LEAPP_BASEPATH, params.container_name)
-
+def offline_os_version_detection(path):
     # Find release version
     with open("{}/etc/redhat-release".format(path), "r") as rfile:
         ver = re.findall(".*\srelease\s(\d+)(?:\.\d+)?.*", rfile.readline(64))
-    rfile.close()
 
     if len(ver) and ver[0] == "6":
         system = RHEL6ContainerOS()
@@ -92,21 +77,23 @@ def main():
     else:
         raise UnknownOSError("Unknown release version")
 
+    return system
+
+
+def main():
+    params = parse_params()
+
+    path = "{}/{}".format(LEAPP_BASEPATH, params.container_name)
+
     sanit_name = TemplateGenerator.sanitize_container_name(params.container_name)
     dest = params.dest
 
     print("Storing templates to: {}".format(dest))
 
     if params.generator == "macroimage":
-        # selective_templating = False
-
-        # for i in params.pod, params.service, params.docker:
-        #     if i:
-        #         selective_templating = True
-
         template = MacroimageTemplateGenerator(
             params.container_name,
-            system,
+            offline_os_version_detection(path),
             exposed_ports=params.tcp,
             is_local=params.local_image,
             external_ips=params.ip
@@ -134,7 +121,7 @@ def main():
                 len(os.listdir(os.path.join(path, f)))]
 
         template = MultivolumeTemplateGenerator(params.container_name,
-                                                system,
+                                                offline_os_version_detection(path),
                                                 params.image_url,
                                                 exposed_ports=params.tcp,
                                                 exported_paths=dirs,

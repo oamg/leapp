@@ -16,7 +16,7 @@ class TemplateGenerator(object):
             @param ContainerOS system       a os description module
             @param list exposed_ports       a list of exposed ports
         """
-        self.sanit_container_name = self.sanitize_container_name(container_name)
+        self.container_name = self.sanitize_container_name(container_name)
         self.system = system
         self.exposed_ports = exposed_ports
         self.external_ips = external_ips
@@ -34,14 +34,14 @@ class TemplateGenerator(object):
             "apiVersion": "v1",
             "kind": "Service",
             "metadata": {
-                "name": "leapp-{}-service".format(self.sanit_container_name),
+                "name": "leapp-{}-service".format(self.container_name),
                 "labels": {
-                    "name": "leapp-{}-label".format(self.sanit_container_name),
+                    "name": "leapp-{}-label".format(self.container_name),
                     }
                 },
             "spec": {
                 "selector": {
-                    "name": "leapp-{}-label".format(self.sanit_container_name),
+                    "name": "leapp-{}-label".format(self.container_name),
                     },
             }
         }
@@ -59,7 +59,7 @@ class TemplateGenerator(object):
                     "port": pmap[0],
                     "targetPort": pmap[1],
                     "protocol": "TCP",
-                    "name": "leapp-{}-{}-{}-port".format(self.sanit_container_name, pmap[0], pmap[1])
+                    "name": "leapp-{}-{}-{}-port".format(self.container_name, pmap[0], pmap[1])
                 }
                 ports_template["ports"].append(port)
 
@@ -82,9 +82,9 @@ class TemplateGenerator(object):
             "apiVersion": "v1",
             "kind": "Pod",
             "metadata": {
-                "name": "leapp-{}-pod".format(self.sanit_container_name),
+                "name": "leapp-{}-pod".format(self.container_name),
                 "labels": {
-                    "name": "leapp-{}-label".format(self.sanit_container_name),
+                    "name": "leapp-{}-label".format(self.container_name),
                 },
                 "annotations": {
                 }
@@ -92,7 +92,7 @@ class TemplateGenerator(object):
             "spec": {
                 "containers": [
                     {
-                        "name": "{}".format(self.sanit_container_name),
+                        "name": "{}".format(self.container_name),
                         "image": self.system.base_image(),
                         "volumeMounts": []
                     }
@@ -118,13 +118,13 @@ class TemplateGenerator(object):
         # Systemd additions
         if self.system.is_systemd():
             systemd_mounts = [{
-                "name": "{}-cgroup-vol".format(self.sanit_container_name),
+                "name": "{}-cgroup-vol".format(self.container_name),
                 "mountPath": "/sys/fs/cgroup",
                 "readOnly": True
             }]
 
             systemd_volumes = [{
-                "name": "{}-cgroup-vol".format(self.sanit_container_name),
+                "name": "{}-cgroup-vol".format(self.container_name),
                 "hostPath": {
                     "path": "/sys/fs/cgroup"
                 }
@@ -132,12 +132,12 @@ class TemplateGenerator(object):
 
             for mount in ["run", "tmp"]:
                 systemd_mounts.append({
-                    "name": "{}-{}-vol".format(self.sanit_container_name, mount),
+                    "name": "{}-{}-vol".format(self.container_name, mount),
                     "mountPath": "/{}".format(mount)
                 })
 
                 systemd_volumes.append({
-                    "name": "{}-{}-vol".format(self.sanit_container_name, mount),
+                    "name": "{}-{}-vol".format(self.container_name, mount),
                     "emptyDir": {
                         "medium": "Memory"
                     }
@@ -202,7 +202,7 @@ class MacroimageTemplateGenerator(TemplateGenerator):
         """
             generate docker image name
         """
-        return "leapp/{}".format(self.sanit_container_name)
+        return "leapp/{}".format(self.container_name)
 
     def generate_pod_template(self, yaml=True):
         """
@@ -233,7 +233,7 @@ class MacroimageTemplateGenerator(TemplateGenerator):
         """
         # TODO: This can be done better if the image is being build on the same machine
         #       where the leapp tool is running
-        path = "{}.tar.gz".format(self.sanit_container_name)
+        path = "{}.tar.gz".format(self.container_name)
         content = "FROM {0}\nADD {1} /".format(self.system.base_image(), path)
 
         return content
@@ -263,9 +263,9 @@ class MultivolumeTemplateGenerator(TemplateGenerator):
         self.exported_paths = list(exported_paths)
 
         # Not allowed paths
-        for i in self.FORBIDDEN_MOUNTS:
+        for FORBIDDEN_MOUNT in self.FORBIDDEN_MOUNTS:
             try:
-                self.exported_paths.remove(i)
+                self.exported_paths.remove(FORBIDDEN_MOUNT)
             except Exception:
                 pass
 
@@ -288,16 +288,15 @@ class MultivolumeTemplateGenerator(TemplateGenerator):
                                         mounts was given, the returned array will be
                                         just a pointer to the same.
             """
-            if mounts is None:
-                mounts = []
+            mounts = mounts or []
 
-            for dir_name in self.exported_paths:
-                vol_name = "{}-{}-vol".format(self.sanit_container_name, dir_name)
+            for exported_path in self.exported_paths:
+                vol_name = "{}-{}-vol".format(self.container_name, exported_path)
 
-                if not len([i for i in mounts if i["name"] == vol_name]):
+                if not len([mount for mount in mounts if mount["name"] == vol_name]):
                     mounts.append({
                         "name": vol_name,
-                        "mountPath": "{}/{}".format(prefix, dir_name)
+                        "mountPath": "{}/{}".format(prefix, exported_path)
                     })
                 else:
                     print("W: Ignoring {} mount since it already exists".format(vol_name))
@@ -306,7 +305,7 @@ class MultivolumeTemplateGenerator(TemplateGenerator):
 
         init_template = [
             {
-                "name": "{0}-init".format(self.sanit_container_name),
+                "name": "{0}-init".format(self.container_name),
                 "image": "busybox",
                 "command": [
                     "sh", "-c",
@@ -325,8 +324,8 @@ class MultivolumeTemplateGenerator(TemplateGenerator):
         _generate_common_mounts(mounts=pod_template["spec"]["containers"][0]["volumeMounts"])
 
         # Generate volumes
-        for dir_name in self.exported_paths:
-            vol_name = "{}-{}-vol".format(self.sanit_container_name, dir_name)
+        for exported_path in self.exported_paths:
+            vol_name = "{}-{}-vol".format(self.container_name, exported_path)
 
             if not len([i for i in pod_template["spec"]["volumes"] if i["name"] == vol_name]):
                 pod_template["spec"]["volumes"].extend([{
