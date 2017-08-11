@@ -1,6 +1,6 @@
 class ContainerOS(object):
     """
-        Baseclass defining OS for templating system
+    Baseclass defining OS for templating system
     """
 
     IMAGE_ROOT = "leapp"
@@ -9,24 +9,24 @@ class ContainerOS(object):
 
     def is_systemd(self):
         """
-            tells if the system is using systemd
+        tells if the system is using systemd
 
-            @return Boolean     true, if OS is using systemd
+        :returns: true, if OS is using systemd
+        :rtype: bool
         """
         raise NotImplemented()
 
     def base_image(self):
         """
-            returns the name of base docker image
-
-            @return string
+        :returns: the name of base docker image
+        :rtype: string
         """
         raise NotImplemented()
 
 
 class UpstartContainerOS(ContainerOS):
     """
-        Baseclass for upstart based OS
+    Baseclass for upstart based OS
     """
 
     IMAGE_TAG = "6"
@@ -38,9 +38,9 @@ class UpstartContainerOS(ContainerOS):
         return "{}/{}:{}".format(self.IMAGE_ROOT, self.IMAGE_BASENAME, self.IMAGE_TAG)
 
 
-class SystemDContainerOS(ContainerOS):
+class SystemdContainerOS(ContainerOS):
     """
-        Baseclass for systemd based OS
+    Baseclass for systemd based OS
     """
 
     IMAGE_TAG = "7"
@@ -54,15 +54,15 @@ class SystemDContainerOS(ContainerOS):
 
 class RHEL6ContainerOS(UpstartContainerOS):
     """
-        RHEL6/CentOS 6 OS definitions
+    RHEL6/CentOS 6 OS definitions
     """
 
     IMAGE_TAG = "6"
 
 
-class RHEL7ContainerOS(SystemDContainerOS):
+class RHEL7ContainerOS(SystemdContainerOS):
     """
-        RHEL7/CentOS 7 OS definitions
+    RHEL7/CentOS 7 OS definitions
     """
 
     IMAGE_TAG = "7"

@@ -34,8 +34,8 @@ def parse_params():
     parser = argparse.ArgumentParser(description='Generate kubernetes tempates.')
     subparser = parser.add_subparsers(dest="generator")
 
-    multi = subparser.add_parser("multivolume", help="test")
-    macro = subparser.add_parser("macroimage", help="test2")
+    multi = subparser.add_parser("multivolume", help="Generate multivolume template")
+    macro = subparser.add_parser("macroimage", help="Generate macroimage template")
 
     mandatory_groups = []
 
@@ -132,8 +132,9 @@ def main():
 
         print("Create a tar image of migrated machine:\n"
               "  tar -czf {}/{}.tar.gz -C {} .\n\n"
-              "Move it to the web server, where it will be available under image-url you've specified"
-              .format(dest, os.path.basename(params.image_url), path))
+              "Move it to the given location ({}),\n"
+              "where it will be available for pod initialization."
+              .format(dest, os.path.basename(params.image_url), path, params.image_url))
 
 if __name__ == "__main__":
     main()
