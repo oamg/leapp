@@ -731,9 +731,23 @@ def main():
 
         # if el7 then use systemd
         if machine_src.installation.os.version.startswith('7'):
+            """
+              In order to avoid using SYS_ADMIN capability for running systemd within the container, an
+            seccomp (Secure compute profile) must be set. Such profile can be used to restrict the application
+            to use specific syscalls. Docker implements seccomp profiles and the default one blocks multiple
+            syscalls which are being required by systemd (i.e. mount). To evercome this issue, we have to set
+            seccomp policy to unconfined for docker, which practically means, that we do not block any syscall
+            so systemd can start within the container since one of the very first thing which systemd does is
+            mounting API filesystems.
+              Another systemd requirement is access to /sys/fs/cgroup. We can have read-only access volume
+            because any changes done above this will be unified with underlying mount within the container only. In
+            other words, any file/directory created on top of /sys/fs/cgroup volume will be read-write accessible
+            and visible within the container only.
+              Also we have to mount /run and /tmp as tmpfs in the container, since this is another requirement of
+            systemd. Finally, last but not least step is set set "container" environment variable to "docker"
+            so systemd will run properly.
+            """
             opts = [
-                # Required for docker 1.13
-                #"--cap-add", "SYS_ADMIN",
                 "--security-opt", "seccomp:unconfined",
                 # Implemented in default command
                 #"-v", "/sys/fs/cgroup:/sys/fs/cgroup:ro",
