@@ -11,7 +11,7 @@ class SanitizeException(Exception):
 
 
 class TemplateGenerator(object):
-    def __init__(self, container_name, system, exposed_ports=None, external_ips=None):
+    def __init__(self, container_name, system, exposed_ports=None, external_ips=None, loadbalancer=False):
         """
         :param container_name: the name of migrated container
         :type container_name: string
@@ -22,11 +22,14 @@ class TemplateGenerator(object):
         :param external_ips: a list of IP addreesses on which the port
             will be opened
         :type external_ips: list[string]
+        :param loadbalancer: enable default external load balancer for services
+        :type loadbalancer: bool
         """
         self.container_name = self.sanitize_container_name(container_name)
         self.system = system
         self.exposed_ports = exposed_ports
         self.external_ips = external_ips
+        self.loadbalancer = loadbalancer
 
     def generate_service_template(self, yaml=True):
         """
@@ -55,8 +58,10 @@ class TemplateGenerator(object):
             }
         }
 
-        if self.external_ips:
+        if self.external_ips and not self.loadbalancer:
             service_template["spec"]["externalIPs"] = self.external_ips
+        elif self.loadbalancer:
+            service_template["spec"]["type"] = "LoadBalancer"
 
         if self.exposed_ports:
             ports_template = {
@@ -208,7 +213,8 @@ class TemplateGenerator(object):
 
 
 class MacroimageTemplateGenerator(TemplateGenerator):
-    def __init__(self, container_name, system, exposed_ports=None, external_ips=None, is_local=False):
+    def __init__(self, container_name, system, exposed_ports=None, external_ips=None, loadbalancer=False,
+                 is_local=False):
         """
         :param container_name: the name of migrated container
         :type container_name: string
@@ -219,10 +225,13 @@ class MacroimageTemplateGenerator(TemplateGenerator):
         :param external_ips: a list of IP addreesses on which the port
             will be opened
         :type external_ips: list[string]
+        :param loadbalancer: enable default external load balancer for services
+        :type loadbalancer: bool
         :param is_local: disable pulling the image from registry on node
         :type is_local: bool
         """
-        super(MacroimageTemplateGenerator, self).__init__(container_name, system, exposed_ports, external_ips)
+        super(MacroimageTemplateGenerator, self).__init__(container_name, system, exposed_ports, external_ips,
+                                                          loadbalancer)
 
         self.is_local = is_local
 
@@ -283,7 +292,7 @@ class MultivolumeTemplateGenerator(TemplateGenerator):
     FORBIDDEN_MOUNTS = ["dev", "sys", "proc", "lost+found"]
 
     def __init__(self, container_name, system, image_url, exposed_ports=None, external_ips=None,
-                 exported_paths=None):
+                 loadbalancer=False, exported_paths=None):
         """
         :param container_name: the name of migrated container
         :type container_name: string
@@ -296,6 +305,8 @@ class MultivolumeTemplateGenerator(TemplateGenerator):
         :param external_ips: a list of IP addreesses on which the port
             will be opened
         :type external_ips: list[string]
+        :param loadbalancer: enable default external load balancer for services
+        :type loadbalancer: bool
         :param exported_paths: a list of all root paths for which should be created a volume. Path must be specified
             without leading /
         :type exposed_paths: list[string]
@@ -304,7 +315,8 @@ class MultivolumeTemplateGenerator(TemplateGenerator):
         :raises ForbiddenVolumeMount: if path is a forbidden mount (see
             MultivolumeTemplateGenerator.FORBIDDEN_MOUNTS)
         """
-        super(MultivolumeTemplateGenerator, self).__init__(container_name, system, exposed_ports, external_ips)
+        super(MultivolumeTemplateGenerator, self).__init__(container_name, system, exposed_ports, external_ips,
+                                                           loadbalancer)
 
         if not exported_paths:
             raise ValueError("Exported paths has to be set")

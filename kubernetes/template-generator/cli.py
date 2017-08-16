@@ -42,7 +42,10 @@ def parse_params():
     for param in multi, macro:
         param.add_argument("--tcp", "-t", type=_parse_port, nargs="*", help="Exposed TCP ports")
         param.add_argument("--ip", "-i", type=_parse_ip, nargs="+",
-                           help="IP address on which the ports will be exposed")
+                           help="IP address on which the ports will be exposed (externalIPs)")
+        param.add_argument("--load-balancer", "-b", action="store_true",
+                           help="Set service type to load-balancer. The --ip argument is ignored when this is used",
+                           default=False)
         param.add_argument("--dest", "-e", default=os.getcwd(), help="Generate service template (default: true)")
 
         mandatory = param.add_argument_group("Mandatory arguments")
@@ -96,8 +99,8 @@ def main():
             offline_os_version_detection(path),
             exposed_ports=params.tcp,
             is_local=params.local_image,
-            external_ips=params.ip
-            )
+            external_ips=params.ip,
+            loadbalancer=params.load_balancer)
 
         write_file("{}/{}-svc.yaml".format(dest, sanit_name), template.generate_service_template())
         write_file("{}/{}-pod.yaml".format(dest, sanit_name), template.generate_pod_template())
@@ -125,7 +128,8 @@ def main():
                                                 params.image_url,
                                                 exposed_ports=params.tcp,
                                                 exported_paths=dirs,
-                                                external_ips=params.ip)
+                                                external_ips=params.ip,
+                                                loadbalancer=params.load_balancer)
 
         write_file("{}/{}-svc.yaml".format(dest, sanit_name), template.generate_service_template())
         write_file("{}/{}-pod.yaml".format(dest, sanit_name), template.generate_pod_template())
