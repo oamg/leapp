@@ -4,12 +4,15 @@ import argparse
 import os
 import re
 
+from template_generator import MultivolumeStatefulTemplateGenerator
 from template_generator import MultivolumeTemplateGenerator
 from template_generator import MacroimageTemplateGenerator
 from template_generator import TemplateGenerator
 
 from container_os import RHEL7ContainerOS
 from container_os import RHEL6ContainerOS
+
+from utils import _get_path_size
 
 
 LEAPP_BASEPATH = "/var/lib/leapp/macrocontainers"
@@ -35,11 +38,12 @@ def parse_params():
     subparser = parser.add_subparsers(dest="generator")
 
     multi = subparser.add_parser("multivolume", help="Generate multivolume template")
+    multi_stateful = subparser.add_parser("stateful", help="Generate stateful multivolume template")
     macro = subparser.add_parser("macroimage", help="Generate macroimage template")
 
     mandatory_groups = []
 
-    for param in multi, macro:
+    for param in multi, macro, multi_stateful:
         param.add_argument("--tcp", "-t", type=_parse_port, nargs="*", help="Exposed TCP ports")
         param.add_argument("--ip", "-i", type=_parse_ip, nargs="+",
                            help="IP address on which the ports will be exposed (externalIPs)")
@@ -59,6 +63,9 @@ def parse_params():
     macro.add_argument("--local-image", "-l", action="store_true",
                        help="Disable pulling images on node (Default: false)",
                        default=False)
+
+    # stateful multivolume specific
+    multi_stateful.add_argument("--service-account", "-s", help="Service account", required=True)
 
     return parser.parse_args()
 
@@ -139,6 +146,28 @@ def main():
               "Move it to the given location ({}),\n"
               "where it will be available for pod initialization."
               .format(dest, os.path.basename(params.image_url), path, params.image_url))
+
+    elif params.generator == "stateful":
+        dirs = [f for f in os.listdir(path)
+                if os.path.isdir(os.path.join(path, f)) and not
+                os.path.islink(os.path.join(path, f)) and
+                len(os.listdir(os.path.join(path, f)))]
+
+        # TODO: for now, just hardcode a bit of extra storage, but this might be customized in the actor
+        mount_sizes = [(x, int(_get_path_size(os.path.join(path, x)) * 1.2)) for x in dirs]
+
+        template = MultivolumeStatefulTemplateGenerator(params.container_name,
+                                                        offline_os_version_detection(path),
+                                                        container_path=path,
+                                                        exposed_ports=params.tcp,
+                                                        external_ips=params.ip,
+                                                        mount_sizes=mount_sizes,
+                                                        service_account=params.service_account,
+                                                        loadbalancer=params.load_balancer)
+
+        write_file("{}/{}-svc.yaml".format(dest, sanit_name), template.generate_service_template())
+        write_file("{}/{}-pod.yaml".format(dest, sanit_name), template.generate_pod_template())
+        write_file("{}/{}-storage.yaml".format(dest, sanit_name), template.generate_storage_template())
 
 if __name__ == "__main__":
     main()
