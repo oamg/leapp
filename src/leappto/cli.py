@@ -156,10 +156,10 @@ def _make_argument_parser():
     )
     migrate_cmd.add_argument('--disable-start', dest='disable_start', default=False, help='Migrated container will not be started immediately', action="store_true")
     migrate_cmd.add_argument(
-        '--freeze-fs', 
+        '--freeze-fs',
         type=lambda v: v and v.lower() not in ['no', 'n', '0', 'f', 'false'],
         nargs='?',
-        default=True, 
+        default=False,
         help='Enable/disable filesystem freezing on source machine (default: true)'
     )
     _add_identity_options(migrate_cmd, context='source')
@@ -247,7 +247,7 @@ def main():
             self.disk = disk
             self.container_name = container_name
 
-            self.freeze = True 
+            self.freeze = False
 
             if excluded_paths is None:
                 # Default excluded paths used only when --exclude-path wasn't used
@@ -257,7 +257,7 @@ def main():
             else:
                 self.excluded_paths = excluded_paths
 
-        def freeze_fs(self, enabled = True):
+        def freeze_fs(self, enabled):
             self.freeze = enabled
 
         def __get_machine_opt_by_context(self, machine_context):
