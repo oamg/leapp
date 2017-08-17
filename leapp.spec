@@ -1,6 +1,6 @@
 Name:       leapp
 Version:    0.1
-Release:    36
+Release:    36.1
 Summary:    leapp tool rpm
 
 Group:      Unspecified
@@ -168,6 +168,9 @@ popd
 %attr (644, root, root) %{_datadir}/zsh/site-functions/_%{name}-autocomplete
 
 %changelog
+* Thu Aug 17 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.1-36.1
+- cli: By default no longer freeze (vfeenstr@redhat.com)
+
 * Fri Aug 11 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.1-36
 - docs: Add instructions on how to set up a dev env (fabiojrb@gmail.com)
 - ui: Log output remove duplications and empty lines (vfeenstr@redhat.com)
