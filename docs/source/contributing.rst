@@ -147,7 +147,7 @@ We'll use `pipsi` to install `leapp-tool` from our repository:
 Create the directory where the imported macrocontainers will be stored:
 ::
 
-    sudo mdkir -p /var/lib/leapp/macrocontainers/
+    sudo mkdir -p /var/lib/leapp/macrocontainers/
 
 By now you should be able to run the tool successfully:
 ::
