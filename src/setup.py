@@ -79,6 +79,7 @@ setup(
     entry_points={
         'console_scripts': [
             'leapp-tool=leappto.cli:main',
+            'leapp-actor-tool=leappto.actor_cli:main',
         ],
     },
 )
