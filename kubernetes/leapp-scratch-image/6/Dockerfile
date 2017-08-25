@@ -2,4 +2,4 @@ FROM scratch
 
 ADD leapp6.tar /
 
-CMD ["/sbin/init"]
+CMD ["/.leapp/leapp-init"]
