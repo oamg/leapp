@@ -59,6 +59,7 @@ Requires:   python2-psutil
 Requires:   python2-setuptools
 Requires:   python2-argcomplete
 %endif
+Requires:   python2-snactor
 
 %description -n python2-%{name}
 LeApp is a "Minimum Viable Migration" utility that aims to decouple virtualized
@@ -71,7 +72,7 @@ container host rather than providing their own.
 %package cockpit
 Summary:  Cockpit plugin for LeApp
 Requires: cockpit
-Requires: docker 
+Requires: docker
 Requires: %{name}-tool = %{version}-%{release}
 
 %description cockpit
@@ -116,7 +117,7 @@ pushd src
 popd
 # When installed via RPM, always rely on ssh-agent for key management
 
-# update version in Cockpit 
+# update version in Cockpit
 cat <<EOF > cockpit/config.json
 {
     "tool-path": "/usr/bin/leapp-tool",
@@ -125,7 +126,7 @@ cat <<EOF > cockpit/config.json
 }
 EOF
 
-# update version in CLI 
+# update version in CLI
 cat <<EOF > src/leappto/version.py
 __version__ = '%{version}-%{release}'
 __pkg_name__ = 'leappto'
@@ -150,6 +151,7 @@ popd
 %files tool
 %doc README.md AUTHORS COPYING
 %attr(755, root, root) %{_bindir}/%{name}-tool
+%attr(755, root, root) %{_bindir}/%{name}-actor-tool
 
 %files -n python2-%{name}
 %doc README.md AUTHORS COPYING
@@ -158,6 +160,7 @@ popd
 %files cockpit
 %doc README.md AUTHORS COPYING
 %dir %attr (755,root,root) %{_datadir}/cockpit/%{name}
+%dir %attr (755,root,root) %{_datadir}/%{name}
 %dir %attr (755,root,root) %{_sharedstatedir}/leapp/macrocontainers
 %attr(644, root, root) %{_datadir}/cockpit/%{name}/*
 
