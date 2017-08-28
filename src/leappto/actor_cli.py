@@ -15,11 +15,8 @@ VERSION = "0.2-dev"
 
 def _add_identity_options(cli_cmd, context=''):
     if context:
-        cli_cmd.add_argument('--' + context + '-identity', default=None,
-                             help='Path to private SSH key for the ' + context + ' machine')
         cli_cmd.add_argument('--' + context + '-user', default="root", help='Connect as this user to the ' + context)
     else:
-        cli_cmd.add_argument('--identity', default=None, help='Path to private SSH key')
         cli_cmd.add_argument('--user', '-u', default="root", help='Connect as this user')
 
 
@@ -107,16 +104,6 @@ def _make_base_object(s):
     return {"value": s}
 
 
-def _start_agent_if_not_available():
-    if 'SSH_AUTH_SOCK' in os.environ:
-        return
-    agent_details = subprocess.check_output(["ssh-agent", "-c"], stderr=PIPE).splitlines()
-    agent_socket = agent_details[0].split()[2].rstrip(";")
-    agent_pid = agent_details[1].split()[2].rstrip(";")
-    os.environ["SSH_AUTH_SOCK"] = agent_socket
-    os.environ["SSH_AGENT_PID"] = agent_pid
-
-
 def _migrate_machine(arguments):
     loader.load(ACTOR_DIRECTORY)
     data = {
@@ -143,10 +130,5 @@ def main():
     ap = _make_argument_parser()
     argcomplete.autocomplete(ap)
     parsed = ap.parse_args()
-
-    for identity in ('identity', 'target_identity', 'source_identity'):
-        if identity in parsed and getattr(parsed, identity):
-            _start_agent_if_not_available()
-            subprocess.call(['ssh-add', getattr(parsed, identity)])
 
     _COMMANDS[parsed.action](parsed)
