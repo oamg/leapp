@@ -5,7 +5,6 @@ from pprint import pprint
 from subprocess import PIPE
 
 import argcomplete
-import snactor.executors
 
 from snactor import loader
 from snactor import registry
@@ -39,7 +38,7 @@ def _port_spec(arg):
     return str(host_port), container_port
 
 
-def to_port_map(items):
+def _to_port_map(items):
     port_map = {}
     for source, target in items:
         port_map[source] = port_map.get(source, []) + [target]
@@ -49,12 +48,12 @@ def to_port_map(items):
 def _path_spec(arg):
     path = os.path.normpath(arg)
     if not os.path.isabs(path):
-        raise ValueError("Path '{}' is not absoulute or valid.".format(str(arg)))
+        raise ValueError("Path '{}' is not absolute or valid.".format(str(arg)))
 
     return path
 
 
-def make_argument_parser():
+def _make_argument_parser():
     ap = ArgumentParser()
     ap.add_argument('-v', '--version', action='version', version=VERSION, help='display version information')
     parser = ap.add_subparsers(help='sub-command', dest='action')
@@ -104,15 +103,11 @@ def make_argument_parser():
     return ap
 
 
-def make_base_string(s):
+def _make_base_object(s):
     return {"value": s}
 
 
-def make_base_bool(s):
-    return {"value": s}
-
-
-def start_agent_if_not_available():
+def _start_agent_if_not_available():
     if 'SSH_AUTH_SOCK' in os.environ:
         return
     agent_details = subprocess.check_output(["ssh-agent", "-c"], stderr=PIPE).splitlines()
@@ -122,17 +117,17 @@ def start_agent_if_not_available():
     os.environ["SSH_AGENT_PID"] = agent_pid
 
 
-def migrate_machine(arguments):
+def _migrate_machine(arguments):
     loader.load(ACTOR_DIRECTORY)
     data = {
-        "target_host": make_base_string(arguments.target),
-        "source_host": make_base_string(arguments.machine),
-        "tcp_port_list": {"tcp": to_port_map(arguments.forwarded_tcp_ports)},
+        "target_host": _make_base_object(arguments.target),
+        "source_host": _make_base_object(arguments.machine),
+        "tcp_port_list": {"tcp": _to_port_map(arguments.forwarded_tcp_ports)},
         "excluded_tcp_port_list": {"tcp": map(lambda x: int(x[0]), arguments.excluded_tcp_ports)},
         "excluded_paths": {"value": arguments.excluded_paths},
-        "start_container": make_base_bool(not arguments.disable_start),
-        "target_user_name": make_base_string(arguments.target_user),
-        "source_user_name": make_base_string(arguments.source_user),
+        "start_container": _make_base_object(not arguments.disable_start),
+        "target_user_name": _make_base_object(arguments.target_user),
+        "source_user_name": _make_base_object(arguments.source_user),
     }
 
     if not registry.get_actor('migrate-machine').execute(data):
@@ -141,14 +136,17 @@ def migrate_machine(arguments):
 
 
 def main():
-    ap = make_argument_parser()
+    _COMMANDS = {
+        'migrate-machine': _migrate_machine,
+    }
+
+    ap = _make_argument_parser()
     argcomplete.autocomplete(ap)
     parsed = ap.parse_args()
 
     for identity in ('identity', 'target_identity', 'source_identity'):
         if identity in parsed and getattr(parsed, identity):
-            start_agent_if_not_available()
+            _start_agent_if_not_available()
             subprocess.call(['ssh-add', getattr(parsed, identity)])
 
-    if parsed.action == 'migrate-machine':
-        return migrate_machine(parsed)
+    _COMMANDS[parsed.action](parsed)
