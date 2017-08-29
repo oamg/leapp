@@ -13,13 +13,6 @@ ACTOR_DIRECTORY = '/usr/share/leapp/actors'
 VERSION = "0.2-dev"
 
 
-def _add_identity_options(cli_cmd, context=''):
-    if context:
-        cli_cmd.add_argument('--' + context + '-user', default="root", help='Connect as this user to the ' + context)
-    else:
-        cli_cmd.add_argument('--user', '-u', default="root", help='Connect as this user')
-
-
 def _port_spec(arg):
     """Converts a port forwarding specifier to a (host_port, container_port) tuple
 
@@ -94,8 +87,8 @@ def _make_argument_parser():
     )
     migrate_cmd.add_argument('--disable-start', dest='disable_start', default=False,
                              help='Migrated container will not be started immediately', action="store_true")
-    _add_identity_options(migrate_cmd, context='source')
-    _add_identity_options(migrate_cmd, context='target')
+    migrate_cmd.add_argument('--target-user', default="root", help='Connect as this user to the target via ssh')
+    migrate_cmd.add_argument('--source-user', default="root", help='Connect as this user to the source via ssh')
 
     return ap
 
@@ -115,11 +108,16 @@ def _migrate_machine(arguments):
         "start_container": _make_base_object(not arguments.disable_start),
         "target_user_name": _make_base_object(arguments.target_user),
         "source_user_name": _make_base_object(arguments.source_user),
+        "force_create": _make_base_object(arguments.force_create),
+        "container_name": _make_base_object(arguments.container_name),
     }
 
-    if not registry.get_actor('migrate-machine').execute(data):
-        pprint(data)
+    actor = registry.get_actor('migrate-machine')
+    if not actor:
         exit(-1)
+
+    if actor.execute(data):
+        pass
 
 
 def main():
