@@ -144,7 +144,7 @@ cp -a cockpit/* %{buildroot}%{_datadir}/cockpit/leapp/
 cp -a autocomplete/%{name}-autocomplete.sh %{buildroot}%{_sysconfdir}/bash_completion.d/%{name}-autocomplete.sh
 cp -a autocomplete/%{name}-autocomplete.zsh %{buildroot}%{_datadir}/zsh/site-functions/_%{name}-autocomplete
 mkdir -p %{buildroot}%{_datadir}/%{name}
-ln -sf %{_datadir}/python-snactor/actor %{buildroot}%{_datadir}/%{name}/actor
+ln -sf %{_datadir}/python-snactor/actors %{buildroot}%{_datadir}/%{name}/actors
 ln -sf %{_datadir}/python-snactor/schema %{buildroot}%{_datadir}/%{name}/schema
 pushd src
 %py2_install
