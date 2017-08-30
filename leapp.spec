@@ -143,7 +143,9 @@ mkdir -p %{buildroot}%{_datadir}/zsh/site-functions/
 cp -a cockpit/* %{buildroot}%{_datadir}/cockpit/leapp/
 cp -a autocomplete/%{name}-autocomplete.sh %{buildroot}%{_sysconfdir}/bash_completion.d/%{name}-autocomplete.sh
 cp -a autocomplete/%{name}-autocomplete.zsh %{buildroot}%{_datadir}/zsh/site-functions/_%{name}-autocomplete
-
+mkdir -p %{buildroot}%{_datadir}/%{name}
+ln -sf %{_datadir}/python-snactor/actor %{buildroot}%{_datadir}/%{name}/actor
+ln -sf %{_datadir}/python-snactor/schema %{buildroot}%{_datadir}/%{name}/schema
 pushd src
 %py2_install
 popd
@@ -273,7 +275,7 @@ popd
 - Changed error type and variable name (mgazdik@redhat.com)
 - --exclude-path overrides default list (mgazdik@redhat.com)
 - CLI: Added support for exclude paths (mgazdik@redhat.com)
-- Add excĺuded paths - initial commit (mgazdik@redhat.com)
+- Add exc??uded paths - initial commit (mgazdik@redhat.com)
 - NOJIRA: rename repo to leapp (vmindru@redhat.com)
 - fix: Use rsync backend by default (podvody@redhat.com)
 - stop using _LOCALHOST, simple check if ip is in (127.0.0.1, localhost)
