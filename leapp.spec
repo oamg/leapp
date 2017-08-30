@@ -59,7 +59,7 @@ Requires:   python2-psutil
 Requires:   python2-setuptools
 Requires:   python2-argcomplete
 %endif
-Requires:   python2-snactor
+Requires:   python-snactor
 
 %description -n python2-%{name}
 LeApp is a "Minimum Viable Migration" utility that aims to decouple virtualized
