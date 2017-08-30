@@ -158,6 +158,9 @@ popd
 %files -n python2-%{name}
 %doc README.md AUTHORS COPYING
 %{python2_sitelib}/*
+%dir %attr (755,root,root) %{_datadir}/%{name}
+%{_datadir}/%{name}/actors
+%{_datadir}/%{name}/schema
 
 %files cockpit
 %doc README.md AUTHORS COPYING
