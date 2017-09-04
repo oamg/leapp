@@ -1,0 +1,2 @@
+- name: Restart the MySQL service
+  service: "name={{ service_name }} state=restarted enabled=true"

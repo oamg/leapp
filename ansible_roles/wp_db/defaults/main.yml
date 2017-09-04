@@ -1,0 +1,4 @@
+wp_db_name: wordpress
+wp_db_user: wordpress
+wp_db_password: wppsswd
+wordpress_host: 10.0.0.21
