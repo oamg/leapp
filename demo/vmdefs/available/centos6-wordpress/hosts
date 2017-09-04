@@ -1,0 +1,5 @@
+[webservers]
+10.0.0.21
+
+[dbservers]
+10.0.0.22
