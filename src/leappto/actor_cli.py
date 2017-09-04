@@ -109,7 +109,7 @@ def _migrate_machine(arguments):
         "target_user_name": _make_base_object(arguments.target_user),
         "source_user_name": _make_base_object(arguments.source_user),
         "force_create": _make_base_object(arguments.force_create),
-        "container_name": _make_base_object(arguments.container_name),
+        "user_container_name": _make_base_object(arguments.container_name),
     }
 
     actor = registry.get_actor('migrate-machine')
