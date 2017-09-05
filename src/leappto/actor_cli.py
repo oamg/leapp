@@ -1,5 +1,7 @@
+import logging
 import os
 import subprocess
+import sys
 from argparse import ArgumentParser
 from pprint import pprint
 from subprocess import PIPE
@@ -102,15 +104,17 @@ def _make_base_object(s):
 
 
 def _migrate_machine(arguments):
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
     loader.load(ACTOR_DIRECTORY)
     loader.load_schemas(SCHEMA_DIRECTORY)
     loader.validate_actor_types()
+    default_excluded_paths = ['/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*']
     data = {
         "target_host": _make_base_object(arguments.target),
         "source_host": _make_base_object(arguments.machine),
         "tcp_ports_user_mapping": _to_port_map(arguments.forwarded_tcp_ports or ()),
         "excluded_tcp_port_list": {"tcp": map(lambda x: int(x[0]), arguments.excluded_tcp_ports or ())},
-        "excluded_paths": {"value": arguments.excluded_paths or []},
+        "excluded_paths": {"value": arguments.excluded_paths or default_excluded_paths},
         "start_container": _make_base_object(not arguments.disable_start),
         "target_user_name": _make_base_object(arguments.target_user),
         "source_user_name": _make_base_object(arguments.source_user),
@@ -120,10 +124,12 @@ def _migrate_machine(arguments):
 
     actor = registry.get_actor('migrate-machine')
     if not actor:
-        exit(-1)
+        sys.exit(-1)
 
     if actor.execute(data):
         pass
+    else:
+        sys.exit(-1)
 
 
 def main():
