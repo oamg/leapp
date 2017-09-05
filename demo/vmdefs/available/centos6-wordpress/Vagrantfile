@@ -1,5 +1,4 @@
 VAGRANTFILE_API_VERSION = "2"
-ENV['VAGRANT_NO_PARALLEL'] = 'yes'
 N = 2 
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
