@@ -10,6 +10,7 @@ from snactor import loader
 from snactor import registry
 
 ACTOR_DIRECTORY = '/usr/share/leapp/actors'
+SCHEMA_DIRECTORY = '/usr/share/leapp/schema'
 VERSION = "0.2-dev"
 
 
@@ -102,6 +103,8 @@ def _make_base_object(s):
 
 def _migrate_machine(arguments):
     loader.load(ACTOR_DIRECTORY)
+    loader.load_schemas(SCHEMA_DIRECTORY)
+    loader.validate_actor_types()
     data = {
         "target_host": _make_base_object(arguments.target),
         "source_host": _make_base_object(arguments.machine),
