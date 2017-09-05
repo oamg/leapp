@@ -121,6 +121,7 @@ popd
 cat <<EOF > cockpit/config.json
 {
     "tool-path": "/usr/bin/leapp-tool",
+    "actor-tool-path": "/usr/bin/leapp-actor-tool",
     "tool-workdir": "/usr/bin",
     "version": "%{version}-%{release}"
 }
