@@ -34,8 +34,8 @@ def _to_port_map(items):
     for source, target in items:
         port_map.append({
             'protocol': 'tcp',
-            'exposed_port': target,
-            'port': source})
+            'exposed_port': int(target),
+            'port': int(source)})
     return {'ports': port_map}
 
 
