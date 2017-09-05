@@ -363,7 +363,7 @@
            }
         */
         var new_leapp_call = function(command, options) {
-            if (options and options.use_actor_tool) {
+            if (options && options.use_actor_tool) {
                 command = [LEAPP_CONF["actor-tool-path"]].concat(command);
             } else {
                 command = [LEAPP_CONF["tool-path"]].concat(command);
