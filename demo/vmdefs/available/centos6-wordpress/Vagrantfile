@@ -1,5 +1,4 @@
 VAGRANTFILE_API_VERSION = "2"
-N = 2
 machine_names=["web","db"]
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|

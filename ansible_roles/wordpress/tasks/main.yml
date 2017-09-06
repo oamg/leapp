@@ -18,8 +18,8 @@
     dest: /etc/wordpress/
 
 - name: Copy conf for apache
-  template:
-    src: wordpress.tpl
+  copy:
+    src: ../templates/wordpress.conf
     dest: /etc/httpd/conf.d/wordpress.conf
     owner: root
     group: root
