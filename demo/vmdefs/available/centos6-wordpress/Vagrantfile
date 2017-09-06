@@ -19,10 +19,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
                 libvirt.memory = 1024
                 libvirt.cpus = 1
             end
- 
+
             machine.vm.provision "ansible" do |ansible|
-                ansible.limit = "all"
-                ansible.playbook = "playbook#{machine_id}.yml"
+                ansible.limit = ipaddr
+                ansible.playbook = "playbook.yml"
                 ansible.inventory_path = "hosts"
                 ansible.sudo = true
             end

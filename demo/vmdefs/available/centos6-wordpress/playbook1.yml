@@ -1,7 +1,0 @@
-- hosts: webservers
-  roles:
-    - role: init
-      key_path: ../../../integration-tests/config/leappto_testing_key.pub
-    - httpd
-    - wordpress
-
