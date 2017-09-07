@@ -50,12 +50,14 @@ def _path_spec(arg):
     return path
 
 
-def _make_argument_parser():
-    ap = ArgumentParser()
-    ap.add_argument('-v', '--version', action='version', version=VERSION, help='display version information')
-    parser = ap.add_subparsers(help='sub-command', dest='action')
-    migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
+def _make_base_object(s):
+    return {"value": s}
 
+
+def _migrate_machine_arguments(parser):
+    migrate_cmd = parser.add_parser('migrate-machine', help='migrate source VM to a target container host')
+    migrate_cmd.add_argument("-p", "--print-port-map", default=False, help='List suggested port mapping on target host',
+                             action="store_true")
     migrate_cmd.add_argument('machine', help='source machine to migrate')
     migrate_cmd.add_argument('-t', '--target', default='localhost', help='target VM name')
     migrate_cmd.add_argument(
@@ -97,12 +99,6 @@ def _make_argument_parser():
     migrate_cmd.add_argument('--target-user', default="root", help='Connect as this user to the target via ssh')
     migrate_cmd.add_argument('--source-user', default="root", help='Connect as this user to the source via ssh')
 
-    return ap
-
-
-def _make_base_object(s):
-    return {"value": s}
-
 
 def _migrate_machine(arguments):
     default_excluded_paths = ['/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*']
@@ -118,17 +114,7 @@ def _migrate_machine(arguments):
         "force_create": _make_base_object(arguments.force_create),
         "user_container_name": _make_base_object(arguments.container_name or ''),
     }
-
-    actor = registry.get_actor('migrate-machine')
-    if not actor:
-        logging.error("Could not find migrate-machine actor to complete the process")
-        sys.exit(-1)
-
-    if actor.execute(data):
-        logging.info("SUCCESS - Migration has been completed")
-    else:
-        logging.error("Migration failed")
-        sys.exit(-1)
+    return data, 'migrate-machine' if not arguments.print_port_map else 'port-mapping'
 
 
 @contextmanager
@@ -150,6 +136,74 @@ def _stdout_socket():
     os.rmdir(directory)
 
 
+def _check_target_arguments(parser):
+    check_target_cmd = parser.add_parser('check-target', help='check for claimed names on target container host')
+    check_target_cmd.add_argument('-t', '--target', default='localhost', help='Target container host')
+    check_target_cmd.add_argument("-s", "--status", default=False, help='Check for services status on target machine',
+                                  action="store_true")
+    check_target_cmd.add_argument('--user', default="root", help='Connect as this user to the target via ssh')
+
+
+def _check_target(arguments):
+    data = {
+        'check_target_service_status': _make_base_object(arguments.status),
+        'target_user_name': _make_base_object(arguments.user),
+        'target_host': _make_base_object(arguments.target)
+    }
+    return data, 'check-target'
+
+
+def _port_inspect_arguments(parser):
+    scan_ports_cmd = parser.add_parser('port-inspect', help='scan ports on virtual machine')
+    scan_ports_cmd.add_argument('address', help='virtual machine address')
+    scan_ports_cmd.add_argument(
+        '--range',
+        default=None,
+        help='port range, example of proper form:"-100,200-1024,T:3000-4000,U:60000-"'
+    )
+    scan_ports_cmd.add_argument(
+        '--shallow',
+        action='store_true',
+        help='Skip detailed informations about used ports, this is quick SYN scan'
+    )
+
+
+def _port_inspect(arguments):
+    data = {
+        'shallow_scan': _make_base_object(arguments.shallow),
+        'port_range': _make_base_object(arguments.range),
+        'port_inspect_host': _make_base_object(arguments.address)
+    }
+    return data, 'port-inspect'
+
+
+def _destroy_container_arguments(parser):
+    destroy_cmd = parser.add_parser('destroy-container', help='destroy named container on virtual machine')
+    destroy_cmd.add_argument('-t', '--target', default='localhost', help='Target container host')
+    destroy_cmd.add_argument('container', help='container to destroy (if it exists)')
+    destroy_cmd.add_argument('--user', default="root", help='Connect as this user to the target via ssh')
+
+
+def _destroy_container(arguments):
+    data = {
+        'container_name': _make_base_object(arguments.container),
+        'target_user_name': _make_base_object(arguments.user),
+        'target_host': _make_base_object(arguments.target)
+    }
+    return data, 'destroy-container'
+
+
+def _make_argument_parser():
+    ap = ArgumentParser()
+    ap.add_argument('-v', '--version', action='version', version=VERSION, help='display version information')
+    parser = ap.add_subparsers(help='sub-command', dest='action')
+    _migrate_machine_arguments(parser)
+    _port_inspect_arguments(parser)
+    _destroy_container_arguments(parser)
+    _check_target_arguments(parser)
+    return ap
+
+
 def main():
     loader.load(ACTOR_DIRECTORY)
     loader.load_schemas(SCHEMA_DIRECTORY)
@@ -158,6 +212,9 @@ def main():
     logging.basicConfig(format='[%(name)s] %(levelname)s:%(message)s', level=logging.DEBUG, stream=sys.stderr)
     _COMMANDS = {
         'migrate-machine': _migrate_machine,
+        'check-target': _check_target,
+        'port-inspect': _port_inspect,
+        'destroy-container': _destroy_container,
     }
 
     ap = _make_argument_parser()
@@ -165,4 +222,19 @@ def main():
     parsed = ap.parse_args()
 
     with _stdout_socket():
-        _COMMANDS[parsed.action](parsed)
+        actor_data, actor_name = _COMMANDS[parsed.action]
+        logging.debug("Actor %s Inputs:\n%s", actor_name, actor_data)
+
+        actor = registry.get_actor(actor_name)
+        if not actor:
+            logging.error("Could not find %s actor to complete the process", actor_name)
+            sys.exit(-1)
+
+        success = actor.execute(actor_data)
+        logging.debug("After execution data:\n%s", actor_data)
+        if success:
+            logging.info("SUCCESS - Migration has been completed")
+        else:
+            logging.error("Migration failed")
+            sys.exit(-1)
+
