@@ -145,7 +145,7 @@ def _stdout_socket():
     if p.poll():
         logging.error("Output tool ended prematurely with %d", p.returncode)
     else:
-        os.kill(p.pid, signal.SIG_TERM)
+        os.kill(p.pid, signal.SIGTERM)
     os.unlink(name)
     os.rmdir(directory)
 
@@ -155,7 +155,7 @@ def main():
     loader.load_schemas(SCHEMA_DIRECTORY)
     loader.validate_actor_types()
 
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG, stream=sys.stderr)
+    logging.basicConfig(format='[%(name)s] %(levelname)s:%(message)s', level=logging.DEBUG, stream=sys.stderr)
     _COMMANDS = {
         'migrate-machine': _migrate_machine,
     }
