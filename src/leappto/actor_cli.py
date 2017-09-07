@@ -2,11 +2,12 @@ import logging
 import os
 import subprocess
 import sys
+import tempfile
 from argparse import ArgumentParser
-from pprint import pprint
-from subprocess import PIPE
+from contextlib import contextmanager
 
 import argcomplete
+import signal
 
 from snactor import loader
 from snactor import registry
@@ -104,10 +105,6 @@ def _make_base_object(s):
 
 
 def _migrate_machine(arguments):
-    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
-    loader.load(ACTOR_DIRECTORY)
-    loader.load_schemas(SCHEMA_DIRECTORY)
-    loader.validate_actor_types()
     default_excluded_paths = ['/dev/*', '/proc/*', '/sys/*', '/tmp/*', '/run/*', '/mnt/*', '/media/*', '/lost+found/*']
     data = {
         "target_host": _make_base_object(arguments.target),
@@ -124,15 +121,41 @@ def _migrate_machine(arguments):
 
     actor = registry.get_actor('migrate-machine')
     if not actor:
+        logging.error("Could not find migrate-machine actor to complete the process")
         sys.exit(-1)
 
     if actor.execute(data):
-        pass
+        logging.info("SUCCESS - Migration has been completed")
     else:
+        logging.error("Migration failed")
         sys.exit(-1)
 
 
+@contextmanager
+def _stdout_socket():
+    directory = tempfile.mkdtemp('', 'LEAPP_STDOUT', None)
+    name = os.join(directory, 'leapp_stdout.sock')
+    registry.register_environment_variable('LEAPP_ACTOR_STDOUT_SOCK', name)
+
+    env = os.environ.copy()
+    env["LEAPP_ACTOR_STDOUT_SOCK"] = name
+    p = subprocess.Popen(["actor-stdout", "server"], env=env)
+
+    yield
+    if p.poll():
+        logging.error("Output tool ended prematurely with %d", p.returncode)
+    else:
+        os.kill(p.pid, signal.SIG_TERM)
+    os.unlink(name)
+    os.rmdir(directory)
+
+
 def main():
+    loader.load(ACTOR_DIRECTORY)
+    loader.load_schemas(SCHEMA_DIRECTORY)
+    loader.validate_actor_types()
+
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG, stream=sys.stderr)
     _COMMANDS = {
         'migrate-machine': _migrate_machine,
     }
@@ -141,4 +164,5 @@ def main():
     argcomplete.autocomplete(ap)
     parsed = ap.parse_args()
 
-    _COMMANDS[parsed.action](parsed)
+    with _stdout_socket():
+        _COMMANDS[parsed.action](parsed)
