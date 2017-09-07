@@ -171,11 +171,12 @@ def _port_inspect_arguments(parser):
 def _port_inspect(arguments):
     data = {
         'scan_options': {
-            'shallow_scan': _make_base_object(arguments.shallow),
-            'port_range': _make_base_object(arguments.range)
+            'shallow_scan': arguments.shallow,
         },
         'host': _make_base_object(arguments.address),
     }
+    if arguments.range:
+        data['scan_options']['port_range'] = arguments.range
     return data, 'port-inspect'
 
 
@@ -224,7 +225,7 @@ def main():
     parsed = ap.parse_args()
 
     with _stdout_socket():
-        actor_data, actor_name = _COMMANDS[parsed.action]
+        actor_data, actor_name = _COMMANDS[parsed.action](parsed)
         logging.debug("Actor %s Inputs:\n%s", actor_name, actor_data)
 
         actor = registry.get_actor(actor_name)
