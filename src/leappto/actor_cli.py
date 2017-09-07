@@ -134,7 +134,7 @@ def _migrate_machine(arguments):
 @contextmanager
 def _stdout_socket():
     directory = tempfile.mkdtemp('', 'LEAPP_STDOUT', None)
-    name = os.join(directory, 'leapp_stdout.sock')
+    name = os.path.join(directory, 'leapp_stdout.sock')
     registry.register_environment_variable('LEAPP_ACTOR_STDOUT_SOCK', name)
 
     env = os.environ.copy()
