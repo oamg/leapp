@@ -170,9 +170,11 @@ def _port_inspect_arguments(parser):
 
 def _port_inspect(arguments):
     data = {
-        'shallow_scan': _make_base_object(arguments.shallow),
-        'port_range': _make_base_object(arguments.range),
-        'port_inspect_host': _make_base_object(arguments.address)
+        'scan_options': {
+            'shallow_scan': _make_base_object(arguments.shallow),
+            'port_range': _make_base_object(arguments.range)
+        },
+        'host': _make_base_object(arguments.address),
     }
     return data, 'port-inspect'
 
@@ -237,4 +239,3 @@ def main():
         else:
             logging.error("Migration failed")
             sys.exit(-1)
-
