@@ -123,7 +123,7 @@ def _stdout_socket():
     name = os.path.join(directory, 'leapp_stdout.sock')
     registry.register_environment_variable('LEAPP_ACTOR_STDOUT_SOCK', name)
     # This might be wanted to be a bit more dynamic but well it's good enough for now
-    registry.register_environment_variable('LEAPP_ACTOR_OUTPUT', '/usr/bin/actor-output')
+    registry.register_environment_variable('LEAPP_ACTOR_OUTPUT', '/usr/bin/actor-stdout')
 
     env = os.environ.copy()
     env["LEAPP_ACTOR_STDOUT_SOCK"] = name
@@ -152,7 +152,7 @@ def _check_target(arguments):
         'target_user_name': _make_base_object(arguments.user),
         'target_host': _make_base_object(arguments.target)
     }
-    return data, 'check-target'
+    return data, 'check_target_group'
 
 
 def _port_inspect_arguments(parser):
@@ -238,7 +238,7 @@ def main():
         success = actor.execute(actor_data)
         logging.debug("After execution data:\n%s", actor_data)
         if success:
-            logging.info("SUCCESS - Migration has been completed")
+            logging.info("SUCCESS - %s has been completed", parsed.action)
         else:
-            logging.error("Migration failed")
+            logging.error("ERROR: %s failed", parsed.action)
             sys.exit(-1)
