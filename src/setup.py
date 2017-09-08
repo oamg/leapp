@@ -78,8 +78,7 @@ setup(
     # Install `leapp-tool` command
     entry_points={
         'console_scripts': [
-            'leapp-tool=leappto.cli:main',
-            'leapp-actor-tool=leappto.actor_cli:main',
+            'leapp-tool=leappto.actor_cli:main',
         ],
     },
 )

@@ -141,7 +141,6 @@ popd
 cat <<EOF > cockpit/config.json
 {
     "tool-path": "/usr/bin/leapp-tool",
-    "actor-tool-path": "/usr/bin/leapp-actor-tool",
     "tool-workdir": "/usr/bin",
     "version": "%{version}-%{release}"
 }
@@ -180,7 +179,6 @@ cp $PWD/gopath/bin/actor-stdout %{buildroot}%{_bindir}/actor-stdout
 %files tool
 %doc README.md AUTHORS COPYING
 %attr(755, root, root) %{_bindir}/%{name}-tool
-%attr(755, root, root) %{_bindir}/%{name}-actor-tool
 
 %files actor-tools
 %doc README.md AUTHORS COPYING
