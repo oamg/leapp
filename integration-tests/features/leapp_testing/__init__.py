@@ -188,6 +188,9 @@ def install_client():
         _run_command(uninstall, work_dir=str(REPO_DIR), ignore_errors=False)
     install = base_cmd + ["install", "--python", py27, str(_LEAPP_SRC_DIR)]
     print(_run_command(install, work_dir=str(REPO_DIR), ignore_errors=False))
+    env_pip = os.path.join(os.environ["HOME"], ".local/venvs/leappto/bin/pip2.7")
+    print(_run_command([env_pip, "install", "git+https://github.com/leapp-to/snactor"], work_dir=str(REPO_DIR),
+                       ignore_errors=False))
     # Ensure private SSH key is only readable by the current user
     os.chmod(_SSH_IDENTITY, 0o600)
     return _PIPSI_LEAPP_TOOL_PATH
