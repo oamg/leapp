@@ -1,3 +1,5 @@
+%global debug_package %{nil}
+
 Name:       leapp
 Version:    0.1
 Release:    36.1
@@ -9,8 +11,9 @@ URL:        https://github.com/leapp-to/leapp
 # git clone https://github.com/leapp-to/leapp
 # tito build --tgz --tag=%{version}
 Source0:    %{name}-%{version}.tar.gz
-BuildArch:  noarch
+BuildArch:  x86_64
 
+BuildRequires:   golang
 BuildRequires:   python2-devel
 %if 0%{?rhel} && 0%{?rhel} <= 7
 BuildRequires:   python-setuptools
@@ -31,6 +34,7 @@ container host rather than providing their own.
 %package    tool
 Summary:    LeApp is a "Minimum Viable Migration" utility
 Requires:   python2-%{name} = %{version}-%{release}
+BuildArch:  noarch
 
 %description tool
 LeApp is a "Minimum Viable Migration" utility that aims to decouple virtualized
@@ -40,8 +44,20 @@ components of a stateful VM (operating system user space, application run-time,
 management tools, configuration files, etc), but use the kernel of the
 container host rather than providing their own.
 
+%package    actor-tools
+Summary:    LeApp is a "Minimum Viable Migration" utility
+
+%description actor-tools
+LeApp is a "Minimum Viable Migration" utility that aims to decouple virtualized
+applications from the operating system kernel included in their VM image by
+migrating them into macro-containers that include all of the traditional
+components of a stateful VM (operating system user space, application run-time,
+management tools, configuration files, etc), but use the kernel of the
+container host rather than providing their own.
+
 %package -n python2-%{name}
 Summary:    Python libraries of LeApp
+BuildArch:  noarch
 Requires:   nmap
 Requires:   sshpass
 Requires:   python-enum34
@@ -60,6 +76,7 @@ Requires:   python2-setuptools
 Requires:   python2-argcomplete
 %endif
 Requires:   python-snactor
+Requires:   %{name}-actor-tools = %{version}-%{release}
 
 %description -n python2-%{name}
 LeApp is a "Minimum Viable Migration" utility that aims to decouple virtualized
@@ -71,6 +88,7 @@ container host rather than providing their own.
 
 %package cockpit
 Summary:  Cockpit plugin for LeApp
+BuildArch:  noarch
 Requires: cockpit
 Requires: docker
 Requires: %{name}-tool = %{version}-%{release}
@@ -85,6 +103,7 @@ container host rather than providing their own.
 
 %package -n %{name}-bash-completion
 Summary:  Bash completion files for LeApp
+BuildArch:  noarch
 Requires: %{name}-tool = %{version}-%{release}
 
 %description -n %{name}-bash-completion
@@ -97,6 +116,7 @@ container host rather than providing their own.
 
 %package -n %{name}-zsh-completion
 Summary:  Zsh completion files for LeApp
+BuildArch:  noarch
 Requires: %{name}-tool = %{version}-%{release}
 
 %description -n %{name}-zsh-completion
@@ -133,8 +153,12 @@ __version__ = '%{version}-%{release}'
 __pkg_name__ = 'leappto'
 EOF
 
-
 cat cockpit/config.json
+
+export GOPATH=$PWD/gopath
+mkdir -p $GOPATH
+go get github.com/leapp-to/leapp-go/cmd/actor-stdout
+go install github.com/leapp-to/leapp-go/cmd/actor-stdout
 
 %install
 mkdir -p %{buildroot}%{_datadir}/cockpit/leapp
@@ -151,10 +175,16 @@ pushd src
 %py2_install
 popd
 
+cp $PWD/gopath/bin/actor-stdout %{buildroot}%{_bindir}/actor-stdout
+
 %files tool
 %doc README.md AUTHORS COPYING
 %attr(755, root, root) %{_bindir}/%{name}-tool
 %attr(755, root, root) %{_bindir}/%{name}-actor-tool
+
+%files actor-tools
+%doc README.md AUTHORS COPYING
+%attr(755, root, root) %{_bindir}/actor-stdout
 
 %files -n python2-%{name}
 %doc README.md AUTHORS COPYING
