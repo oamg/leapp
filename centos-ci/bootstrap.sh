@@ -39,7 +39,7 @@ yum-config-manager --add-repo https://copr-be.cloud.fedoraproject.org/results/ev
 yum install -y tito python2-nmap
 yum-builddep -y leapp.spec
 TERM=xterm tito build --rpm --test || (echo "Failed to build leapp RPM" && exit 1)
-yum install -y /tmp/tito/noarch/leapp-tool-*.noarch.rpm /tmp/tito/noarch/python2-leapp-*.noarch.rpm /tmp/tito/noarch/leapp-cockpit-*.noarch.rpm
+yum install -y /tmp/tito/noarch/leapp-tool-*.noarch.rpm /tmp/tito/noarch/python2-leapp-*.noarch.rpm /tmp/tito/noarch/leapp-cockpit-*.noarch.rpm /tmp/tito/x86_64/leapp-actor-tools-*.x86_64.rpm
 
 time_since_begining "step2: build and install RPM"
 
