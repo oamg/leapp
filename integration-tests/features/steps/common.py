@@ -102,7 +102,6 @@ def repeat_previous_migration(context, time_limit):
     helper = context.cli_helper
     cmd_args = helper.make_migration_command(source_vm, target_vm, migration_opt)
     output = helper.check_response_time(cmd_args, time_limit,
-                                        use_default_identity=True,
                                         expect_failure=True)
     assert_that(output, is_not(equal_to("")))
     # TODO: Assert specifics regarding expected output
@@ -118,7 +117,6 @@ def expect_failed_migration(context, source_vm, target_vm, app_name, time_limit)
     cmd_args = helper.make_migration_command(source_vm, target_vm, migration_opt,
                                              container_name=app_name)
     output = helper.check_response_time(cmd_args, time_limit,
-                                        use_default_identity=True,
                                         expect_failure=True)
     assert_that(output, is_not(equal_to("")))
     # TODO: Assert specifics regarding expected output
@@ -134,7 +132,7 @@ def force_app_migration(context, time_limit):
     cmd_args = helper.make_migration_command(source_vm, target_vm, migration_opt,
                                              container_name=app_name,
                                              force_create=True)
-    output = helper.check_response_time(cmd_args, time_limit, use_default_identity=True)  # nopep8
+    output = helper.check_response_time(cmd_args, time_limit)  # nopep8
     # TODO: Assert specifics regarding expected output
 
 

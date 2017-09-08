@@ -1,5 +1,6 @@
 Feature: End-to-end testing of supported remote authentication models
 
+@skip
 Scenario: Remote access using the --identity option
     Given the default identity file is not registered with ssh-agent
       And the local virtual machines:
@@ -7,6 +8,7 @@ Scenario: Remote access using the --identity option
          | remote-system      | centos7-target      | no           |
     Then remote-system should be accessible using the default identity file
 
+@skip
 Scenario: Remote access using the --identity option @ centos6
     Given the default identity file is not registered with ssh-agent
       And the local virtual machines:
