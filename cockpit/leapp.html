@@ -363,11 +363,7 @@
            }
         */
         var new_leapp_call = function(command, options) {
-            if (options && options.use_actor_tool) {
-                command = [LEAPP_CONF["actor-tool-path"]].concat(command);
-            } else {
-                command = [LEAPP_CONF["tool-path"]].concat(command);
-            }
+            command = [LEAPP_CONF["tool-path"]].concat(command);
             return new_generic_call(command, options);
         }
 
@@ -863,7 +859,7 @@
             }
 
             //output.empty();
-            var ctx = new_leapp_call(import_args, {use_actor_tool: true});
+            var ctx = new_leapp_call(import_args);
             ctx.log(`Migrating ${source} to ${target}`);
             ctx.run();
             ctx.log("This can take a while, do not close this page ... ");
