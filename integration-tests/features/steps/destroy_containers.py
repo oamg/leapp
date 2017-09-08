@@ -12,7 +12,6 @@ def check_destroy_container(context, container, target, time_limit):
     context.cli_helper.check_response_time(
         ["destroy-container", "-t", context.vm_helper.get_ip_address(target), container],
         time_limit,
-        use_default_identity=True
     )
     if container in claimed_names:
         claimed_names.remove(container)

@@ -22,8 +22,7 @@ def check_remote_access_with_identity_file(context, target):
     """Check remote machine access using the default identity file"""
     context.cli_helper.check_response_time(
         _make_auth_test_command(context, target),
-        time_limit=20,
-        use_default_identity=True
+        time_limit=20
     )
 
 @then("{target} should be accessible using the default password")
@@ -31,8 +30,7 @@ def check_remote_access_with_interactive_password_entry(context, target):
     """Check remote machine access using the default user & password"""
     context.cli_helper.check_response_time(
         _make_auth_test_command(context, target),
-        time_limit=20,
-        use_default_password=True
+        time_limit=20
     )
 
 

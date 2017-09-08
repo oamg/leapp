@@ -175,9 +175,7 @@ _SSH_USER = "vagrant"
 _SSH_IDENTITY = str(REPO_DIR / "integration-tests/config/leappto_testing_key")
 _SSH_PASSWORD = "vagrant"
 _DEFAULT_LEAPP_USER = ['--user', _SSH_USER]
-_DEFAULT_LEAPP_IDENTITY = ['--identity', _SSH_IDENTITY]
 _DEFAULT_LEAPP_MIGRATE_USER = ['--target-user', _SSH_USER, '--source-user', _SSH_USER]
-_DEFAULT_LEAPP_MIGRATE_IDENTITY = ['--target-identity', _SSH_IDENTITY, '--source-identity', _SSH_IDENTITY]
 
 def install_client():
     """Install the CLI and its dependencies into a Python 2.7 environment"""
@@ -241,8 +239,7 @@ class ClientHelper(object):
         """Check viability of target VM and report currently unavailable names"""
         command_output = self.check_response_time(
             ["check-target", "-t", self._vm_helper.get_ip_address(target_vm)],
-            time_limit,
-            use_default_identity=True
+            time_limit
         )
         return command_output.splitlines()
 
@@ -251,16 +248,13 @@ class ClientHelper(object):
         """Check services status of target VM and report results"""
         command_output = self.check_response_time(
             ["check-target", "--status", "-t", self._vm_helper.get_ip_address(target_vm)],
-            time_limit,
-            use_default_identity=True
+            time_limit
         )
         return command_output.splitlines()
 
 
     def check_response_time(self, cmd_args, time_limit, *,
                             specify_default_user=False,
-                            use_default_identity=False,
-                            use_default_password=False,
                             as_sudo=False,
                             expect_failure=False):
         """Check given command completes within the specified time limit
@@ -269,23 +263,19 @@ class ClientHelper(object):
         """
         is_migrate = 'migrate-machine' in cmd_args
         start = time.monotonic()
-        if use_default_password:
-            cmd_output = self._run_leapp_with_askpass(cmd_args, is_migrate=is_migrate)
+        add_default_user = specify_default_user
+        try:
+            cmd_output = self._run_leapp(cmd_args,
+                                        add_default_user=add_default_user,
+                                        is_migrate=is_migrate,
+                                        as_sudo=as_sudo)
+        except subprocess.CalledProcessError as exc:
+            if not expect_failure:
+                raise
+            cmd_output = exc.stdout
         else:
-            add_default_user = specify_default_user or use_default_identity
-            try:
-                cmd_output = self._run_leapp(cmd_args,
-                                            add_default_user=add_default_user,
-                                            add_default_identity=use_default_identity,
-                                            is_migrate=is_migrate,
-                                            as_sudo=as_sudo)
-            except subprocess.CalledProcessError as exc:
-                if not expect_failure:
-                    raise
-                cmd_output = exc.stdout
-            else:
-                if expect_failure:
-                    raise AssertionError("Command succeeded unexpectedly")
+            if expect_failure:
+                raise AssertionError("Command succeeded unexpectedly")
         response_time = time.monotonic() - start
         assert_that(response_time, less_than_or_equal_to(time_limit))
         return cmd_output
@@ -342,7 +332,6 @@ class ClientHelper(object):
 
     def _run_leapp(self, cmd_args, *,
                    add_default_user=False,
-                   add_default_identity=False,
                    is_migrate=False,
                    as_sudo=False):
         as_sudo = as_sudo or self._requires_sudo(cmd_args)
@@ -350,20 +339,7 @@ class ClientHelper(object):
         cmd.extend(cmd_args)
         if add_default_user:
             cmd.extend(_DEFAULT_LEAPP_MIGRATE_USER if is_migrate else _DEFAULT_LEAPP_USER)
-        if add_default_identity:
-            cmd.extend(_DEFAULT_LEAPP_MIGRATE_IDENTITY if is_migrate else _DEFAULT_LEAPP_IDENTITY)
         return _run_command(cmd, work_dir=str(REPO_DIR), as_sudo=as_sudo)
-
-    def _run_leapp_with_askpass(self, cmd_args, is_migrate=False):
-        # Helper specifically for --ask-pass testing with default credentials
-        if os.getuid() != 0:
-            err = "sshpass TTY emulation is incompatible with sudo credential caching"
-            raise RuntimeError(err)
-        cmd = ["sshpass", "-p"+_SSH_PASSWORD, self._leapp_tool_path]
-        cmd.extend(cmd_args)
-        cmd.extend(_DEFAULT_LEAPP_MIGRATE_USER if is_migrate else _DEFAULT_LEAPP_USER)
-        cmd.append("--ask-pass")
-        return _run_command(cmd, work_dir=str(REPO_DIR))
 
     @staticmethod
     def _make_migration_command(source_host, target_host, migration_opt, force_create=False, container_name=None):
@@ -395,7 +371,6 @@ class ClientHelper(object):
         cmd_args = self._make_migration_command(source_host, target_host, migration_opt, force_create, container_name)
         result = self._run_leapp(cmd_args,
                                 add_default_user=True,
-                                add_default_identity=True,
                                 is_migrate=True,
                                 as_sudo=True)
         msg = "Migrated {} as macrocontainer on {}"

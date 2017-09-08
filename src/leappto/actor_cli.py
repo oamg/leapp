@@ -114,6 +114,8 @@ def _migrate_machine(arguments):
         "force_create": _make_base_object(arguments.force_create),
         "user_container_name": _make_base_object(arguments.container_name or ''),
     }
+    if not arguments.print_port_map:
+        logging.getLogger().addHandler(logging.StreamHandler(sys.stderr))
     return data, 'migrate-machine' if not arguments.print_port_map else 'port-mapping'
 
 
@@ -209,12 +211,19 @@ def _make_argument_parser():
     return ap
 
 
+class NullLogSink(object):
+    def write(self, *args, **kwargs):
+        pass
+    def flush(self, *args, **kwargs):
+        pass
+
+
 def main():
     loader.load(ACTOR_DIRECTORY)
     loader.load_schemas(SCHEMA_DIRECTORY)
     loader.validate_actor_types()
 
-    logging.basicConfig(format='[%(name)s] %(levelname)s:%(message)s', level=logging.DEBUG, stream=sys.stderr)
+    logging.basicConfig(format='[%(name)s] %(levelname)s:%(message)s', level=logging.DEBUG, stream=NullLogSink())
     _COMMANDS = {
         'migrate-machine': _migrate_machine,
         'check-target': _check_target,

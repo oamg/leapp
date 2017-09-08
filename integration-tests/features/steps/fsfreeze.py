@@ -21,8 +21,8 @@ def _replace_fsfreeze_bin(context, machine):
     _clean_test(context, machine)
 
     context.vm_helper.run_remote_command(machine, "sudo", "mv", FSFREEZE_BIN_PATH, "{}.back".format(FSFREEZE_BIN_PATH))
-    context.vm_helper.run_remote_command(machine, 
-        "sudo -i <<< \"echo '{}' > {}\"".format(FSFREEZE_MOCK_SCRIPT, FSFREEZE_BIN_PATH) 
+    context.vm_helper.run_remote_command(machine,
+        "sudo -i <<< \"echo '{}' > {}\"".format(FSFREEZE_MOCK_SCRIPT, FSFREEZE_BIN_PATH)
     )
     context.vm_helper.run_remote_command(machine, "sudo", "chmod", "+x", FSFREEZE_BIN_PATH)
 
@@ -40,7 +40,7 @@ def _check_if_system_was_locked(context, machine):
 @when("{source} is migrated to {target} and fs is {not_frozen} frozen")
 @when("{source} is migrated to {target} and fs is frozen")
 def test_migrate_fsfreeze(context, source, target, not_frozen=None):
-    result = None 
+    result = None
     expect_frozen = (not_frozen is None)
 
     try:
@@ -50,13 +50,12 @@ def test_migrate_fsfreeze(context, source, target, not_frozen=None):
 
         _replace_fsfreeze_bin(context, source)
         migration = context.cli_helper.check_response_time(
-            cmd, 
-            time_limit=100,
-            use_default_identity=True
+            cmd,
+            time_limit=100
         )
-        result = _check_if_system_was_locked(context, source) 
+        result = _check_if_system_was_locked(context, source)
     finally:
-        # restore original command & clean, this may fail if fsfreeze 
+        # restore original command & clean, this may fail if fsfreeze
         # command wasn't replaced
         try:
             _restore_fsfreeze_bin(context, source)
