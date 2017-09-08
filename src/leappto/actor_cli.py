@@ -122,6 +122,8 @@ def _stdout_socket():
     directory = tempfile.mkdtemp('', 'LEAPP_STDOUT', None)
     name = os.path.join(directory, 'leapp_stdout.sock')
     registry.register_environment_variable('LEAPP_ACTOR_STDOUT_SOCK', name)
+    # This might be wanted to be a bit more dynamic but well it's good enough for now
+    registry.register_environment_variable('LEAPP_ACTOR_OUTPUT', '/usr/bin/actor-output')
 
     env = os.environ.copy()
     env["LEAPP_ACTOR_STDOUT_SOCK"] = name
