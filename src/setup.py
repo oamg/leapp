@@ -13,7 +13,7 @@ _VERSION = None
 _NAME = None
 
 # Extract the version and name from the new leappto module
-with open(convert_path('leappto/version.py')) as mod:
+with open(convert_path(path.join(here, 'leappto/version.py'))) as mod:
     ns = {}
     exec(mod.read(), ns)
     _VERSION = ns['__version__']
@@ -61,9 +61,8 @@ setup(
         "paramiko",
         "python-nmap==0.6.1",
         "psutil==5.2.2",
-        "argcomplete"
+        "argcomplete",
     ],
-
     # Extras:
     #   dbus: dependencies needed to run the DBus status caching service
     #   test: dependencies needed to run the tests
