@@ -34,11 +34,11 @@ def _port_spec(arg):
 
 def _to_port_map(items):
     port_map = []
-    for source, target in items:
+    for target, source in items:
         port_map.append({
             'protocol': 'tcp',
-            'exposed_port': int(source),
-            'port': int(target)})
+            'exposed_port': int(target),
+            'port': int(source)})
     return {'ports': port_map}
 
 
