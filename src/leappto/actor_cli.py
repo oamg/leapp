@@ -98,6 +98,7 @@ def _migrate_machine_arguments(parser):
                              help='Migrated container will not be started immediately', action="store_true")
     migrate_cmd.add_argument('--target-user', default="root", help='Connect as this user to the target via ssh')
     migrate_cmd.add_argument('--source-user', default="root", help='Connect as this user to the source via ssh')
+    migrate_cmd.add_argument('--debug', default=False, action="store_true", help='Turn on debug logging on stderr')
 
 
 def _migrate_machine(arguments):
@@ -114,7 +115,7 @@ def _migrate_machine(arguments):
         "force_create": _make_base_object(arguments.force_create),
         "user_container_name": _make_base_object(arguments.container_name or ''),
     }
-    if not arguments.print_port_map:
+    if arguments.debug or not arguments.print_port_map:
         logging.getLogger().addHandler(logging.StreamHandler(sys.stderr))
     return data, 'migrate-machine' if not arguments.print_port_map else 'port-mapping'
 
@@ -146,9 +147,12 @@ def _check_target_arguments(parser):
     check_target_cmd.add_argument("-s", "--status", default=False, help='Check for services status on target machine',
                                   action="store_true")
     check_target_cmd.add_argument('--user', default="root", help='Connect as this user to the target via ssh')
-
+    check_target_cmd.add_argument('--debug', default=False, action="store_true", help='Turn on debug logging on stderr')
 
 def _check_target(arguments):
+    if arguments.debug:
+        logging.getLogger().addHandler(logging.StreamHandler(sys.stderr))
+
     data = {
         'check_target_service_status': _make_base_object(arguments.status),
         'target_user_name': _make_base_object(arguments.user),
@@ -170,9 +174,13 @@ def _port_inspect_arguments(parser):
         action='store_true',
         help='Skip detailed informations about used ports, this is quick SYN scan'
     )
+    scan_ports_cmd.add_argument('--debug', default=False, action="store_true", help='Turn on debug logging on stderr')
 
 
 def _port_inspect(arguments):
+    if arguments.debug:
+        logging.getLogger().addHandler(logging.StreamHandler(sys.stderr))
+
     data = {
         'scan_options': {
             'shallow_scan': arguments.shallow,
@@ -189,9 +197,13 @@ def _destroy_container_arguments(parser):
     destroy_cmd.add_argument('-t', '--target', default='localhost', help='Target container host')
     destroy_cmd.add_argument('container', help='container to destroy (if it exists)')
     destroy_cmd.add_argument('--user', default="root", help='Connect as this user to the target via ssh')
+    destroy_cmd.add_argument('--debug', default=False, action="store_true", help='Turn on debug logging on stderr')
 
 
 def _destroy_container(arguments):
+    if arguments.debug:
+        logging.getLogger().addHandler(logging.StreamHandler(sys.stderr))
+
     data = {
         'container_name': _make_base_object(arguments.container),
         'target_user_name': _make_base_object(arguments.user),
