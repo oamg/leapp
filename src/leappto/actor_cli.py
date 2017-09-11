@@ -107,7 +107,7 @@ def _migrate_machine(arguments):
         "target_host": _make_base_object(arguments.target),
         "source_host": _make_base_object(arguments.machine),
         "tcp_ports_user_mapping": _to_port_map(arguments.forwarded_tcp_ports or ()),
-        "excluded_tcp_ports": {"tcp": {str(x[0]): {} for x in arguments.excluded_tcp_ports or ()}},
+        "excluded_tcp_ports": {"tcp": {str(x[0]): {"name": ""} for x in arguments.excluded_tcp_ports or ()}},
         "excluded_paths": {"value": arguments.excluded_paths or default_excluded_paths},
         "start_container": _make_base_object(not arguments.disable_start),
         "target_user_name": _make_base_object(arguments.target_user),
