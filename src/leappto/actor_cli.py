@@ -106,6 +106,7 @@ def _migrate_machine(arguments):
     data = {
         "target_host": _make_base_object(arguments.target),
         "source_host": _make_base_object(arguments.machine),
+        "use_default_port_map": _make_base_object(not arguments.ignore_default_port_map),
         "tcp_ports_user_mapping": _to_port_map(arguments.forwarded_tcp_ports or ()),
         "excluded_tcp_ports": {"tcp": {str(x[0]): {"name": ""} for x in arguments.excluded_tcp_ports or ()}},
         "excluded_paths": {"value": arguments.excluded_paths or default_excluded_paths},
