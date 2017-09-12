@@ -132,14 +132,17 @@ def _stdout_socket():
     env = os.environ.copy()
     env["LEAPP_ACTOR_STDOUT_SOCK"] = name
     p = subprocess.Popen(["actor-stdout", "server"], env=env)
-
-    yield
-    if p.poll():
-        logging.error("Output tool ended prematurely with %d", p.returncode)
-    else:
-        os.kill(p.pid, signal.SIGTERM)
-    os.unlink(name)
-    os.rmdir(directory)
+    try:
+        yield
+    except:
+        raise
+    finally:
+        if p.poll():
+            logging.error("Output tool ended prematurely with %d", p.returncode)
+        else:
+            os.kill(p.pid, signal.SIGTERM)
+        os.unlink(name)
+        os.rmdir(directory)
 
 
 def _check_target_arguments(parser):
@@ -228,6 +231,7 @@ def _make_argument_parser():
 class NullLogSink(object):
     def write(self, *args, **kwargs):
         pass
+
     def flush(self, *args, **kwargs):
         pass
 
