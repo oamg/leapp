@@ -149,6 +149,7 @@ def _check_target_arguments(parser):
     check_target_cmd.add_argument('--user', default="root", help='Connect as this user to the target via ssh')
     check_target_cmd.add_argument('--debug', default=False, action="store_true", help='Turn on debug logging on stderr')
 
+
 def _check_target(arguments):
     if arguments.debug:
         logging.getLogger().addHandler(logging.StreamHandler(sys.stderr))
@@ -158,7 +159,7 @@ def _check_target(arguments):
         'target_user_name': _make_base_object(arguments.user),
         'target_host': _make_base_object(arguments.target)
     }
-    return data, 'check_target_group'
+    return data, 'remote-target-check-group'
 
 
 def _port_inspect_arguments(parser):
