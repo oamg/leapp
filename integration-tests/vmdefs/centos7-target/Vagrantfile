@@ -10,6 +10,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.provider :libvirt do |libvirt|
         libvirt.memory = 1024
         libvirt.cpus = 1
+        libvirt.cpu_mode = 'host-passthrough'
     end
 
     config.vm.provision "ansible" do |ansible|

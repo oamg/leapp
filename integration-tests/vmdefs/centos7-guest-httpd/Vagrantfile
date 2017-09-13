@@ -8,8 +8,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     config.vm.network :private_network, ip: "10.0.0.100"
 
     config.vm.provider :libvirt do |libvirt|
-        libvirt.memory = 512 
+        libvirt.memory = 512
         libvirt.cpus = 1
+        libvirt.cpu_mode = 'host-passthrough'
     end
 
     config.vm.provision "ansible" do |ansible|
