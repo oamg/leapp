@@ -141,8 +141,10 @@ def _stdout_socket():
             logging.error("Output tool ended prematurely with %d", p.returncode)
         else:
             os.kill(p.pid, signal.SIGTERM)
-        os.unlink(name)
-        os.rmdir(directory)
+        if os.path.exists(name):
+            os.unlink(name)
+        if os.path.exists(directory):
+            os.rmdir(directory)
 
 
 def _check_target_arguments(parser):
