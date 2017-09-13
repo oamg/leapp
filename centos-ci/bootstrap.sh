@@ -21,13 +21,14 @@ if [[ $(id -u) != 0 ]]; then
 fi
 
 yum install -y http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-10.noarch.rpm
-yum install -y python2-pip gcc redhat-rpm-config openssl-devel python-devel wget
+yum install -y python2-pip gcc redhat-rpm-config openssl-devel python-devel wget git ansible
 
 # Interim EPEL-based approach to enable testing of --ask-pass option
 yum install -y sshpass
 time_since_begining "step1: install yum deps"
 
 yum install -y yum-utils wget
+
 pushd /tmp
 wget https://copr-be.cloud.fedoraproject.org/results/evilissimo/leapp/pubkey.gpg
 rpm --import /tmp/pubkey.gpg
@@ -37,14 +38,20 @@ yum-config-manager --add-repo https://copr-be.cloud.fedoraproject.org/results/ev
 
 # Check the RPM can be built & installed successfully
 yum install -y tito python2-nmap
-yum-builddep -y leapp.spec
-TERM=xterm tito build --rpm --test || (echo "Failed to build leapp RPM" && exit 1)
+
+pushd /tmp/
+git clone https://github.com/leapp-to/snactor snactor-build
+cd snactor-build
+yum-builddep python-snactor.spec -y
+TERM=xterm tito build --rpm --test --install || (echo "Failed to build and install snactor" && exit 1)
+popd
+
+TERM=xterm tito build --rpm --test || (echo "Failed to build LeApp" && exit 1)
 yum install -y /tmp/tito/noarch/leapp-tool-*.noarch.rpm /tmp/tito/noarch/python2-leapp-*.noarch.rpm /tmp/tito/noarch/leapp-cockpit-*.noarch.rpm /tmp/tito/x86_64/leapp-actor-tools-*.x86_64.rpm
 
 time_since_begining "step2: build and install RPM"
 
 # Configure the system to run the integration tests
-yum install -y ansible
 
 echo "$(print_date): running ansible playbook"
 cd centos-ci/ansible/
