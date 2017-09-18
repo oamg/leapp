@@ -46,6 +46,7 @@ yum-builddep python-snactor.spec -y
 TERM=xterm tito build --rpm --test --install || (echo "Failed to build and install snactor" && exit 1)
 popd
 
+yum-builddep -y leapp.spec
 TERM=xterm tito build --rpm --test || (echo "Failed to build LeApp" && exit 1)
 yum install -y /tmp/tito/noarch/leapp-tool-*.noarch.rpm /tmp/tito/noarch/python2-leapp-*.noarch.rpm /tmp/tito/noarch/leapp-cockpit-*.noarch.rpm /tmp/tito/x86_64/leapp-actor-tools-*.x86_64.rpm
 
