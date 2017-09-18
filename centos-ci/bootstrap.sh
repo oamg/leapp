@@ -27,11 +27,17 @@ yum install -y python2-pip gcc redhat-rpm-config openssl-devel python-devel
 yum install -y sshpass
 time_since_begining "step1: install yum deps"
 
+yum install -y yum-utils wget
+pushd /tmp
+wget https://copr-be.cloud.fedoraproject.org/results/evilissimo/leapp/pubkey.gpg
+rpm --import /tmp/pubkey.gpg
+popd
+
+yum-config-manager --add-repo https://copr-be.cloud.fedoraproject.org/results/evilissimo/leapp/epel-7-x86_64/
 
 # Check the RPM can be built & installed successfully
-yum install -y tito
+yum install -y tito python2-nmap
 yum-builddep -y leapp.spec
-yum install -y https://copr-be.cloud.fedoraproject.org/results/evilissimo/leapp/epel-7-x86_64/00547360-python-nmap/python2-nmap-0.6.1-1.el7.centos.noarch.rpm
 TERM=xterm tito build --rpm --test || (echo "Failed to build leapp RPM" && exit 1)
 yum install -y /tmp/tito/noarch/leapp-tool-*.noarch.rpm /tmp/tito/noarch/python2-leapp-*.noarch.rpm /tmp/tito/noarch/leapp-cockpit-*.noarch.rpm
 
