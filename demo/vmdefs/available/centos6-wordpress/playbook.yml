@@ -1,0 +1,15 @@
+- hosts: all
+  roles:
+    - role: init
+      key_path: ../../../integration-tests/config/leappto_testing_key.pub
+
+- hosts: webservers
+  roles:
+    - httpd
+    - wordpress
+
+- hosts: dbservers
+  roles:
+    - scl
+    - { role: mysql,  package_name: "mysql55", service_name: "mysql55-mysqld"}
+    - wp_db

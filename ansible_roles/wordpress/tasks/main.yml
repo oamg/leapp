@@ -1,0 +1,32 @@
+- name: enable epel
+  yum:
+    name: epel-release
+
+- name: Install Wordpress
+  yum:
+    name: wordpress 
+
+- name: Fetch random salts for WordPress config
+  local_action: command curl https://api.wordpress.org/secret-key/1.1/salt/
+  register: "wp_salt"
+  become: no
+  become_method: sudo
+
+- name: Copy WordPress config file
+  template: 
+    src: wp-config.php
+    dest: /etc/wordpress/
+
+- name: Copy conf for apache
+  copy:
+    src: ../templates/wordpress.conf
+    dest: /etc/httpd/conf.d/wordpress.conf
+    owner: root
+    group: root
+    mode: 0644
+ 
+- name: Copy WordPress files to website
+  shell: cp -r /usr/share/wordpress/* /var/www/html
+  notify:
+  - restart httpd
+
