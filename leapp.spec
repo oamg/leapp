@@ -2,7 +2,7 @@
 
 Name:       leapp
 Version:    0.2
-Release:    1
+Release:    39
 Summary:    leapp tool rpm
 
 Group:      Unspecified
@@ -205,6 +205,9 @@ cp $PWD/gopath/bin/actor-stdout %{buildroot}%{_bindir}/actor-stdout
 %attr (644, root, root) %{_datadir}/zsh/site-functions/_%{name}-autocomplete
 
 %changelog
+* Tue Sep 19 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.2-39
+- 
+
 * Tue Sep 19 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.2-1
 - boostrap: Install build deps (vfeenstr@redhat.com)
 - centos-ci: Build and install snactor (vfeenstr@redhat.com)
