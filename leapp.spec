@@ -2,7 +2,7 @@
 
 Name:       leapp
 Version:    0.2
-Release:    39
+Release:    39.1
 Summary:    leapp tool rpm
 
 Group:      Unspecified
@@ -206,6 +206,10 @@ cp $PWD/gopath/bin/actor-stdout %{buildroot}%{_bindir}/actor-stdout
 %attr (644, root, root) %{_datadir}/zsh/site-functions/_%{name}-autocomplete
 
 %changelog
+* Tue Sep 19 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.2-39.1
+- spec: Copr needs git now for building the golang project
+  (vfeenstr@redhat.com)
+
 * Tue Sep 19 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.2-39
 - 
 
