@@ -14,6 +14,7 @@ Source0:    %{name}-%{version}.tar.gz
 BuildArch:  x86_64
 
 BuildRequires:   golang
+BuildRequires:   git
 BuildRequires:   python2-devel
 %if 0%{?rhel} && 0%{?rhel} <= 7
 BuildRequires:   python-setuptools
