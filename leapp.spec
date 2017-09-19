@@ -8,10 +8,8 @@ Summary:    leapp tool rpm
 Group:      Unspecified
 License:    LGPLv2+
 URL:        https://github.com/leapp-to/leapp
-# git clone https://github.com/leapp-to/leapp
-# tito build --tgz --tag=%{version}
 Source0:    %{name}-%{version}.tar.gz
-BuildArch:  x86_64
+ExclusiveArch:  x86_64
 
 BuildRequires:   golang
 BuildRequires:   git
