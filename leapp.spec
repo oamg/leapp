@@ -1,8 +1,8 @@
 %global debug_package %{nil}
 
 Name:       leapp
-Version:    0.1
-Release:    36.1
+Version:    0.2
+Release:    1
 Summary:    leapp tool rpm
 
 Group:      Unspecified
@@ -205,6 +205,72 @@ cp $PWD/gopath/bin/actor-stdout %{buildroot}%{_bindir}/actor-stdout
 %attr (644, root, root) %{_datadir}/zsh/site-functions/_%{name}-autocomplete
 
 %changelog
+* Tue Sep 19 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.2-1
+- boostrap: Install build deps (vfeenstr@redhat.com)
+- centos-ci: Build and install snactor (vfeenstr@redhat.com)
+- Vagrantfile: Use host-passthrough for libvirt configuration to avoid errors
+  in vagrant-libvirt (vfeenstr@redhat.com)
+- actor_cli: Only try to remove the socket and its directory when they do still
+  exist (vfeenstr@redhat.com)
+- Documentation update (vfeenstr@redhat.com)
+- FS Freeze removal (vfeenstr@redhat.com)
+- Properly handle execption cases with the stdout server (vfeenstr@redhat.com)
+- actor_cli: add 'use default port map' option (vfeenstr@redhat.com)
+- Drop old code (vfeenstr@redhat.com)
+- actor_cli: Use remote target check group (vfeenstr@redhat.com)
+- actor_cli: Fix naming order in port map (vfeenstr@redhat.com)
+- actor_cli: Fix input format for excluded tcp ports (vfeenstr@redhat.com)
+- actor_cli: Add debug flags (vfeenstr@redhat.com)
+- integration-tests: Install latest snactor from git (vfeenstr@redhat.com)
+- Actor based updates to integration tests and logging (vfeenstr@redhat.com)
+- Now leapp-actor-tool is the leapp-tool (vfeenstr@redhat.com)
+- Preparation for 0.2 (vfeenstr@redhat.com)
+- actor_cli: Fix port mapping inputs (vfeenstr@redhat.com)
+- actor_cli: Fix output and check target group name (vfeenstr@redhat.com)
+- centos-ci: We do now need the actor tools rpm too (vfeenstr@redhat.com)
+- spec: Add actor-stdout to the spec file (vfeenstr@redhat.com)
+- actor_cli: register LEAPP_ACTOR_OUTPUT environment variable
+  (vfeenstr@redhat.com)
+- port-inspect: Finalization (vfeenstr@redhat.com)
+- actor_cli: Fix options for port-inspect (vfeenstr@redhat.com)
+- actor_cli: Support for other commands (vfeenstr@redhat.com)
+- actor_cli: Fix SIGTERM name + logging format shows now actor name
+  (vfeenstr@redhat.com)
+- actor_cli: Fix typo (vfeenstr@redhat.com)
+- stdout tool integration (vfeenstr@redhat.com)
+- actor_cli: Finalize (vfeenstr@redhat.com)
+- ui: Fix syntax in condition (vfeenstr@redhat.com)
+- username needs to be not None before transforming it to the object form
+  (vfeenstr@redhat.com)
+- user_container_name cannot be None (vfeenstr@redhat.com)
+- ports need to be integers not strings (vfeenstr@redhat.com)
+- excluded_paths needs to be list not a tuple (vfeenstr@redhat.com)
+- Add schema loading (vfeenstr@redhat.com)
+- ui: Fix options (vfeenstr@redhat.com)
+- actor_tool: Necessary cockpit modifications (vfeenstr@redhat.com)
+- actor_cli: Fix empty parameter cases (vfeenstr@redhat.com)
+- Fixed port mapping format (vfeenstr@redhat.com)
+- Rename container_name to user_container_name based on changes in actors
+  (vfeenstr@redhat.com)
+- spec: The package dependency is called python-snactor (vfeenstr@redhat.com)
+- ci: GPG Checks for the copr repo (vfeenstr@redhat.com)
+- spec: Need to specify symlinks in data dir (vfeenstr@redhat.com)
+- spec: Fix typo (vfeenstr@redhat.com)
+- spec: Install symlinks links to the snactor actors (vfeenstr@redhat.com)
+- Missing commands and simplification of the parameter creation
+  (vfeenstr@redhat.com)
+- Remove identity file support - This is not a good thing anyway and was
+  previously more a courtesy than a real feature (vfeenstr@redhat.com)
+- Some more aesthetic improvements (vfeenstr@redhat.com)
+- Initial snactor integration (vfeenstr@redhat.com)
+- centos-ci: Fix bootstrap (vfeenstr@redhat.com)
+- integration-tests: Skip fsfreeze=True since we hard disabled it
+  (vfeenstr@redhat.com)
+- Added short note why we need seccomp and mount for systemd
+  (mgazdik@redhat.com)
+- Used seccomp instad of sys_admin cap for systemd (mgazdik@redhat.com)
+- Fix typo in 'mkdir' (jzigmund@redhat.com)
+
 * Thu Aug 17 2017 Vinzenz Feenstra <vfeenstr@redhat.com> 0.1-36.1
 - cli: By default no longer freeze (vfeenstr@redhat.com)
 
