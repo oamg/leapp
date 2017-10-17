@@ -358,17 +358,8 @@
         </div>
     </div>
     <script>
-        /* options: {
-            log_stdout: true
-           }
-        */
         var new_leapp_call = function(command, options) {
-            command = [LEAPP_CONF["tool-path"]].concat(command);
-            return new_generic_call(command, options);
-        }
-
-        var new_generic_call = function(command, options) {
-            var cmd = command.join(" ");
+            var cmd = command[0] + " " + JSON.stringify(command[1])
             var $log_entry = $(`
                 <li class="initial closed">
                     <h4>Executing: ${cmd}</h4>
@@ -419,9 +410,40 @@
                 if (force || (!options || options.log_stdout !== false)) {
                     for (let line of data.split(/\r?\n/)) {
                         if (line) {
+                            try {
+                                let tmp = JSON.stringify(JSON.parse(line), null, 4)
+                                //line = tmp
+
+                                if (tmp != line) {
+                                    process_output(tmp)
+                                    continue
+                                }
+                            }
+                            catch (err) {}
+
                             write_log('> ' + line);
                         }
                     }
+                }
+            };
+
+            var process_result = function(result) {
+                try {
+                    result = JSON.parse(String(result));
+                } catch(err) {
+                    return { success: false, errors: [{code: -1, err_message: String(err)}]};
+                }
+
+                if (result.errors !== undefined) {
+                    return { success: false, errors: result.errors };
+                }
+                else {
+                    var data = {};
+                    if (result.data !== undefined) {
+                        data = result.data;
+                    }
+
+                    return { success: true, data: data };
                 }
             };
 
@@ -429,37 +451,64 @@
                 run: function() {
                     if (proc == null) {
                         update_state('running');
-                        proc = cockpit.spawn(command, {
-                            directory: LEAPP_CONF["tool-workdir"],
-                            environ: ["SSH_AUTH_SOCK=" + AGENT_AUTH_SOCK],
-                            err: 'out',
-                            superuser: 'require',
-                        });
-                        proc.done(function(data) {
-                            update_state('success');
-                            process_output(data);
-                            output += data;
-                            write_log("Command completed successfully");
-                            instance.done = function(f) { f(output); };
-                            instance.then = function(f) { f(); };
-                            handlers.done.forEach(function(e) { e(output); });
-                            handlers.then.forEach(function(e) { e(output); });
-                        });
-                        proc.fail(function(err, data) {
+
+                        var fail = function() {
                             update_state('failed');
-                            output += data;
+
                             if (!options || options.log_stdout !== false) {
-                                process_output(data);
+                                process_output(output);
                             } else {
                                 process_output(output, true);
                             }
-                            write_log(`Command failed with status ${err.exit_status}!`);
+
                             instance.fail = function(f) { f(output); };
                             instance.then = function(f) { f(); };
                             handlers.fail.forEach(function(e) { e(output); });
                             handlers.then.forEach(function(e) { e(output); });
+                        }
+
+
+                        http = cockpit.http(LEAPP_CONF["daemon-port"], {
+                            address: LEAPP_CONF["daemon-address"],
+                        })
+                        request = http.post("/" + LEAPP_CONF["daemon-api-version"] + "/" + command[0], command[1])
+
+                        request.done(function(data) {
+                            output += data;
+
+                            result = process_result(output)
+                            if (!result.success) {
+                                fail();
+                                for (var i = 0; i < result.errors.length; i++) {
+                                    write_log(`Command failed with status ${result.errors[i].code}!`);
+                                }
+                            }
+                            else {
+                                data = result.data;
+
+                                update_state('success');
+                                process_output(output);
+
+                                write_log("Command completed successfully");
+                                instance.done = function(f) { f(data); };
+                                instance.then = function(f) { f(); };
+                                handlers.done.forEach(function(e) { e(data); });
+                                handlers.then.forEach(function(e) { e(data); });
+                            }
                         });
-                        proc.stream(function(data) {
+                        request.fail(function(err, data) {
+                            if (data === undefined && err.problem == "not-found"){
+                                let new_output = `None or invalid response received from daemon "${LEAPP_CONF["daemon-address"] + ":" + LEAPP_CONF["daemon-port"]}"\n`
+                                new_output += "Response: \n" + output
+                                output = new_output
+                            }
+
+                            output += data;
+
+                            fail();
+                            write_log(`Command failed with status ${err.exit_status}!`);
+                        });
+                        request.stream(function(data) {
                             output += data;
                             process_output(data);
                         });
@@ -476,23 +525,11 @@
                 options: function() { return options; },
             };
         }
-    </script>
-    <script>
+
         const MIN_PORT = 1;
         const MAX_PORT = 65535;
 
         var target_ports = [];
-
-        var AGENT_AUTH_SOCK='';
-        cockpit.spawn(['/bin/bash', '-c', 'echo $SSH_AUTH_SOCK']).done(function(e){
-            AGENT_AUTH_SOCK = (e || '').trim();
-        });
-
-        $(function () {
-          $('.analyze').hide();
-          $('[data-toggle="tooltip"]').tooltip()
-        });
-
 
         function parse_exclude_paths(){
             var $exp = $("#exclude-paths-input")
@@ -512,9 +549,30 @@
             }
         });
 
+        function validate_source_input() {
+            var $par = $("#source-address").parent("div");
+
+            if (!$("#source-address").val()){
+                $par.addClass("has-error");
+                $par.append($(`<span class="help-block">Please provide a valid source IP or hostname</span>`));
+                return false
+            }
+            else {
+                $par.removeClass("has-error");
+                $par.find(".help-block").remove();
+                return true
+            }
+        }
+
+
         $("#scan-source-btn").click(function(){
+            if (!validate_source_input()) {
+                return
+            }
+
             set_lock_cmd();
             loader.show();
+
             var mapping = get_port_mapping();
             var names = load_target_container_names();
             var target = get_target_ports();
@@ -664,6 +722,9 @@
 
             //popovers
             $('[data-toggle=popover]').popovers();
+
+            $('.analyze').hide();
+            $('[data-toggle="tooltip"]').tooltip()
         });
 
         function set_lock_cmd() {
@@ -768,23 +829,25 @@
         }
 
         function get_port_mapping() {
-            var ctx = new_leapp_call(
-                override_identity(["migrate-machine", "-p", "-t", "127.0.0.1",
-                                  $("#source-address").val()]));
+            var ctx = new_leapp_call(["port-map", {
+                default_port_map: true,
+                target_host: "localhost",
+                source_host: $("#source-address").val()
+            }]);
 
             ctx.log("Loading default port mapping....");
             ctx.done(function(data){
-                var mapping = JSON.parse(data);
+                var mapping = data.exposed_ports.ports;
                 var source_ports = [];
                 $("#mapped-ports ul li").remove();
                 mapping.forEach(function(entry) {
-                    var mapped_port = entry[0];
-                    var source_port = entry[1];
-                    source_ports.push(source_port);
-                    add_port_entry(source_port, mapped_port, true);
+                    source_ports.push(entry.port);
+                    add_port_entry(entry.port, entry.exposed_port, true);
                 });
                 $('.mapped-port-info').tooltip();
-                scan_ports($("#source-address").val(), add_ports_product_info, source_ports, false);
+                if (source_ports.length) {
+                    scan_ports($("#source-address").val(), add_ports_product_info, source_ports.join(","), false);
+                }
             });
             ctx.run();
             return ctx;
@@ -793,7 +856,7 @@
         function set_app_list(args) {
             $("#target-container-list ul li").remove();
             $("#target-container-list").hide();
-            var containers = args.split('\n');
+            var containers = args.containerslist.containers;
             containers.forEach(function(e) {
                 $("#target-container-list ul").append(`<li>${e}</li>`);
             });
@@ -803,64 +866,47 @@
         }
 
         function load_target_container_names() {
-            var ctx = new_leapp_call(["check-target", "-t", "127.0.0.1"]);
+            var cmd = ["check-target", {
+                target_host: "localhost"
+            }]
+            var ctx = new_leapp_call(cmd);
             ctx.log("Loading used applications names from the target...");
             ctx.done(set_app_list);
             ctx.run();
             return ctx;
         }
 
-        function override_identity(cmd_args) {
-            // Appends any defined identity override settings to a command
-            if ("override-username" in LEAPP_CONF) {
-                cmd_args.push("--target-user", LEAPP_CONF["override-username"])
-                cmd_args.push("--source-user", LEAPP_CONF["override-username"])
-            }
-            return cmd_args;
-        }
-
         function import_to_host(event) {
+            var import_request_data = {
+                use_default_port_map:       false,
+                target_host:                "localhost",
+                source_host:                $("#source-address").val(),
+                container_name:             null,
+                force_create:               $("#force-creation")[0].checked,
+                excluded_paths:             parse_exclude_paths(),
+                tcp_ports_user_mapping:     {ports: []},
+                target_user:                LEAPP_CONF["override-username"] ? LEAPP_CONF["override-username"] : null,
+                source_user:                LEAPP_CONF["override-username"] ? LEAPP_CONF["override-username"] : null,
+                start_container:            $("#start-container")[0].checked
+            }
+
+            $("#mapped-ports ul li label input[type=checkbox]:checked").each(function(i, element) {
+                var mapping = $(element).parents("li").find("input.mapped-ports[type=text]")
+                if (mapping.val()) {
+                    import_request_data.tcp_ports_user_mapping.ports.push({
+                        protocol: "tcp",
+                        port: parseInt(mapping.data("source")),
+                        exposed_port: parseInt(mapping.val())
+                    })
+                }
+            });
 
             set_lock_cmd();
             loader.show();
 
-            var source = $("#source-address").val();
-            var target = "127.0.0.1";
+            var ctx = new_leapp_call(["migrate-machine", import_request_data]);
 
-            var mapped_ports = [];
-            $("#mapped-ports ul li label input[type=checkbox]:checked").each(function(i, element) {
-                var target = $(element).parents("li").find("input.mapped-ports[type=text]")
-                if (target.val()) {
-                    mapped_ports.push(target.val() + ":" + target.data("source"));
-                }
-            });
-
-            var import_args = ["migrate-machine"]
-            override_identity(import_args);
-            import_args.push("--ignore-default-port-map");
-            import_args.push("--tcp-port");
-            Array.prototype.push.apply(import_args, mapped_ports)
-            import_args.push("-t", target, source)
-
-            if ($("#application-name").val()) {
-                import_args.push("--container-name", $("#application-name").val());
-            }
-            if ($("#force-creation")[0].checked) {
-                import_args.push("--force-create");
-            }
-            if ($("#start-container")[0].checked === false) {
-                import_args.push("--disable-start");
-            }
-
-            var exclude_paths = parse_exclude_paths();
-            if(exclude_paths.length){
-                import_args.push("--exclude-path");
-                import_args = import_args.concat(exclude_paths);
-            }
-
-            //output.empty();
-            var ctx = new_leapp_call(import_args);
-            ctx.log(`Migrating ${source} to ${target}`);
+            ctx.log(`Migrating ${import_request_data.source_host} to ${import_request_data.target_host}`);
             ctx.run();
             ctx.log("This can take a while, do not close this page ... ");
             ctx.done(function(){
@@ -875,14 +921,17 @@
         }
 
         function scan_ports(ip_addr, callback, ports=null, shallow=false) {
-            var scan_args = ['port-inspect', ip_addr];
-            if (ports !== null) {
-                scan_args.push('--range', ports);
+            // Make sure that shallow will be true or false only
+            if (shallow !== false) {
+                shallow = true
             }
-            if (shallow) {
-                scan_args.push('--shallow');
-            }
-            var ctx = new_leapp_call(scan_args);
+
+            var ctx = new_leapp_call(['port-inspect', {
+                target_host: ip_addr,
+                shallow_scan: shallow,
+                port_range: ports,
+            }]);
+
             ctx.log(`Scanning ports on ${ip_addr}`);
             ctx.done(callback);
             ctx.run();
@@ -890,13 +939,12 @@
         }
 
         function add_ports_product_info(data) {
-            data = JSON.parse(data);
-            if (typeof(data.ports.tcp) !== undefined) {
+            if (typeof(data.port_scan_result.tcp) !== "undefined") {
                 $('.mapped-port-info').each(function(i,e) {
                     var p = $(e).data('port');
-                    if (p in data.ports.tcp) {
+                    if (p in data.port_scan_result.tcp) {
                         $(e).attr('data-original-title',
-                                  `Port ${p} is used by ${data.ports.tcp[p].product || data.ports.tcp[p].name}`);
+                                  `Port ${p} is used by ${data.port_scan_result.tcp[p].product || data.port_scan_result.tcp[p].name}`);
                         $(e).tooltip('fixTitle');
                     }
                 });
@@ -904,16 +952,17 @@
         }
 
         function get_target_ports() {
-            return scan_ports("127.0.0.1", show_target_ports, null, true);  // scan target machine
+            return scan_ports("localhost", show_target_ports, null, true);  // scan target machine
         }
 
         function show_target_ports(data) {
-            var data = JSON.parse(data);
             target_ports = [];
-            if (typeof(data.ports.tcp) !== undefined) {
+
+            // TODO: Add structure checking
+            if (typeof(data.port_scan_result.tcp) !== "undefined") {
                 $("#target-ports-field").children("span.target-port-selector").remove();
 
-                for (port in data.ports.tcp) {
+                for (port in data.port_scan_result.tcp) {
                     if(target_ports.length)
                         $("#target-ports-field").append('<span class="target-port-selector">, </span>');
 
