@@ -1,6 +1,7 @@
 {
-    "tool-path": "/opt/leapp/bin/leapp-actor-tool",
-    "tool-workdir": "/opt/leapp/bin/",
     "version": "0.2-master",
-    "override-username": "vagrant"
+    "daemon-address": "localhost",
+    "daemon-port": 8000,
+    "daemon-api-version": "v1",
+    "override-username": "root"
 }
