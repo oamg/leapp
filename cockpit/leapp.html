@@ -881,7 +881,7 @@
                 use_default_port_map:       false,
                 target_host:                "localhost",
                 source_host:                $("#source-address").val(),
-                container_name:             null,
+                container_name:             $("#application-name").val().length ? $("#application-name").val() : null,
                 force_create:               $("#force-creation")[0].checked,
                 excluded_paths:             parse_exclude_paths(),
                 tcp_ports_user_mapping:     {ports: []},
