@@ -840,7 +840,9 @@
                 var mapping = data.exposed_ports.ports;
                 var source_ports = [];
                 $("#mapped-ports ul li").remove();
-                mapping.forEach(function(entry) {
+                mapping.sort(function(a, b){
+                    return parseInt(a.port) - parseInt(b.port)
+                }).forEach(function(entry) {
                     source_ports.push(entry.port);
                     add_port_entry(entry.port, entry.exposed_port, true);
                 });
