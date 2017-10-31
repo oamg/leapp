@@ -837,7 +837,7 @@
 
             ctx.log("Loading default port mapping....");
             ctx.done(function(data){
-                var mapping = data.exposed_ports.ports;
+                var mapping = data.exposed_ports[0].ports;
                 var source_ports = [];
                 $("#mapped-ports ul li").remove();
                 mapping.sort(function(a, b){
@@ -944,9 +944,9 @@
             if (typeof(data.port_scan_result.tcp) !== "undefined") {
                 $('.mapped-port-info').each(function(i,e) {
                     var p = $(e).data('port');
-                    if (p in data.port_scan_result.tcp) {
+                    if (p in data.port_scan_result[0].tcp) {
                         $(e).attr('data-original-title',
-                                  `Port ${p} is used by ${data.port_scan_result.tcp[p].product || data.port_scan_result.tcp[p].name}`);
+                                  `Port ${p} is used by ${data.port_scan_result[0].tcp[p].product || data.port_scan_result[0].tcp[p].name}`);
                         $(e).tooltip('fixTitle');
                     }
                 });
@@ -961,10 +961,10 @@
             target_ports = [];
 
             // TODO: Add structure checking
-            if (typeof(data.port_scan_result.tcp) !== "undefined") {
+            if (typeof(data.port_scan_result[0].tcp) !== "undefined") {
                 $("#target-ports-field").children("span.target-port-selector").remove();
 
-                for (port in data.port_scan_result.tcp) {
+                for (port in data.port_scan_result[0].tcp) {
                     if(target_ports.length)
                         $("#target-ports-field").append('<span class="target-port-selector">, </span>');
 
