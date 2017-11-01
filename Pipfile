@@ -14,7 +14,9 @@ pylint = "*"
 requests = "*"
 attrs = "*"
 PyHamcrest = "*"
-splinter = "*"
+# Since we restrict the version of selenium and this is its dependency, we have
+# to restrict it as well
+splinter = "< 0.7.6"
 # We restrict ourselves to older versions of Selenium for the Cockpit plugin
 # testing as:
 #
