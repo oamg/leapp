@@ -1,0 +1,30 @@
+VAGRANTFILE_API_VERSION = "2"
+
+BUILD_SCRIPT        = "build_leapp_environment.sh"
+BUILD_SCRIPT_URL    = "https://raw.githubusercontent.com/GAZDOWN/leapp-to.github.io/devenv/files/build_leapp_environment.sh"
+HOME                = "/home/vagrant"
+LEAPP_HOME          = "#{HOME}/leapp"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+    config.vm.box = "fedora/26-cloud-base"
+    config.vm.define "leapp-development-environment"
+    config.vm.hostname = "leapp-devenv"
+
+
+    config.vm.provider :libvirt do |libvirt|
+        libvirt.memory = 2048
+        libvirt.cpus = 1
+        libvirt.cpu_mode = 'host-passthrough'
+        libvirt.nested = true
+        
+        libvirt.management_network_name = 'leapp-devenv-network'
+        libvirt.management_network_address = '192.168.124.0/24'
+    end
+
+    config.vm.provision "shell", inline: "dnf -y update && dnf -y install docker libvirt"
+
+    config.vm.provision "shell", inline: "cd #{HOME} && curl -O #{BUILD_SCRIPT_URL} && $SHELL #{BUILD_SCRIPT} 2>&1 | tee #{HOME}/leapp-setup.log", privileged: false
+    config.vm.provision "shell", inline: "systemctl enable docker libvirtd"
+    config.vm.provision "shell", inline: "systemctl start docker libvirtd"
+
+end
