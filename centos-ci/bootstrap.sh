@@ -1,4 +1,8 @@
 #!/bin/bash
+#####################################
+# TEMPORARILY DISABLE CI
+exit 0
+#####################################
 export TZ=UTC
 alias print_date='date --rfc-2822'
 alias unixdate='date +%s'
