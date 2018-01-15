@@ -10,12 +10,12 @@ use the kernel of the container host rather than providing
 their own.
 
 ## More info
-Please visit [Getting Started](http://leapp.readthedocs.io/en/latest/getstarted.html) 
+Please visit [our homepage](https://leapp-to.github.io/) 
 for more infomation and documenation.
 
 ## Contributing
 If you are looking for information about contributing into this project, kindly 
-visit: [Contributing to LeApp](http://leapp.readthedocs.io/en/latest/contributing.html).
+visit: [Contributing to LeApp](CONTRIBUTING.rst).
 
 
 ## Demo

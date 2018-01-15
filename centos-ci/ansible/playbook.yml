@@ -1,6 +1,0 @@
-- hosts: all
-  roles:
-    - scl
-    - vagrant
-    - app-import
-    - cockpit-integration

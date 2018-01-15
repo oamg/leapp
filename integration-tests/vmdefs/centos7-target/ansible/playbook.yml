@@ -1,8 +1,0 @@
- - hosts: all
-   roles:
-    - role: init
-      key_path: ../../../config/leappto_testing_key.pub
-    - docker
-    - target
-    # Needed for CLI --ask-pass testing
-    - sshd-password-auth

@@ -1,7 +1,0 @@
-- name: Allow SSH password authentication
-  # needed for CLI --ask-pass testing
-  lineinfile: dest=/etc/ssh/sshd_config
-              regexp="^PasswordAuthentication"
-              line="PasswordAuthentication yes"
-              state=present
-  notify: Restart sshd
