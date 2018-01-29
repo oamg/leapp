@@ -1,6 +1,9 @@
 #!/bin/bash
 
 BRANCH=master
+PATCHES_SINCE_RELEASE="$(git log `git describe  --abbrev=0`..HEAD --format=oneline | wc -l)"
+
+LEAPP_BUILD_TAG="$(git describe  --abbrev=0 | cut -d- -f3).$PATCHES_SINCE_RELEASE"
 
 rm -rf leapp-build
 mkdir -p leapp-build
@@ -24,5 +27,5 @@ then
     SRPMDIR="$1"
 fi
 
-rpmbuild --define "_srcrpmdir $SRPMDIR" -ts ./leapp-build.tar.gz
+rpmbuild --define "_srcrpmdir $SRPMDIR" --define "LEAPP_BUILD_TAG $LEAPP_BUILD_TAG" -ts ./leapp-build.tar.gz
 

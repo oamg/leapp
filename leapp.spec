@@ -1,8 +1,8 @@
 %global debug_package %{nil}
-
+%{!?LEAPP_BUILD_TAG: %define LEAPP_BUILD_TAG 1}
 Name:       leapp
 Version:    0.3
-Release:    1
+Release:    %{LEAPP_BUILD_TAG}
 Summary:    Utility for VM migration to a container(s) and upgrade tool
 
 Group:      Unspecified
