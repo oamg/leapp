@@ -11,6 +11,9 @@ URL:        https://github.com/leapp-to/leapp
 Source0:    leapp-build.tar.gz
 
 # leapp-go
+BuildRequires:   golang
+BuildRequires:   make
+BuildRequires:   git
 BuildRequires:   golang-github-gorilla-mux-devel
 BuildRequires:   golang-github-pkg-errors-devel
 BuildRequires:   golang-github-mattn-go-sqlite3-devel

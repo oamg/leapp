@@ -17,3 +17,10 @@ mv leapp-go-$BRANCH leapp-go
 popd
 /bin/cp ../leapp.spec .
 tar czf leapp-build.tar.gz leapp-build leapp.spec
+
+rpmbuild -ts ./leapp-build.tar.gz
+if [ -n "$1" ]
+then
+    cp ~/rpmbuild/SRPMS/*.src.rpm $1
+fi
+
