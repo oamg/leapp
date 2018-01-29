@@ -18,9 +18,10 @@ popd
 /bin/cp ../leapp.spec .
 tar czf leapp-build.tar.gz leapp-build leapp.spec
 
-rpmbuild -ts ./leapp-build.tar.gz
-if [ -n "$1" ]
+SRPMDIR="$PWD"
+if [ -z "$1" ]
+    SRPMDIR="$1"
 then
-    cp ~/rpmbuild/SRPMS/*.src.rpm $1
+    rpmbuild --define "_srcrpmdir $SRPMDIR" -ts ./leapp-build.tar.gz
 fi
 
