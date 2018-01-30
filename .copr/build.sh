@@ -1,23 +1,43 @@
 #!/bin/bash
 
 BRANCH=master
-PATCHES_SINCE_RELEASE="$(git log `git describe  --abbrev=0`..HEAD --format=oneline | wc -l)"
+LEAPP_PATCHES_SINCE_RELEASE="$(git log `git describe  --abbrev=0`..HEAD --format=oneline | wc -l)"
 
-LEAPP_BUILD_TAG="$(git describe  --abbrev=0 | cut -d- -f3).$PATCHES_SINCE_RELEASE"
 
 rm -rf leapp-build
 mkdir -p leapp-build
 pushd leapp-build
-curl -L https://github.com/leapp-to/leapp-actors/archive/$BRANCH.tar.gz | tar xz
-mv leapp-actors-$BRANCH leapp-actors
-curl -L https://github.com/leapp-to/leappctl/archive/$BRANCH.tar.gz | tar xz
-mv leappctl-$BRANCH leappctl
-curl -L https://github.com/leapp-to/snactor/archive/$BRANCH.tar.gz | tar xz
-mv snactor-$BRANCH snactor
-rm -f snactor/python-snactor.spec
-curl -L https://github.com/leapp-to/leapp-go/archive/$BRANCH.tar.gz | tar xz
-mv leapp-go-$BRANCH leapp-go
+
+git clone --depth=1000 https://github.com/leapp-to/leapp-actors
+    pushd leapp-actors
+    LEAPP_ACTORS_PATCHES_SINCE_RELEASE="$(git log `git describe  --abbrev=0`..HEAD --format=oneline | wc -l)"
+    rm -rf .git
+    popd
+
+git clone --depth=1000 https://github.com/leapp-to/leappctl
+    pushd leappctl
+    LEAPPCTL_PATCHES_SINCE_RELEASE="$(git log `git describe  --abbrev=0`..HEAD --format=oneline | wc -l)"
+    rm -rf .git
+    popd
+
+git clone --depth=1000 https://github.com/leapp-to/snactor
+    pushd snactor
+    SNACTOR_PATCHES_SINCE_RELEASE="$(git log `git describe  --abbrev=0`..HEAD --format=oneline | wc -l)"
+    rm -f python-snactor.spec
+    rm -rf .git
+    popd
+
+git clone --depth=1000 https://github.com/leapp-to/leapp-go
+    pushd leapp-go
+    LEAPP_GO_PATCHES_SINCE_RELEASE="$(git log `git describe  --abbrev=0`..HEAD --format=oneline | wc -l)"
+    rm -rf .git
+    popd
+
 popd
+
+PATCHES_SINCE_RELEASE=$(($LEAPP_ACTORS_PATCHES_SINCE_RELEASE + $LEAPPCTL_PATCHES_SINCE_RELEASE + $SNACTOR_PATCHES_SINCE_RELEASE + $LEAPP_GO_PATCHES_SINCE_RELEASE))
+LEAPP_BUILD_TAG="$(date  --rfc-3339=date | tr -d '-').$PATCHES_SINCE_RELEASE"
+
 /bin/cp ../leapp.spec .
 tar czf leapp-build.tar.gz leapp-build leapp.spec
 
