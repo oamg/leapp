@@ -35,8 +35,11 @@ git clone --depth=1000 https://github.com/leapp-to/leapp-go
 
 popd
 
-PATCHES_SINCE_RELEASE=$(($LEAPP_ACTORS_PATCHES_SINCE_RELEASE + $LEAPPCTL_PATCHES_SINCE_RELEASE + $SNACTOR_PATCHES_SINCE_RELEASE + $LEAPP_GO_PATCHES_SINCE_RELEASE))
-LEAPP_BUILD_TAG="$(date  --rfc-3339=date | tr -d '-').$PATCHES_SINCE_RELEASE"
+VERSION=$(git describe  --abbrev=0|cut -d- -f 2)
+DIST=$(git describe  --abbrev=0|cut -d- -f 3)
+
+PATCHES_SINCE_RELEASE=$(($LEAPP_PATCHES_SINCE_RELEASE + $LEAPP_ACTORS_PATCHES_SINCE_RELEASE + $LEAPPCTL_PATCHES_SINCE_RELEASE + $SNACTOR_PATCHES_SINCE_RELEASE + $LEAPP_GO_PATCHES_SINCE_RELEASE))
+LEAPP_BUILD_TAG=".$DIST.$(date  --rfc-3339=date | tr -d '-').git.$PATCHES_SINCE_RELEASE"
 
 /bin/cp ../leapp.spec .
 tar czf leapp-build.tar.gz leapp-build leapp.spec
@@ -47,5 +50,5 @@ then
     SRPMDIR="$1"
 fi
 
-rpmbuild --define "_srcrpmdir $SRPMDIR" --define "LEAPP_BUILD_TAG $LEAPP_BUILD_TAG" -ts ./leapp-build.tar.gz
+rpmbuild --define "_srcrpmdir $SRPMDIR" --define "version $VERSION" --define "dist $LEAPP_BUILD_TAG" -ts ./leapp-build.tar.gz
 
