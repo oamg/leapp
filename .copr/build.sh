@@ -1,13 +1,26 @@
 #!/bin/bash
 
+OUTDIR="$PWD"
+if [ -n "$1" ]; then
+    OUTDIR="$(realpath $1)"
+fi
+
+POPD=""
 export
 if [ -z "$(which git)" ]; then
     dnf -y install git-core
 fi
 
-if [ -n "$1" ]
-then
-    pushd $1
+if ! git status 2&>1 > /dev/null; then
+    rm -rf leapp
+    git clone https://github.com/leapp-to/leapp
+    POPD=$(realpath leapp)
+    pushd leapp/.copr
+else
+    if [ -n "$1" ]; then
+        POPD=$(realpath $1)
+        pushd $1
+    fi
 fi
 
 BRANCH=master
@@ -61,15 +74,12 @@ echo LEAPP_BUILD_TAG=$LEAPP_BUILD_TAG
 /bin/cp ../leapp.spec .
 tar czf leapp-build.tar.gz leapp-build leapp.spec
 
-SRPMDIR="$PWD"
-if [ -n "$1" ]
-then
-    SRPMDIR="$1"
-fi
 
+echo $PWD $OUTDIR
+SRPMDIR="$OUTDIR"
 rpmbuild --define "_srcrpmdir $SRPMDIR" --define "version $VERSION" --define "dist $LEAPP_BUILD_TAG" -ts ./leapp-build.tar.gz
 
-if [ -n "$1" ]
+if [ -n "$POPD" ]
 then
     popd
 fi
