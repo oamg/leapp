@@ -3,6 +3,10 @@
 BRANCH=master
 LEAPP_PATCHES_SINCE_RELEASE="$(git log `git describe  --abbrev=0`..HEAD --format=oneline | wc -l)"
 
+export
+if [ -z "$(which git)" ]; then
+    dnf -y install git-core
+fi
 
 rm -rf leapp-build
 mkdir -p leapp-build
