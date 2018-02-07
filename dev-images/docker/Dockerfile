@@ -1,36 +1,40 @@
 FROM fedora:26
 
-ENV BUILD_SCRIPT        build_leapp_environment.sh
-ENV BUILD_SCRIPT_URL    https://leapp-to.github.io/files/$BUILD_SCRIPT
+ENV GIT_BRANCH          master
+ENV GIT_URL             https://github.com/leapp-to/ansible-devel-env.git
+ENV GIT_CLONE_DIR       ansible-devel-env
 ENV HOME                /root
 ENV LEAPP_HOME          $HOME/leapp
 
+VOLUME ["${LEAPP_HOME}"]
 
-RUN dnf update -y && \
-    dnf -y install 'dnf-command(copr)' sudo libvirt docker passwd && \
-    dnf -y clean all
-
-RUN systemctl enable libvirtd docker
-
-RUN echo "echo \"Welcome in leapp development image. The development environment is prepared for you in /root/leapp\"" >> $HOME/.bashrc && \
+RUN echo "echo \"Welcome to Leapp development image. The development environment is prepared for you in ${LEAPP_HOME}\"" >> $HOME/.bashrc && \
     echo "echo -e \"\n\$(ls -l ${LEAPP_HOME})\n\"" >> $HOME/.bashrc && \
     echo "export SHELL=/bin/bash" >> $HOME/.bashrc
 
-VOLUME ["${LEAPP_HOME}", "/lib/libvirt"]
+RUN dnf upgrade -y && \
+    dnf -y install \
+    ansible \
+    'dnf-command(copr)' \
+    docker \
+    git \
+    passwd \
+    && dnf -y clean all
 
 RUN echo "leapp" | passwd root --stdin
 
-## Run the build script before the container starts. This way the git data are
+RUN systemctl enable docker
+
+## Run the Ansible playbook before the container starts. This way the git data are
 ## not distributed in the image and will be updated each time the container
 ## is created.
 CMD /bin/bash -c " \
     cd ${HOME} && \
-    curl -O ${BUILD_SCRIPT_URL} && \
-        [ ! -e ${LEAPP_HOME}/.installed ] && \
-        $SHELL ${BUILD_SCRIPT} 2>&1 | tee ${HOME}/leapp-setup.log && \
-        touch ${LEAPP_HOME}/.installed; \
-    M=$(ls -1 /dev/loop* | grep -v loop-control | sort -r | head -n 1 | sed -e 's/\/dev\/loop//'); \
-    mknod -m660 $(echo /dev/loop$((M+1))) b 7 $((M+1)); \
-    mknod -m660 $(echo /dev/loop$((M+2))) b 7 $((M+2)); \
+    git clone ${GIT_URL} ${GIT_CLONE_DIR} 2>&1 | tee ${HOME}/leapp-setup.log && \
+    cd ${GIT_CLONE_DIR} && \
+    git checkout ${GIT_BRANCH} 2>&1 | tee -a ${HOME}/leapp-setup.log && \
+    [ ! -e ${LEAPP_HOME}/.installed ] && \
+    ansible-playbook ansible/leapp_dev.yml 2>&1 | tee -a ${HOME}/leapp-setup.log && \
+    touch ${LEAPP_HOME}/.installed; \
     exec /sbin/init \
 "
