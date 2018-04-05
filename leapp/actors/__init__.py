@@ -16,6 +16,7 @@ class Actor(object):
     def __init__(self, messaging=None, logger=None):
         self._messaging = messaging
         self.log = (logger or logging.getLogger('leapp.actors')).getChild(self.name)
+        """ Configured logger for the actor """
 
     @property
     def actor_files_paths(self):
