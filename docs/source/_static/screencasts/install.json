@@ -491,62 +491,6 @@
       "p"
     ],
     [
-      0.239802,
-      "-"
-    ],
-    [
-      0.072078,
-      "a"
-    ],
-    [
-      0.071665,
-      "c"
-    ],
-    [
-      0.223989,
-      "t"
-    ],
-    [
-      0.192179,
-      "o"
-    ],
-    [
-      0.100633,
-      "r"
-    ],
-    [
-      0.163474,
-      "s"
-    ],
-    [
-      0.248037,
-      "-"
-    ],
-    [
-      1.072726,
-      "s"
-    ],
-    [
-      0.143474,
-      "t"
-    ],
-    [
-      0.183661,
-      "d"
-    ],
-    [
-      0.135935,
-      "l"
-    ],
-    [
-      0.136723,
-      "i"
-    ],
-    [
-      0.071198,
-      "b"
-    ],
-    [
       0.586277,
       "\r\n"
     ],
@@ -568,7 +512,7 @@
     ],
     [
       1.625628,
-      "Collecting click (from leapp-actor-standard-library==0.0.0)"
+      "Collecting click (from leapp==0.0.0)"
     ],
     [
       0.000113,
@@ -584,7 +528,7 @@
     ],
     [
       0.053287,
-      "Collecting marshmallow (from leapp-actor-standard-library==0.0.0)"
+      "Collecting marshmallow (from leapp==0.0.0)"
     ],
     [
       9.3e-05,
@@ -600,7 +544,7 @@
     ],
     [
       0.062871,
-      "Collecting requests (from leapp-actor-standard-library==0.0.0)"
+      "Collecting requests (from leapp==0.0.0)"
     ],
     [
       0.000102,
@@ -616,7 +560,7 @@
     ],
     [
       0.067503,
-      "Collecting urllib3<1.23,>=1.21.1 (from requests->leapp-actor-standard-library==0.0.0)"
+      "Collecting urllib3<1.23,>=1.21.1 (from requests->leapp==0.0.0)"
     ],
     [
       9.1e-05,
@@ -632,7 +576,7 @@
     ],
     [
       0.069731,
-      "Collecting idna<2.7,>=2.5 (from requests->leapp-actor-standard-library==0.0.0)"
+      "Collecting idna<2.7,>=2.5 (from requests->leapp==0.0.0)"
     ],
     [
       0.000109,
@@ -648,7 +592,7 @@
     ],
     [
       0.058562,
-      "Collecting chardet<3.1.0,>=3.0.2 (from requests->leapp-actor-standard-library==0.0.0)"
+      "Collecting chardet<3.1.0,>=3.0.2 (from requests->leapp==0.0.0)"
     ],
     [
       0.000105,
@@ -664,7 +608,7 @@
     ],
     [
       0.074631,
-      "Collecting certifi>=2017.4.17 (from requests->leapp-actor-standard-library==0.0.0)"
+      "Collecting certifi>=2017.4.17 (from requests->leapp==0.0.0)"
     ],
     [
       0.000126,
@@ -680,7 +624,7 @@
     ],
     [
       0.037168,
-      "Installing collected packages: click, marshmallow, urllib3, idna, chardet, certifi, requests, leapp-actor-standard-library"
+      "Installing collected packages: click, marshmallow, urllib3, idna, chardet, certifi, requests, leapp"
     ],
     [
       7.8e-05,
@@ -688,7 +632,7 @@
     ],
     [
       0.334795,
-      "  Running setup.py install for leapp-actor-standard-library ... \u001b[?25l"
+      "  Running setup.py install for leapp ... \u001b[?25l"
     ],
     [
       0.121368,
@@ -704,7 +648,7 @@
     ],
     [
       0.04445,
-      "\u001b[?25hSuccessfully installed certifi-2018.1.18 chardet-3.0.4 click-6.7 idna-2.6 leapp-actor-standard-library-0.0.0 marshmallow-2.15.0 requests-2.18.4 urllib3-1.22"
+      "\u001b[?25hSuccessfully installed certifi-2018.1.18 chardet-3.0.4 click-6.7 idna-2.6 leapp-0.0.0 marshmallow-2.15.0 requests-2.18.4 urllib3-1.22"
     ],
     [
       0.000101,
