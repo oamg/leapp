@@ -1,5 +1,6 @@
 # Working with Workflows
 
+
 ## Creating a workflow
 
 To create a new workflow first we create a tag with the same name and then the workflow. (Later the snactor tool
@@ -142,4 +143,21 @@ $ snactor workflow run Example
 2018-04-04 09:24:10.334 INFO     PID: 38687 leapp.workflow.reports phase: Starting stage After of phase reports phase
 ```
 
+## Adding an actor to a workflow
 
+To have an actor added to a specific workflow phase one needs to assign 2 tags
+1. The workflow tag 
+    In the Example workflow above this was ExampleTag    
+2. The phase tag
+    In case of the ScanPhase it is the ScanTag, in the Reports phase the ReportsTag
+
+In the actor the tags field would be filled like this:
+```python
+    tags = (ExampleTag, ScanTag)
+```
+
+To have an actor always added when a tag is used, one would add the .Common attribute of the tag:
+
+```python
+    tags += (ScanTag.Common,)
+```
