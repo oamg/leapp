@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "width": 80,
+  "height": 24,
+  "duration": 5.515238,
+  "command": null,
+  "title": null,
+  "env": {
+    "TERM": "xterm-256color",
+    "SHELL": "/bin/bash"
+  },
+  "stdout": [
+    [
+      0.355731,
+      "\u001b]777;notify;Command completed;snactor run --print-output HostnameScanner\u0007\u001b]0;evilissimo@actor-developer:~/devel/tutorial\u0007\u001b]7;file://actor-developer/home/evilissimo/devel/tutorial\u0007"
+    ],
+    [
+      0.001155,
+      "\u001b[0;38;5;231;48;5;31;1m evilissimo \u001b[0;38;5;31;48;5;74;22m \u001b[0;38;5;231;48;5;74m(e) tut \u001b[0;38;5;74;48;5;240;22m \u001b[0;38;5;250;48;5;240m~ \u001b[0;38;5;245;48;5;240;22m \u001b[0;38;5;250;48;5;240mdevel \u001b[0;38;5;245;48;5;240;22m \u001b[0;38;5;252;48;5;240;1mtutorial \u001b[0;38;5;240;49;22m \u001b[0m"
+    ],
+    [
+      0.547768,
+      "s"
+    ],
+    [
+      0.119569,
+      "n"
+    ],
+    [
+      0.055794,
+      "a"
+    ],
+    [
+      0.088046,
+      "c"
+    ],
+    [
+      0.208851,
+      "t"
+    ],
+    [
+      0.095685,
+      "o"
+    ],
+    [
+      0.073504,
+      "r"
+    ],
+    [
+      0.110164,
+      " "
+    ],
+    [
+      0.080096,
+      "d"
+    ],
+    [
+      0.087981,
+      "i"
+    ],
+    [
+      0.084751,
+      "s"
+    ],
+    [
+      0.09989,
+      "c"
+    ],
+    [
+      0.119608,
+      "o"
+    ],
+    [
+      0.105346,
+      "v"
+    ],
+    [
+      0.102322,
+      "e"
+    ],
+    [
+      0.081777,
+      "r"
+    ],
+    [
+      0.056412,
+      "\r\n"
+    ],
+    [
+      3.0,
+      "Models:"
+    ],
+    [
+      6.5e-05,
+      "\r\n"
+    ],
+    [
+      0.000149,
+      "   - Hostname                            models/hostname.py"
+    ],
+    [
+      4.8e-05,
+      "\r\n"
+    ],
+    [
+      4.3e-05,
+      "\r\n"
+    ],
+    [
+      4.5e-05,
+      "Channels:"
+    ],
+    [
+      3.6e-05,
+      "\r\n"
+    ],
+    [
+      9e-05,
+      "   - SystemInfoChannel                   channels/systeminfo.py"
+    ],
+    [
+      5.2e-05,
+      "\r\n"
+    ],
+    [
+      4.4e-05,
+      "\r\n"
+    ],
+    [
+      8.4e-05,
+      "Actors:"
+    ],
+    [
+      4.8e-05,
+      "\r\n"
+    ],
+    [
+      7.3e-05,
+      "   - HostnameScanner                     actors/hostnamescanner/actor.py"
+    ],
+    [
+      3.8e-05,
+      "\r\n"
+    ],
+    [
+      6.5e-05,
+      "\r\n"
+    ],
+    [
+      5.4e-05,
+      "Tags:"
+    ],
+    [
+      4.6e-05,
+      "\r\n"
+    ],
+    [
+      7.7e-05,
+      "   - ScanTag                             tags/scan.py"
+    ],
+    [
+      3.9e-05,
+      "\r\n"
+    ],
+    [
+      4.2e-05,
+      "\r\n"
+    ],
+    [
+      0.038374,
+      "\u001b]777;notify;Command completed;snactor discover\u0007\u001b]0;evilissimo@actor-developer:~/devel/tutorial\u0007\u001b]7;file://actor-developer/home/evilissimo/devel/tutorial\u0007"
+    ],
+    [
+      0.001139,
+      "\u001b[0;38;5;231;48;5;31;1m evilissimo \u001b[0;38;5;31;48;5;74;22m \u001b[0;38;5;231;48;5;74m(e) tut \u001b[0;38;5;74;48;5;240;22m \u001b[0;38;5;250;48;5;240m~ \u001b[0;38;5;245;48;5;240;22m \u001b[0;38;5;250;48;5;240mdevel \u001b[0;38;5;245;48;5;240;22m \u001b[0;38;5;252;48;5;240;1mtutorial \u001b[0;38;5;240;49;22m \u001b[0m"
+    ]
+  ]
+}

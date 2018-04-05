@@ -1,18 +1,10 @@
-ROOT_PATH=$(PREFIX)/usr/bin
-
-clean:
-	true
-
-build:
-	true
-
-install-deps:
-	true
-
 install:
-	true
+	pip install -r requirements.txt
+
+install-test:
+	pip install -r requirements-tests.txt
 
 test:
-	true	
+	py.test --cov leapp
 
-.PHONY: clean build install-deps install test
+.PHONY: install install-test test

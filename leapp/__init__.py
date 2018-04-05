@@ -1,0 +1,2 @@
+VERSION = "0.3"
+FULL_VERSION = VERSION + ' alpha'

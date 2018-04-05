@@ -3,6 +3,7 @@ python:
   - "2.7"
   - "3.6"
 install:
-  - make install-deps install build
+  - make install-test
+  - pip install .
 
 script: make test

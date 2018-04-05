@@ -2,6 +2,17 @@
 __pycache__/
 *.pyc
 # Symlink to virtualenv
+# Virtualenv
+# http://iamzed.com/2009/05/07/a-primer-on-virtualenv/
+.DS_Store
+.Python
+[Bb]in
+[Ii]nclude
+[Ll]ib
+[Ll]ib64
+[Ll]ocal
+[Ss]cripts
+pyvenv.cfg
 .venv
 playbook.retry
 dist/
@@ -9,3 +20,10 @@ dist/
 docs/build/
 .idea/
 docs/build/
+pip-selfcheck.json
+.coverage
+.pytest_cache
+.cache/
+*.egg-info/
+*.py[co]
+*/.Python/*
