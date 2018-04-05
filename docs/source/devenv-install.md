@@ -11,7 +11,7 @@ First step to do so, is to create a new virtualenv called tut and activate it
 
 Next we will install the framework via pip
 ```shell
-	$ pip install git+https://github.com/leapp-to/leapp-actors-stdlib
+	$ pip install git+https://github.com/leapp-to/leapp
 ```
 
 Once the framework is installed in your virtualenv environment you can start using the snactor tool.

@@ -552,7 +552,7 @@
     ],
     [
       0.212483,
-      "Collecting git+https://github.com/leapp-to/leapp-actors-stdlib"
+      "Collecting git+https://github.com/leapp-to/leapp"
     ],
     [
       0.0001,
@@ -560,7 +560,7 @@
     ],
     [
       0.000457,
-      "  Cloning https://github.com/leapp-to/leapp-actors-stdlib to /tmp/pip-vSAopq-build"
+      "  Cloning https://github.com/leapp-to/leapp to /tmp/pip-vSAopq-build"
     ],
     [
       5.1e-05,
@@ -712,7 +712,7 @@
     ],
     [
       0.080341,
-      "\u001b]777;notify;Command completed;pip install git+https://github.com/leapp-to/leapp-actors-stdlib\u0007\u001b]0;evilissimo@actor-developer:~/devel\u0007\u001b]7;file://actor-developer/home/evilissimo/devel\u0007"
+      "\u001b]777;notify;Command completed;pip install git+https://github.com/leapp-to/leapp\u0007\u001b]0;evilissimo@actor-developer:~/devel\u0007\u001b]7;file://actor-developer/home/evilissimo/devel\u0007"
     ],
     [
       0.0007,
