@@ -13,6 +13,12 @@ from leapp.utils.meta import get_flattened_subclasses
 
 
 class Actor(object):
+    name = None
+    description = None
+    consumes = ()
+    produces = ()
+    tags = ()
+
     def __init__(self, messaging=None, logger=None):
         self._messaging = messaging
         self.log = (logger or logging.getLogger('leapp.actors')).getChild(self.name)
@@ -50,6 +56,9 @@ class Actor(object):
             self.process(*args)
         finally:
             os.environ.pop('LEAPP_CURRENT_ACTOR', None)
+
+    def process(self, *args, **kwargs):
+        raise NotImplementedError()
 
     def produce(self, *args):
         if self._messaging:
@@ -97,7 +106,7 @@ def _is_tuple_of(value_type):
 
 def _is_model_tuple(actor, name, value):
     if isinstance(value, type) and issubclass(value, Model):
-        logging.getLogger("leapp.linter").warn("Actor %s field %s should be a tuple of Models", actor, name)
+        logging.getLogger("leapp.linter").warning("Actor %s field %s should be a tuple of Models", actor, name)
         value = value,
     _is_type(tuple)(actor, name, value)
     if not all([True] + list(map(lambda item: isinstance(item, type) and issubclass(item, Model), value))):
@@ -108,7 +117,7 @@ def _is_model_tuple(actor, name, value):
 
 def _is_tag_tuple(actor, name, value):
     if isinstance(value, type) and issubclass(value, Tag):
-        logging.getLogger("leapp.linter").warn("Actor %s field %s should be a tuple of Tags", actor, name)
+        logging.getLogger("leapp.linter").warning("Actor %s field %s should be a tuple of Tags", actor, name)
         value = value,
     _is_type(tuple)(actor, name, value)
     if not all([True] + list(map(lambda item: isinstance(item, type) and issubclass(item, Tag), value))):
