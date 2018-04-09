@@ -13,11 +13,24 @@ from leapp.utils.meta import get_flattened_subclasses
 
 
 class Actor(object):
+    """
+    The Actor class represents the smallest step in the workflow. It defines what kind
+    of data it expects, it consumes (process) a given data and produces data for other
+    actors in the workflow.
+    """
     name = None
+    """ Name of the actor that's used to identify data/messages created by the actor. """
     description = None
+    """ More verbose actor's description. """
     consumes = ()
+    """ Tuple of Models (:py:class:`leapp.models`) those define data send to actor. """
     produces = ()
+    """ Tuple of Models (:py:class:`leapp.models`) those define produced data. """
     tags = ()
+    """
+    Tuple of Tags (:py:class:`leapp.tags`) those are definying workflow phase group(s)
+    where the actor belongs to and will be executed in.
+    """
 
     def __init__(self, messaging=None, logger=None):
         self._messaging = messaging
@@ -26,17 +39,21 @@ class Actor(object):
 
     @property
     def actor_files_paths(self):
+        """ Returns actor's related files paths. """
         return os.getenv("LEAPP_FILES", "").split(":")
 
     @property
     def files_paths(self):
+        """ Returns all actor files paths (related ones to the actor and common actors files paths). """
         return self.actor_files_paths + self.common_files_paths
 
     @property
     def common_files_paths(self):
+        """ Returns all common actors files paths. """
         return os.getenv("LEAPP_COMMON_FILES", "").split(":")
 
     def get_folder_path(self, name):
+        """ Returns folders paths for all actors files. """
         for path in self.files_paths:
             path = os.path.join(path, name)
             if os.path.isdir(path):
@@ -44,6 +61,7 @@ class Actor(object):
         return None
 
     def get_file_path(self, name):
+        """ Returns all actors files paths. """
         for path in self.files_paths:
             path = os.path.join(path, name)
             if os.path.isfile(path):
@@ -51,6 +69,7 @@ class Actor(object):
         return None
 
     def run(self, *args):
+        """ Runs actor (calling method :py:func:`process`. """
         os.environ['LEAPP_CURRENT_ACTOR'] = self.name
         try:
             self.process(*args)
@@ -58,9 +77,11 @@ class Actor(object):
             os.environ.pop('LEAPP_CURRENT_ACTOR', None)
 
     def process(self, *args, **kwargs):
+        """ Main processing method (in inherited actors, the function needs to be defined to be able process)"""
         raise NotImplementedError()
 
     def produce(self, *args):
+        """ After running :py:func:`process`, it prepares processed data - results to next processing in workflow. """
         if self._messaging:
             for arg in args:
                 if isinstance(arg, getattr(self.__class__, 'produces')):
@@ -78,6 +99,7 @@ class Actor(object):
                     })
 
     def consume(self, *types):
+        """ Load any given model data types to be able to process them. """
         if self._messaging:
             return self._messaging.consume(*types)
         return ()
@@ -137,6 +159,15 @@ def _get_attribute(actor, name, validator, required=False, default_value=None):
 
 
 def get_actor_metadata(actor):
+    """
+    Returns Actor's metadata dictionary
+
+    Args:
+        actor (:py:class:`leapp.actors.Actor`): Actor that we want to get its metadata
+
+    Returns:
+        Dictionary with name, tags, consumes, produces and description of the actor
+    """
     return dict([
         ('class_name', actor.__name__),
         ('path', os.path.dirname(sys.modules[actor.__module__].__file__)),
@@ -150,6 +181,10 @@ def get_actor_metadata(actor):
 
 
 def get_actors():
+    """
+    Returns:
+        Flattened list of subclasses and their subclasses for the actor
+    """
     actors = get_flattened_subclasses(Actor)
     for actor in actors:
         get_actor_metadata(actor)
