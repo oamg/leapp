@@ -1,11 +1,12 @@
 # Minimal makefile for Sphinx documentation
 #
 ## default build operation:
-all: clean html 
+all: clean html
 
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
+SPHINXAUTOBUILD = sphinx-autobuild
 SPHINXPROJ    = Leapp
 SOURCEDIR     = source
 BUILDDIR      = build
@@ -13,6 +14,8 @@ BUILDDIR      = build
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+livehtml:
+	@$(SPHINXAUTOBUILD) "$(SOURCEDIR)" "$(BUILDDIR)/html" $(SPHINXOPTS) $(0)
 
 .PHONY: help Makefile
 
