@@ -9,6 +9,7 @@ Welcome to Leapp's documentation!
 
     terminology
     tutorials
+    debugging
     best-practises
     contributing
     python-coding-guidelines
