@@ -15,3 +15,5 @@ The snactor tool has also the --debug parameter and checks fo the environment va
 In that case it will enable the debug logging. So any actor that logs to self.log.debug
 will get its output printed on the commandline.
 
+ladida
+
