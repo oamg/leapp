@@ -15,7 +15,7 @@ BUILDDIR      = build
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 livehtml:
-	@$(SPHINXAUTOBUILD) "$(SOURCEDIR)" "$(BUILDDIR)/html" $(SPHINXOPTS) $(0)
+	@$(SPHINXAUTOBUILD) -z ../leapp "$(SOURCEDIR)" "$(BUILDDIR)/html" $(SPHINXOPTS) $(0)
 
 .PHONY: help Makefile
 
