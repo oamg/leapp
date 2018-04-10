@@ -20,6 +20,7 @@
 
 import os
 import sys
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
 import sphinx_rtd_theme
@@ -36,7 +37,8 @@ from recommonmark.transform import AutoStructify
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.githubpages']
+              'sphinx.ext.githubpages',
+              'autosectionlabelext']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -171,24 +173,19 @@ autoclass_content = 'both'
 autodoc_default_flags = ['members', 'undoc-members', 'inherited-members', 'show-inheritance']
 
 
+
 def filter_unwanted_leapp_types(app, what, name, obj, skip, options):
-    from pprint import pformat
-    with open('/tmp/sphinx-out', 'a+') as f:
-        f.write(pformat([app, what, name, obj, skip, options]) + '\n-----------------------------------------\n')
     if name.startswith('with_meta_base_') or name == 'mro':
         return True
     if name == 'commands' and what == 'module':
         return True
     return skip
 
-
 def setup(app):
     app.add_config_value('recommonmark_config', {
         'enable_auto_doc_ref': False,
     }, True)
     app.add_transform(AutoStructify)
-    with open('/tmp/sphinx-out', 'w') as f:
-        f.write('')
     app.connect('autodoc-skip-member', filter_unwanted_leapp_types)
     app.add_stylesheet('css/asciinema-player.css')
     app.add_stylesheet('css/custom.css')
