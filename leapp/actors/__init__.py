@@ -18,42 +18,60 @@ class Actor(object):
     of data it expects, it consumes (process) a given data and produces data for other
     actors in the workflow.
     """
+
     name = None
     """ Name of the actor that's used to identify data/messages created by the actor. """
+
     description = None
-    """ More verbose actor's description. """
+    """ More verbose actor's description."""
+
     consumes = ()
-    """ Tuple of Models (:py:class:`leapp.models`) those define data send to actor. """
+    """
+    Tuple of :py:class:`leapp.models.Model` derived classes defined in the :ref:`repositories <terminology:repository>` that
+    define :ref:`messages <terminology:message>` the actor consumes.
+    """
+
     produces = ()
-    """ Tuple of Models (:py:class:`leapp.models`) those define produced data. """
+    """
+    Tuple of :py:class:`leapp.models.Model` derived classes defined in the :ref:`repositories <terminology:repository>` that define
+    :ref:`messages <terminology:message>` the actor produces.
+    """
+
     tags = ()
     """
-    Tuple of Tags (:py:class:`leapp.tags`) those are definying workflow phase group(s)
-    where the actor belongs to and will be executed in.
+    Tuple of :py:class:`leapp.tags.Tag` derived classes by which :ref:`workflow <terminology:workflow>` :ref:`phases <terminology:phase>` select
+    actors for execution.
     """
 
     def __init__(self, messaging=None, logger=None):
         self._messaging = messaging
         self.log = (logger or logging.getLogger('leapp.actors')).getChild(self.name)
-        """ Configured logger for the actor """
+        """ A configured logger instance for the current actor """
 
     @property
     def actor_files_paths(self):
-        """ Returns actor's related files paths. """
+        """ Returns the file paths that are bundled with the actor. (Path to the content of the actor's file directory)"""
         return os.getenv("LEAPP_FILES", "").split(":")
 
     @property
     def files_paths(self):
-        """ Returns all actor files paths (related ones to the actor and common actors files paths). """
+        """ Returns all actor file paths (related ones to the actor and common actors files paths). """
         return self.actor_files_paths + self.common_files_paths
 
     @property
     def common_files_paths(self):
-        """ Returns all common actors files paths. """
+        """ Returns all common repository file paths. """
         return os.getenv("LEAPP_COMMON_FILES", "").split(":")
 
     def get_folder_path(self, name):
-        """ Returns folders paths for all actors files. """
+        """
+        Finds first matching folder path within :py:attr:`files_paths`.
+
+        :param name: Name of the folder
+        :type name: str
+        :return: Found folder path
+        :rtype: str or None
+        """
         for path in self.files_paths:
             path = os.path.join(path, name)
             if os.path.isdir(path):
@@ -61,7 +79,14 @@ class Actor(object):
         return None
 
     def get_file_path(self, name):
-        """ Returns all actors files paths. """
+        """
+        Finds first matching file path within :py:attr:`files_paths`.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
         for path in self.files_paths:
             path = os.path.join(path, name)
             if os.path.isfile(path):
@@ -69,7 +94,7 @@ class Actor(object):
         return None
 
     def run(self, *args):
-        """ Runs actor (calling method :py:func:`process`. """
+        """ Runs actor calling method :py:func:`process`. """
         os.environ['LEAPP_CURRENT_ACTOR'] = self.name
         try:
             self.process(*args)
@@ -77,20 +102,25 @@ class Actor(object):
             os.environ.pop('LEAPP_CURRENT_ACTOR', None)
 
     def process(self, *args, **kwargs):
-        """ Main processing method (in inherited actors, the function needs to be defined to be able process)"""
+        """ Main processing method (in inherited actors, the function needs to be defined to be able process)."""
         raise NotImplementedError()
 
-    def produce(self, *args):
-        """ After running :py:func:`process`, it prepares processed data - results to next processing in workflow. """
+    def produce(self, *models):
+        """
+        By calling produce model instances are store as messages. Those messages can be then consumed by other actors.
+
+        :param models: Messages to be sent (those model types have to be specified in :py:attr:`produces`
+        :type models: Variable number of the derived classes from :py:class:`leapp.models.Model`
+        """
         if self._messaging:
-            for arg in args:
-                if isinstance(arg, getattr(self.__class__, 'produces')):
-                    message_data = json.dumps(arg.dump(), sort_keys=True)
+            for model in models:
+                if isinstance(model, getattr(self.__class__, 'produces')):
+                    message_data = json.dumps(model.dump(), sort_keys=True)
                     message_hash = hashlib.sha256(message_data).hexdigest()
-                    self._messaging.produce(arg.topic.name, {
-                        'type': arg.__class__.__name__,
+                    self._messaging.produce(model.topic.name, {
+                        'type': model.__class__.__name__,
                         'actor': self.name,
-                        'topic': arg.topic.name,
+                        'topic': model.topic.name,
                         'stamp': datetime.datetime.utcnow().isoformat() + 'Z',
                         'message': {
                             'data': message_data,
@@ -98,10 +128,15 @@ class Actor(object):
                         }
                     })
 
-    def consume(self, *types):
-        """ Load any given model data types to be able to process them. """
+    def consume(self, *models):
+        """
+        Retrieve messages specified in the actors :py:attr:`consumes` attribute and can be filter the message types by models.
+
+        :param models: Models to use as filter for the messages to return
+        :type models: Variable number of the derived classes from :py:class:`leapp.models.Model`
+        """
         if self._messaging:
-            return self._messaging.consume(*types)
+            return self._messaging.consume(*models)
         return ()
 
 
@@ -160,13 +195,11 @@ def _get_attribute(actor, name, validator, required=False, default_value=None):
 
 def get_actor_metadata(actor):
     """
-    Returns Actor's metadata dictionary
+    Creates Actor's metadata dictionary
 
-    Args:
-        actor (:py:class:`leapp.actors.Actor`): Actor that we want to get its metadata
-
-    Returns:
-        Dictionary with name, tags, consumes, produces and description of the actor
+    :param actor: Actor that we want to get its metadata
+    :type actor: derived class from :py:class:`leapp.actors.Actor`
+    :return: Dictionary with name, tags, consumes, produces and description of the actor
     """
     return dict([
         ('class_name', actor.__name__),
@@ -182,8 +215,7 @@ def get_actor_metadata(actor):
 
 def get_actors():
     """
-    Returns:
-        Flattened list of subclasses and their subclasses for the actor
+    :return: All actor's ancestors with their metadata
     """
     actors = get_flattened_subclasses(Actor)
     for actor in actors:
