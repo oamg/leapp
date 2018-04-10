@@ -1,20 +1,20 @@
 # Installing the actor development environment
 
-This demo encourages to use virtualenv to setup the actor development environment.
+This demo uses the virtualenv tool to set up the actor development environment.
 
-First step to do so, is to create a new virtualenv called tut and activate it
+First, create a new virtual environment called "tut" and activate it:
 ```shell
 	$ cd ~/devel
 	$ virtualenv -p /usr/bin/python2.7 tut
 	$ . tut/bin/activate
 ```
 
-Next we will install the framework via pip
+Then, install the framework by using the pip package management system:
 ```shell
 	$ pip install git+https://github.com/leapp-to/leapp
 ```
 
-Once the framework is installed in your virtualenv environment you can start using the snactor tool.
+Once the framework is installed in your virtual environment, you can start using the snactor tool.
 ```shell
 	$ snactor -h
 	Usage: snactor [OPTIONS] COMMAND [ARGS]...
