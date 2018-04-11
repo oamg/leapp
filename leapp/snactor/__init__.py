@@ -5,6 +5,7 @@ import socket
 from leapp.snactor import commands
 from leapp.snactor.commands import workflow
 from leapp.utils.clicmd import command, command_opt
+from leapp.snactor.utils import find_project_basedir
 from leapp import VERSION
 
 SHORT_HELP = "actor-snactor is a leapp actor project management snactor"
@@ -33,8 +34,27 @@ def _load_commands_from(path):
 
 
 @command('', help=LONG_HELP)
-@command_opt('debug', is_flag=True, help='Enables debug logging')
+@command_opt('debug', is_flag=True, help='Enables debug logging', inherit=True)
+@command_opt('config', help='Allows to override the leapp.conf location', inherit=True)
+@command_opt('logger-config', help='Allows to override the logger.conf location', inherit=True)
 def cli(args):
+    if args.logger_config and os.path.isfile(args.logger_config):
+        os.environ['LEAPP_LOGGER_CONFIG'] = args.logger_config
+
+    config_file_path = None
+    if args.config and os.path.isfile(args.config):
+        config_file_path = args.config
+
+    if not config_file_path and find_project_basedir('.'):
+        config_file_path = os.path.join(find_project_basedir('.'), '.leapp/leapp.conf')
+
+    if not config_file_path and not os.path.isfile(config_file_path):
+        config_file_path = os.environ.get('LEAPP_CONFIG')
+
+    if not config_file_path and not os.path.isfile(config_file_path):
+        config_file_path = '/etc/leapp/leapp.conf'
+
+    os.environ['LEAPP_CONFIG'] = config_file_path
     os.environ['LEAPP_DEBUG'] = '1' if args.debug else '0'
 
 

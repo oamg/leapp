@@ -27,3 +27,5 @@ pip-selfcheck.json
 *.egg-info/
 *.py[co]
 */.Python/*
+leapp/utils/schemas.py
+res/schema/schemas.py

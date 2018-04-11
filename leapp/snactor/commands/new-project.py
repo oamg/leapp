@@ -4,6 +4,14 @@ import sys
 
 from leapp.utils.clicmd import command_arg, command
 
+_PROJECT_CONFIG = '''
+[repositories]
+custom_repo_path=${project:root_dir}
+
+[database]
+path=${project:state_dir}/leapp.db
+'''
+
 
 @command('new-project', help='Creates a new project')
 @command_arg('name')
@@ -19,4 +27,7 @@ def cli(args):
                 'name': name,
                 'messages': {}
             }, f)
+        with open(os.path.join(project_dir, 'leapp.conf'), 'w') as f:
+            f.write(_PROJECT_CONFIG)
+
         sys.stdout.write("New project {} has been created in {}\n".format(name, os.path.realpath(name)))
