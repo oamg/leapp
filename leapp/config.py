@@ -55,7 +55,7 @@ def get_config():
                 'state_dir': '${root_dir}/.leapp',
             }
         _LEAPP_CONFIG = BetterConfigParser()
-        for section, values in _CONFIG_DEFAULTS.items() + project_defaults.items():
+        for section, values in tuple(_CONFIG_DEFAULTS.items()) + tuple(project_defaults.items()):
             if not _LEAPP_CONFIG.has_section(section):
                 _LEAPP_CONFIG.add_section(section)
             for name, value in values.items():
