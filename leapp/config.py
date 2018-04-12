@@ -59,7 +59,8 @@ def get_config():
             if not _LEAPP_CONFIG.has_section(section):
                 _LEAPP_CONFIG.add_section(section)
             for name, value in values.items():
-                _LEAPP_CONFIG.set(section, name, value)
+                if value is not None:
+                    _LEAPP_CONFIG.set(section, name, value)
         _LEAPP_CONFIG.read([os.getenv('LEAPP_CONFIG', '/etc/leapp/leapp.conf')])
 
     return _LEAPP_CONFIG
