@@ -1,35 +1,172 @@
-Name:		leapp
-Version:	0.3
-Release:	1%{?dist}
-Summary:	Leapp is an OS & Application modernization framework
+%global debug_package %{nil}
+%global gittag master
 
-License:	ASL 2.0
-URL:		https://leapp-to.github.io
-Source0:	
 
-BuildRequires:	
-Requires:	
+# Do not build bindings for python3 for RHEL <= 7
+%if 0%{?rhel} && 0%{?rhel} <= 7
+%bcond_with python3
+%else
+%if 0%{?rhel} && 0%{?rhel} > 7
+%bcond_without python2
+%endif
+%bcond_without python3
+%endif
+
+Name:       leapp
+Version:    0.3
+Release:    1%{?dist}
+Summary:    Leapp is an OS & Application modernization framework
+
+License:    ASL 2.0
+URL:        https://leapp-to.github.io
+Source0:    https://github.com/leapp-to/%{name}/archive/%{gittag}/%{name}-%{version}.tar.gz
+
+BuildArch:  noarch
+
 
 %description
+Leapp tool for handling upgrades
 
 
+##################################################
+# snactor package
+##################################################
+%package -n snactor
+Summary:        %{sum}
+
+%description -n snactor
+Leapp's snactor tool - Actor development environment utility for creating and managing actor projects.
+
+##################################################
+# Python 2 library package
+##################################################
+%if %{with python2}
+
+%package -n python2-%{srcname}
+
+Summary:        %{sum}
+%{?python_provide:%python_provide python2-%{srcname}}
+
+%if 0%{?rhel} && 0%{?rhel} == 7
+# RHEL 7
+BuildRequires:  python-devel
+BuildRequires:  python-setuptools
+%else
+# else
+BuildRequires:  python2-devel
+
+%if 0%{?fedora}
+# Fedora
+BuildRequires:  python2-pytest-cov
+BuildRequires:  python2-pytest-flake8
+
+%endif
+
+BuildRequires:  python2-setuptools
+
+%endif
+
+%description -n python2-%{srcname}
+Python 2 leapp framework libraries
+
+%endif
+
+
+##################################################
+# Python 3 library package
+##################################################
+%if %{with python3}
+
+%package -n python3-%{srcname}
+Summary:        %{sum}
+%{?system_python_abi}
+%{?python_provide:%python_provide python3-%{srcname}}
+
+BuildRequires:  python3-devel
+BuildRequires:  python3-setuptools
+
+%if 0%{?fedora}
+# Fedora
+BuildRequires:  python3-pytest-cov
+BuildRequires:  python3-pytest-flake8
+
+%endif
+
+
+
+%description -n python3-%{srcname}
+Python 3 leapp framework libraries
+
+%endif
+
+##################################################
+# Prep
+##################################################
 %prep
-%setup -q
+%autosetup -n %{name}-%{commit}
 
-
+##################################################
+# Build
+##################################################
 %build
-%configure
-make %{?_smp_mflags}
+
+%if %{with python2}
+%py2_build
+%endif
+
+%if %{with python3}
+%py3_build
+%endif
 
 
+##################################################
+# Install
+##################################################
 %install
-%make_install
+
+%if %{with python2}
+%py2_install
+%endif
+
+%if %{with python3}
+%py3_install
+%endif
 
 
+##################################################
+# leapp files
+##################################################
 %files
-%doc
+%doc README.md
+%license COPYING
+%{_bindir}/leapp
 
 
+##################################################
+# snactor files
+##################################################
+%files -n snactor
+%{_bindir}/snactor
+
+
+##################################################
+# python2-leapp files
+##################################################
+%if %{with python3}
+
+%files -n python2-%{srcname}
+%{python2_sitelib}/*
+
+%endif
+
+##################################################
+# python3-leapp files
+##################################################
+%if %{with python3}
+%files -n python3-%{srcname}
+%{python3_sitelib}/*%endif
+
+%endif
 
 %changelog
 
