@@ -2,11 +2,13 @@
 %global gittag master
 
 
-# Do not build bindings for python3 for RHEL <= 7
-%if 0%{?rhel} && 0%{?rhel} <= 7
-%bcond_with python3
+# Do not build bindings for python3 for RHEL == 7
+%if 0%{?rhel} && 0%{?rhel} == 7
+%define with_python2 1
 %else
 %if 0%{?rhel} && 0%{?rhel} > 7
+%bcond_with python2
+%else
 %bcond_without python2
 %endif
 %bcond_without python3
@@ -22,7 +24,11 @@ URL:        https://leapp-to.github.io
 Source0:    https://github.com/leapp-to/%{name}/archive/%{gittag}/%{name}-%{version}.tar.gz
 
 BuildArch:  noarch
-
+%if %{with python2}
+Requires: python2-%{name}%{?_isa} = %{version}-%{release}
+%else
+Requires: python3{name}%{?_isa} = %{version}-%{release}
+%endif
 
 %description
 Leapp tool for handling upgrades
@@ -33,6 +39,11 @@ Leapp tool for handling upgrades
 ##################################################
 %package -n snactor
 Summary:        %{sum}
+%if %{with python2}
+Requires: python2-%{name}%{?_isa} = %{version}-%{release}
+%else
+Requires: python3{name}%{?_isa} = %{version}-%{release}
+%endif
 
 %description -n snactor
 Leapp's snactor tool - Actor development environment utility for creating and managing actor projects.
@@ -58,7 +69,7 @@ BuildRequires:  python2-devel
 %if 0%{?fedora}
 # Fedora
 BuildRequires:  python2-pytest-cov
-BuildRequires:  python2-pytest-flake8
+# BuildRequires:  python2-pytest-flake8
 
 %endif
 
@@ -88,7 +99,7 @@ BuildRequires:  python3-setuptools
 %if 0%{?fedora}
 # Fedora
 BuildRequires:  python3-pytest-cov
-BuildRequires:  python3-pytest-flake8
+# BuildRequires:  python3-pytest-flake8
 
 %endif
 
@@ -103,7 +114,7 @@ Python 3 leapp framework libraries
 # Prep
 ##################################################
 %prep
-%autosetup -n %{name}-%{commit}
+%autosetup -n %{name}-%{gittag}
 
 ##################################################
 # Build
@@ -132,7 +143,6 @@ Python 3 leapp framework libraries
 %py3_install
 %endif
 
-
 ##################################################
 # leapp files
 ##################################################
@@ -152,7 +162,7 @@ Python 3 leapp framework libraries
 ##################################################
 # python2-leapp files
 ##################################################
-%if %{with python3}
+%if %{with python2}
 
 %files -n python2-%{name}
 %{python2_sitelib}/*
@@ -164,7 +174,7 @@ Python 3 leapp framework libraries
 ##################################################
 %if %{with python3}
 %files -n python3-%{name}
-%{python3_sitelib}/*%endif
+%{python3_sitelib}/*
 
 %endif
 
