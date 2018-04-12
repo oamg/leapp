@@ -42,10 +42,10 @@ Leapp's snactor tool - Actor development environment utility for creating and ma
 ##################################################
 %if %{with python2}
 
-%package -n python2-%{srcname}
+%package -n python2-%{name}
 
 Summary:        %{sum}
-%{?python_provide:%python_provide python2-%{srcname}}
+%{?python_provide:%python_provide python2-%{name}}
 
 %if 0%{?rhel} && 0%{?rhel} == 7
 # RHEL 7
@@ -66,7 +66,7 @@ BuildRequires:  python2-setuptools
 
 %endif
 
-%description -n python2-%{srcname}
+%description -n python2-%{name}
 Python 2 leapp framework libraries
 
 %endif
@@ -77,10 +77,10 @@ Python 2 leapp framework libraries
 ##################################################
 %if %{with python3}
 
-%package -n python3-%{srcname}
+%package -n python3-%{name}
 Summary:        %{sum}
 %{?system_python_abi}
-%{?python_provide:%python_provide python3-%{srcname}}
+%{?python_provide:%python_provide python3-%{name}}
 
 BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
@@ -94,7 +94,7 @@ BuildRequires:  python3-pytest-flake8
 
 
 
-%description -n python3-%{srcname}
+%description -n python3-%{name}
 Python 3 leapp framework libraries
 
 %endif
@@ -154,7 +154,7 @@ Python 3 leapp framework libraries
 ##################################################
 %if %{with python3}
 
-%files -n python2-%{srcname}
+%files -n python2-%{name}
 %{python2_sitelib}/*
 
 %endif
@@ -163,7 +163,7 @@ Python 3 leapp framework libraries
 # python3-leapp files
 ##################################################
 %if %{with python3}
-%files -n python3-%{srcname}
+%files -n python3-%{name}
 %{python3_sitelib}/*%endif
 
 %endif
