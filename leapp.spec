@@ -24,10 +24,10 @@ URL:        https://leapp-to.github.io
 Source0:    https://github.com/leapp-to/%{name}/archive/%{gittag}/%{name}-%{version}.tar.gz
 
 BuildArch:  noarch
-%if %{with python2}
-Requires: python2-%{name}%{?_isa} = %{version}-%{release}
+%if %{with python3}
+Requires: python3-%{name} = %{version}-%{release}
 %else
-Requires: python3{name}%{?_isa} = %{version}-%{release}
+Requires: python2-%{name} = %{version}-%{release}
 %endif
 
 %description
@@ -39,10 +39,10 @@ Leapp tool for handling upgrades
 ##################################################
 %package -n snactor
 Summary:        %{sum}
-%if %{with python2}
-Requires: python2-%{name}%{?_isa} = %{version}-%{release}
+%if %{with python3}
+Requires: python3-%{name} = %{version}-%{release}
 %else
-Requires: python3{name}%{?_isa} = %{version}-%{release}
+Requires: python2-%{name} = %{version}-%{release}
 %endif
 
 %description -n snactor
