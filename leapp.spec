@@ -1,6 +1,6 @@
 %global debug_package %{nil}
 %global gittag master
-
+%global dist %{nil}
 
 # Do not build bindings for python3 for RHEL == 7
 %if 0%{?rhel} && 0%{?rhel} == 7

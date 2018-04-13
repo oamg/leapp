@@ -6,6 +6,8 @@ if [ -n "$1" ]; then
     OUTDIR="$(realpath $1)"
 fi
 
+dnf -y install which
+
 export
 if [ -z "$(which git)" ]; then
     dnf -y install git-core
@@ -33,10 +35,16 @@ fi
 
 echo LEAPP_BUILD_TAG=$LEAPP_BUILD_TAG
 export toplevel=$(git rev-parse --show-toplevel)
-git archive --remote "$toplevel" --prefix leapp-master/ HEAD | gzip > leapp-$VERSION.tar.gz
+git archive --remote "$toplevel" --prefix leapp-master/ HEAD > leapp-$VERSION.tar
+tar --delete leapp-master/leapp.spec --file leapp-$VERSION.tar
+mkdir leapp-master
+/bin/cp ../leapp.spec leapp-master/
+cat ../leapp.spec | sed "s/^%global dist.*$/%global dist $LEAPP_BUILD_TAG/g" > leapp-master/leapp.spec
+tar --append --file leapp-$VERSION.tar leapp-master/leapp.spec
 
+cat leapp-$VERSION.tar | gzip > leapp-$VERSION.tar.gz
 
 echo $PWD $OUTDIR
 SRPMDIR="$OUTDIR"
-rpmbuild --define "_srcrpmdir $SRPMDIR" --define "version $VERSION" --define "dist $LEAPP_BUILD_TAG" --define "gittag master" -ts ./leapp-$VERSION.tar.gz
+rpmbuild --define "_srcrpmdir $SRPMDIR" --define "version $VERSION" --define "gittag master" -ts ./leapp-$VERSION.tar.gz
 
