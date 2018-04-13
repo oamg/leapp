@@ -37,9 +37,9 @@ echo LEAPP_BUILD_TAG=$LEAPP_BUILD_TAG
 export toplevel=$(git rev-parse --show-toplevel)
 git archive --remote "$toplevel" --prefix leapp-master/ HEAD > leapp-$VERSION.tar
 tar --delete leapp-master/leapp.spec --file leapp-$VERSION.tar
-mkdir leapp-master
-/bin/cp ../leapp.spec leapp-master/
-cat ../leapp.spec | sed "s/^%global dist.*$/%global dist $LEAPP_BUILD_TAG/g" > leapp-master/leapp.spec
+mkdir -p leapp-master
+/bin/cp ${toplevel}/leapp.spec leapp-master/leapp.spec
+sed -i "s/^%global dist.*$/%global dist $LEAPP_BUILD_TAG/g" leapp-master/leapp.spec
 tar --append --file leapp-$VERSION.tar leapp-master/leapp.spec
 
 cat leapp-$VERSION.tar | gzip > leapp-$VERSION.tar.gz
