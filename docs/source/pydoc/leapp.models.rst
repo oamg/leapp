@@ -1,5 +1,5 @@
-leapp.models package
-====================
+leapp\.models package
+=====================
 
 Subpackages
 -----------

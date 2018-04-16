@@ -1,5 +1,5 @@
-leapp.actors package
-====================
+leapp\.actors package
+=====================
 
 Module contents
 ---------------

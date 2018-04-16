@@ -1,10 +1,10 @@
-leapp\.tags package
-===================
+leapp\.utils\.audit package
+===========================
 
 Module contents
 ---------------
 
-.. automodule:: leapp.tags
+.. automodule:: leapp.utils.audit
     :members:
     :undoc-members:
     :show-inheritance:

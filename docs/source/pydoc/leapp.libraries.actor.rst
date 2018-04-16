@@ -1,5 +1,5 @@
-leapp.libraries.actor package
-=============================
+leapp\.libraries\.actor package
+===============================
 
 Module contents
 ---------------

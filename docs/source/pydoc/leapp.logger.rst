@@ -1,5 +1,5 @@
-leapp.logger package
-====================
+leapp\.logger package
+=====================
 
 Module contents
 ---------------

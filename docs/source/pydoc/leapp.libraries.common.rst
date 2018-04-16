@@ -1,5 +1,5 @@
-leapp.libraries.common package
-==============================
+leapp\.libraries\.common package
+================================
 
 Module contents
 ---------------

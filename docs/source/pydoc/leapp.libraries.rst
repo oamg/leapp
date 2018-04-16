@@ -1,5 +1,5 @@
-leapp.libraries package
-=======================
+leapp\.libraries package
+========================
 
 Subpackages
 -----------

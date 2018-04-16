@@ -1,5 +1,5 @@
-leapp.topics package
-======================
+leapp\.topics package
+=====================
 
 Module contents
 ---------------

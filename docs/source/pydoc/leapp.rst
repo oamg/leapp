@@ -7,7 +7,7 @@ Subpackages
 .. toctree::
 
     leapp.actors
-    leapp.topics
+    leapp.cli
     leapp.libraries
     leapp.logger
     leapp.messaging
@@ -15,22 +15,31 @@ Subpackages
     leapp.repository
     leapp.snactor
     leapp.tags
+    leapp.topics
     leapp.utils
     leapp.workflows
 
 Submodules
 ----------
 
-leapp.compat module
--------------------
+leapp\.compat module
+--------------------
 
 .. automodule:: leapp.compat
     :members:
     :undoc-members:
     :show-inheritance:
 
-leapp.exceptions module
------------------------
+leapp\.config module
+--------------------
+
+.. automodule:: leapp.config
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+leapp\.exceptions module
+------------------------
 
 .. automodule:: leapp.exceptions
     :members:
