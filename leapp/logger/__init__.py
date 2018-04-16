@@ -5,7 +5,6 @@ import os
 import time
 import sys
 
-from leapp.utils.actorapi import get_actor_api, RequestException
 from leapp.utils.audit import Audit
 _logger = None
 
@@ -13,8 +12,11 @@ _logger = None
 class LeappAuditHandler(logging.Handler):
     def __init__(self, *args, **kwargs):
         super(LeappAuditHandler, self).__init__(*args, **kwargs)
-        self.url = 'leapp://localhost/actors/v1/log'
-        self.session = get_actor_api()
+        self.use_remote = kwargs.pop('use_remote', False)
+        if self.use_remote:
+            from leapp.utils.actorapi import get_actor_api
+            self.url = 'leapp://localhost/actors/v1/log'
+            self.session = get_actor_api()
 
     def emit(self, record):
         log_data = {
@@ -29,8 +31,10 @@ class LeappAuditHandler(logging.Handler):
                 'message': self.format(record)
             }
         }
-        # TODO: When we start remote support again we need to switch here to use remote_emit
-        self._do_emit(log_data)
+        if self.use_remote:
+            self._remote_emit(log_data)
+        else:
+            self._do_emit(log_data)
 
     @staticmethod
     def _do_emit(log_data):
@@ -38,6 +42,7 @@ class LeappAuditHandler(logging.Handler):
         Audit(**log_data).store()
 
     def _remote_emit(self, log_data):
+        from leapp.utils.actorapi import RequestException
         try:
             self.session.post(self.url, json=log_data, timeout=0.1)
         except RequestException:

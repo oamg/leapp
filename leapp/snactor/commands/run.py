@@ -4,7 +4,7 @@ import sys
 from leapp.utils.clicmd import command, command_opt, command_arg
 from leapp.logger import configure_logger
 from leapp.snactor.utils import find_project_basedir, requires_project
-from leapp.messaging import ProjectLocalMessaging
+from messaging.inprocess import InProcessMessaging
 from leapp.repository.scan import scan_repo
 
 
@@ -19,11 +19,12 @@ def cli(args):
     repository = scan_repo(basedir)
     repository.load()
 
-    messaging = ProjectLocalMessaging()
-    messaging.load()
     actor_logger = log.getChild('actors')
+    actor = repository.lookup_actor(args.actor_name)
+    messaging = InProcessMessaging()
+    messaging.load(actor.consumes)
 
-    repository.lookup_actor(args.actor_name)(messaging=messaging, logger=actor_logger).run()
+    actor(messaging=messaging, logger=actor_logger).run()
     if args.save_output:
         messaging.store()
     if args.print_output:
