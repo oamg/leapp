@@ -133,6 +133,9 @@ Python 3 leapp framework libraries
 # Install
 ##################################################
 %install
+install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp
+install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp/repos.d
+install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 
 %if %{with python2}
 %py2_install
@@ -146,9 +149,16 @@ Python 3 leapp framework libraries
 # leapp files
 ##################################################
 %files
+%defattr(-,root,root,-)
 %doc README.md
 %license COPYING
+%config(noreplace) %{_sysconfdir}/leapp/leapp.conf
+%config(noreplace) %{_sysconfdir}/leapp/logger.conf
+%dir %{_sysconfdir}/leapp
+%dir %{_sysconfdir}/leapp/repos.d
 %{_bindir}/leapp
+
+
 
 
 ##################################################
@@ -178,4 +188,5 @@ Python 3 leapp framework libraries
 %endif
 
 %changelog
-
+* Mon Apr 16 2018 Vinzenz Feenstra <evilissimo@gmail.com> - 0.3-1
+- Initial rpm
