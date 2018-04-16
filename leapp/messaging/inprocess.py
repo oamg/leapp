@@ -1,7 +1,7 @@
 import os
 
-from messaging import BaseMessaging
-from utils.audit import Message, Audit, MessageData, get_messages
+from leapp.messaging import BaseMessaging
+from leapp.utils.audit import Message, Audit, MessageData, get_messages
 
 
 class InProcessMessaging(BaseMessaging):

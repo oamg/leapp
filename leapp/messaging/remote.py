@@ -1,7 +1,7 @@
 import os
 
-from messaging import BaseMessaging
-from utils.actorapi import get_actor_api
+from leapp.messaging import BaseMessaging
+from leapp.utils.actorapi import get_actor_api
 
 
 class RemoteMessaging(BaseMessaging):
