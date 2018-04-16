@@ -8,10 +8,6 @@ class InProcessMessaging(BaseMessaging):
     def __init__(self):
         super(InProcessMessaging, self).__init__()
 
-    def load(self, consumes):
-        names = [consume.__name__ for consume in consumes]
-        self._data = get_messages(names)
-
     def produce(self, topic, message):
         message = super(InProcessMessaging, self).produce(topic, message)
         message['event'] = 'new-message'

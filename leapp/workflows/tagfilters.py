@@ -10,16 +10,19 @@ class TagFilter(object):
             raise TagFilterUsageError("TagFilter phase key needs to be set to a tag.")
 
     def get_before(self):
-        result = set(self.phase.Before.actors)
+        result = set(actor for actor in self.phase.Before.actors)
         [result.intersection_update(tag.actors) for tag in self.tags]
+        result.update(self.phase.Before.Common.actors)
         return tuple(result)
 
     def get_after(self):
-        result = set(self.phase.After.actors)
+        result = set(actor for actor in self.phase.After.actors)
         [result.intersection_update(tag.actors) for tag in self.tags]
+        result.update(self.phase.After.Common.actors)
         return tuple(result)
 
     def get(self):
-        result = set(self.phase.actors)
+        result = set(actor for actor in self.phase.actors)
         [result.intersection_update(tag.actors) for tag in self.tags]
+        result.update(self.phase.Common.actors)
         return tuple(result)
