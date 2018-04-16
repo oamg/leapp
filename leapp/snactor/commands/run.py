@@ -4,7 +4,7 @@ import sys
 from leapp.utils.clicmd import command, command_opt, command_arg
 from leapp.logger import configure_logger
 from leapp.snactor.utils import find_project_basedir, requires_project
-from messaging.inprocess import InProcessMessaging
+from leapp.messaging.inprocess import InProcessMessaging
 from leapp.repository.scan import scan_repo
 
 
