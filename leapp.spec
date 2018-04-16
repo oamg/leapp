@@ -76,6 +76,7 @@ BuildRequires:  python2-pytest-cov
 BuildRequires:  python2-setuptools
 
 %endif
+Requires: python2-six
 
 %description -n python2-%{name}
 Python 2 leapp framework libraries
@@ -99,11 +100,9 @@ BuildRequires:  python3-setuptools
 %if 0%{?fedora}
 # Fedora
 BuildRequires:  python3-pytest-cov
-# BuildRequires:  python3-pytest-flake8
-
 %endif
 
-
+Requires: python3-six
 
 %description -n python3-%{name}
 Python 3 leapp framework libraries
