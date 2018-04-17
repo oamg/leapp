@@ -1,4 +1,7 @@
 class DefinitionKind(object):
+    """
+    Represents all known repository resources in Leapp.
+    """
     class _Kind(object):
         def __init__(self, kind):
             self.name = kind

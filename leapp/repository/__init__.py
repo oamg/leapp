@@ -12,7 +12,14 @@ from leapp.utils.project import get_project_name
 
 
 class Repository(object):
+    """
+    The Repository class represents a place where all resources (actors, models, tags, etc.) are defined. The repository directory layout looks like :ref:`Repository Directory Layout <best-practises:repository directory layout>`
+    """
     def __init__(self, directory):
+        """
+        :param directory: Path to the repository folder
+        :type directory: str
+        """
         self.name = get_project_name(directory)
         self.log = getLogger('leapp.repository').getChild(self.name)
         self._repo_dir = directory
@@ -20,6 +27,13 @@ class Repository(object):
         self.log.info("New repository '%s' initialized at %s", self.name, directory)
 
     def lookup_actor(self, name):
+        """
+        Finds actor in repository
+
+        :param name: Name of the actor
+        :type name: str
+        :return: None or Actor
+        """
         name = name.lower()
         for actor in self.actors:
             actor_name = actor.name.lower()
@@ -29,6 +43,14 @@ class Repository(object):
         return None
 
     def add(self, kind, item):
+        """
+        Adds any supported kind of resource to the repository
+
+        :param kind: specific kind of repository resource
+        :type kind: :py:class:`leapp.repository.definition.DefinitionKind`
+        :param item: Item that will be added
+        :type item: :py:class:`leapp.repository.actor_definition.ActorDefiniton` or str
+        """
         self.log.debug('Adding %s - %s', kind.name, item.directory if isinstance(item, ActorDefinition) else item)
         if kind not in DefinitionKind.REPO_WHITELIST:
             raise UnsupportedDefinitionKindError('Repositories do not support {kind}.'.format(kind=kind.name))
@@ -44,6 +66,9 @@ class Repository(object):
         self._definitions.setdefault(kind, []).append(item)
 
     def load(self):
+        """
+        Loads the repository resources
+        """
         self.log.debug("Loading repository %s", self.name)
         self.log.debug("Loading tag modules")
         self._load_modules(self.tags)
@@ -96,6 +121,9 @@ class Repository(object):
             importer.find_module(name).load_module(name)
 
     def dump(self):
+        """
+        :return: Dictionary of all repository resources
+        """
         return {
             'repo_dir': self._repo_dir,
             'actors': [a.dump() for a in self.actors],
@@ -113,36 +141,63 @@ class Repository(object):
         os.environ[name] = ':'.join(os.environ.get(name, '').split(':') + list(paths))
 
     def relative_paths(self, paths):
-        return map(lambda x: os.path.relpath(x, self._repo_dir), paths)
+        """
+        :return: Tuple of repository relative paths
+        """
+        return tuple(map(lambda x: os.path.relpath(x, self._repo_dir), paths))
 
     @property
     def actors(self):
+        """
+        :return: Tuple of actors in the repository
+        """
         return tuple(self._definitions.get(DefinitionKind.ACTOR, ()))
 
     @property
     def topics(self):
+        """
+        :return: Tuple of topics in the repository
+        """
         return tuple(self._definitions.get(DefinitionKind.TOPIC, ()))
 
     @property
     def models(self):
+        """
+        :return: Tuple of models in the repository
+        """
         return tuple(self._definitions.get(DefinitionKind.MODEL, ()))
 
     @property
     def tags(self):
+        """
+        :return: Tuple of tags in the repository
+        """
         return tuple(self._definitions.get(DefinitionKind.TAG, ()))
 
     @property
     def workflows(self):
+        """
+        :return: Tuple of workflows in the repository
+        """
         return tuple(self._definitions.get(DefinitionKind.WORKFLOW, ()))
 
     @property
     def tools(self):
+        """
+        :return: Tuple of tools in the repository 
+        """
         return tuple(self._definitions.get(DefinitionKind.TOOLS, ()))
 
     @property
     def libraries(self):
+        """
+        :return: Tuple of libraries in the repository
+        """
         return tuple(self._definitions.get(DefinitionKind.LIBRARIES, ()))
 
     @property
     def files(self):
+        """
+        :return: Tuple of files in the repository
+        """
         return tuple(self._definitions.get(DefinitionKind.FILES, ()))
