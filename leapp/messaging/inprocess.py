@@ -5,11 +5,14 @@ from leapp.utils.audit import Message, Audit, MessageData, get_messages
 
 
 class InProcessMessaging(BaseMessaging):
+    """
+    This class implements the direct database access for the messaging.
+    """
+
     def __init__(self):
         super(InProcessMessaging, self).__init__()
 
-    def produce(self, topic, message):
-        message = super(InProcessMessaging, self).produce(topic, message)
+    def _process_message(self, message):
         message['event'] = 'new-message'
         message_keys = ('stamp', 'topic', 'actor', 'phase', 'hostname', 'context', 'msg_type')
         audit_keys = ('event', 'stamp', 'data', 'actor', 'phase', 'hostname', 'context')
@@ -22,6 +25,6 @@ class InProcessMessaging(BaseMessaging):
         audit.store()
         return message
 
-    def load(self, consumes):
+    def _perform_load(self, consumes):
         context = os.environ.get('LEAPP_EXECUTION_ID', 'TESTING-CONTEXT')
         self._data = get_messages([consume.__name__ for consume in consumes], context)

@@ -50,7 +50,9 @@ class Actor(object):
 
     @property
     def actor_files_paths(self):
-        """ Returns the file paths that are bundled with the actor. (Path to the content of the actor's file directory)"""
+        """
+        Returns the file paths that are bundled with the actor. (Path to the content of the actor's file directory)
+        """
         return os.getenv("LEAPP_FILES", "").split(":")
 
     @property
@@ -117,9 +119,9 @@ class Actor(object):
                 if isinstance(model, getattr(self.__class__, 'produces')):
                     message_data = json.dumps(model.dump(), sort_keys=True)
                     message_hash = hashlib.sha256(message_data).hexdigest()
-                    self._messaging.produce(model.topic.name, {
-                        'type': model.__class__.__name__,
-                        'actor': self.name,
+                    self._messaging.produce({
+                        'type': type(model).__name__,
+                        'actor': type(self).name,
                         'topic': model.topic.name,
                         'stamp': datetime.datetime.utcnow().isoformat() + 'Z',
                         'message': {
