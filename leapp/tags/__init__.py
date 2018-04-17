@@ -5,6 +5,12 @@ from leapp.utils.meta import get_flattened_subclasses, with_metaclass
 
 
 class TagMeta(type):
+    """
+    Meta class for the registration of tags
+
+    This meta class adds dynamically Common, Before, Before.Common, After and After.Common attributes to the
+    tag class. For more information see :py:class:`leapp.tags.Tag`
+    """
     def __new__(mcs, name, bases, attrs):
         klass = super(TagMeta, mcs).__new__(mcs, name, bases, attrs)
         if klass.__module__ is not TagMeta.__module__:
@@ -56,11 +62,14 @@ class Tag(with_metaclass(TagMeta)):
 
     actors = ()
     """
-    Here are all actors registered that use this tag
+    Tuple of all registered actors using this tag
     """
 
 
 def get_tags():
+    """
+    :return: All registered :py:class:`leapp.tags.Tag` derived classes
+    """
     tags = get_flattened_subclasses(Tag)
     for tag in (tag for tag in tags if tag is not Tag):
         tag_name = getattr(tag, 'name', None)
