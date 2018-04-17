@@ -215,7 +215,7 @@ def get_actor_metadata(actor):
 
 def get_actors():
     """
-    :return: All actor's ancestors with their metadata
+    :return: All registered actors with their metadata
     """
     actors = get_flattened_subclasses(Actor)
     for actor in actors:

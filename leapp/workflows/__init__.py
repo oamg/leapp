@@ -22,6 +22,9 @@ def _get_phases_sorted(attrs):
 
 
 class WorkflowMeta(type):
+    """
+    Meta class for the registration of workflows
+    """
     def __new__(mcs, name, bases, attrs):
         klass = super(WorkflowMeta, mcs).__new__(mcs, name, bases, attrs)
         if not getattr(sys.modules[mcs.__module__], name, None):
@@ -99,10 +102,13 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
         :param execution_id: Custom execution id to use instead of a randomly generated UUIDv4
         :type execution_id: str
-        :param until_phase:
-        :type until_phase:
-        :param until_actor:
-        :type until_actor:
+        :param until_phase: Specify until including which phase the execution should run - phase.stage can be used to
+                            control it even more granular. `phase` is any phase name where `stage` refers to `main`,
+                            `before` or `after`. If no stage is defined, `after` is assumed as the default value.
+                            The execution will end when this phase (and stage if specified) have been executed.
+        :type until_phase: str
+        :param until_actor: The execution will finish when this actor has been executed.
+        :type until_actor: str
 
         """
         os.environ['LEAPP_EXECUTION_ID'] = execution_id or str(uuid.uuid4())
@@ -146,4 +152,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
 
 def get_workflows():
+    """
+    :return: all registered workflows
+    """
     return get_flattened_subclasses(Workflow)
