@@ -3,6 +3,17 @@ import pkgutil
 
 
 def library_loader(mod, prefix, paths):
+    """
+    Prepares modules and packages to be loaded
+
+    :param mod: module namespace
+    :type mod: Python Module?
+    :param prefix: prefix of module/package
+    :type prefix: str
+    :param paths: iterable paths
+    :type paths: tuple(str) 
+    :return: List of prepared modules/packages to be added (injected)
+    """
     to_add = []
     for importer, name, is_pkg in pkgutil.iter_modules(paths):
         imported = importer.find_module(name).load_module(name)
