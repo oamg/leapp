@@ -35,10 +35,11 @@ leapp\.utils\.meta module
     :undoc-members:
     :show-inheritance:
 
-leapp\.utils\.schemas module
+
+leapp\.utils\.project module
 ----------------------------
 
-.. automodule:: leapp.utils.schemas
+.. automodule:: leapp.utils.project
     :members:
     :undoc-members:
     :show-inheritance:

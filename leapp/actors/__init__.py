@@ -1,6 +1,3 @@
-import datetime
-import hashlib
-import json
 import logging
 import os
 import sys
@@ -116,19 +113,8 @@ class Actor(object):
         """
         if self._messaging:
             for model in models:
-                if isinstance(model, getattr(self.__class__, 'produces')):
-                    message_data = json.dumps(model.dump(), sort_keys=True)
-                    message_hash = hashlib.sha256(message_data).hexdigest()
-                    self._messaging.produce({
-                        'type': type(model).__name__,
-                        'actor': type(self).name,
-                        'topic': model.topic.name,
-                        'stamp': datetime.datetime.utcnow().isoformat() + 'Z',
-                        'message': {
-                            'data': message_data,
-                            'hash': message_hash
-                        }
-                    })
+                if isinstance(model, type(self).produces):
+                    self._messaging.produce(model, self)
 
     def consume(self, *models):
         """

@@ -4,7 +4,7 @@ import leapp.workflows
 from leapp.snactor.commands.workflow import workflow
 from leapp.utils.clicmd import command_arg, command_opt
 from leapp.logger import configure_logger
-from leapp.snactor.utils import requires_project, find_project_basedir
+from leapp.utils.project import requires_project, find_project_basedir
 from leapp.repository.scan import scan_repo
 
 

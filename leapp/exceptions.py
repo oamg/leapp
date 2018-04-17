@@ -74,3 +74,13 @@ class RepoItemPathDoesNotExistError(LeappError):
 class ActorDiscoveryExecutionError(LeappError):
     def __init__(self, message):
         super(ActorDiscoveryExecutionError, self).__init__(message)
+
+
+class UsageError(LeappError):
+    def __init__(self, message):
+        super(UsageError, self).__init__(message)
+
+
+class CommandDefinitionError(LeappError):
+    def __init__(self, message):
+        super(CommandDefinitionError, self).__init__(message)

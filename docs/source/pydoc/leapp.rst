@@ -7,13 +7,11 @@ Subpackages
 .. toctree::
 
     leapp.actors
-    leapp.cli
     leapp.libraries
     leapp.logger
     leapp.messaging
     leapp.models
     leapp.repository
-    leapp.snactor
     leapp.tags
     leapp.topics
     leapp.utils

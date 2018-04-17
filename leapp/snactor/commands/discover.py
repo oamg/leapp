@@ -7,7 +7,7 @@ from leapp.topics import get_topics
 from leapp.models import get_models
 from leapp.repository.scan import scan_repo
 from leapp.tags import get_tags
-from leapp.snactor.utils import find_project_basedir, get_project_name, requires_project
+from leapp.utils.project import requires_project, find_project_basedir, get_project_name
 from leapp.utils.clicmd import command, command_opt
 
 

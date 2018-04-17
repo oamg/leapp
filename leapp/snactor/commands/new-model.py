@@ -2,7 +2,7 @@ import os
 
 import sys
 
-from leapp.snactor.utils import find_project_basedir, make_class_name, requires_project
+from leapp.utils.project import requires_project, make_class_name, find_project_basedir
 from leapp.utils.clicmd import command_arg, command, UsageError
 
 

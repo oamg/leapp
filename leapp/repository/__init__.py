@@ -8,7 +8,7 @@ from logging import getLogger
 from leapp.exceptions import ModuleNameAlreadyExistsError, RepoItemPathDoesNotExistError, UnsupportedDefinitionKindError
 from leapp.repository.definition import DefinitionKind
 from leapp.repository.actor_definition import ActorDefinition
-from leapp.snactor.utils import get_project_name
+from leapp.utils.project import get_project_name
 
 
 class Repository(object):

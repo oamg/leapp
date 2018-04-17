@@ -3,7 +3,7 @@ import sys
 
 from leapp.snactor.commands.workflow import workflow
 from leapp.utils.clicmd import command_arg, command_opt
-from leapp.snactor.utils import find_project_basedir, requires_project, make_class_name, make_name
+from leapp.utils.project import requires_project, make_class_name, make_name, find_project_basedir
 
 
 @workflow.command('new', help='Creates a new workflow with the given name')

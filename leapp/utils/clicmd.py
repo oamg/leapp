@@ -1,22 +1,16 @@
-class UsageError(Exception):
-    def __init__(self, message):
-        super(UsageError, self).__init__(message)
-
-
-class CommandDefinitionError(Exception):
-    def __init__(self, message):
-        super(CommandDefinitionError, self).__init__(message)
-
-
-class _Empty(object):
-    pass
-
-
-empty = _Empty()
+from leapp.exceptions import CommandDefinitionError
 
 
 class Command(object):
+    """
+    Command implements a convenient command based argument parsing framework.
+    """
     def __init__(self, name, target=None, help=''):
+        """
+        :param name: Name of the sub command
+        :param target: Function to call when the command gets invoked
+        :param help: Help message to show
+        """
         self.name = name
         self.help = help
         self._sub_commands = {}
@@ -26,9 +20,19 @@ class Command(object):
         self.parser = None
 
     def get_inheritable_options(self):
+        """
+        :return: Returns all options that are marked as 'inherit'
+        """
         return [option for option in self._options if option[2].get('inherit')]
 
     def called(self, args):
+        """
+        The actual call is dispatched through this method - It will ensure that the parent is called as well
+        for allowing some generic handling of some flags (especially inherited flags)
+
+        :param args: Arguments object that is the result of the `argparse` commandline parser
+        :return: None
+        """
         if self.parent:
             self.parent.called(args)
 
@@ -36,6 +40,13 @@ class Command(object):
             self.target(args)
 
     def apply_parser(self, sparser, parent=None, parser=None):
+        """
+        :param sparser: ArgumentParser.add_subparsers
+        :param parent: Instance of :py:ref:`_Command`
+        :param parser: ArgumentParser instance usually received from sparser.add_parser
+        :return: None
+        """
+
         if self.parent is not parent:
             return
 
@@ -58,6 +69,13 @@ class Command(object):
                 cmd.apply_parser(subs, parent=self)
 
     def add_sub(self, cmd):
+        """
+        Add a sub command to this command
+
+        :param cmd: The sub command object
+        :type cmd: :py:class:`leapp.utils.clicmd.Command`
+        :return: self
+        """
         cmd.parent = self
         self._sub_commands[cmd.name] = cmd
         return self
@@ -80,6 +98,26 @@ class Command(object):
 
     def add_option(self, name, short_name='', help='', is_flag=False, inherit=False, value_type=str, wrapped=None,
                    action=None):
+        """
+        Add an option
+
+        :param name: Name of the option
+        :type name: str
+        :param short_name: short name of the option (One letter)
+        :type short_name: str
+        :param help: Help string for the option
+        :type help: str
+        :param is_flag: If it is a flag
+        :type is_flag: bool
+        :param inherit: Should this option be inherited by sub commands?
+        :type inherit: bool
+        :param value_type: Type of the value by default string
+        :param wrapped: Function that is wrapped (aka the target)
+        :type wrapped: Callable
+        :param action: ArgumentParser actions to take (e.g. store)
+        :type action: str
+        :return: self
+        """
         name = name.lstrip('-')
         names = ['--' + name]
         kwargs = {}
@@ -98,11 +136,25 @@ class Command(object):
         return self
 
     def add_argument(self, name, value_type=None, help='', wrapped=None):
+        """
+
+        :param name:
+        :param value_type:
+        :param help:
+        :param wrapped:
+        :return:
+        """
         self._add_opt(name.replace('-', '_'), help=help, type=value_type or str, internal={'wrapped': wrapped})
         return self
 
 
 def command(name, help=''):
+    """
+    Decorator to mark a function as sub command
+
+    :param name: Sub command name
+    :param help: Help string for the sub command
+    """
     def wrapper(f):
         if not hasattr(f, 'command'):
             f.command = Command(name, help=help, target=f)
@@ -121,6 +173,13 @@ def _ensure_command(f):
 
 
 def command_arg(name, value_type=None, help=''):
+    """
+    Decorator to wrap functions to add command line arguments to the sub command to invoke
+
+    :param name: Name of the argument
+    :param value_type: Type of the argument
+    :param help: Help string for the argument
+    """
     def wrapper(f):
         _ensure_command(f).command.add_argument(name, value_type=value_type, help=help, wrapped=f)
         return f
@@ -128,6 +187,12 @@ def command_arg(name, value_type=None, help=''):
 
 
 def command_opt(name, **kwargs):
+    """
+    Decorator to wrap functions to add command line options to the sub command to invoke
+
+    :param name: Name of the option
+    :param kwargs: parameters as specified in :py:func:`leapp.utils.clicmd.Command.add_option`
+    """
     def wrapper(f):
         _ensure_command(f).command.add_option(name, wrapped=f, **kwargs)
         return f

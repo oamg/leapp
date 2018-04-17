@@ -3,7 +3,7 @@ import os
 import sys
 
 from leapp.utils.clicmd import command_arg, command, UsageError
-from leapp.snactor.utils import find_project_basedir, make_name, make_class_name, requires_project
+from leapp.utils.project import requires_project, make_class_name, make_name, find_project_basedir
 
 
 @command('new-tag', help='Create a new tag')

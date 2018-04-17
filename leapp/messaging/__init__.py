@@ -1,3 +1,5 @@
+import datetime
+import hashlib
 import json
 import os
 import socket
@@ -41,32 +43,32 @@ class BaseMessaging(object):
         """
         self._perform_load(consumes)
 
-    def produce(self, message):
+    def produce(self, model, actor):
         """
         Called to send a message to be available for other actors.
 
-        Extends message with the following fields:
-        - :field str phase: Environment variable LEAPP_CURRENT_PHASE or value 'NON-WORKFLOW-EXECUTION'
-        - :field str context: Environment variable LEAPP_EXECUTION_ID or value 'TESTING-CONTEXT'
-        - :field str hostname: Hostname of the system either via env LEAPP_HOSTNAME or `socket.getfqdn()`
-
-        :param message: Dictionary of message items with the following fields:
-            - :field str actor: Who produced the message
-            - :field str topic: Name of the topic of the message
-            - :field str type: Model class name
-            - :field str stamp: UTC Timestamp in ISO format
-            - :field dict message:
-                - :field str data: JSON dump string with sorted keys
-                - :field str hash: SHA256 hex digest hash of `data`
-        :type message: dict
+        :param model: Model to send as message payload
+        :type model: :py:class:`leapp.models.Model`
+        :param actor: Actor that sends the message
+        :type actor: :py:class:`leapp.actors.Actor`
         :return: the updated message dict
         :rtype: dict
         """
-        message.setdefault('phase', os.environ.get('LEAPP_CURRENT_PHASE', 'NON-WORKFLOW-EXECUTION'))
-        message.setdefault('context', os.environ.get('LEAPP_EXECUTION_ID', 'TESTING-CONTEXT'))
-        message.setdefault('hostname', os.environ.get('LEAPP_HOSTNAME', socket.getfqdn()))
+        data = json.dumps(model.dump(), sort_keys=True)
+        message = {
+            'type': type(model).__name__,
+            'actor': type(actor).name,
+            'topic': model.topic.name,
+            'stamp': datetime.datetime.utcnow().isoformat() + 'Z',
+            'phase': os.environ.get('LEAPP_CURRENT_PHASE', 'NON-WORKFLOW-EXECUTION'),
+            'context': os.environ.get('LEAPP_EXECUTION_ID', 'TESTING-CONTEXT'),
+            'hostname': os.environ.get('LEAPP_HOSTNAME', socket.getfqdn()),
+            'message': {
+                'data': data,
+                'hash': hashlib.sha256(data).hexdigest()
+            }
+        }
         self._new_data.append(message)
-
         return self._process_message(message)
 
     def consume(self, *types):

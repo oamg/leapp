@@ -5,7 +5,7 @@ import socket
 from leapp.snactor import commands
 from leapp.snactor.commands import workflow
 from leapp.utils.clicmd import command, command_opt
-from leapp.snactor.utils import find_project_basedir
+from leapp.utils.project import find_project_basedir
 from leapp import VERSION
 
 SHORT_HELP = "actor-snactor is a leapp actor project management snactor"
@@ -17,7 +17,6 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 def load_commands():
     _load_commands_from(commands.__file__)
-
     _load_commands_from(commands.workflow.__file__)
     cli.command.add_sub(workflow.workflow.command)
 

@@ -2,7 +2,7 @@ import functools
 import re
 
 from six.moves import configparser
-from leapp.snactor.utils import find_project_basedir
+from leapp.utils.project import find_project_basedir
 import os
 
 
