@@ -74,13 +74,13 @@ class Model(with_metaclass(ModelMeta)):
 
     topic = None
     """
-    `topic` has to be set to a subclass of leapp.topics.Topic
+    `topic` has to be set to a subclass of :py:class:`leapp.topics.Topic`
     It defines the categorization of this model.
     """
 
     fields = None
     """
-    `fields` contains a dictionary with all attributes of type `Field` in the class
+    `fields` contains a dictionary with all attributes of type py:class:`leapp.models.fields.Field` in the class
     
     Note: Dynamically added fields are ignored by the framework
     """

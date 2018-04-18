@@ -275,6 +275,62 @@ class DateTime(BuiltinField):
             return value.isoformat() + 'Z'
 
 
+class EnumMixin(Field):
+    """
+    EnumMixin adds the ability to use the field as an Enum type of field
+    """
+    def __init__(self, choices, **kwargs):
+        """
+        :param choices: List of values that are allowed for this field
+        :type choices: list or tuple of allowed values
+        """
+        super(EnumMixin, self).__init__(**kwargs)
+        if not isinstance(choices, (tuple, list)):
+            raise ModelMisuseError("Choices needs to be a list or a tuple")
+        self._choices = choices
+
+    def _validate_model_value(self, value, name):
+        super(EnumMixin, self)._validate_model_value(value, name)
+        self._validate_choices(value, name)
+
+    def _validate_builtin_value(self, value, name):
+        super(EnumMixin, self)._validate_builtin_value(value, name)
+        self._validate_choices(value, name)
+
+    def _validate_choices(self, value, name):
+        if value not in (None, missing) and value not in self._choices:
+            values = ", ".join(map(str, self._choices))
+            raise ModelViolationError("Field {name} value must be one of '{values}'".format(name=name, values=values))
+
+
+class StringEnum(EnumMixin, String):
+    """
+    Field that represents an enumeration of Strings
+    """
+    pass
+
+
+class IntegerEnum(EnumMixin, Integer):
+    """
+    Field that represents an enumeration of Integers
+    """
+    pass
+
+
+class FloatEnum(EnumMixin, Float):
+    """
+    Field that represents an enumeration of Floats
+    """
+    pass
+
+
+class NumberEnum(EnumMixin, Number):
+    """
+    Field that represents an enumeration of Numbers
+    """
+    pass
+
+
 class List(Field):
     """
         List represents lists of `elem_field` values

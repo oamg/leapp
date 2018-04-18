@@ -264,13 +264,14 @@ def _make_dict(instance, value):
     return {instance.name: value}
 
 
-def create_fixture(field, value, name):
+def create_fixture(field, value, name, fail_values=None):
     def init(self):
         setattr(self, 'field_type', field)
 
     return type('Fixture', (object,), {
         'value': value,
         'name': name,
+        'fail_values': fail_values,
         'make_object': _make_object,
         'make_dict': _make_dict,
         '__init__': init
@@ -285,6 +286,12 @@ def _create_nested_base_model_field(**kwargs):
     return fields.Nested(BasicModel, **kwargs)
 
 
+def _create_string_enum_(*choices):
+    def _fun(**kwargs):
+        return fields.StringEnum(choices=choices, **kwargs)
+    return _fun
+
+
 BASIC_TYPE_FIXTURES = (
     create_fixture(fields.String, 'Test String Value', 'string_value'),
     create_fixture(fields.Boolean, True, 'boolean_value'),
@@ -294,8 +301,28 @@ BASIC_TYPE_FIXTURES = (
     create_fixture(fields.Number, 2, 'number_integer_value'),
     create_fixture(fields.DateTime, datetime.utcnow(), 'datetime_value'),
     create_fixture(_create_field_string_list, ['a', 'b', 'c'], 'string_list_value'),
-    create_fixture(_create_nested_base_model_field, BasicModel(message='Test message'), 'nested_model_value')
+    create_fixture(_create_nested_base_model_field, BasicModel(message='Test message'), 'nested_model_value'),
+    create_fixture(_create_string_enum_('YES', 'NO', 'MAYBE'), 'YES', 'string_enum_value', fail_values=('Woot',)),
 )
+
+
+def test_choices_wrong_value():
+    with pytest.raises(fields.ModelMisuseError):
+        fields.StringEnum(choices='abc')
+    fields.StringEnum(choices=('abc',))
+    with pytest.raises(fields.ModelMisuseError):
+        fields.IntegerEnum(choices=1)
+    fields.IntegerEnum(choices=(1,))
+    with pytest.raises(fields.ModelMisuseError):
+        fields.FloatEnum(choices=1.2)
+    fields.FloatEnum(choices=(1.2,))
+    with pytest.raises(fields.ModelMisuseError):
+        fields.NumberEnum(choices=3.14)
+    fields.NumberEnum(choices=(3.14,))
+
+
+def test_list_field_default():
+    fields.List(fields.StringEnum(choices=('1', '2', '3')), default=['1', '2'])
 
 
 @pytest.mark.parametrize("case", BASIC_TYPE_FIXTURES)
@@ -353,5 +380,18 @@ def test_basic_types_sanity(case):
     field.to_builtin(source, case.name, target)
     assert target.get(case.name) is None
     json.dumps(target)
+
+    if case.fail_values:
+        for fail_value in case.fail_values:
+            source = case.make_object(fail_value)
+            target = {case.name: fail_value}
+            field = case.field_type(required=False, allow_null=True)
+            with pytest.raises(fields.ModelViolationError):
+                field.to_builtin(source, case.name, target)
+
+            target = case.make_object(case.value)
+            source = {case.name: fail_value}
+            with pytest.raises(fields.ModelViolationError):
+                field.to_model(source, case.name, target)
 
     assert isinstance(field.help, six.string_types)
