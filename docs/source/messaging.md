@@ -1,22 +1,22 @@
 ## Using messaging to send data between actors
 
-The Leapp framework uses messages to send data to other actors are executed afterwards.
-Messages are defined through the models we have declared [earlier](first-actor.html#creating-a-model). Actors can consume those messages and produce data based on their input.
+The Leapp framework uses messages to send data to other actors that are executed afterward.
+Messages are defined through the models we have declared [earlier](first-actor.html#creating-a-model). Actors can consume these messages and produce data based on their input.
 
-As an example in this part of the tutorial, we will consume Hostname messages and resolve the IPs for those
-hostnames and create a ResolvedHostname model to send a new type of message.
+As an example, the actors will consume Hostname messages, resolve the IPs for those
+hostnames, and create a ResolvedHostname model to send a new type of message.
 
-### Creating the new ResolvedHostname model
+### Creating a new ResolvedHostname model
 
-First we will create the new model ResolvedHostname using the snactor tool.
+Create the new ResolvedHostname model by using the snactor tool.
 
 ```shell
 $ snactor new-model ResolvedHostname
 ```
 
-Next we will assign the SystemInfoTopic to the new model and add two fields:
-* The field `name` represents the hostname
-* The fields `ips` will contain a list of strings with the IPv4 or IPv6 addresses
+Assign the SystemInfoTopic to the new model and add two fields:
+* The `name` field represents the hostname.
+* The `ips` field contains a list of strings with the IPv4 or IPv6 addresses.
 
 Both fields are required in this scenario.
 
@@ -33,32 +33,32 @@ class ResolvedHostname(Model):
 
 ### Creating the message consuming actor
 
-Now we will create the new actor that does resolve the IPs for the hostnames.
+Create a new actor that resolves the IPs for the hostnames:
 
 ```shell
 $ snactor new-actor IpResolver
 ```
 
-We will import the ScanTag from leapp.tags and the models Hostname and
+Import the ScanTag from leapp.tags, and the models Hostname and
 ResolvedHostname from leapp.models. Since we want to retrieve the Hostname
-messages to process their data we set it in the consumes tuple.
-And our result will be ResolvedHostname so we are setting the type in the
+messages to process their data, we set it in the consumes tuple.
+The result will be ResolvedHostname, so set the type in the
 produces tuple.
 
 The tags tuple gets extended with the ScanTag.
-Next we will just import socket.
+Now, import a socket.
 
-To consume messages we will use the class method consume and pass the type
-of message we would like to consume. Actually this is just to filter out the
-messages. In theory we could just consume all messages, but it's recommended
-not to do so. If you would like to change your code later and consume more
-types of messages you might end up with unexpected results. So rather always
-specify on the 'consume' method all types you would like to consume instead
-of getting all messages unfiltered.
+To enable actors to consume messages, use the consume class method, and pass the type
+of the message to be consumed. This is necessary to filter out the
+messages. In theory, all messages can be consumed, but it is not recommended.
+If you would like to change your code later and consume more
+types of messages, you might end up with unexpected results. Always
+specify on the consume class method all types of messages to be consumed instead
+of having all messages unfiltered.
 
-Now we just perform the resolving of the hostnames and produce a new message.
+Now, perform the resolving of the hostnames and produce a new message.
 
-See the example code here:
+See the example of the code:
 
 ```python
 import socket
@@ -88,22 +88,21 @@ class IpResolver(Actor):
 
 ### Storing messages in the project data for reuse
 
-The framework tool `snactor` allows to save the output of actors as locally stored messages,
-so they can be consumed by actors that are being developed.
+The `snactor` framework tool saves the output of actors as locally stored messages,
+so that they can be consumed by the actors that are being developed.
 
-To make the data consumable to other actors, the actor producing the data has to be
-run with the --save-output like this.
+To make the data consumable by other actors, run the actor producing the data with the --save-output option:
 
 ```shell
 $ snactor run --save-output HostnameScanner
 ```
 
-Now the output of the actor will be stored in the local project data file and can be used
+The output of the actor is stored in the local project data file, and it can be used
 by other actors.
 
 ### Testing the new actor
 
-Now that we have the input messages available and stored the actor can be tested.
+With the input messages available and stored, the actor can be tested.
 
 ```shell
 $ snactor run --print-output IpResolver
