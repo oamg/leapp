@@ -1,56 +1,46 @@
-# Creating a first actor
+# Creating your first actor
 
-We will go through the steps necessary to create a new actor in a complete clean environment.
-The purpose of the actor we will write in this tutorial, is to retrieve the hostname of the
-system and send it as a message into the system so other actors can consume it.
+We will go through the steps necessary to create a new actor in a completely clean environment.
+The purpose of the actor in this tutorial is to retrieve the hostname of the
+system and to send it as a message into the system, so that other actors can consume it.
 
-For the sake of getting started from zero, we will assume that all things have to be created.
+We will start at the very beginning, so we will assume that all things have to be created.
 
 ## Terminology
 
-First let's start defining the terminology
-
 ### Models
-To send messages between actors a model has to be created that describes the format of the
-message and acts at the same time as an object to access the data. If you know ORM libraries,
-this works pretty similar
+To send messages between actors, a model has to be created. The model describes the format of the
+message and acts as an object to access the data. This principle is similar to ORM libraries.
 
 ### Topics
-Topic are used to classify the purpose of a message and every Model has to have an assigned
-topic.
+Topics are used to classify the purpose of a message, and they are a necessary part of every model.
 
 ### Tags
 Tags are used by the framework to be able to query the repository for actors that should be
-executed together in a [phase of a workflow](terminlogy.html#phase). This starts being
-interesting when you want to have your actor being included into a
-[workflow](terminology.html#workflow) in a phase. For keeping the tutorial a bit more simple
-about how to write and test the actor we skip this topic.
+executed at the same time in a [phase of a workflow](terminlogy.html#phase). This is necessary when you want to have your actor being included into a [workflow](terminology.html#workflow) in a phase. For keeping the tutorial simpler, we will not discuss the tags now.
 
 ### Actors
-Actors define what messages they want to consume and what they produce by importing the
+Actors define what messages they consume and what they produce by importing the
 classes and assigning them to a tuple in the actor class definition.
-Tags are defined there as well for the reasons as outlined above.
+Tags are defined there as well for the reasons outlined above.
 
 
 ## Getting started
 
-First go to your project directory. If you did not yet create a project please check the
-steps [in the create project tutorial](create-project)
-
-We're considering that this is an empty project.
+First, create and go to your project directory. See [Creating a new project project tutorial](create-project).
 
 ### Creating a tag
 
-As outlined above, we will have to create a tag. Since we are scanning the system, let's
-call this tag 'Scan'
+Create a tag. Since we are scanning the system, let's
+call this tag 'Scan'. Use the snactor tool.
 
 ```shell
     $ snactor new-tag Scan
 ```
 
-This will create a subdirectory called tags with a file scan.py and in that file all
-necessary code is already defined and it creates the class *ScanTag* which we will use
-later on.
+This will create a subdirectory called tags with a scan.py file. The file contains all
+the necessary code, and it creates the *ScanTag* class, which we will use
+later.
 
 #### Screencast
 
@@ -58,14 +48,14 @@ later on.
 
 ### Creating a topic
 
-Next we will have to create a topic, which we will call *SystemInfo* topic
+Create the *SystemInfo* topic.
 
 ```shell
     $ snactor new-topic SystemInfo
 ```
 
-This time the folder topics has been created with a systeminfo.py file that provides
-the complete code and definition for the *SystemInfoTopic* class we will use in the model.
+The topics directory has been created with a systeminfo.py file, which provides
+the complete code and definition for the *SystemInfoTopic* class used in the model.
 
 #### Screencast
 
@@ -73,14 +63,14 @@ the complete code and definition for the *SystemInfoTopic* class we will use in 
 
 ### Creating a model
 
-Now we have to create the model we want to use for sending the message. We will call the
-model *Hostname* and have it assigned to the *SystemInfoTopic*
+Create a model for sending a message. We will call the
+model *Hostname* and have it assigned to the *SystemInfoTopic* class.
 
 ```shell
    $ snactor new-model Hostname
 ```
 
-The model boiler plate will be now available at models/hostname.py and looks like this:
+The model boiler plate is available at the models/hostname.py file:
 
 ```python
 from leapp.models import Model, fields
@@ -90,17 +80,17 @@ class Hostname(Model):
     topic = None #  TODO: import appropriate topic and set it here
 ```
 
-As the comment says, we will have to import the SystemInfoTopic and assign it to
-the topic variable of the Hostname class.
+As the comment says, import the *SystemInfoTopic* class and assign it to
+the topic variable of the *Hostname* model.
 
-You can import the SystemInfoTopic class like this:
+Import the *SystemInfoTopic* class:
 ```python
 from leapp.topics import SystemInfoTopic
 ```
 
-After the topic has been assigned we will create a new field for the message
-called name, which is supposed to be a string. This can be accomplished by
-setting the name field like this:
+After the topic has been assigned, create a new field for the message
+called *name*, which is supposed to be a string. This can be accomplished by
+setting the *name* field:
 
 ```python
 class Hostname(Model):
@@ -108,10 +98,9 @@ class Hostname(Model):
     name = fields.String()
 ```
 
-Now let's add a default value of 'localhost.localdomain', in case the name
-does not get set. Default values are initializing the values in the
-construction of the class object, if there has not been passed any other
-value.
+Add a default value of 'localhost.localdomain', in case the name
+is not specified. Default values are initializing the values in the
+construction of the class object, if no other value has been determined.
 
 ```python
 class Hostname(Model):
@@ -119,7 +108,7 @@ class Hostname(Model):
     name = fields.String(default='localhost.localdomain')
 ```
 
-Now we can save the file a go write an actor using the other parts.
+Save the file and write an actor.
 
 #### Screencast
 
@@ -128,16 +117,16 @@ Now we can save the file a go write an actor using the other parts.
 
 ### Creating an actor
 
-So as we said in the introduction we said we would like to create an actor
+We are creating an actor
 that retrieves the system hostname and sends it as a message.
-Therefore we will create an actor called HostnameScanner
+Call the actor *HostnameScanner*.
 
 ```shell
     $ snactor new-actor HostnameScanner
 ```
 
-We will receive a folder actors/hostnamescanner/ with an actor.py file
-and a tests subfolder. Let's look at the pregenerated actor.py file:
+We created the actors/hostnamescanner/ directory with an actor.py file
+and a tests subdirectory. Let's look at the pregenerated actor.py file:
 
 ```python
 from leapp.actors import Actor
@@ -154,7 +143,7 @@ class HostnameScanner(Actor):
          pass
 ```
 
-First we will have to import the model and the tag we have previously created to
+Import the model and the tag we have previously created to
 be able to assign them.
 
 ```python
@@ -162,9 +151,9 @@ from leapp.models import Hostname
 from leapp.tags import ScanTag
 ```
 
-Now assign *Hostname*, to the *produces* attribute as a tuple element and
-do the same with *ScanTag* and the *tags* attribute
-Don't forget the trailing comma ;-)
+Assign *Hostname* to the *produces* attribute as a tuple element and
+do the same with the *ScanTag* and *tags* attributes.
+Do not forget the trailing commas.
 
 ```python
      consumes = ()
@@ -172,13 +161,13 @@ Don't forget the trailing comma ;-)
      tags = (ScanTag,)
 ```
 
-Now we can start writing the actor code. The actor code has to be added
+Now, we can start writing the actor code. The actor code has to be added
 in the process method.
 
 To retrieve the hostname, we will use the python socket module, which has
-a function called getfqdn. This will retrieve us the hostname.
+a function called *getfqdn*, which will retrieve the hostname.
 
-For that add `import socket` on the top of the file.
+For that, add `import socket` at the top of the file.
 
 A very minimal implementation for this actor can look like this:
 
@@ -187,7 +176,7 @@ A very minimal implementation for this actor can look like this:
         self.produce(Hostname(name=socket.getfqdn()))
 ```
 
-But we would like also to do some logging so we can see our actor at work.
+But we would also like to do some logging, so that we can see our actor at work.
 
 ```python
    def process(self):
@@ -198,9 +187,9 @@ But we would like also to do some logging so we can see our actor at work.
                      hostname)
 ```
 
-If you want, you can edit the description of the actor now.
+You can edit the description of the actor now.
 
-Now we can save the file and it's ready to run from commandline via:
+Save the file, and it is ready to be run from the commandline:
 
 ```shell
 	$ snactor run HostnameScanner
@@ -210,7 +199,7 @@ Now we can save the file and it's ready to run from commandline via:
     2018-03-20 13:24:16.188 INFO     PID: 6273 leapp.actors.hostname_scanner: Finished scanning for the hostname, found = actor-developer
 ```
 
-If you want to see the message it generated use the --print-output flag
+To see the message it generated, use the --print-output option:
 
 ```shell
 	$ snactor run --print-output HostnameScanner
