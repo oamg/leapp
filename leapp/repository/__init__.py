@@ -38,8 +38,25 @@ class Repository(object):
         for actor in self.actors:
             actor_name = actor.name.lower()
             actor_class = actor.class_name.lower()
-            if actor_name == name or actor_class == name:
+            if name in (actor_name, actor_class):
                 return actor
+        return None
+
+    def lookup_workflow(self, name):
+        """
+        Finds workflow in repository
+
+        :param name: Name of the workflow class name, Workflow.name or Workflow.short_name
+        :type name: str
+        :return: None or Workflow
+        """
+        name = name.lower()
+        for workflow in self.workflows:
+            workflow_name = workflow.name.lower()
+            workflow_class = workflow.class_name.lower()
+            workflow_short_name = workflow.short_name
+            if name in (workflow_name, workflow_class, workflow_short_name):
+                return workflow
         return None
 
     def add(self, kind, item):

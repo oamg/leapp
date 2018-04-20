@@ -1,11 +1,40 @@
 import itertools
 
+
 class RepositoryManager(object):
     """
-    Gives ability to manage repositories.
+    Handles multiple loaded repositories
     """
     def __init__(self):
         self._repos = []
+
+    def lookup_actor(self, name):
+        """
+        Finds actor in all loaded repositories
+
+        :param name: Name of the actor
+        :type name: str
+        :return: None or Actor
+        """
+        for repo in self._repos:
+            actor = repo.lookup_actor(name)
+            if actor:
+                return actor
+        return None
+
+    def lookup_workflow(self, name):
+        """
+        Finds workflow in all loaded repositories
+
+        :param name: Name of the workflow
+        :type name: str
+        :return: None or Workflow
+        """
+        for repo in self._repos:
+            workflow = repo.lookup_workflow(name)
+            if workflow:
+                return workflow
+        return None
 
     def add_repo(self, repo):
         """
@@ -19,9 +48,9 @@ class RepositoryManager(object):
     @property
     def repos(self):
         """
-        :note: TODO
+        Returns a tuple of all repository instances
         """
-        pass
+        return tuple(self._repos)
 
     def load(self):
         """
@@ -35,13 +64,6 @@ class RepositoryManager(object):
         :return: List of resources in all known repositories
         """
         return [repo.dump() for repo in self._repos]
-
-    def inject(self):
-        """
-        :note: TODO
-        """
-        for repo in self._repos:
-            repo.inject()
 
     @property
     def actors(self):

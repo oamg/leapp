@@ -1,7 +1,17 @@
 import os
+import subprocess
 
 from leapp.repository import Repository, DefinitionKind
+from leapp.repository.manager import RepositoryManager
 from leapp.repository.actor_definition import ActorDefinition
+
+
+def find_and_scan_repositories(path, manager=None):
+    if os.path.isdir(path):
+        manager = manager or RepositoryManager()
+        for directory in subprocess.check_output(['/usr/bin/find', path, '-name', '.leapp']).split('\n'):
+            manager.add_repo(scan_repo(os.path.dirname(directory)))
+    return manager
 
 
 def scan_repo(path):
