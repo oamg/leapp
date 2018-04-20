@@ -29,6 +29,7 @@ Requires: python3-%{name} = %{version}-%{release}
 %else
 Requires: python2-%{name} = %{version}-%{release}
 %endif
+Requires: leapp-repository >= %{version}
 
 %description
 Leapp tool for handling upgrades
