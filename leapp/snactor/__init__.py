@@ -60,7 +60,8 @@ def cli(args):
 def main():
     os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
     from argparse import ArgumentParser
-    parser = ArgumentParser(prog='snactor', version='snactor version {}'.format(VERSION))
+    parser = ArgumentParser(prog='snactor')
+    parser.add_argument('--version', action='version', version='snactor version {}'.format(VERSION))
     parser.set_defaults(func=None)
     s = parser.add_subparsers(description='Main commands')
     load_commands()

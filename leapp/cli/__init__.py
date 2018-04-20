@@ -13,7 +13,8 @@ def cli(args):
 
 def main():
     cli.command.add_sub(leapp.cli.upgrade.upgrade.command)
-    parser = argparse.ArgumentParser(prog='leapp', version='leapp version {}'.format(VERSION))
+    parser = argparse.ArgumentParser(prog='leapp')
+    parser.add_argument('--version', action='version', version='leapp version {}'.format(VERSION))
     parser.set_defaults(func=None)
     s = parser.add_subparsers(description='Main commands')
     cli.command.apply_parser(s, parser=parser)
