@@ -1,3 +1,5 @@
 class Flags(object):
-    def __init__(self, *args, **kwargs):
-        pass
+    restart_after_phase = False
+
+    def __init__(self, restart_after_phase=False):
+        self.restart_after_phase = restart_after_phase

@@ -4,7 +4,7 @@ import uuid
 from leapp.config import get_config
 from leapp.logger import configure_logger
 from leapp.repository.scan import find_and_scan_repositories
-from leapp.utils.audit import Execution, get_connection
+from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
 
 
@@ -21,17 +21,31 @@ def load_repositories():
 
 
 def fetch_last_upgrade_context():
+    """
+    :return: Context of the last execution
+    """
     db = get_connection(None)
-    cursor = db.execute("SELECT context, stamp FROM execution WHERE kind = ? ORDER BY stamp DESC LIMIT 1")
-    return cursor.fetchone()[0]
+    cursor = db.execute('SELECT context, stamp FROM execution WHERE kind = "upgrade" ORDER BY stamp DESC LIMIT 1')
+    row = cursor.fetchone()
+    if row:
+        return row[0]
+    return None
+
+
+def get_last_phase(context):
+    checkpoints = get_checkpoints(context=context)
+    if checkpoints:
+        return checkpoints[-1]['phase']
 
 
 @command('upgrade', help='')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
 def upgrade(args):
+    skip_phases_until=None
     context = str(uuid.uuid4())
     if args.resume:
         context = fetch_last_upgrade_context()
+        skip_phases_until = get_last_phase(context)
     else:
         e = Execution(context=context, kind='upgrade', configuration={})
         e.store()
@@ -41,4 +55,4 @@ def upgrade(args):
 
     repositories = load_repositories()
     workflow = repositories.lookup_workflow('IPUWorkflow')
-    workflow.run()
+    workflow.run(skip_phases_until=skip_phases_until)

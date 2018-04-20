@@ -4,6 +4,7 @@ import sys
 import uuid
 
 from leapp.utils.meta import with_metaclass, get_flattened_subclasses
+from leapp.utils import reboot_system
 from leapp.workflows.phases import Phase
 from leapp.workflows.phaseactors import PhaseActors
 from leapp.messaging.inprocess import InProcessMessaging
@@ -96,7 +97,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         """ All produced messaged """
         return self._all_produced
 
-    def run(self, execution_id=None, until_phase=None, until_actor=None):
+    def run(self, execution_id=None, until_phase=None, until_actor=None, skip_phases_until=None):
         """
         Executes the workflow
 
@@ -109,6 +110,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
         :type until_phase: str
         :param until_actor: The execution will finish when this actor has been executed.
         :type until_actor: str
+        :param skip_phases_until: Skips all phases until including the phase specified and then continues execution.
+        :type skip_phases_until: str or None
 
         """
         os.environ['LEAPP_EXECUTION_ID'] = execution_id or str(uuid.uuid4())
@@ -116,6 +119,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self.log.info('Starting workflow execution: {name} - ID: {id}'.format(
             name=self.name, id=os.environ['LEAPP_EXECUTION_ID']))
 
+        skip_phases_until = (skip_phases_until or '').lower()
         needle_phase = until_phase or ''
         needle_stage = None
         if '.' in needle_phase:
@@ -126,6 +130,12 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
         for phase in self._phase_actors:
             os.environ['LEAPP_CURRENT_PHASE'] = phase[0].name
+
+            if skip_phases_until:
+                if skip_phases_until == phase[0].name.lower():
+                    skip_phases_until = ''
+                self.log.info('Skipping phase {name}'.format(name=phase[0].name))
+                continue
 
             self.log.info('Starting phase {name}'.format(name=phase[0].name))
             current_logger = self.log.getChild(phase[0].name)
@@ -149,6 +159,10 @@ class Workflow(with_metaclass(WorkflowMeta)):
             if phase[0].name == needle_phase:
                 self.log.info('Workflow finished due to until-phase flag')
                 return
+
+            if phase[0].flags.restart_after_phase:
+                self.log.info('Initiating system reboot due to restart_after_reboot flag')
+                reboot_system()
 
 
 def get_workflows():
