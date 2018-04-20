@@ -47,10 +47,10 @@ def cli(args):
     if not config_file_path and find_project_basedir('.'):
         config_file_path = os.path.join(find_project_basedir('.'), '.leapp/leapp.conf')
 
-    if not config_file_path and not os.path.isfile(config_file_path):
+    if not config_file_path or not os.path.isfile(config_file_path):
         config_file_path = os.environ.get('LEAPP_CONFIG')
 
-    if not config_file_path and not os.path.isfile(config_file_path):
+    if not config_file_path or not os.path.isfile(config_file_path):
         config_file_path = '/etc/leapp/leapp.conf'
 
     os.environ['LEAPP_CONFIG'] = config_file_path
