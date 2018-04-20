@@ -3,7 +3,7 @@ import os
 import sqlite3
 
 from leapp.utils.audit import get_connection, Execution, Host, MessageData, \
-    DataSource, Message, Audit, get_messages
+    DataSource, Message, Audit, get_messages, checkpoint, get_checkpoints
 from leapp.config import get_config
 
 _HOSTNAME = 'test-host.example.com'
@@ -216,3 +216,13 @@ def test_get_messages():
     test_message()
     messages = get_messages((_MESSAGE_TYPE,), _CONTEXT_NAME)
     assert messages and len(messages) == 1
+
+
+def test_checkpoints():
+    checkpoint(actor=_ACTOR_NAME, phase=_PHASE_NAME, context=_CONTEXT_NAME, hostname=_HOSTNAME)
+    result = get_checkpoints(_CONTEXT_NAME)
+    assert result and len(result) == 1
+    assert result[0]['id']
+    assert result[0]['actor'] == _ACTOR_NAME
+    assert result[0]['phase'] == _PHASE_NAME
+    assert result[0]['stamp'].endswith('Z')

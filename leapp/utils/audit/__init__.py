@@ -258,8 +258,16 @@ class Audit(DataSource):
         self.stamp = stamp or datetime.datetime.utcnow().isoformat() + 'Z'
         self.message = message
         self.data = data
+        self._audit_id = None
+
+    @property
+    def audit_id(self):
+        return self._audit_id
 
     def do_store(self, connection):
+        if self._audit_id:
+            return
+
         super(Audit, self).do_store(connection)
 
         if self.message and not self.message.message_id:
@@ -268,11 +276,13 @@ class Audit(DataSource):
         if self.data and not isinstance(self.data, six.string_types):
             self.data = json.dumps(self.data)
 
-        connection.execute(
+        cursor = connection.execute(
             'INSERT INTO audit (event, stamp, context, data_source_id, message_id, data)'
             ' VALUES(?, ?, ?, ?, ?, ?)',
             (self.event, self.stamp, self.context, self.data_source_id,
              self.message.message_id if self.message else None, self.data))
+
+        self._audit_id = cursor.lastrowid
 
 
 def _dict_factory(cursor, row):
@@ -310,3 +320,51 @@ def get_messages(names, context):
     for row in result:
         row['message'] = {'data': row.pop('message_data'), 'hash': row.pop('message_hash')}
     return result
+
+
+_AUDIT_CHECKPOINT_EVENT = 'checkpoint'
+
+
+def checkpoint(actor, phase, context, hostname):
+    """
+    Creates a checkpoint audit entry
+
+    :param actor: Name of the actor that triggered the entry
+    :type actor: str
+    :param phase: In which phase of the workflow execution the data entry was created
+    :type phase: str
+    :param context: The execution context
+    :type context: str
+    :param hostname: Hostname of the system that produced the entry
+    :type hostname: str
+    :return: None
+    """
+
+    audit = Audit(event=_AUDIT_CHECKPOINT_EVENT, actor=actor, phase=phase, hostname=hostname, context=context)
+    audit.store()
+
+
+def get_checkpoints(context):
+    """
+    Retrieve all checkpoints stored in the database for the given context
+
+    :param context: The execution context
+    :type context: str
+    :return: list of dicts with id, timestamp, actor and phase fields
+    """
+    cursor = get_connection(None).execute('''
+        SELECT
+            audit.id          AS id,
+            audit.stamp       AS stamp,
+            data_source.actor AS actor,
+            data_source.phase AS phase
+          FROM
+            audit
+          JOIN
+            data_source ON data_source.id = audit.data_source_id
+          WHERE
+            audit.context = ? AND audit.event = ?
+          ORDER BY stamp ASC;
+    ''', (context, _AUDIT_CHECKPOINT_EVENT))
+    cursor.row_factory = _dict_factory
+    return cursor.fetchall()
