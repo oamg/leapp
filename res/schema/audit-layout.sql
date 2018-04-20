@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS execution (
   id            INTEGER PRIMARY KEY NOT NULL,
   context       VARCHAR(36)         NOT NULL UNIQUE,
   stamp         TIMESTAMP           NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  configuration TEXT                         DEFAULT NULL
+  configuration TEXT                         DEFAULT NULL,
+  kind          VARCHAR(256)                 DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS host (

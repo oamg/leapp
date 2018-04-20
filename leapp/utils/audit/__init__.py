@@ -81,10 +81,12 @@ class Execution(Storable):
         """
         return self._execution_id
 
-    def __init__(self, context=None, configuration=None, stamp=None):
+    def __init__(self, context=None, kind=None, configuration=None, stamp=None):
         """
         :param context: Execution context identifier
         :type context: str
+        :param kind: Execution kind - Can be any string and used for filtering
+        :type kind: str
         :param configuration:
         :type configuration: str
         :param stamp: Timestamp string of the execution start in iso format
@@ -92,14 +94,17 @@ class Execution(Storable):
         """
         super(Execution, self).__init__()
         self.stamp = stamp or datetime.datetime.utcnow().isoformat() + 'Z'
+        if not isinstance(configuration, str):
+            configuration = json.dumps(configuration, sort_keys=True)
         self.configuration = configuration
         self.context = context
+        self.kind = kind
         self._execution_id = None
 
     def do_store(self, connection):
         super(Execution, self).do_store(connection)
-        connection.execute('INSERT OR IGNORE INTO execution (context, configuration, stamp) VALUES(?, ?, ?)',
-                           (self.context, self.configuration, self.stamp))
+        connection.execute('INSERT OR IGNORE INTO execution (context, configuration, stamp, kind) VALUES(?, ?, ?, ?)',
+                           (self.context, self.configuration, self.stamp, self.kind))
         cursor = connection.execute('SELECT id FROM execution WHERE context = ?',
                                     (self.context,))
         self._execution_id = cursor.fetchone()[0]
