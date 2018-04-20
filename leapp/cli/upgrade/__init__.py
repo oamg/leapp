@@ -1,11 +1,11 @@
 import os
 import uuid
 
-from leapp.utils.clicmd import command, command_opt
-from leapp.repository.scan import find_and_scan_repositories
 from leapp.config import get_config
 from leapp.logger import configure_logger
+from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection
+from leapp.utils.clicmd import command, command_opt
 
 
 def load_repositories_from(name, repo_path, manager=None):
