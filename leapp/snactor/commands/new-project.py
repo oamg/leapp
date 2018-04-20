@@ -6,7 +6,7 @@ from leapp.utils.clicmd import command_arg, command
 
 _PROJECT_CONFIG = '''
 [repositories]
-custom_repo_path=${project:root_dir}
+repo_path=${project:root_dir}
 
 [database]
 path=${project:state_dir}/leapp.db

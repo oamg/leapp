@@ -12,8 +12,7 @@ _CONFIG_DEFAULTS = {
         'path': '/var/lib/leapp/leapp.db',
     },
     'repositories': {
-        'global_repo_path': '.',
-        'custom_repo_path': None,
+        'repo_path': '.',
     },
 }
 
