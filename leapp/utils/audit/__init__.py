@@ -83,7 +83,7 @@ class Execution(Storable):
 
     def __init__(self, context=None, configuration=None, stamp=None):
         """
-        :param context: Executino context identifier
+        :param context: Execution context identifier
         :type context: str
         :param configuration:
         :type configuration: str
@@ -297,7 +297,7 @@ _MESSAGE_QUERY_TEMPLATE = '''
              id, context, stamp, topic, type, actor, phase, message_hash, message_data, hostname                          
         FROM                                                                                                               
              messages_data                                                                                                  
-        WHERE context = ? AND type IN ("{}")'''
+        WHERE context = ? AND type IN (%s)'''
 
 
 def get_messages(names, context):
@@ -312,7 +312,8 @@ def get_messages(names, context):
     if not names:
         return ()
 
-    cursor = get_connection(None).execute(_MESSAGE_QUERY_TEMPLATE.format('"'.join(names)), (context,))
+    cursor = get_connection(None).execute(_MESSAGE_QUERY_TEMPLATE % ', '.join('?' * len(names)),
+                                          (context,) + tuple(names))
     cursor.row_factory = _dict_factory
     result = cursor.fetchall()
 

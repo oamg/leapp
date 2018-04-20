@@ -203,6 +203,10 @@ def test_audit_non_string_data():
     e = Audit(event='new-message', data=['Some data'], actor=_ACTOR_NAME, phase=_PHASE_NAME, context=_CONTEXT_NAME,
               hostname=_HOSTNAME)
     e.store()
+    assert e.audit_id
+    current = e.audit_id
+    e.store()
+    assert current is e.audit_id
     assert e.data_source_id
     assert e.host_id
     assert not e.message
