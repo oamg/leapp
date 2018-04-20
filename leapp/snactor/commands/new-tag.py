@@ -2,7 +2,8 @@ import os
 
 import sys
 
-from leapp.utils.clicmd import command_arg, command, UsageError
+from leapp.utils.clicmd import command_arg, command
+from leapp.exceptions import UsageError
 from leapp.utils.project import requires_project, make_class_name, make_name, find_project_basedir
 
 

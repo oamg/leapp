@@ -2,7 +2,8 @@ import os
 import sys
 
 from leapp.utils.project import requires_project, make_class_name, make_name, find_project_basedir
-from leapp.utils.clicmd import command, command_arg, UsageError
+from leapp.utils.clicmd import command, command_arg
+from leapp.exceptions import UsageError
 
 
 @command('new-actor', help='Creates a new actor')

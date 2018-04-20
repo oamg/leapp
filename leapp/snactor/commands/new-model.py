@@ -3,7 +3,8 @@ import os
 import sys
 
 from leapp.utils.project import requires_project, make_class_name, find_project_basedir
-from leapp.utils.clicmd import command_arg, command, UsageError
+from leapp.utils.clicmd import command_arg, command
+from leapp.exceptions import UsageError
 
 
 @command('new-model', help='Creates a new model')
