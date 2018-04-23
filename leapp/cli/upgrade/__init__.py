@@ -55,4 +55,4 @@ def upgrade(args):
 
     repositories = load_repositories()
     workflow = repositories.lookup_workflow('IPUWorkflow')
-    workflow.run(skip_phases_until=skip_phases_until)
+    workflow().run(skip_phases_until=skip_phases_until)

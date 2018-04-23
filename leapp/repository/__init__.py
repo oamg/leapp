@@ -133,7 +133,7 @@ class Repository(object):
                 self._load_libraries(path=(os.path.dirname(loaded.__file__),), mod=loaded, prefix=mod_full_name)
 
     def _load_modules(self, modules):
-        directories = {os.path.join(self._repo_dir, os.path.dirname(module)) for module in modules}
+        directories = tuple(os.path.join(self._repo_dir, os.path.dirname(module)) for module in modules)
         for importer, name, is_pkg in pkgutil.iter_modules(directories):
             importer.find_module(name).load_module(name)
 
