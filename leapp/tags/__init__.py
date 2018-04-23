@@ -16,15 +16,24 @@ class TagMeta(type):
         if klass.__module__ is not TagMeta.__module__:
             setattr(sys.modules[mcs.__module__], name, klass)
             setattr(klass, 'actors', ())
+
             if not getattr(klass, 'parent', None):
                 data = {'parent': klass, 'actors': ()}
-                before_common = type(name + 'BeforeCommon', (Tag,), dict(name='common-before-' + klass.name, **data))
-                after_common = type(name + 'AfterCommon', (Tag,), dict(name='common-after-' + klass.name, **data))
-                klass.Before = type('Before' + name, (Tag,),
+                before_common = type('_' + name + 'BeforeCommon', (Tag,), dict(name='common-before-' + klass.name, **data))
+                after_common = type('_' + name + 'AfterCommon', (Tag,), dict(name='common-after-' + klass.name, **data))
+                klass.Before = type('_' + 'Before' + name, (Tag,),
                                     dict(name='before-' + klass.name, Common=before_common, **data))
-                klass.After = type('After' + name, (Tag,),
+                klass.After = type('_' + 'After' + name, (Tag,),
                                    dict(name='after-' + klass.name, Common=after_common, **data))
-                klass.Common = type('Common' + name, (Tag,), dict(name='common-' + klass.name, **data))
+                klass.Common = type('_' + 'Common' + name, (Tag,), dict(name='common-' + klass.name, **data))
+
+                # To allow pickle to handle these tags we have to publish them on module level
+                globals().update({
+                    before_common.__name__: before_common,
+                    after_common.__name__: after_common,
+                    klass.Before.__name__: klass.Before,
+                    klass.After.__name__: klass.After,
+                    klass.Common.__name__: klass.Common})
         return klass
 
 
