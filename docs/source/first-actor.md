@@ -134,7 +134,7 @@ from leapp.actors import Actor
 
 class HostnameScanner(Actor):
      name = 'hostname_scanner'
-     description = 'For the actor hostname_scanner has been no description provided.'
+     description = 'No description has been provided for the hostname_scanner actor.'
      consumes = ()
      produces = ()
      tags = ()
