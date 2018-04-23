@@ -51,8 +51,11 @@ def upgrade(args):
         e.store()
     os.environ['LEAPP_EXECUTION_ID'] = context
 
-    configure_logger()
+    logger = configure_logger()
+
+    if args.resume:
+        logger.info("Resuming execution after phase: %s", skip_phases_until)
 
     repositories = load_repositories()
     workflow = repositories.lookup_workflow('IPUWorkflow')
-    workflow().run(skip_phases_until=skip_phases_until)
+    workflow().run(context=context, skip_phases_until=skip_phases_until)

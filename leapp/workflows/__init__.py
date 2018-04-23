@@ -1,5 +1,6 @@
 import logging
 import os
+import socket
 import sys
 import uuid
 
@@ -8,6 +9,7 @@ from leapp.utils import reboot_system
 from leapp.workflows.phases import Phase
 from leapp.workflows.phaseactors import PhaseActors
 from leapp.messaging.inprocess import InProcessMessaging
+from leapp.utils.audit import checkpoint
 
 
 def _phase_sorter_key(a):
@@ -97,12 +99,12 @@ class Workflow(with_metaclass(WorkflowMeta)):
         """ All produced messaged """
         return self._all_produced
 
-    def run(self, execution_id=None, until_phase=None, until_actor=None, skip_phases_until=None):
+    def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None):
         """
         Executes the workflow
 
-        :param execution_id: Custom execution id to use instead of a randomly generated UUIDv4
-        :type execution_id: str
+        :param context: Custom execution id to use instead of a randomly generated UUIDv4
+        :type context: str
         :param until_phase: Specify until including which phase the execution should run - phase.stage can be used to
                             control it even more granular. `phase` is any phase name where `stage` refers to `main`,
                             `before` or `after`. If no stage is defined, `after` is assumed as the default value.
@@ -114,7 +116,9 @@ class Workflow(with_metaclass(WorkflowMeta)):
         :type skip_phases_until: str or None
 
         """
-        os.environ['LEAPP_EXECUTION_ID'] = execution_id or str(uuid.uuid4())
+        context = context or str(uuid.uuid4())
+        os.environ['LEAPP_EXECUTION_ID'] = context
+        os.environ['LEAPP_HOSTNAME'] = os.environ.get('LEAPP_HOSTNAME', socket.getfqdn())
 
         self.log.info('Starting workflow execution: {name} - ID: {id}'.format(
             name=self.name, id=os.environ['LEAPP_EXECUTION_ID']))
@@ -147,14 +151,20 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     messaging = InProcessMessaging()
                     messaging.load(actor.consumes)
                     actor(logger=current_logger, messaging=messaging).run()
-
+                    checkpoint(actor=actor.name, phase=phase[0].name, context=context,
+                               hostname=os.environ['LEAPP_HOSTNAME'])
                     if needle_actor in (actor.name.lower(), actor.class_name.lower()):
                         self.log.info('Workflow finished due to until-actor flag')
                         return
+                if not stage.actors:
+                    checkpoint(actor='', phase=phase[0].name + '.' + stage.stage, context=context,
+                               hostname=os.environ['LEAPP_HOSTNAME'])
 
                 if phase[0].name.lower() == needle_phase and needle_stage == stage.stage.lower():
                     self.log.info('Workflow finished due to until-phase flag')
                     return
+
+            checkpoint(actor='', phase=phase[0].name, context=context, hostname=os.environ['LEAPP_HOSTNAME'])
 
             if phase[0].name == needle_phase:
                 self.log.info('Workflow finished due to until-phase flag')
@@ -163,6 +173,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
             if phase[0].flags.restart_after_phase:
                 self.log.info('Initiating system reboot due to restart_after_reboot flag')
                 reboot_system()
+                return
 
 
 def get_workflows():

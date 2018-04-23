@@ -4,6 +4,7 @@ import sys
 
 
 import leapp.libraries.common
+import leapp.workflows
 from logging import getLogger
 from leapp.exceptions import ModuleNameAlreadyExistsError, RepoItemPathDoesNotExistError, UnsupportedDefinitionKindError
 from leapp.repository.definition import DefinitionKind
@@ -42,7 +43,8 @@ class Repository(object):
                 return actor
         return None
 
-    def lookup_workflow(self, name):
+    @staticmethod
+    def lookup_workflow(name):
         """
         Finds workflow in repository
 
@@ -51,7 +53,7 @@ class Repository(object):
         :return: None or Workflow
         """
         name = name.lower()
-        for workflow in self.workflows:
+        for workflow in leapp.workflows.get_workflows():
             workflow_name = workflow.name.lower()
             workflow_class = workflow.class_name.lower()
             workflow_short_name = workflow.short_name
