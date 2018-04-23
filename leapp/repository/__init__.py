@@ -55,7 +55,7 @@ class Repository(object):
         name = name.lower()
         for workflow in leapp.workflows.get_workflows():
             workflow_name = workflow.name.lower()
-            workflow_class = workflow.class_name.lower()
+            workflow_class = workflow.__name__.lower()
             workflow_short_name = workflow.short_name
             if name in (workflow_name, workflow_class, workflow_short_name):
                 return workflow
