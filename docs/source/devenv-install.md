@@ -13,7 +13,7 @@ Packages are built for EPEL and Fedora.
 ```
 
 For the actor development, install the `leapp` and `snactor` tools. This pulls in also
-`leapp-repository` with actors.
+`leapp-repository` with already existing actors, models, topic, tags and workflows.
 
 
 ```shell
