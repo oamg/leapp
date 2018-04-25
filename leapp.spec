@@ -77,7 +77,13 @@ BuildRequires:  python2-pytest-cov
 BuildRequires:  python2-setuptools
 
 %endif
+%if 0%{?rhel} && 0%{?rhel} == 7
+Requires: python-six
+Requires: python-setuptools
+%else
 Requires: python2-six
+Requires: python22-setuptools
+%endif
 
 %description -n python2-%{name}
 Python 2 leapp framework libraries
