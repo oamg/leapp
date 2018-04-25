@@ -1,8 +1,10 @@
 import json
 import os
 import sys
+import uuid
 
 from leapp.utils.clicmd import command_arg, command
+from leapp.utils.audit import create_connection, Execution
 
 _PROJECT_CONFIG = '''
 [repositories]
@@ -24,8 +26,7 @@ def cli(args):
         os.mkdir(project_dir)
         with open(os.path.join(project_dir, 'info'), 'w') as f:
             json.dump({
-                'name': name,
-                'messages': {}
+                'name': name
             }, f)
         with open(os.path.join(project_dir, 'leapp.conf'), 'w') as f:
             f.write(_PROJECT_CONFIG)

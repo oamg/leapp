@@ -1,6 +1,7 @@
 import datetime
 import hashlib
 import json
+import multiprocessing
 import os
 import socket
 
@@ -10,9 +11,34 @@ class BaseMessaging(object):
     BaseMessaging is the Base class for all messaging implementations - It provides the basic interface that is
     supported within the framework - That are the `produce` and `consume` methods.
     """
-    def __init__(self):
-        self._data = []
-        self._new_data = []
+    def __init__(self, stored=True):
+        self._manager = multiprocessing.Manager()
+        self._data = self._manager.list()
+        self._new_data = self._manager.list()
+        self._stored = stored
+
+    @property
+    def stored(self):
+        """
+        :return: If the messages are stored immediately this returns True otherwise False
+        """
+        return self._stored
+
+    def get_new(self):
+        """
+        Get all newly produced messages
+        :return: List of newly processed messages
+        """
+        return list(self._new_data)
+
+    def store(self):
+        """
+        Stores messages that have been produced but not stored - Noop if stored is True
+        :return: None
+        """
+        if not self.stored:
+            for message in self._new_data:
+                self._process_message(message)
 
     def _perform_load(self, consumes):
         """
@@ -69,7 +95,10 @@ class BaseMessaging(object):
             }
         }
         self._new_data.append(message)
-        return self._process_message(message)
+        if self.stored:
+            return self._process_message(message)
+        else:
+            return message
 
     def consume(self, *types):
         """
@@ -78,8 +107,9 @@ class BaseMessaging(object):
         :param types: Variable number of :py:class:`leapp.models.Model` derived types to filter messages to consume
         :return: Iterable with messages matching the criteria
         """
+        all_messages = list(self._data) + list(self._new_data)
         if not type:
-            return self._data + self._new_data
+            return all_messages
         lookup = dict([(model.__name__, model) for model in types])
         return (lookup[message['type']].create(json.loads(message['message']['data']))
-                for message in (self._data + self._new_data) if message['type'] in lookup)
+                for message in all_messages if message['type'] in lookup)

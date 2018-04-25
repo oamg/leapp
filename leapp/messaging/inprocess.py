@@ -9,8 +9,8 @@ class InProcessMessaging(BaseMessaging):
     This class implements the direct database access for the messaging.
     """
 
-    def __init__(self):
-        super(InProcessMessaging, self).__init__()
+    def __init__(self, stored=True):
+        super(InProcessMessaging, self).__init__(stored=stored)
 
     def _process_message(self, message):
         message['event'] = 'new-message'

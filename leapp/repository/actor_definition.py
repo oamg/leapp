@@ -45,7 +45,8 @@ class ActorCallContext(object):
     @staticmethod
     def _do_run(logger, messaging, definition, args, kwargs):
         definition.load()
-        get_actors()[0](logger=logger, messaging=messaging).run(*args, **kwargs)
+        with definition.injected_context():
+            get_actors()[0](logger=logger, messaging=messaging).run(*args, **kwargs)
 
     def run(self, *args, **kwargs):
         """
@@ -73,6 +74,7 @@ class ActorDefinition(object):
         self.log = log or logging.getLogger('leapp.actor')
         self._directory = directory
         self._repo_dir = repo_dir
+        self._full_repo_dir = os.path.abspath(repo_dir)
         self._definitions = {}
         self._module = None
         self._discovery = None
@@ -196,8 +198,9 @@ class ActorDefinition(object):
         path_backup = os.environ.get('PATH', '')
         os.environ['PATH'] = ':'.join(path_backup.split(':') + list(self.tools))
 
-        files_backup = os.environ.get('LEAPP_FILES', '')
-        os.environ['LEAPP_FILES'] = ':'.join(files_backup.split(':') + list(self.files))
+        files_backup = os.environ.get('LEAPP_FILES', None)
+        if self.files:
+            os.environ['LEAPP_FILES'] = os.path.join(self._repo_dir, self._directory, self.files[0])
 
         # We make a snapshot of the symbols in the module
         before = leapp.libraries.actor.__dict__.keys()
@@ -213,14 +216,18 @@ class ActorDefinition(object):
                 backup[name] = sys.modules[name]
             sys.modules[name] = mod
 
+        previous_path = os.getcwd()
+        os.chdir(os.path.join(self._repo_dir, self._directory))
         try:
             yield
         finally:
+            os.chdir(previous_path)
 
             # Restoration of the PATH environment variable
             os.environ['PATH'] = path_backup
             # Restoration of the LEAPP_FILES environment variable
-            os.environ['LEAPP_FILES'] = files_backup
+            if files_backup is not None:
+                os.environ['LEAPP_FILES'] = files_backup
 
             # Remove all symbols in the actor lib before the execution
             current = leapp.libraries.actor.__dict__.keys()

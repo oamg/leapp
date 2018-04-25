@@ -1,3 +1,4 @@
+import functools
 import logging
 import os
 import socket
@@ -6,6 +7,7 @@ import uuid
 
 from leapp.utils.meta import with_metaclass, get_flattened_subclasses
 from leapp.utils import reboot_system
+from leapp.utils.project import find_project_basedir
 from leapp.workflows.phases import Phase
 from leapp.workflows.phaseactors import PhaseActors
 from leapp.messaging.inprocess import InProcessMessaging

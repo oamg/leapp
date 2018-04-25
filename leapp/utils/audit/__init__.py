@@ -32,6 +32,16 @@ def _initialize_database(db):
     return db
 
 
+def create_connection(path):
+    """
+    Creates a database connection to the path and ensures it's initialized and up to date.
+
+    :param path: Path to the database
+    :return: Connection object
+    """
+    return _initialize_database(sqlite3.connect(path))
+
+
 def get_connection(db):
     """
     Get the database connection or passes it through if it is already set
@@ -42,7 +52,7 @@ def get_connection(db):
     if db:
         return db
     cfg = get_config()
-    return _initialize_database(sqlite3.connect(cfg.get('database', 'path')))
+    return create_connection(cfg.get('database', 'path'))
 
 
 class Storable(object):
