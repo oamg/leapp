@@ -1,4 +1,3 @@
-import argparse
 import os
 
 from leapp.utils.clicmd import command, command_opt
@@ -14,10 +13,4 @@ def cli(args):
 
 def main():
     cli.command.add_sub(leapp.cli.upgrade.upgrade.command)
-    parser = argparse.ArgumentParser(prog='leapp')
-    parser.add_argument('--version', action='version', version='leapp version {}'.format(VERSION))
-    parser.set_defaults(func=None)
-    s = parser.add_subparsers(description='Main commands')
-    cli.command.apply_parser(s, parser=parser)
-    args = parser.parse_args()
-    args.func(args)
+    cli.command.execute('leapp version {}'.format(VERSION))

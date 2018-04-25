@@ -1,4 +1,21 @@
+import sys
+
+from argparse import ArgumentParser, _SubParsersAction
+
 from leapp.exceptions import CommandDefinitionError
+
+
+class _SubParserActionOverride(_SubParsersAction):
+    def __call__(self, parser, namespace, values, option_string=None):
+        super(_SubParserActionOverride, self).__call__(parser, namespace, values, option_string)
+        if sys.version >= (2, 7, 9):
+            return
+        parser_name = values[0]
+        arg_strings = values[1:]
+        parser = self._name_parser_map[parser_name]
+        sub_namespace, arg_strings = parser.parse_known_args(arg_strings, None)
+        for key, value in vars(sub_namespace).items():
+            setattr(namespace, key, value)
 
 
 class Command(object):
@@ -18,6 +35,16 @@ class Command(object):
         self.target = target
         self.parent = None
         self.parser = None
+
+    def execute(self, version):
+        parser = ArgumentParser(prog=sys.argv[0])
+        parser.register('action', 'parsers', _SubParserActionOverride)
+        parser.add_argument('--version', action='version', version=version)
+        parser.set_defaults(func=None)
+        s = parser.add_subparsers(description='Main commands')
+        self.command.apply_parser(s, parser=parser)
+        args = parser.parse_args()
+        args.func(args)
 
     def get_inheritable_options(self):
         """

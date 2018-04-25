@@ -5,7 +5,7 @@ import socket
 from leapp.snactor import commands
 from leapp.snactor.commands import workflow
 from leapp.snactor.commands import messages
-from leapp.utils.clicmd import command, command_opt
+from leapp.utils.clicmd import command, command_opt, execute_command
 from leapp.utils.project import find_project_basedir
 from leapp import VERSION
 
@@ -61,12 +61,5 @@ def cli(args):
 
 def main():
     os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
-    from argparse import ArgumentParser
-    parser = ArgumentParser(prog='snactor')
-    parser.add_argument('--version', action='version', version='snactor version {}'.format(VERSION))
-    parser.set_defaults(func=None)
-    s = parser.add_subparsers(description='Main commands')
     load_commands()
-    cli.command.apply_parser(s, parser=parser)
-    args = parser.parse_args()
-    args.func(args)
+    cli.command.execute(version='snactor version {}'.format(VERSION))
