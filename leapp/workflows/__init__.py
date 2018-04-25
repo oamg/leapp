@@ -1,4 +1,3 @@
-import functools
 import logging
 import os
 import socket
@@ -8,6 +7,7 @@ import uuid
 from leapp.utils.meta import with_metaclass, get_flattened_subclasses
 from leapp.utils import reboot_system
 from leapp.workflows.phases import Phase
+from leapp.workflows.policies import Policies
 from leapp.workflows.phaseactors import PhaseActors
 from leapp.messaging.inprocess import InProcessMessaging
 from leapp.utils.audit import checkpoint, get_errors
@@ -154,6 +154,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
             self.log.info('Starting phase {name}'.format(name=phase[0].name))
             current_logger = self.log.getChild(phase[0].name)
+
             for stage in phase[1:]:
                 current_logger.info("Starting stage {stage} of phase {phase}".format(
                     phase=phase[0].name, stage=stage.stage))
@@ -164,7 +165,12 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     actor(logger=current_logger, messaging=messaging).run()
 
                     # Collect errors
-                    self._errors.extend(messaging.errors())
+                    if messaging.errors():
+                        self._errors.extend(messaging.errors())
+
+                        if phase[0].policies.error is Policies.Errors.FailImmediately:
+                            self.log.info('Workflow interrupted due to FailImmediately error policy')
+                            return
 
                     checkpoint(actor=actor.name, phase=phase[0].name, context=context,
                                hostname=os.environ['LEAPP_HOSTNAME'])
@@ -180,6 +186,10 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     return
 
             checkpoint(actor='', phase=phase[0].name, context=context, hostname=os.environ['LEAPP_HOSTNAME'])
+
+            if self._errors and phase[0].policies.error is Policies.Errors.FailPhase:
+                self.log.info('Workflow interrupted due to FailPhase error policy')
+                return
 
             if phase[0].name == needle_phase:
                 self.log.info('Workflow finished due to until-phase flag')
