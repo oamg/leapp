@@ -104,14 +104,14 @@ def test_migrations_are_applied():
     assert con.execute("PRAGMA user_version").fetchone()[0] == 0
     con.close()
 
-    db = get_connection(None)
-    assert db.execute("PRAGMA user_version").fetchone()[0] > 0
+    with get_connection(None) as db:
+        assert db.execute("PRAGMA user_version").fetchone()[0] > 0
 
 
 def test_pass_through():
-    db = get_connection(None)
-    db2 = get_connection(db)
-    assert db is db2
+    with get_connection(None) as db:
+        with get_connection(db) as db2:
+            assert db is db2
 
 
 def test_execution():
@@ -130,8 +130,9 @@ def test_message_data(saved=True):
     e = MessageData(data='abc', hash_id='abc')
     if saved:
         e.store()
-        data = get_connection(None).execute(
-            'SELECT data from message_data WHERE hash = "abc"').fetchone()[0]
+        with get_connection(None) as conn:
+            data = conn.execute(
+                'SELECT data from message_data WHERE hash = "abc"').fetchone()[0]
         assert data == 'abc'
     return e
 

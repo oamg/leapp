@@ -1,10 +1,8 @@
 import json
 import os
 import sys
-import uuid
 
 from leapp.utils.clicmd import command_arg, command
-from leapp.utils.audit import create_connection, Execution
 
 _PROJECT_CONFIG = '''
 [repositories]

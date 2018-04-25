@@ -24,11 +24,11 @@ def fetch_last_upgrade_context():
     """
     :return: Context of the last execution
     """
-    db = get_connection(None)
-    cursor = db.execute('SELECT context, stamp FROM execution WHERE kind = "upgrade" ORDER BY stamp DESC LIMIT 1')
-    row = cursor.fetchone()
-    if row:
-        return row[0]
+    with get_connection(None) as db:
+        cursor = db.execute('SELECT context, stamp FROM execution WHERE kind = "upgrade" ORDER BY stamp DESC LIMIT 1')
+        row = cursor.fetchone()
+        if row:
+            return row[0]
     return None
 
 

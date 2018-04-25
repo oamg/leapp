@@ -327,15 +327,15 @@ def get_messages(names, context):
     if not names:
         return ()
 
-    cursor = get_connection(None).execute(_MESSAGE_QUERY_TEMPLATE % ', '.join('?' * len(names)),
-                                          (context,) + tuple(names))
-    cursor.row_factory = _dict_factory
-    result = cursor.fetchall()
+    with get_connection(None) as conn:
+        cursor = conn.execute(_MESSAGE_QUERY_TEMPLATE % ', '.join('?' * len(names)), (context,) + tuple(names))
+        cursor.row_factory = _dict_factory
+        result = cursor.fetchall()
 
-    # Transform to expected format
-    for row in result:
-        row['message'] = {'data': row.pop('message_data'), 'hash': row.pop('message_hash')}
-    return result
+        # Transform to expected format
+        for row in result:
+            row['message'] = {'data': row.pop('message_data'), 'hash': row.pop('message_hash')}
+        return result
 
 
 _AUDIT_CHECKPOINT_EVENT = 'checkpoint'
@@ -368,19 +368,20 @@ def get_checkpoints(context):
     :type context: str
     :return: list of dicts with id, timestamp, actor and phase fields
     """
-    cursor = get_connection(None).execute('''
-        SELECT
-            audit.id          AS id,
-            audit.stamp       AS stamp,
-            data_source.actor AS actor,
-            data_source.phase AS phase
-          FROM
-            audit
-          JOIN
-            data_source ON data_source.id = audit.data_source_id
-          WHERE
-            audit.context = ? AND audit.event = ?
-          ORDER BY stamp ASC;
-    ''', (context, _AUDIT_CHECKPOINT_EVENT))
-    cursor.row_factory = _dict_factory
-    return cursor.fetchall()
+    with get_connection(None) as conn:
+        cursor = conn.execute('''
+            SELECT
+                audit.id          AS id,
+                audit.stamp       AS stamp,
+                data_source.actor AS actor,
+                data_source.phase AS phase
+              FROM
+                audit
+              JOIN
+                data_source ON data_source.id = audit.data_source_id
+              WHERE
+                audit.context = ? AND audit.event = ?
+              ORDER BY stamp ASC;
+        ''', (context, _AUDIT_CHECKPOINT_EVENT))
+        cursor.row_factory = _dict_factory
+        return cursor.fetchall()
