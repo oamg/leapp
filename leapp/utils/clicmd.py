@@ -37,6 +37,12 @@ class Command(object):
         self.parser = None
 
     def execute(self, version):
+        """
+        Entry point to command execution - Used for the main entry function of an application
+
+        :param version: Version string to display for --version calls
+        :return: None
+        """
         parser = ArgumentParser(prog=sys.argv[0])
         parser.register('action', 'parsers', _SubParserActionOverride)
         parser.add_argument('--version', action='version', version=version)

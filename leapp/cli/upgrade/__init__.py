@@ -38,7 +38,7 @@ def get_last_phase(context):
         return checkpoints[-1]['phase']
 
 
-@command('upgrade', help='')
+@command('upgrade', help='Upgrades the current system to the next available major version.')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
 def upgrade(args):
     skip_phases_until=None
