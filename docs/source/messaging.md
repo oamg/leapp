@@ -1,14 +1,14 @@
 ## Using messaging to send data between actors
 
 The Leapp framework uses messages to send data to other actors that are executed afterward.
-Messages are defined through the models we have declared [earlier](first-actor.html#creating-a-model). Actors can consume these messages and produce data based on their input.
+Messages are defined through the models declared [earlier](first-actor.html#creating-a-model). Actors can consume these messages and produce data based on their input.
 
-As an example, the actors will consume Hostname messages, resolve the IPs for those
-hostnames, and create a ResolvedHostname model to send a new type of message.
+As an example, the actors consume Hostname messages, resolve IPs for those
+hostnames, and create the ResolvedHostname model to send a new type of message.
 
-### Creating a new ResolvedHostname model
+### Creating the ResolvedHostname model
 
-Create the new ResolvedHostname model by using the snactor tool.
+Create the ResolvedHostname model by using the snactor tool.
 
 ```shell
 $ snactor new-model ResolvedHostname
@@ -16,7 +16,7 @@ $ snactor new-model ResolvedHostname
 
 Assign the SystemInfoTopic to the new model and add two fields:
 * The `name` field represents the hostname.
-* The `ips` field contains a list of strings with the IPv4 or IPv6 addresses.
+* The `ips` field contains a list of strings with IPv4 or IPv6 addresses.
 
 Both fields are required in this scenario.
 
@@ -31,7 +31,7 @@ class ResolvedHostname(Model):
     ips = fields.List(fields.String(), required=True)
 ```
 
-### Creating the message consuming actor
+### Creating a message consuming actor
 
 Create a new actor that resolves the IPs for the hostnames:
 
@@ -40,23 +40,23 @@ $ snactor new-actor IpResolver
 ```
 
 Import the ScanTag from leapp.tags, and the models Hostname and
-ResolvedHostname from leapp.models. Since we want to retrieve the Hostname
-messages to process their data, we set it in the consumes tuple.
+ResolvedHostname from leapp.models. To retrieve the Hostname
+messages to process their data, set it in the consumes tuple.
 The result will be ResolvedHostname, so set the type in the
 produces tuple.
 
 The tags tuple gets extended with the ScanTag.
-Now, import a socket.
+Now, import the socket library.
 
-To enable actors to consume messages, use the consume class method, and pass the type
+To enable actors to consume messages, use the consume method, and pass the type
 of the message to be consumed. This is necessary to filter out the
 messages. In theory, all messages can be consumed, but it is not recommended.
 If you would like to change your code later and consume more
 types of messages, you might end up with unexpected results. Always
-specify on the consume class method all types of messages to be consumed instead
-of having all messages unfiltered.
+specify the consume method for all types of messages to be consumed instead
+of retrieving all messages unfiltered.
 
-Now, perform the resolving of the hostnames and produce a new message.
+Now, perform the resolving of the hostnames, and produce a new message.
 
 See the example of the code:
 
@@ -70,7 +70,7 @@ from leapp.models import Hostname, ResolvedHostname
 
 class IpResolver(Actor):
     name = 'ip_resolver'
-    description = 'For the actor ip_resolver has been no description provided.'
+    description = 'No description is provided for the ip_resolver actor.'
     consumes = (Hostname,)
     produces = (ResolvedHostname,)
     tags = (ScanTag,)
@@ -89,9 +89,9 @@ class IpResolver(Actor):
 ### Storing messages in the project data for reuse
 
 The `snactor` framework tool saves the output of actors as locally stored messages,
-so that they can be consumed by the actors that are being developed.
+so that they can be consumed by other actors that are being developed.
 
-To make the data consumable by other actors, run the actor producing the data with the --save-output option:
+To make the data consumable, run the actor producing the data with the --save-output option:
 
 ```shell
 $ snactor run --save-output HostnameScanner
