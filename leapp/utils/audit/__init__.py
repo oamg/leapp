@@ -360,6 +360,17 @@ def checkpoint(actor, phase, context, hostname):
     audit.store()
 
 
+def get_errors(context):
+    """
+    Queries all error messages from the database for the given context
+
+    :param context: The execution context
+    :type context: str
+    :return: List of error messages
+    """
+    return get_messages(('ErrorModel',), context=context)
+
+
 def get_checkpoints(context):
     """
     Retrieve all checkpoints stored in the database for the given context

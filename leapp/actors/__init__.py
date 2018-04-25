@@ -2,11 +2,13 @@ import logging
 import os
 import sys
 
+
 from leapp.compat import string_types
 from leapp.exceptions import MissingActorAttributeError, WrongAttributeTypeError
 from leapp.models import Model
 from leapp.tags import Tag
 from leapp.utils.meta import get_flattened_subclasses
+from leapp.models.error_severity import ErrorSeverity
 
 
 class Actor(object):
@@ -15,6 +17,9 @@ class Actor(object):
     of data it expects, it consumes (process) a given data and produces data for other
     actors in the workflow.
     """
+
+    ErrorSeverity = ErrorSeverity
+    """ Convenience forward for the ErrorSeverity constants """
 
     name = None
     """ Name of the actor that's used to identify data/messages created by the actor. """
@@ -126,6 +131,28 @@ class Actor(object):
         if self._messaging:
             return self._messaging.consume(*models)
         return ()
+
+    def report_error(self, message, severity=ErrorSeverity.ERROR, details=None):
+        """
+        Reports an execution error
+
+        :param message: Message to print for the error
+        :type message: str
+        :param severity: Severity of the error default :py:attr:`leapp.messaging.errors.ErrorSeverity.ERROR`
+        :type severity: str with defined values from :py:attr:`leapp.messaging.errors.ErrorSeverity.ERROR`
+        :param details: A dictionary where additional context information can be passed along with the error
+        :type details: dict
+        :return: None
+        """
+        if self._messaging:
+            if not ErrorSeverity.validate(severity):
+                self.log.warning("report_error: Unknown severity value %s was passed - Falling back to ERROR", severity)
+                severity = ErrorSeverity.ERROR
+            self._messaging.report_error(
+                message=message,
+                severity=severity,
+                actor=self,
+                details=details)
 
 
 def _is_type(value_type):

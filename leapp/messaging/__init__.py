@@ -5,6 +5,9 @@ import multiprocessing
 import os
 import socket
 
+from leapp.exceptions import CannotConsumeErrorMessages
+from leapp.models import ErrorModel
+
 
 class BaseMessaging(object):
     """
@@ -15,6 +18,7 @@ class BaseMessaging(object):
         self._manager = multiprocessing.Manager()
         self._data = self._manager.list()
         self._new_data = self._manager.list()
+        self._errors = self._manager.list()
         self._stored = stored
 
     @property
@@ -24,21 +28,19 @@ class BaseMessaging(object):
         """
         return self._stored
 
-    def get_new(self):
+    def errors(self):
+        """
+        Get all produced errors
+        :return: List of newly produced errors
+        """
+        return list(self._errors)
+
+    def messages(self):
         """
         Get all newly produced messages
         :return: List of newly processed messages
         """
         return list(self._new_data)
-
-    def store(self):
-        """
-        Stores messages that have been produced but not stored - Noop if stored is True
-        :return: None
-        """
-        if not self.stored:
-            for message in self._new_data:
-                self._process_message(message)
 
     def _perform_load(self, consumes):
         """
@@ -66,8 +68,31 @@ class BaseMessaging(object):
 
         :param consumes: Tuple or list of :py:class:`leapp.models.Model` types to preload
         :return: None
+        :raises leapp.exceptions.CannotConsumeErrorMessages: When an trying to consume ErrorModel
         """
+        if ErrorModel in consumes:
+            raise CannotConsumeErrorMessages()
         self._perform_load(consumes)
+
+    def report_error(self, message, severity, actor, details):
+        """
+        Reports an execution error
+
+        :param message: Message to print for the error
+        :type message: str
+        :param severity: Severity of the error
+        :type severity: ErrorSeverity
+        :param actor: Actor name that produced the message
+        :type actor: str
+        :param details: A dictionary where additional context information can be passed along with the error
+        :type details: dict
+        :return: None
+        """
+        if details:
+            details = json.dumps(details)
+        model = ErrorModel(message=message, actor=actor.name, severity=severity, details=details,
+                           time=datetime.datetime.utcnow())
+        self._do_produce(model, actor, self._errors)
 
     def produce(self, model, actor):
         """
@@ -80,6 +105,9 @@ class BaseMessaging(object):
         :return: the updated message dict
         :rtype: dict
         """
+        return self._do_produce(model, actor, self._new_data)
+
+    def _do_produce(self, model, actor, target):
         data = json.dumps(model.dump(), sort_keys=True)
         message = {
             'type': type(model).__name__,
@@ -94,7 +122,7 @@ class BaseMessaging(object):
                 'hash': hashlib.sha256(data).hexdigest()
             }
         }
-        self._new_data.append(message)
+        target.append(message)
         if self.stored:
             return self._process_message(message)
         else:

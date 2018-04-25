@@ -6,6 +6,7 @@ from leapp.utils.clicmd import command_arg, command_opt
 from leapp.logger import configure_logger
 from leapp.utils.project import requires_project, find_project_basedir
 from leapp.repository.scan import scan_repo
+from leapp.utils.output import report_errors
 
 
 @workflow.command('run', help='Execute a workflow with the given name')
@@ -19,4 +20,6 @@ def cli(params):
     repository.load()
     for wf in leapp.workflows.get_workflows():
         if wf.name.lower() == params.name.lower():
-            wf().run(until_phase=params.until_phase, until_actor=params.until_actor)
+            instance = wf()
+            instance.run(until_phase=params.until_phase, until_actor=params.until_actor)
+            report_errors(instance.errors)

@@ -3,6 +3,11 @@ class LeappError(Exception):
         super(LeappError, self).__init__(message)
 
 
+class CannotConsumeErrorMessages(Exception):
+    def __init__(self):
+        super(CannotConsumeErrorMessages, self).__init__("Actors cannot consume error messages.")
+
+
 class InvalidTopicItemError(LeappError):
     def __init__(self, message):
         super(InvalidTopicItemError, self).__init__(message)

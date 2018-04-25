@@ -239,7 +239,7 @@ class DateTime(BuiltinField):
 
     @property
     def _builtin_type(self):
-        return str
+        return six.string_types
 
     def _convert_to_model(self, value, name):
         self._validate_builtin_value(value=value, name=name)

@@ -7,11 +7,10 @@ import uuid
 
 from leapp.utils.meta import with_metaclass, get_flattened_subclasses
 from leapp.utils import reboot_system
-from leapp.utils.project import find_project_basedir
 from leapp.workflows.phases import Phase
 from leapp.workflows.phaseactors import PhaseActors
 from leapp.messaging.inprocess import InProcessMessaging
-from leapp.utils.audit import checkpoint
+from leapp.utils.audit import checkpoint, get_errors
 
 
 def _phase_sorter_key(a):
@@ -55,12 +54,20 @@ class Workflow(with_metaclass(WorkflowMeta)):
     description = ''
     """ Documentation for the workflow """
 
+    @property
+    def errors(self):
+        """
+        :return: All reported errors
+        """
+        return self._errors
+
     def __init__(self, logger=None):
         """
         :param logger: Optional logger to be used instead of leapp.workflow
         :type logger: Instance of :py:class:`logging.Logger`
         """
         self.log = (logger or logging.getLogger('leapp')).getChild('workflow')
+        self._errors = []
         self._all_consumed = set()
         self._all_produced = set()
         self._initial = set()
@@ -134,6 +141,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
         needle_stage = (needle_stage or '').lower()
         needle_actor = (until_actor or '').lower()
 
+        self._errors = get_errors(context)
+
         for phase in self._phase_actors:
             os.environ['LEAPP_CURRENT_PHASE'] = phase[0].name
 
@@ -153,6 +162,10 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     messaging = InProcessMessaging()
                     messaging.load(actor.consumes)
                     actor(logger=current_logger, messaging=messaging).run()
+
+                    # Collect errors
+                    self._errors.extend(messaging.errors())
+
                     checkpoint(actor=actor.name, phase=phase[0].name, context=context,
                                hostname=os.environ['LEAPP_HOSTNAME'])
                     if needle_actor in (actor.name.lower(), actor.class_name.lower()):

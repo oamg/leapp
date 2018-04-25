@@ -25,11 +25,12 @@ Now the models can be used like this::
 """
 import sys
 
-from . import fields
+from leapp.models import fields
 
 from leapp.exceptions import ModelDefinitionError
 from leapp.utils.meta import get_flattened_subclasses, with_metaclass
 from leapp.topics import Topic, ErrorTopic
+from leapp.models.error_severity import ErrorSeverity
 
 
 class ModelMeta(type):
@@ -119,6 +120,8 @@ class ErrorModel(Model):
     topic = ErrorTopic
 
     message = fields.String(required=True)
+    severity = fields.StringEnum(required=True, choices=ErrorSeverity.ALLOWED_VALUES, default=ErrorSeverity.ERROR)
+    details = fields.String(required=True, allow_null=True, default=None)
     actor = fields.String(required=True)
     time = fields.DateTime(required=True)
 
