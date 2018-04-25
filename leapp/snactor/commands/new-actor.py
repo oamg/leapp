@@ -35,7 +35,7 @@ def cli(args):
 
 class {actor_class}(Actor):
     name = '{actor_name}'
-    description = 'For the actor {actor_name} has been no description provided.'
+    description = 'No description has been provided for the {actor_name} actor.'
     consumes = ()
     produces = ()
     tags = ()
