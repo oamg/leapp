@@ -25,7 +25,7 @@ def fetch_last_upgrade_context():
     :return: Context of the last execution
     """
     with get_connection(None) as db:
-        cursor = db.execute('SELECT context, stamp FROM execution WHERE kind = "upgrade" ORDER BY stamp DESC LIMIT 1')
+        cursor = db.execute("SELECT context, stamp FROM execution WHERE kind = 'upgrade' ORDER BY stamp DESC LIMIT 1")
         row = cursor.fetchone()
         if row:
             return row[0]
@@ -41,7 +41,7 @@ def get_last_phase(context):
 @command('upgrade', help='Upgrades the current system to the next available major version.')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
 def upgrade(args):
-    skip_phases_until=None
+    skip_phases_until = None
     context = str(uuid.uuid4())
     if args.resume:
         context = fetch_last_upgrade_context()

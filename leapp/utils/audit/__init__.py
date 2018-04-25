@@ -98,7 +98,7 @@ class Execution(Storable):
         :param kind: Execution kind - Can be any string and used for filtering
         :type kind: str
         :param configuration:
-        :type configuration: str
+        :type configuration: str, dict, list or tuple
         :param stamp: Timestamp string of the execution start in iso format
         :type stamp: str
         """
