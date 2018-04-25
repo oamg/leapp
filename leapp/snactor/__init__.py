@@ -5,7 +5,7 @@ import socket
 from leapp.snactor import commands
 from leapp.snactor.commands import workflow
 from leapp.snactor.commands import messages
-from leapp.utils.clicmd import command, command_opt, execute_command
+from leapp.utils.clicmd import command, command_opt
 from leapp.utils.project import find_project_basedir
 from leapp import VERSION
 
