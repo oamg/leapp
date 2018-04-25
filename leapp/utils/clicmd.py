@@ -6,6 +6,16 @@ from leapp.exceptions import CommandDefinitionError
 
 
 class _SubParserActionOverride(_SubParsersAction):
+    """
+    This class implements a workaround for an issue fixed in 2.7.9
+    Reference: https://bugs.python.org/issue9351
+
+    TLDR: Before 2.7.9 argparse._SubParserAction did not propagate sub parser default values
+    to the global namespace when they were defined already
+    This implementation is a workaround to additionally override those values
+
+    The additional code will not be executed if python 2.7.9 or higher was found.
+    """
     def __call__(self, parser, namespace, values, option_string=None):
         super(_SubParserActionOverride, self).__call__(parser, namespace, values, option_string)
         if sys.version >= (2, 7, 9):
