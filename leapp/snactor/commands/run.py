@@ -10,7 +10,15 @@ from leapp.repository.scan import scan_repo
 from leapp.snactor.context import with_snactor_context
 
 
-@command('run', help='Execute the given actor')
+_LONG_DESCRIPTION = '''
+Runs the given actor as specified as `actor_name` in a testing environment.
+
+For more information please consider reading the documentation at:
+https://red.ht/leapp-docs 
+'''
+
+
+@command('run', help='Execute the given actor', description=_LONG_DESCRIPTION)
 @command_arg('actor-name')
 @command_opt('--save-output', is_flag=True)
 @command_opt('--print-output', is_flag=True)

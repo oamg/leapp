@@ -8,8 +8,21 @@ from leapp.utils.project import requires_project, find_project_basedir
 from leapp.repository.scan import scan_repo
 from leapp.utils.output import report_errors
 
+_LONG_DESCRIPTION = '''
+Executes the given workflow.
 
-@workflow.command('run', help='Execute a workflow with the given name')
+Using --until-phase the workflow will be only executed until including
+the given phase.
+
+Using --until-actor the workflow will be only executed until including
+the first occurrence of the given actor name.
+
+For more information please consider reading the documentation at:
+https://red.ht/leapp-docs 
+'''
+
+
+@workflow.command('run', help='Execute a workflow with the given name', description=_LONG_DESCRIPTION)
 @command_arg('name')
 @command_opt('until-phase', help='Runs until including the given phase but then exits')
 @command_opt('until-actor', help='Runs until including the given actor but then exits')

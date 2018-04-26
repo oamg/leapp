@@ -19,7 +19,7 @@ class Actor(object):
     """
 
     ErrorSeverity = ErrorSeverity
-    """ Convenience forward for the ErrorSeverity constants """
+    """ Convenience forward for the :py:class:`leapp.models.error_severity.ErrorSeverity` constants """
 
     name = None
     """ Name of the actor that's used to identify data/messages created by the actor. """

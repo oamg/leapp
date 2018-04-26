@@ -7,7 +7,16 @@ from leapp.utils.clicmd import command_arg, command
 from leapp.exceptions import UsageError
 
 
-@command('new-model', help='Creates a new model')
+_LONG_DESCRIPTION = '''
+Creates a new Model with all necessary boilerplate code in the current
+repository.
+
+For more information please consider reading the documentation at:
+https://red.ht/leapp-docs 
+'''
+
+
+@command('new-model', help='Creates a new model', description=_LONG_DESCRIPTION)
 @command_arg('model-name')
 @requires_project
 def cli(args):

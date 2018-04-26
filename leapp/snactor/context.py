@@ -1,12 +1,12 @@
-import functools
 import os
 import uuid
 
 from leapp.utils.audit import get_connection, Execution
+from leapp.utils.clicmd import command_aware_wraps
 
 
 def with_snactor_context(f):
-    @functools.wraps(f)
+    @command_aware_wraps(f)
     def wrapper(*args, **kwargs):
         with get_connection(None) as db:
             cursor = db.execute("""

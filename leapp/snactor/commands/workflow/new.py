@@ -5,11 +5,21 @@ from leapp.snactor.commands.workflow import workflow
 from leapp.utils.clicmd import command_arg, command_opt
 from leapp.utils.project import requires_project, make_class_name, make_name, find_project_basedir
 
+_LONG_DESCRIPTION = '''
+Creates a new workflow with the given name.
 
-@workflow.command('new', help='Creates a new workflow with the given name')
+Short name can be overridden using the --short-name option. The class name
+can be overridden by using the --class-name option. 
+
+For more information please consider reading the documentation at:
+https://red.ht/leapp-docs 
+'''
+
+
+@workflow.command('new', help='Creates a new workflow with the given name', description=_LONG_DESCRIPTION)
 @command_arg('name')
-@command_opt('short-name', short_name='s')
-@command_opt('class-name', short_name='c')
+@command_opt('short-name', short_name='s', help='Used short name for the workflow')
+@command_opt('class-name', short_name='c', help='Used class name of the workflow')
 @requires_project
 def cli(args):
     class_name = args.class_name

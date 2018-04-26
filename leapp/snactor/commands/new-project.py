@@ -12,8 +12,16 @@ repo_path=${project:root_dir}
 path=${project:state_dir}/leapp.db
 '''
 
+_LONG_DESCRIPTION = '''
+Creates a new local repository for writing Actors, Models, Tags, 
+Topics, and Workflows or adding shared files, tools or libraries.
 
-@command('new-project', help='Creates a new project')
+For more information please consider reading the documentation at:
+https://red.ht/leapp-docs 
+'''
+
+
+@command('new-project', help='Creates a new project', description=_LONG_DESCRIPTION)
 @command_arg('name')
 def cli(args):
     name = args.name

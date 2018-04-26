@@ -6,7 +6,16 @@ from leapp.utils.clicmd import command, command_arg
 from leapp.exceptions import UsageError
 
 
-@command('new-actor', help='Creates a new actor')
+_LONG_DESCRIPTION = '''
+Creates a new Actor with all necessary boilerplate code in the current
+repository.
+
+For more information please consider reading the documentation at:
+https://red.ht/leapp-docs 
+'''
+
+
+@command('new-actor', help='Creates a new actor', description=_LONG_DESCRIPTION)
 @command_arg('actor-name')
 @requires_project
 def cli(args):
