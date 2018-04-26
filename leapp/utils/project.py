@@ -1,16 +1,16 @@
-import functools
 import json
 import os
 import re
 
 from leapp.exceptions import UsageError
+from leapp.utils.clicmd import command_aware_wraps
 
 
 def requires_project(f):
     """
     Decorator for snactor commands that require to be run in a project directory.
     """
-    @functools.wraps(f)
+    @command_aware_wraps(f)
     def checker(*args, **kwargs):
         if not find_project_basedir('.'):
             raise UsageError('This command must be executed from the project directory')

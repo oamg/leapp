@@ -1,8 +1,18 @@
+import functools
+import os
 import sys
 
-from argparse import ArgumentParser, _SubParsersAction
+from argparse import ArgumentParser, _SubParsersAction, RawDescriptionHelpFormatter, SUPPRESS
 
-from leapp.exceptions import CommandDefinitionError
+from leapp.exceptions import CommandDefinitionError, UsageError
+
+
+class _LeappHelpFormatter(RawDescriptionHelpFormatter):
+    """
+    Capitalizes section headings in the help output
+    """
+    def start_section(self, heading):
+        return super(_LeappHelpFormatter, self).start_section(heading.capitalize())
 
 
 class _SubParserActionOverride(_SubParsersAction):
@@ -32,14 +42,20 @@ class Command(object):
     """
     Command implements a convenient command based argument parsing framework.
     """
-    def __init__(self, name, target=None, help=''):
+    def __init__(self, name, target=None, help='', description=None):
         """
         :param name: Name of the sub command
+        :type name: str
         :param target: Function to call when the command gets invoked
+        :type target: Callable
         :param help: Help message to show
+        :type help: str
+        :param description: Extended description of the command (defaults to `help`)
+        :type description: str
         """
         self.name = name
         self.help = help
+        self.description = description or help
         self._sub_commands = {}
         self._options = []
         self.target = target
@@ -51,13 +67,15 @@ class Command(object):
         Entry point to command execution - Used for the main entry function of an application
 
         :param version: Version string to display for --version calls
+        :type version: str
         :return: None
         """
-        parser = ArgumentParser(prog=sys.argv[0])
+        parser = ArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=_LeappHelpFormatter)
+        parser.add_help
         parser.register('action', 'parsers', _SubParserActionOverride)
         parser.add_argument('--version', action='version', version=version)
         parser.set_defaults(func=None)
-        s = parser.add_subparsers(description='Main commands')
+        s = parser.add_subparsers(title='Main commands', metavar='')
         self.apply_parser(s, parser=parser)
         args = parser.parse_args()
         args.func(args)
@@ -74,19 +92,27 @@ class Command(object):
         for allowing some generic handling of some flags (especially inherited flags)
 
         :param args: Arguments object that is the result of the `argparse` commandline parser
+        :type args: :py:class:`argparse.Namespace`
         :return: None
         """
-        if self.parent:
-            self.parent.called(args)
+        try:
+            if self.parent:
+                self.parent.called(args)
 
-        if self.target:
-            self.target(args)
+            if self.target:
+                self.target(args)
+        except UsageError as e:
+            self.parser.print_help(file=sys.stderr)
+            self.parser.exit(status=2, message='\nUsageError: {message}\n'.format(message=e.message))
 
     def apply_parser(self, sparser, parent=None, parser=None):
         """
         :param sparser: ArgumentParser.add_subparsers
-        :param parent: Instance of :py:ref:`_Command`
+        :type sparser: _SubParserActionOverride
+        :param parent: Instance of :py:class:`_Command`
+        :type parent: _Command
         :param parser: ArgumentParser instance usually received from sparser.add_parser
+        :type parser: argparse.ArgumentParser
         :return: None
         """
 
@@ -96,7 +122,8 @@ class Command(object):
         if parser:
             self.parser = parser
         else:
-            self.parser = sparser.add_parser(self.name, help=self.help)
+            self.parser = sparser.add_parser(self.name, help=self.help, formatter_class=_LeappHelpFormatter,
+                                             description='Description:\n\n' + self.description)
 
         self.parser.set_defaults(prog=self.parser.prog, func=self.called)
         inheritable = [] if not self.parent else self.parent.get_inheritable_options()
@@ -105,7 +132,8 @@ class Command(object):
 
         if self._sub_commands:
             if not parser:
-                subs = self.parser.add_subparsers(prog=self.parser.prog, description=self.help)
+                subs = self.parser.add_subparsers(prog=self.parser.prog, title='Available subcommands', help=self.help,
+                                                  metavar='')
             else:
                 subs = sparser
             for name, cmd in self._sub_commands.items():
@@ -123,17 +151,9 @@ class Command(object):
         self._sub_commands[cmd.name] = cmd
         return self
 
-    def __call__(self, name, help=''):
-        def wrapper(f):
-            if not hasattr(f, 'command'):
-                f.command = Command(name, target=f, help=help)
-            else:
-                f.command.name = name
-                f.command.help = help
-                f.command.target = f
-            self.add_sub(f.command)
-            return f
-        return wrapper
+    def __call__(self, *args, **kwargs):
+        kwargs['parent'] = self
+        return command(*args, **kwargs)
 
     def _add_opt(self, *args, **kwargs):
         internal = kwargs.pop('internal', {})
@@ -191,28 +211,40 @@ class Command(object):
         return self
 
 
-def command(name, help=''):
+def command(name, help='', description=None, parent=None):
     """
     Decorator to mark a function as sub command
 
     :param name: Sub command name
+    :type name: str
     :param help: Help string for the sub command
+    :type help: str
+    :param description: Extended description for the sub command defaults to help if not set
+    :type description: str
+    :param parent: Instance to the parent command if it is a sub-command
+    :type parent: Command
     """
     def wrapper(f):
         if not hasattr(f, 'command'):
-            f.command = Command(name, help=help, target=f)
+            f.command = Command(name, help=help, target=f, description=description)
         else:
             f.command.name = name
             f.command.help = help
+            f.command.description = description or help
             f.command.target = f
+        if parent:
+            parent.add_sub(f.command)
         return f
     return wrapper
 
 
-def _ensure_command(f):
-    if not hasattr(f, 'command'):
-        f.command = Command('')
-    return f
+def _ensure_command(wrapped):
+    @functools.wraps(wrapped)
+    def wrapper(f):
+        if not hasattr(f, 'command'):
+            f.command = Command('')
+        return wrapped(f)
+    return wrapper
 
 
 def command_arg(name, value_type=None, help=''):
@@ -223,8 +255,9 @@ def command_arg(name, value_type=None, help=''):
     :param value_type: Type of the argument
     :param help: Help string for the argument
     """
+    @_ensure_command
     def wrapper(f):
-        _ensure_command(f).command.add_argument(name, value_type=value_type, help=help, wrapped=f)
+        f.command.add_argument(name, value_type=value_type, help=help, wrapped=f)
         return f
     return wrapper
 
@@ -236,7 +269,20 @@ def command_opt(name, **kwargs):
     :param name: Name of the option
     :param kwargs: parameters as specified in :py:func:`leapp.utils.clicmd.Command.add_option`
     """
+    @_ensure_command
     def wrapper(f):
-        _ensure_command(f).command.add_option(name, wrapped=f, **kwargs)
+        f.command.add_option(name, wrapped=f, **kwargs)
         return f
     return wrapper
+
+
+def command_aware_wraps(f):
+    """
+    Decorator to pass through the command attribute of the wrapped function to the wrapper
+
+    This needs to be used by decorators which are trying to wrap clicmd decorated command functions.
+    """
+    additional = ()
+    if hasattr(f, 'command'):
+        additional = ('command',)
+    return functools.wraps(f, assigned=functools.WRAPPER_ASSIGNMENTS + additional)
