@@ -82,7 +82,7 @@ Requires: python-six
 Requires: python-setuptools
 %else
 Requires: python2-six
-Requires: python22-setuptools
+Requires: python2-setuptools
 %endif
 
 %description -n python2-%{name}
