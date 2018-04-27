@@ -1,7 +1,12 @@
 import json
+import os
 from subprocess import check_call, check_output, CalledProcessError
 
 import pytest
+
+
+def setup_module(m):
+    os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
 
 @pytest.fixture(scope='session')
