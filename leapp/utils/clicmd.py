@@ -28,7 +28,7 @@ class _SubParserActionOverride(_SubParsersAction):
     """
     def __call__(self, parser, namespace, values, option_string=None):
         super(_SubParserActionOverride, self).__call__(parser, namespace, values, option_string)
-        if sys.version >= (2, 7, 9):
+        if sys.version_info >= (2, 7, 9):
             return
         parser_name = values[0]
         arg_strings = values[1:]
