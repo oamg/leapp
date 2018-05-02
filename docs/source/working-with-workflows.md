@@ -1,17 +1,17 @@
-# Working with Workflows
+# Working with workflows
 
 
 ## Creating a workflow
 
-To create a new workflow first we create a tag with the same name and then the workflow. (Later the snactor tool
-will take care of this, for now this is necessary since it's still a TODO)
+To create a new workflow, create a tag with the same name, and then the workflow. Later, the snactor tool
+will provide this automatically.
 
 ```shell
 $ snactor new-tag Example
 $ snactor workflow new Example
 ```
 
-This will create the Example workflow boilerplate:
+This procedure creates the Example workflow boilerplate:
 
 ```python
 from leapp.workflows import Workflow
@@ -29,8 +29,8 @@ class ExampleWorkflow(Workflow):
     short_name = 'example'
     description = '''No description has been provided for the Example workflow.'''
 
-    # Template for phase definition - The order in which the phase classes are defined
-    # within the Workflow class represents the execution order
+    # Template for a phase definition. The order in which the phase classes are defined
+    # within the Workflow class represents the execution order.
     #
     # class PhaseName(Phase):
     #    name = 'phase_name'
@@ -42,14 +42,20 @@ class ExampleWorkflow(Workflow):
 
 ## Defining workflow phases
 
-To add a phase one simple defines a new sub class within the workflow deriving from Phase.
-We will create one phase called ScanPhase which is supposed to be handling all actors which
-are defining the tags (ScanTag or ScanTag.Before or ScanTag.After) and ExampleTag or
-with either of ScanTag.Common, ScanTag.Common.Before or ScanTag.Common.After
+To add a phase, define a new subclass within the workflow deriving from the Phase class.
 
-We will set the policies to fail the whole phase, but let all actors run within even if
-an actor failed. The retry policy will be set to restart the whole phase from the beginning
-when retrying.
+
+We will create a phase called ScanPhase, which is supposed to be handling all actors that
+are defining the ScanTag for the phase, and the ExampleTag for the workflow.
+
+
+Phases have policies that control the execution of the workflow. These policies can control
+the behavior in case of errors that are reported by actors. Additionally, the retry behavior
+can be specified. The retry behavior allows to specify how to recover from failing workflow executions
+without having to rerun the whole process or to disable the retry ability entirely. 
+
+In this scenario, we set the policy to fail the whole phase, but let all actors run, even if
+one of the actors fails. And for the retry policy, we specify to restart the whole phase from the beginning.
 
 The definition of the ScanPhase class: (Note: ScanTag has to be imported)
 
@@ -62,14 +68,13 @@ class ScanPhase(Phase):
     flags = Flags()
 ```
 
-Now we will define an imaginary reports phase that would process the data produced by
+Now, we will define an imaginary reports phase that would process the data produced by
 the ScanPhase and create one or more reports.
 
-For this will will choose the ReportsTag to be used.
+For this, the ReportsTag is used.
 
-This time we will make the the phase fail immediately and bail out when one of the actors
-fail.
-And we disable the retry, this means that this cannot be re-run and has to be restarted from scratch.
+This time, we will make the phase fail immediately, and stop the workflow execution once one of the actors fails.
+And we disallow the retry by disabling it, which means that the phase cannot be recovered from. This implies that the workflow has to be restarted from the very beginning.
 
 The definition of the ReportsPhase class: (Note: ReportsTag has to be imported)
 
@@ -82,7 +87,7 @@ class ReportsPhase(Phase):
     flags = Flags()
 ```
 
-The whole example workflow now:
+The whole example workflow:
 
 ```python
 from leapp.workflows import Workflow
@@ -116,11 +121,11 @@ class ExampleWorkflow(Workflow):
 ```
 
 
-## Testing workflow execution
+## Testing the workflow execution
 
-If you would like to test the execution of workflows you can use the snactor tool.
+To test the execution of workflows, use the snactor tool.
 
-Here the snactor tool is run with the above workflow in the tutorial project which contains the HostnameScanner
+The snactor tool is run with the above workflow in the tutorial project, which contains the HostnameScanner
 and IpResolver actors.
 
 ```shell
@@ -145,19 +150,22 @@ $ snactor workflow run Example
 
 ## Adding an actor to a workflow
 
-To have an actor added to a specific workflow phase one needs to assign 2 tags
+To have an actor added to a specific workflow phase, assign two tags:
 1. The workflow tag 
-    In the Example workflow above this was ExampleTag    
+    In the Example workflow above this was the ExampleTag.    
 2. The phase tag
-    In case of the ScanPhase it is the ScanTag, in the Reports phase the ReportsTag
+    In case of the ScanPhase it is the ScanTag, in the Reports phase the ReportsTag.
 
-In the actor the tags field would be filled like this:
+In the actor, the tags field is filled like this:
 ```python
     tags = (ExampleTag, ScanTag)
 ```
 
-To have an actor always added when a tag is used, one would add the .Common attribute of the tag:
+To have an actor added to any workflow when a phase tag is used, add the `.Common` attribute of the tag:
 
 ```python
-    tags += (ScanTag.Common,)
+    tags = (ScanTag.Common,)
 ```
+
+
+
