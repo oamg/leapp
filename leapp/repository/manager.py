@@ -40,7 +40,7 @@ class RepositoryManager(object):
         """
         Adds new repository to manager.
 
-        :param repo: Repository that will be added (registered) 
+        :param repo: Repository that will be added (registered)
         :type repo: :py:class:`leapp.repository.Repository`
         """
         self._repos.append(repo)

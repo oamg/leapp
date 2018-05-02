@@ -14,7 +14,9 @@ from leapp.utils.project import get_project_name
 
 class Repository(object):
     """
-    The Repository class represents a place where all resources (actors, models, tags, etc.) are defined. The repository directory layout looks like :ref:`Repository Directory Layout <best-practises:repository directory layout>`
+    The Repository class represents a place where all resources (actors, models, tags, etc.) are defined. The
+    repository directory layout looks like
+    :ref:`Repository Directory Layout <best-practises:repository directory layout>`
     """
     def __init__(self, directory):
         """
@@ -209,7 +211,7 @@ class Repository(object):
     @property
     def tools(self):
         """
-        :return: Tuple of tools in the repository 
+        :return: Tuple of tools in the repository
         """
         return tuple(self._definitions.get(DefinitionKind.TOOLS, ()))
 

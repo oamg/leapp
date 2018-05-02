@@ -14,7 +14,7 @@ _LONG_DESCRIPTION = '''
 Runs the given actor as specified as `actor_name` in a testing environment.
 
 For more information please consider reading the documentation at:
-https://red.ht/leapp-docs 
+https://red.ht/leapp-docs
 '''
 
 
@@ -40,4 +40,3 @@ def cli(args):
 
     if args.print_output:
         json.dump(messaging.messages(), sys.stdout, indent=2)
-

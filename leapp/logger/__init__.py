@@ -55,7 +55,7 @@ def configure_logger():
         path = os.getenv('LEAPP_LOGGER_CONFIG', '/etc/leapp/logger.conf')
         if path and os.path.isfile(path):
             logging.config.fileConfig(path)
-        else: # Fall back logging configuration
+        else:  # Fall back logging configuration
             logging.Formatter.converter = time.gmtime
             log_format = '%(asctime)s.%(msecs)-3d %(levelname)-8s PID: %(process)d %(name)s: %(message)s'
             log_date_format = '%Y-%m-%d %H:%M:%S'

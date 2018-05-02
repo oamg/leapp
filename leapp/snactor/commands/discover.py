@@ -43,7 +43,7 @@ def _get_actor_details(actor):
 
 
 def _get_workflow_details(workflow):
-    return {'name': workflow.name, 'description': workflow.description, 'short_name':workflow.short_name}
+    return {'name': workflow.name, 'description': workflow.description, 'short_name': workflow.short_name}
 
 
 def _get_tag_details(tag):
@@ -72,7 +72,7 @@ Support entities:
 
 
 For more information please consider reading the documentation at:
-https://red.ht/leapp-docs 
+https://red.ht/leapp-docs
 '''
 
 
@@ -91,8 +91,9 @@ def cli(args):
     tags = [tag for tag in get_tags() if _is_local(base_dir, tag)]
     workflows = [workflow for workflow in get_workflows() if _is_local(base_dir, workflow)]
     if not args.json:
-        sys.stdout.write('Project:\n  Name: {project}\n  Path: {base_dir}\n\n'.format(project=get_project_name(base_dir),
-                                                                                      base_dir=base_dir))
+        sys.stdout.write(
+            'Project:\n  Name: {project}\n  Path: {base_dir}\n\n'.format(project=get_project_name(base_dir),
+                                                                         base_dir=base_dir))
         _print_group('Actors', actors, name_resolver=lambda x: x.class_name, path_resolver=_get_actor_path)
         _print_group('Models', models)
         _print_group('Tags', tags)
@@ -102,10 +103,10 @@ def cli(args):
         output = {
             'project': get_project_name(base_dir),
             'base_dir': base_dir,
-            'topics': {topic.__name__: _get_topic_details(topic) for topic in topics},
-            'models': {model.__name__: _get_model_details(model) for model in models},
-            'actors': {actor.class_name: _get_actor_details(actor) for actor in actors},
-            'tags': {tag.name: _get_tag_details(tag) for tag in tags},
-            'models': {workflow.__name__: _get_workflow_details(workflow) for workflow in workflows}
+            'topics': dict((topic.__name__, _get_topic_details(topic)) for topic in topics),
+            'models': dict((model.__name__, _get_model_details(model)) for model in models),
+            'actors': dict((actor.class_name, _get_actor_details(actor)) for actor in actors),
+            'tags': dict((tag.name, _get_tag_details(tag)) for tag in tags),
+            'workflows': dict((workflow.__name__, _get_workflow_details(workflow)) for workflow in workflows)
         }
         json_mod.dump(output, sys.stdout, indent=2)

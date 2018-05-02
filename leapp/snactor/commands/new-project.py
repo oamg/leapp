@@ -13,11 +13,11 @@ path=${project:state_dir}/leapp.db
 '''
 
 _LONG_DESCRIPTION = '''
-Creates a new local repository for writing Actors, Models, Tags, 
+Creates a new local repository for writing Actors, Models, Tags,
 Topics, and Workflows or adding shared files, tools or libraries.
 
 For more information please consider reading the documentation at:
-https://red.ht/leapp-docs 
+https://red.ht/leapp-docs
 '''
 
 

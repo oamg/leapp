@@ -17,7 +17,7 @@ def find_and_scan_repositories(path, manager=None):
 
 def scan_repo(path):
     """
-    Scans all related resources of the repository 
+    Scans all related resources of the repository
 
     :param path: path to the repository
     :type path: str

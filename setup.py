@@ -1,9 +1,7 @@
-import os
 import sys
 from subprocess import check_call
 from setuptools import find_packages, setup
 from distutils.util import convert_path
-from shutil import copyfile
 
 main_ns = {}
 ver_path = convert_path('leapp/__init__.py')

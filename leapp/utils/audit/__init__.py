@@ -308,10 +308,10 @@ def _dict_factory(cursor, row):
 
 
 _MESSAGE_QUERY_TEMPLATE = '''
-        SELECT                                                                                                             
-             id, context, stamp, topic, type, actor, phase, message_hash, message_data, hostname                          
-        FROM                                                                                                               
-             messages_data                                                                                                  
+        SELECT
+             id, context, stamp, topic, type, actor, phase, message_hash, message_data, hostname
+        FROM
+             messages_data
         WHERE context = ? AND type IN (%s)'''
 
 

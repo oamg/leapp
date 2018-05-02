@@ -11,12 +11,14 @@
 
 from docutils import nodes
 
-#from sphinx.locale import __
+# from sphinx.locale import __
 import logging
 from sphinx.util.nodes import clean_astext
 
+
 def __(x):
     return x
+
 
 if False:
     # For type annotation
@@ -65,4 +67,3 @@ def setup(app):
         'parallel_read_safe': True,
         'parallel_write_safe': True,
     }
-

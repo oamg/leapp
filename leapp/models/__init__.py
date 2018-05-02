@@ -87,7 +87,7 @@ class Model(with_metaclass(ModelMeta)):
     fields = None
     """
     `fields` contains a dictionary with all attributes of type py:class:`leapp.models.fields.Field` in the class
-    
+
     Note: Dynamically added fields are ignored by the framework
     """
 

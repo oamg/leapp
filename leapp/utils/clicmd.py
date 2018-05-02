@@ -2,7 +2,7 @@ import functools
 import os
 import sys
 
-from argparse import ArgumentParser, _SubParsersAction, RawDescriptionHelpFormatter, SUPPRESS
+from argparse import ArgumentParser, _SubParsersAction, RawDescriptionHelpFormatter
 
 from leapp.exceptions import CommandDefinitionError, UsageError
 

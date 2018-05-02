@@ -16,6 +16,6 @@ install-test:
 	pip install -r requirements-tests.txt
 
 test:
-	py.test --cov leapp
+	py.test --flake8 --cov leapp
 
 .PHONY: install-deps install install-test test

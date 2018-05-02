@@ -19,7 +19,8 @@ class TagMeta(type):
 
             if not getattr(klass, 'parent', None):
                 data = {'parent': klass, 'actors': ()}
-                before_common = type('_' + name + 'BeforeCommon', (Tag,), dict(name='common-before-' + klass.name, **data))
+                before_common = type('_' + name + 'BeforeCommon', (Tag,), dict(name='common-before-' + klass.name,
+                                                                               **data))
                 after_common = type('_' + name + 'AfterCommon', (Tag,), dict(name='common-after-' + klass.name, **data))
                 klass.Before = type('_' + 'Before' + name, (Tag,),
                                     dict(name='before-' + klass.name, Common=before_common, **data))

@@ -9,10 +9,10 @@ _LONG_DESCRIPTION = '''
 Creates a new workflow with the given name.
 
 Short name can be overridden using the --short-name option. The class name
-can be overridden by using the --class-name option. 
+can be overridden by using the --class-name option.
 
 For more information please consider reading the documentation at:
-https://red.ht/leapp-docs 
+https://red.ht/leapp-docs
 '''
 
 

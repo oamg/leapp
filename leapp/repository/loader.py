@@ -11,7 +11,7 @@ def library_loader(mod, prefix, paths):
     :param prefix: prefix of module/package
     :type prefix: str
     :param paths: iterable paths
-    :type paths: tuple(str) 
+    :type paths: tuple(str)
     :return: List of prepared modules/packages to be added (injected)
     """
     to_add = []

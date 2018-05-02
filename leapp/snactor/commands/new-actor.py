@@ -11,7 +11,7 @@ Creates a new Actor with all necessary boilerplate code in the current
 repository.
 
 For more information please consider reading the documentation at:
-https://red.ht/leapp-docs 
+https://red.ht/leapp-docs
 '''
 
 

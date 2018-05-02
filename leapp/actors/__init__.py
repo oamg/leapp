@@ -29,20 +29,20 @@ class Actor(object):
 
     consumes = ()
     """
-    Tuple of :py:class:`leapp.models.Model` derived classes defined in the :ref:`repositories <terminology:repository>` that
-    define :ref:`messages <terminology:message>` the actor consumes.
+    Tuple of :py:class:`leapp.models.Model` derived classes defined in the :ref:`repositories <terminology:repository>`
+    that define :ref:`messages <terminology:message>` the actor consumes.
     """
 
     produces = ()
     """
-    Tuple of :py:class:`leapp.models.Model` derived classes defined in the :ref:`repositories <terminology:repository>` that define
-    :ref:`messages <terminology:message>` the actor produces.
+    Tuple of :py:class:`leapp.models.Model` derived classes defined in the :ref:`repositories <terminology:repository>`
+    that define :ref:`messages <terminology:message>` the actor produces.
     """
 
     tags = ()
     """
-    Tuple of :py:class:`leapp.tags.Tag` derived classes by which :ref:`workflow <terminology:workflow>` :ref:`phases <terminology:phase>` select
-    actors for execution.
+    Tuple of :py:class:`leapp.tags.Tag` derived classes by which :ref:`workflow <terminology:workflow>`
+    :ref:`phases <terminology:phase>` select actors for execution.
     """
 
     def __init__(self, messaging=None, logger=None):
@@ -123,7 +123,8 @@ class Actor(object):
 
     def consume(self, *models):
         """
-        Retrieve messages specified in the actors :py:attr:`consumes` attribute and can be filter the message types by models.
+        Retrieve messages specified in the actors :py:attr:`consumes` attribute and can be filter the message types by
+        models.
 
         :param models: Models to use as filter for the messages to return
         :type models: Variable number of the derived classes from :py:class:`leapp.models.Model`

@@ -23,10 +23,11 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
-import sphinx_rtd_theme
-import leapp
-from recommonmark.parser import CommonMarkParser
-from recommonmark.transform import AutoStructify
+import sphinx_rtd_theme  # noqa
+import leapp  # noqa
+from recommonmark.parser import CommonMarkParser  # noqa
+from recommonmark.transform import AutoStructify  # noqa
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -173,13 +174,13 @@ autoclass_content = 'both'
 autodoc_default_flags = ['members', 'undoc-members', 'inherited-members', 'show-inheritance']
 
 
-
 def filter_unwanted_leapp_types(app, what, name, obj, skip, options):
     if name.startswith('with_meta_base_') or name == 'mro':
         return True
     if name == 'commands' and what == 'module':
         return True
     return skip
+
 
 def setup(app):
     app.add_config_value('recommonmark_config', {

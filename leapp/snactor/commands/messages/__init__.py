@@ -10,7 +10,7 @@ This group of commands are around managing messages stored in the
 current project database.
 
 For more information please consider reading the documentation at:
-https://red.ht/leapp-docs 
+https://red.ht/leapp-docs
 '''
 
 
@@ -25,7 +25,7 @@ This gives the developer control over the input data available to actors
 run and developed in this project.
 
 For more information please consider reading the documentation at:
-https://red.ht/leapp-docs 
+https://red.ht/leapp-docs
 '''
 
 

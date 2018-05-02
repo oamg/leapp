@@ -18,7 +18,7 @@ Using --until-actor the workflow will be only executed until including
 the first occurrence of the given actor name.
 
 For more information please consider reading the documentation at:
-https://red.ht/leapp-docs 
+https://red.ht/leapp-docs
 '''
 
 

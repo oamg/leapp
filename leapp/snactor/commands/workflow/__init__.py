@@ -4,7 +4,7 @@ _LONG_DESCRIPTION = '''
 Leapp Workflow related commands.
 
 For more information please consider reading the documentation at:
-https://red.ht/leapp-docs 
+https://red.ht/leapp-docs
 '''
 
 
