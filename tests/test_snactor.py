@@ -78,6 +78,31 @@ class TestModel(Model):
         check_call(['snactor', 'discover'])
 
 
+def test_ref_model(project_dir):
+    # We need the topic to be created already
+    if not project_dir.join('topics/test.py').check(file=True):
+        test_new_topic(project_dir)
+    with project_dir.as_cwd():
+        # We need the model to be created already for the actor
+        # So we have to check if it wasn't already created
+        if not project_dir.join('models/a.py').check(file=True):
+            check_call(['snactor', 'new-model', 'A'])
+        assert project_dir.join('models/a.py').check(file=True)
+        with pytest.raises(CalledProcessError):
+            # Now discover should fail due to the missing topic
+            check_call(['snactor', 'discover'])
+        project_dir.join('models/a.py').write('''
+from leapp.models import Model, fields, TestModel
+from leapp.topics import TestTopic
+
+
+class A(Model):
+    topic = TestTopic
+    referenced = fields.Nested(TestModel)
+''')
+        check_call(['snactor', 'discover'])
+
+
 def test_new_actor(project_dir):
     # We need the model to be created already
     if not project_dir.join('models/testmodel.py').check(file=True):
@@ -97,9 +122,38 @@ class Test(Actor):
     description = 'No description has been provided for the test actor.'
     consumes = ()
     produces = (TestModel,)
-    tags = (TestTag,)
+    tags = (TestTag.Common,)
 
     def process(self):
         pass
 ''')
         check_call(['snactor', 'discover'])
+
+
+def test_new_workflow(project_dir):
+    pass
+
+
+def test_run_workflow(project_dir):
+    pass
+
+
+def test_run_actor(project_dir):
+    with project_dir.as_cwd():
+        check_call(['snactor', 'run', 'Test'])
+        check_call(['snactor', 'run', '--print-output', 'Test'])
+        check_call(['snactor', 'run', '--save-output', 'Test'])
+        check_call(['snactor', 'run', '--print-output', '--save-output', 'Test'])
+        check_call(['snactor', 'run', '--debug', 'Test'])
+        check_call(['snactor', 'run', '--debug', '--print-output', 'Test'])
+        check_call(['snactor', 'run', '--debug', '--save-output', 'Test'])
+        check_call(['snactor', 'run', '--debug', '--print-output', '--save-output', 'Test'])
+        check_call(['snactor', '--debug', 'run', 'Test'])
+        check_call(['snactor', '--debug', 'run', '--print-output', 'Test'])
+        check_call(['snactor', '--debug', 'run', '--save-output', 'Test'])
+        check_call(['snactor', '--debug', 'run', '--print-output', '--save-output', 'Test'])
+
+
+def test_clear_messages(project_dir):
+    with project_dir.as_cwd():
+        check_call(['snactor', 'messages', 'clear'])

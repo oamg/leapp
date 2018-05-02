@@ -84,9 +84,12 @@ class Repository(object):
 
         self._definitions.setdefault(kind, []).append(item)
 
-    def load(self):
+    def load(self, resolve=True):
         """
         Loads the repository resources
+
+        :param resolve: Whether or not to perform the resolving of model references
+        :type resolve: bool
         """
         self.log.debug("Loading repository %s", self.name)
         self.log.debug("Loading tag modules")
@@ -95,6 +98,9 @@ class Repository(object):
         self._load_modules(self.topics)
         self.log.debug("Loading model modules")
         self._load_modules(self.models)
+        if resolve:
+            from leapp.models import resolve_model_references
+            resolve_model_references()
 
         if not leapp.libraries.common.LEAPP_BUILTIN_COMMON_INITIALIZED:
             self.log.debug("Loading builtin common libraries")
