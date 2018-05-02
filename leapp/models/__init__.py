@@ -42,11 +42,6 @@ class ModelMeta(type):
     def __new__(mcs, name, bases, attrs):
         klass = super(ModelMeta, mcs).__new__(mcs, name, bases, attrs)
 
-        model_ref_cls = globals().get('_ModelReference')
-        if name == '_ModelReference' or (model_ref_cls and issubclass(klass, model_ref_cls)):
-            setattr(sys.modules[mcs.__module__], name, klass)
-            return klass
-
         # Every model has to be bound to a topic except for the Model base class
         # Since it is using this class as meta class, we will dynamically get the class object from the globals
         model_cls = globals().get('Model')
@@ -137,60 +132,4 @@ def get_models():
 
     :return: List Model subclasses
     """
-    return [model for model in get_flattened_subclasses(Model) if model is not issubclass(model, _ModelReference)]
-
-
-class _ModelReference(Model):
-    _referenced = None
-    _resolved = None
-
-    def __new__(cls, *args, **kwargs):
-        return cls.resolve()(*args, **kwargs)
-
-    @classmethod
-    def create(cls, data):
-        return cls.resolve()(init_method='to_model', **data)
-
-    @classmethod
-    def resolve(cls):
-        if not cls._resolved:
-            try:
-                cls._resolved = globals()[cls._referenced]
-            except KeyError:
-                raise ModelDefinitionError('Undefined Model "{}"'.format(cls._referenced))
-        return cls._resolved
-
-
-def resolve_model_references():
-    """
-    Resolves all dynamically created model references. When importing a model that has not been loaded
-    yet, a dynamic model reference is created. After the loading of all models, resolve_model_references
-    shall be called, to ensure the consistency of the code.
-
-    :return: None
-    """
-    for reference in get_flattened_subclasses(_ModelReference):
-        reference.resolve()
-
-
-def _module_ref(name):
-    reference = type(name + "Reference", (_ModelReference,), {})
-    reference._referenced = name
-    return reference
-
-
-def _patch_module_getitem():
-    class ReferenceDict(object):
-        def __init__(self, module):
-            self.__dict__['_module'] = module
-
-        def __setattr__(self, name, value):
-            setattr(self._module, name, value)
-
-        def __getattr__(self, item):
-            return getattr(self._module, item, None) or _module_ref(item)
-
-    sys.modules[__name__] = ReferenceDict(sys.modules[__name__])
-
-
-_patch_module_getitem()
+    return get_flattened_subclasses(Model)

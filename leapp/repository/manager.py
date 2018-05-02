@@ -52,19 +52,12 @@ class RepositoryManager(object):
         """
         return tuple(self._repos)
 
-    def load(self, resolve=True):
+    def load(self):
         """
         Loads all known repositories.
-
-        :param resolve: Whether or not to perform the resolving of model references
-        :type resolve: bool
         """
         for repo in self._repos:
-            repo.load(resolve=False)
-
-        if resolve:
-            from leapp.models import resolve_model_references
-            resolve_model_references()
+            repo.load()
 
     def dump(self):
         """
