@@ -3,11 +3,9 @@
 
 ## Creating a workflow
 
-To create a new workflow, create a tag with the same name, and then the workflow. Later, the snactor tool
-will provide this automatically.
+To create a new workflow, create a tag with the same name, and then the workflow.
 
 ```shell
-$ snactor new-tag Example
 $ snactor workflow new Example
 ```
 
@@ -20,12 +18,12 @@ from leapp.workflows.flags import Flags
 from leapp.workflows.filters import Filter
 from leapp.workflows.tagfilters import TagFilter
 from leapp.workflows.policies import Policies
-from leapp.tags import ExampleTag
+from leapp.tags import ExampleWorkflowTag
 
 
 class ExampleWorkflow(Workflow):
     name = 'Example'
-    tag =  ExampleTag
+    tag =  ExampleWorkflowTag
     short_name = 'example'
     description = '''No description has been provided for the Example workflow.'''
 
@@ -46,7 +44,7 @@ To add a phase, define a new subclass within the workflow deriving from the Phas
 
 
 We will create a phase called ScanPhase, which is supposed to be handling all actors that
-are defining the ScanTag for the phase, and the ExampleTag for the workflow.
+are defining the ScanTag for the phase, and the ExampleWorkflowTag for the workflow.
 
 
 Phases have policies that control the execution of the workflow. These policies can control
@@ -96,12 +94,12 @@ from leapp.workflows.flags import Flags
 from leapp.workflows.filters import Filter
 from leapp.workflows.tagfilters import TagFilter
 from leapp.workflows.policies import Policies
-from leapp.tags import ExampleTag, ScanTag, ReportsTag
+from leapp.tags import ExampleWorkflowTag, ScanTag, ReportsTag
 
 
 class ExampleWorkflow(Workflow):
     name = 'Example'
-    tag =  ExampleTag
+    tag =  ExampleWorkflowTag
     short_name = 'example'
     description = '''No description has been provided for the Example workflow.'''
 
@@ -152,13 +150,13 @@ $ snactor workflow run Example
 
 To have an actor added to a specific workflow phase, assign two tags:
 1. The workflow tag 
-    In the Example workflow above this was the ExampleTag.    
+    In the Example workflow above this was the ExampleWorkflowTag.
 2. The phase tag
     In case of the ScanPhase it is the ScanTag, in the Reports phase the ReportsTag.
 
 In the actor, the tags field is filled like this:
 ```python
-    tags = (ExampleTag, ScanTag)
+    tags = (ExampleWorkflowTag, ScanTag)
 ```
 
 To have an actor added to any workflow when a phase tag is used, add the `.Common` attribute of the tag:

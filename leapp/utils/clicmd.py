@@ -126,7 +126,11 @@ class Command(object):
                                              description='Description:\n\n' + self.description)
 
         self.parser.set_defaults(prog=self.parser.prog, func=self.called)
-        inheritable = [] if not self.parent else self.parent.get_inheritable_options()
+        inheritable = []
+        current = self.parent
+        while current:
+            inheritable += current.get_inheritable_options()
+            current = current.parent
         for args, kwargs, internal in self._options + inheritable:
             self.parser.add_argument(*args, **kwargs)
 

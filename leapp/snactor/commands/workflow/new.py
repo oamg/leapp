@@ -1,6 +1,8 @@
 import os
 import sys
 
+from subprocess import check_call
+
 from leapp.snactor.commands.workflow import workflow
 from leapp.utils.clicmd import command_arg, command_opt
 from leapp.utils.project import requires_project, make_class_name, make_name, find_project_basedir
@@ -31,6 +33,8 @@ def cli(args):
     class_name = class_name or make_class_name(name)
     short_name = short_name or make_name(name)
 
+    check_call(['snactor', 'new-tag', class_name + 'Workflow'])
+
     if not os.path.exists(workflows_dir):
         os.mkdir(workflows_dir)
 
@@ -43,12 +47,12 @@ from leapp.workflows.flags import Flags
 from leapp.workflows.filters import Filter
 from leapp.workflows.tagfilters import TagFilter
 from leapp.workflows.policies import Policies
-from leapp.tags import {workflow_class}Tag
+from leapp.tags import {workflow_class}WorkflowTag
 
 
 class {workflow_class}Workflow(Workflow):
     name = '{workflow_name}'
-    tag =  {workflow_class}Tag
+    tag =  {workflow_class}WorkflowTag
     short_name = '{workflow_short_name}'
     description = '''No description has been provided for the {workflow_name} workflow.'''
 

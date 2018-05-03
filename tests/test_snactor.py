@@ -131,11 +131,37 @@ class Test(Actor):
 
 
 def test_new_workflow(project_dir):
-    pass
+    if project_dir.join('workflows/test.py').check(file=True):
+        # Test must have been run already
+        return
+    with project_dir.as_cwd():
+        check_call(['snactor', 'workflow', 'new', 'Test'])
+        assert project_dir.join('workflows/test.py').check(file=True)
+        check_call(['snactor', 'discover'])
+        content = project_dir.join('workflows/test.py').read().decode('utf-8')
+        project_dir.join('workflows/test.py').write('from leapp.tags import TestTag\n' + content + '''
+        
+    class TestPhase(Phase):
+         name = 'unit-test-workflow-phase'
+         filter = TagFilter(TestTag)
+         policies = Policies(Policies.Errors.FailPhase,
+                             Policies.Retry.Phase)
+         flags = Flags()
+''')
+        check_call(['snactor', 'discover'])
 
 
 def test_run_workflow(project_dir):
-    pass
+    # We need the workflow to be created already
+    if not project_dir.join('workflows/test.py').check(file=True):
+        test_new_workflow(project_dir)
+    with pytest.raises(CalledProcessError):
+        check_call(['snactor', 'workflow', 'run', 'Test'])
+    with project_dir.as_cwd():
+        check_call(['snactor', 'workflow', 'run', 'Test'])
+        check_call(['snactor', '--debug', 'workflow', 'run', 'Test'])
+        check_call(['snactor', 'workflow', '--debug', 'run', 'Test'])
+        check_call(['snactor', 'workflow', 'run', '--debug', 'Test'])
 
 
 def test_run_actor(project_dir):
