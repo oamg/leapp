@@ -59,8 +59,8 @@ The definition of the ScanPhase class: (Note: ScanTag has to be imported)
 
 ```python
 class ScanPhase(Phase):
-	name = 'scan phase'
-	filter = TagFilter(ScanTag)
+    name = 'scan phase'
+    filter = TagFilter(ScanTag)
     policies = Policies(Policies.Errors.FailPhase,
                         Policies.Retry.Phase)
     flags = Flags()
@@ -78,8 +78,8 @@ The definition of the ReportsPhase class: (Note: ReportsTag has to be imported)
 
 ```python
 class ReportsPhase(Phase):
-	name = 'reports phase'
-	filter = TagFilter(ReportsTag)
+    name = 'reports phase'
+    filter = TagFilter(ReportsTag)
     policies = Policies(Policies.Errors.FailImmediately,
                         Policies.Retry.Disabled)
     flags = Flags()
@@ -103,19 +103,19 @@ class ExampleWorkflow(Workflow):
     short_name = 'example'
     description = '''No description has been provided for the Example workflow.'''
 
-	class ScanPhase(Phase):
-		name = 'scan phase'
-		filter = TagFilter(ScanTag)
-		policies = Policies(Policies.Errors.FailPhase,
-							Policies.Retry.Phase)
-		flags = Flags()
+    class ScanPhase(Phase):
+        name = 'scan phase'
+        filter = TagFilter(ScanTag)
+        policies = Policies(Policies.Errors.FailPhase,
+                            Policies.Retry.Phase)
+        flags = Flags()
 
-	class ReportsPhase(Phase):
-		name = 'reports phase'
-		filter = TagFilter(ReportsTag)
-		policies = Policies(Policies.Errors.FailImmediately,
-							Policies.Retry.Disabled)
-		flags = Flags()
+    class ReportsPhase(Phase):
+        name = 'reports phase'
+        filter = TagFilter(ReportsTag)
+        policies = Policies(Policies.Errors.FailImmediately,
+                            Policies.Retry.Disabled)
+        flags = Flags()
 ```
 
 
