@@ -130,7 +130,7 @@ class Actor(object):
         :type models: Variable number of the derived classes from :py:class:`leapp.models.Model`
         """
         if self._messaging:
-            return self._messaging.consume(*models)
+            return self._messaging.consume(self, *models)
         return ()
 
     def report_error(self, message, severity=ErrorSeverity.ERROR, details=None):

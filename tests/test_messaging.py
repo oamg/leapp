@@ -1,0 +1,90 @@
+import pytest
+
+from leapp.messaging.inprocess import InProcessMessaging, BaseMessaging
+from leapp.models.error_severity import ErrorSeverity
+from leapp.models import ErrorModel
+from leapp.exceptions import CannotConsumeErrorMessages
+
+from helpers import project_dir
+from test_models import UnitTestModel
+from test_tags import TestTag
+
+
+class UnitTestModelUnused(UnitTestModel):
+    name = 'UnitTestModelUnused'
+
+
+class FakeActor(object):
+    name = 'Fake-actor'
+    consumes = (UnitTestModel,)
+    produces = ()
+    description = '''No description for a fake actor.'''
+    tags = (TestTag.Common,)
+
+    def process(self):
+        pass
+
+
+@pytest.mark.parametrize('stored', (True, False))
+def test_messaging_messages(project_dir, stored):
+    with project_dir.as_cwd():
+        msg = InProcessMessaging(stored=stored)
+        v = UnitTestModel()
+        msg.produce(v, FakeActor())
+        consumed = tuple(msg.consume(FakeActor(), UnitTestModel))
+        assert len(consumed) == 1
+        assert len(msg.messages()) == 1
+        assert consumed[0] == v
+
+
+def test_loading(project_dir):
+    with project_dir.as_cwd():
+        msg = InProcessMessaging()
+        with pytest.raises(CannotConsumeErrorMessages):
+            msg.load((ErrorModel,))
+        msg.load((UnitTestModel,))
+        v = UnitTestModel()
+        consumed = tuple(msg.consume(FakeActor(), UnitTestModel))
+        assert len(consumed) == 1
+        assert len(msg.messages()) == 0
+        assert consumed[0] == v
+
+        consumed = tuple(msg.consume(FakeActor(), UnitTestModelUnused))
+        assert len(consumed) == 0
+        assert len(msg.messages()) == 0
+
+        consumed = tuple(msg.consume(FakeActor()))
+        assert len(consumed) == 1
+        assert len(msg.messages()) == 0
+        assert consumed[0] == v
+
+        consumed = tuple(msg.consume(FakeActor(), UnitTestModelUnused))
+        assert len(consumed) == 0
+        assert len(msg.messages()) == 0
+
+
+def test_report_error(project_dir):
+    with project_dir.as_cwd():
+        msg = InProcessMessaging()
+        msg.report_error('Some error', ErrorSeverity.ERROR, FakeActor(), details=None)
+        msg.report_error('Some error with details', ErrorSeverity.ERROR, FakeActor(), details={'foo': 'bar'})
+        assert len(msg.errors()) == 2
+
+
+@pytest.mark.parametrize('stored', (True, False))
+def test_not_implemented(project_dir, stored):
+    with project_dir.as_cwd():
+        msg = BaseMessaging(stored=stored)
+        if stored:
+            with pytest.raises(NotImplementedError):
+                msg.report_error('Some error', ErrorSeverity.ERROR, FakeActor(), details=None)
+            with pytest.raises(NotImplementedError):
+                msg.produce(UnitTestModel(), FakeActor())
+        with pytest.raises(NotImplementedError):
+            msg.load(FakeActor.consumes)
+        msg.consume(FakeActor())
+        msg.consume(FakeActor(), UnitTestModel)
+        assert len(msg.errors()) == 0
+        assert len(msg.messages()) == 0
+        assert msg.stored == stored
+

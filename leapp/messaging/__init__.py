@@ -83,7 +83,7 @@ class BaseMessaging(object):
         :param severity: Severity of the error
         :type severity: ErrorSeverity
         :param actor: Actor name that produced the message
-        :type actor: str
+        :type actor: leapp.actors.Actor
         :param details: A dictionary where additional context information can be passed along with the error
         :type details: dict
         :return: None
@@ -119,25 +119,27 @@ class BaseMessaging(object):
             'hostname': os.environ.get('LEAPP_HOSTNAME', socket.getfqdn()),
             'message': {
                 'data': data,
-                'hash': hashlib.sha256(data).hexdigest()
+                'hash': hashlib.sha256(data.encode('utf-8')).hexdigest()
             }
         }
-        target.append(message)
-        if self.stored:
-            return self._process_message(message)
-        else:
-            return message
 
-    def consume(self, *types):
+        if self.stored:
+            self._process_message(message.copy())
+
+        target.append(message)
+        return message
+
+    def consume(self, actor, *types):
         """
         Returns all consumable messages and filters them by `types`
 
         :param types: Variable number of :py:class:`leapp.models.Model` derived types to filter messages to consume
+        :param actor: Actor that consumes the data
         :return: Iterable with messages matching the criteria
         """
-        all_messages = list(self._data) + list(self._new_data)
-        if not type:
-            return all_messages
-        lookup = dict([(model.__name__, model) for model in types])
-        return (lookup[message['type']].create(json.loads(message['message']['data']))
-                for message in all_messages if message['type'] in lookup)
+        messages = list(self._data) + list(self._new_data)
+        lookup = dict([(model.__name__, model) for model in type(actor).consumes])
+        if types:
+            filtered = set(requested.__name__ for requested in types)
+            messages = [message for message in messages if message['type'] in filtered]
+        return (lookup[message['type']].create(json.loads(message['message']['data'])) for message in messages)
