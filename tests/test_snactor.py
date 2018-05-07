@@ -2,19 +2,13 @@ import json
 import os
 from subprocess import check_call, check_output, CalledProcessError
 
+from helpers import project_dir
+
 import pytest
 
 
 def setup_module(m):
     os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
-
-
-@pytest.fixture(scope='session')
-def project_dir(tmpdir_factory):
-    root = tmpdir_factory.mktemp('repositories')
-    with root.as_cwd():
-        check_call(['snactor', 'new-project', 'testing'])
-        return root.join('testing')
 
 
 def test_discovery(project_dir):

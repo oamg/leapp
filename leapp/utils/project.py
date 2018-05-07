@@ -25,7 +25,9 @@ def to_snake_case(name):
     :param name: Name to convert
     :return: converted snake case name
     """
-    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name.replace('-', '_'))
+    if '-' in name:
+        name = ''.join([part.capitalize() for part in name.split('-') if part])
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
     return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
 
 
@@ -46,7 +48,7 @@ def make_name(name):
     :param name: Name to convert
     :return: Lower snake case
     """
-    return to_snake_case(name).lower()
+    return to_snake_case(name)
 
 
 def find_project_basedir(path):

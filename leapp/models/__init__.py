@@ -187,6 +187,9 @@ def _patch_module_getitem():
         def __setattr__(self, name, value):
             setattr(self._module, name, value)
 
+        def __delattr__(self, name):
+            delattr(self._module, name)
+
         def __getattr__(self, item):
             return getattr(self._module, item, None) or _module_ref(item)
 
