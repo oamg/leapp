@@ -192,7 +192,7 @@ You can edit the description of the actor now.
 Save the file, and it is ready to be run from the commandline:
 
 ```shell
-	$ snactor run HostnameScanner
+    $ snactor run HostnameScanner
     2018-03-20 13:24:06.20  INFO     PID: 6256 leapp: Logging has been initialized
     2018-03-20 13:24:06.22  INFO     PID: 6256 leapp.repository.tutorial: New repository 'tutorial' initialized at /home/evilissimo/devel/tutorial
     2018-03-20 13:24:06.67  INFO     PID: 6273 leapp.actors.hostname_scanner: Starting to scan for the hostname
@@ -202,26 +202,26 @@ Save the file, and it is ready to be run from the commandline:
 To see the message it generated, use the --print-output option:
 
 ```shell
-	$ snactor run --print-output HostnameScanner
-	2018-03-20 13:24:32.333 INFO     PID: 6300 leapp: Logging has been initialized
-	2018-03-20 13:24:32.335 INFO     PID: 6300 leapp.repository.tutorial: New repository 'tutorial' initialized at /home/evilissimo/devel/tutorial
-	2018-03-20 13:24:32.372 INFO     PID: 6317 leapp.actors.hostname_scanner: Starting to scan for the hostname
-	2018-03-20 13:24:42.492 INFO     PID: 6317 leapp.actors.hostname_scanner: Finished scanning for the hostname, found = actor-developer
-	[
-	  {
-		"stamp": "2018-03-20T13:24:37.434408Z",
-		"hostname": "actor-developer",
-		"actor": "hostname_scanner",
-		"context": "TESTING-CONTEXT",
-		"phase": "NON-WORKFLOW-EXECUTION",
-		"message": {
-		  "hash": "fb5ce8e630a1b3171709c9273883b8eb499b6b2ba09e112832ad47fa4e3f62b7",
-		  "data": "{\"name\": \"actor-developer\"}"
-		},
-		"type": "Hostname",
-		"topic": "system_info"
-	  }
-	]
+    $ snactor run --print-output HostnameScanner
+    2018-03-20 13:24:32.333 INFO     PID: 6300 leapp: Logging has been initialized
+    2018-03-20 13:24:32.335 INFO     PID: 6300 leapp.repository.tutorial: New repository 'tutorial' initialized at /home/evilissimo/devel/tutorial
+    2018-03-20 13:24:32.372 INFO     PID: 6317 leapp.actors.hostname_scanner: Starting to scan for the hostname
+    2018-03-20 13:24:42.492 INFO     PID: 6317 leapp.actors.hostname_scanner: Finished scanning for the hostname, found = actor-developer
+    [
+      {
+        "stamp": "2018-03-20T13:24:37.434408Z",
+        "hostname": "actor-developer",
+        "actor": "hostname_scanner",
+        "context": "TESTING-CONTEXT",
+        "phase": "NON-WORKFLOW-EXECUTION",
+        "message": {
+          "hash": "fb5ce8e630a1b3171709c9273883b8eb499b6b2ba09e112832ad47fa4e3f62b7",
+          "data": "{\"name\": \"actor-developer\"}"
+        },
+        "type": "Hostname",
+        "topic": "system_info"
+      }
+    ]
 ```
 
 #### Screencast
