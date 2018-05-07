@@ -126,6 +126,7 @@ class Command(object):
                                              description='Description:\n\n' + self.description)
 
         self.parser.set_defaults(prog=self.parser.prog, func=self.called)
+        self.parser.register('action', 'parsers', _SubParserActionOverride)
         inheritable = []
         current = self.parent
         while current:
