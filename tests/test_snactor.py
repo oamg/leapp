@@ -134,7 +134,7 @@ def test_new_workflow(project_dir):
         check_call(['snactor', 'discover'])
         content = project_dir.join('workflows/test.py').read().decode('utf-8')
         project_dir.join('workflows/test.py').write('from leapp.tags import TestTag\n' + content + '''
-        
+
     class TestPhase(Phase):
          name = 'unit-test-workflow-phase'
          filter = TagFilter(TestTag)

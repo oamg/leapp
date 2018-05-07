@@ -10,7 +10,7 @@ class UnitTestTopic(Topic):
 
 
 def test_topic():
-    assert getattr(leapp.topics, 'TestTopic') is UnitTestTopic
+    assert getattr(leapp.topics, 'UnitTestTopic') is UnitTestTopic
 
 
 def test_get_topics():
