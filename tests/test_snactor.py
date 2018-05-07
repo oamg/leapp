@@ -132,7 +132,7 @@ def test_new_workflow(project_dir):
         check_call(['snactor', 'workflow', 'new', 'Test'])
         assert project_dir.join('workflows/test.py').check(file=True)
         check_call(['snactor', 'discover'])
-        content = project_dir.join('workflows/test.py').read().decode('utf-8')
+        content = project_dir.join('workflows/test.py').read()
         project_dir.join('workflows/test.py').write('from leapp.tags import TestTag\n' + content + '''
 
     class TestPhase(Phase):
