@@ -3,7 +3,8 @@ import datetime
 import six
 
 
-def missing(): pass
+def missing():
+    pass
 
 
 class ModelViolationError(Exception):

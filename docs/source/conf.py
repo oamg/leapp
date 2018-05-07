@@ -167,7 +167,7 @@ texinfo_documents = [
 
 
 source_parsers = {
-   '.md': CommonMarkParser,
+    '.md': CommonMarkParser,
 }
 
 autoclass_content = 'both'
