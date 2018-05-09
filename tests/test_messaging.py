@@ -87,4 +87,3 @@ def test_not_implemented(project_dir, stored):
         assert len(msg.errors()) == 0
         assert len(msg.messages()) == 0
         assert msg.stored == stored
-

@@ -21,4 +21,3 @@ def project_dir(request, tmpdir_factory):
         project = root.join(TESTING_PROJECT_NAME)
         os.environ['LEAPP_CONFIG'] = project.join('.leapp', 'leapp.conf').strpath
         return project
-
