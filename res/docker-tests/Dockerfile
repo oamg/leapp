@@ -12,4 +12,4 @@ ENTRYPOINT virtualenv testenv && \
     pip install -U funcsigs && \
     pip install -U -r requirements-tests.txt && \
     pip install -U . && \
-    make test
+    py.test
