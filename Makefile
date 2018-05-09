@@ -11,9 +11,15 @@ install:
 	install -dm 0755 ${LIBDIR}
 	python -c "import sqlite3; sqlite3.connect('${LIBDIR}/audit.db').executescript(open('res/audit-layout.sql', 'r').read())"
 
+install-container-test:
+	docker pull ${CONTAINER}
+	docker build -t leapp-tests -f res/docker-tests/Dockerfile res/docker-tests
 
 install-test:
 	pip install -r requirements-tests.txt
+
+container-test:
+	docker run --rm -ti -v ${PWD}:/payload leapp-tests
 
 test:
 	py.test --flake8 --cov leapp
