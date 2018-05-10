@@ -165,6 +165,13 @@ class ActorDefinition(object):
         return self.discover()['produces']
 
     @property
+    def tags(self):
+        """
+        :return: Tuple of tags assigned to the actor
+        """
+        return self.discover()['tags']
+
+    @property
     def class_name(self):
         """
         :return: Actor class name
