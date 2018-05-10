@@ -66,4 +66,3 @@ def test_actor_definition(project_dir):
                     with mock.patch('leapp.repository.actor_definition.get_actors', return_value=[True, True]):
                         definition._discovery = None
                         definition.discover()
-
