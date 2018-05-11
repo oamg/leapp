@@ -11,6 +11,7 @@ _FAKE_META_DATA = {
     'description': 'Fake Description',
     'class_name': 'FakeActor',
     'name': 'fake-actor',
+    'path': 'actors/test',
     'tags': (),
     'consumes': (),
     'produces': (),
@@ -41,7 +42,7 @@ def test_actor_definition(project_dir):
                     assert definition.name == _FAKE_META_DATA['name']
                     assert definition.description == _FAKE_META_DATA['description']
                     dumped = definition.dump()
-                    assert dumped.pop('path') == 'actors/test'
+                    assert dumped.pop('path') == _FAKE_META_DATA['path']
                     assert dumped.pop('name') == definition.name
                     assert dumped.pop('files') == ('.',)
                     assert dumped.pop('libraries') == ('.',)

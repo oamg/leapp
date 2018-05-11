@@ -89,3 +89,8 @@ class UsageError(LeappError):
 class CommandDefinitionError(LeappError):
     def __init__(self, message):
         super(CommandDefinitionError, self).__init__(message)
+
+
+class LeappRuntimeError(LeappError):
+    def __init__(self, message):
+        super(LeappRuntimeError, self).__init__(message)

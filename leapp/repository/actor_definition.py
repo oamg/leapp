@@ -7,7 +7,8 @@ from multiprocessing import Process, Queue
 
 import leapp.libraries.actor
 from leapp.actors import get_actors, get_actor_metadata
-from leapp.exceptions import ActorInspectionFailedError, MultipleActorsError, UnsupportedDefinitionKindError
+from leapp.exceptions import ActorInspectionFailedError, MultipleActorsError, UnsupportedDefinitionKindError,\
+    LeappRuntimeError
 from leapp.repository import DefinitionKind
 from leapp.repository.loader import library_loader
 
@@ -22,7 +23,9 @@ def inspect_actor(definition, result_queue):
     :type result_queue: :py:class:`multiprocessing.Queue`
     """
     definition.load()
-    result_queue.put([get_actor_metadata(actor) for actor in get_actors()])
+    result = [get_actor_metadata(actor) for actor in get_actors()]
+    result = [entry for entry in result if entry['path'] in definition.full_path]
+    result_queue.put(result)
 
 
 class ActorCallContext(object):
@@ -55,6 +58,10 @@ class ActorCallContext(object):
         p = Process(target=self._do_run, args=(self.logger, self.messaging, self.definition, args, kwargs))
         p.start()
         p.join()
+        if p.exitcode != 0:
+            raise LeappRuntimeError(
+                'Actor {actorname} unexpectedly terminated with exit code: {exitcode}'
+                .format(actorname=self.definition.name, exitcode=p.exitcode))
 
 
 class ActorDefinition(object):
@@ -74,10 +81,13 @@ class ActorDefinition(object):
         self.log = log or logging.getLogger('leapp.actor')
         self._directory = directory
         self._repo_dir = repo_dir
-        self._full_repo_dir = os.path.abspath(repo_dir)
         self._definitions = {}
         self._module = None
         self._discovery = None
+
+    @property
+    def full_path(self):
+        return os.path.join(self._repo_dir, self._directory)
 
     def add(self, kind, path):
         """
