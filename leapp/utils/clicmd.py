@@ -165,7 +165,7 @@ class Command(object):
         self._options.append((args, kwargs, internal))
 
     def add_option(self, name, short_name='', help='', is_flag=False, inherit=False, value_type=str, wrapped=None,
-                   action=None):
+                   action=None, metavar=None):
         """
         Add an option
 
@@ -184,6 +184,9 @@ class Command(object):
         :type wrapped: Callable
         :param action: ArgumentParser actions to take (e.g. store)
         :type action: str
+        :param metavar: Changes the display name of arguments in generated help messages.
+                        It has no influence on the attribute name from the generated arguments namespace.
+        :type metavar: str
         :return: self
         """
         name = name.lstrip('-')
@@ -200,6 +203,8 @@ class Command(object):
                 action = 'store_true'
             elif value_type:
                 kwargs['type'] = value_type
+        if metavar:
+            kwargs['metavar'] = metavar
         self._add_opt(*names, help=help, action=action, internal={'wrapped': wrapped, 'inherit': inherit}, **kwargs)
         return self
 
