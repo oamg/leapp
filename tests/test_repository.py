@@ -1,12 +1,13 @@
 from argparse import Namespace
-from multiprocessing import Queue, Process
+from multiprocessing import Process
 
 import pytest
 
-from leapp.repository.scan import scan_repo
+from leapp.repository.scan import find_and_scan_repositories, scan_repo
 from helpers import make_project_dir
 from leapp.snactor.commands.new_actor import cli as new_actor_cmd
 from leapp.snactor.commands.new_tag import cli as new_tag_cmd
+from leapp.snactor.commands.workflow.new import cli as new_workflow_cmd
 from leapp.exceptions import LeappRuntimeError
 
 
@@ -31,23 +32,36 @@ def test_empty_repo(empty_repository_dir):
 def setup_repo(repository_dir):
     with repository_dir.as_cwd():
         new_tag_cmd(Namespace(tag_name='Test'))
+        new_workflow_cmd(Namespace(name='Test', class_name=None, short_name=None))
         actor_path = new_actor_cmd(Namespace(
             actor_name='TestActor',
-            tag=['TestTag'],
+            tag=['TestTag', 'TestWorkflowTag'],
             consumes=[],
             produces=[],
         ))
-        type(repository_dir)(actor_path).mkdir('libraries').join('lib.py').write('''from subprocess import call
+        type(repository_dir)(actor_path).join('tests', 'test_this_actor.py').write('print("I am a test")')
+        type(repository_dir)(actor_path).mkdir('libraries').mkdir('lib').join('__init__.py').write(
+            '''from subprocess import call
 def do():
     # This must always fail - This function is crashing the actor ;-)
     assert call(['woot-tool']) == 0
         ''')
+        repository_dir.mkdir('libraries').mkdir('lib').join('__init__.py').write(
+            '''from subprocess import call
+def do():
+    assert call(['common-woot-tool']) == 42
+        ''')
         type(repository_dir)(actor_path).mkdir('files').join('test.data').write('data')
+        repository_dir.mkdir('files').join('common-test.data').write('data')
         tool_path = type(repository_dir)(actor_path).mkdir('tools').join('woot-tool')
-        tool_path.write('''#!/bin/bash
+        woot_tool_content = '''#!/bin/bash
 echo 'WOOT'
 exit 42
-''')
+'''
+        tool_path.write(woot_tool_content)
+        tool_path.chmod(0o755)
+        tool_path = repository_dir.mkdir('tools').join('common-woot-tool')
+        tool_path.write(woot_tool_content)
         tool_path.chmod(0o755)
         actor_file = type(repository_dir)(actor_path).join('actor.py')
         actor_content = actor_file.read().replace('pass', '''from leapp.libraries.actor.lib import do
@@ -60,12 +74,25 @@ def test_repo(repository_dir):
 
     def _run_test(repo_path):
         with repo_path.as_cwd():
-            repository = scan_repo(repo_path.strpath)
+            repository = find_and_scan_repositories(repo_path.dirpath().strpath)
             assert repository
             repository.load(resolve=True)
-            from leapp.tags import TestTag
-            assert TestTag.__name__ == 'TestTag'
+            import leapp.tags
+            assert getattr(leapp.tags, 'TestTag')
             assert repository.lookup_actor('TestActor')
+            assert repository.lookup_workflow('TestWorkflow')
+            assert not repository.lookup_workflow('MissingWorkflow')
+            assert not repository.lookup_actor('MissingActor')
+            assert repository.repos
+            assert len(repository.dump()) >= 1
+            assert repository.actors
+            assert not repository.topics
+            assert not repository.models
+            assert repository.tags
+            assert repository.workflows
+            assert repository.tools
+            assert repository.libraries
+            assert repository.files
             with pytest.raises(LeappRuntimeError):
                 repository.lookup_actor('TestActor')().run()
 
