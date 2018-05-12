@@ -44,7 +44,6 @@ def cli(args):
             f.write("""from leapp.workflows import Workflow
 from leapp.workflows.phases import Phase
 from leapp.workflows.flags import Flags
-from leapp.workflows.filters import Filter
 from leapp.workflows.tagfilters import TagFilter
 from leapp.workflows.policies import Policies
 from leapp.tags import {workflow_class}WorkflowTag
