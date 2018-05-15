@@ -15,7 +15,7 @@ matrix:
 install:
   - if [ ! -z "$CONTAINER" ]; then make install-container-test CONTAINER=$CONTAINER; fi
   - if [ -z "$CONTAINER" ]; then make install-test; fi
-  - if [ -z "$CONTAINER" ]; then pip install .; fi
+  - if [ -z "$CONTAINER" ]; then pip install --editable .; fi
 
 script:
   - if [ ! -z "$CONTAINER" ]; then make container-test; else make test; fi
