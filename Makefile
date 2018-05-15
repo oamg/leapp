@@ -22,6 +22,6 @@ container-test:
 	docker run --rm -ti -v ${PWD}:/payload leapp-tests
 
 test:
-	py.test --flake8 ---cov-report=term-missing --cov=leapp tests/scripts
+	py.test --flake8 --cov-report term-missing --cov=leapp tests/scripts
 
 .PHONY: install-deps install install-test test
