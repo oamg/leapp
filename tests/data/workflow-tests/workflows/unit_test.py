@@ -15,7 +15,7 @@ class UnitTestWorkflow(Workflow):
     class FirstPhase(Phase):
        name = 'first-phase'
        filter = TagFilter(FirstPhaseTag)
-       policies = Policies(Policies.Errors.FailPhase,
+       policies = Policies(Policies.Errors.FailImmediately,
                            Policies.Retry.Phase)
        flags = Flags()
 
