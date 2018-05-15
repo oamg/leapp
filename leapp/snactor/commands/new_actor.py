@@ -28,7 +28,7 @@ def as_quoted_tuple(values):
     if values:
         suffix = ''
         if len(values) == 1:
-            suffix + ','
+            suffix = ','
         return ', '.join(values) + suffix
     return ''
 
@@ -48,13 +48,13 @@ def cli(args):
     tag_imports = ''
     model_imports = ''
     if args.tag:
-        tag_imports = '\nfrom leapp.tags import {}'.format(', '.join(args.tag))
+        tag_imports = '\nfrom leapp.tags import {}'.format(', '.join(tuple(map(lambda x: x.split('.')[0], args.tag))))
     if args.consumes or args.produces:
         models = set((args.produces or []) + (args.consumes or []))
         model_imports = '\nfrom leapp.models import {}'.format(', '.join(models))
 
-    consumes_content = '({})'.format(as_quoted_tuple(args.consumes))
     tags_content = '({})'.format(as_quoted_tuple(args.tag))
+    consumes_content = '({})'.format(as_quoted_tuple(args.consumes))
     produces_content = '({})'.format(as_quoted_tuple(args.produces))
 
     actors_dir = os.path.join(basedir, 'actors')

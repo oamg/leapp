@@ -4,10 +4,10 @@ from leapp.tags import Tag
 
 class TagFilter(object):
     def __init__(self, phase, *tags):
+        if not phase or not isinstance(phase, type) or not issubclass(phase, Tag):
+            raise TagFilterUsageError("TagFilter phase parameter needs to be set to a tag.")
         self.phase = phase
         self.tags = tags
-        if not self.phase or not isinstance(self.phase, type) or not issubclass(self.phase, Tag):
-            raise TagFilterUsageError("TagFilter phase key needs to be set to a tag.")
 
     def get_before(self):
         result = set(actor for actor in self.phase.Before.actors)

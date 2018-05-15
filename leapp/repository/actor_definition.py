@@ -49,7 +49,8 @@ class ActorCallContext(object):
     def _do_run(logger, messaging, definition, args, kwargs):
         definition.load()
         with definition.injected_context():
-            get_actors()[0](logger=logger, messaging=messaging).run(*args, **kwargs)
+            target_actor = [actor for actor in get_actors() if actor.name == definition.name][0]
+            target_actor(logger=logger, messaging=messaging).run(*args, **kwargs)
 
     def run(self, *args, **kwargs):
         """
@@ -213,7 +214,8 @@ class ActorDefinition(object):
         """
         # Backup of the path variable
         path_backup = os.environ.get('PATH', '')
-        os.environ['PATH'] = ':'.join(path_backup.split(':') + list(self.tools))
+        os.environ['PATH'] = ':'.join(path_backup.split(':') +
+                                      list(os.path.join(self._repo_dir, self._directory, path) for path in self.tools))
 
         files_backup = os.environ.get('LEAPP_FILES', None)
         if self.files:

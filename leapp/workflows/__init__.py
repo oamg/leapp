@@ -147,7 +147,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
             os.environ['LEAPP_CURRENT_PHASE'] = phase[0].name
 
             if skip_phases_until:
-                if skip_phases_until == phase[0].name.lower():
+                if skip_phases_until in (phase[0].__name__.lower(), phase[0].name.lower()):
                     skip_phases_until = ''
                 self.log.info('Skipping phase {name}'.format(name=phase[0].name))
                 continue
@@ -181,7 +181,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     checkpoint(actor='', phase=phase[0].name + '.' + stage.stage, context=context,
                                hostname=os.environ['LEAPP_HOSTNAME'])
 
-                if phase[0].name.lower() == needle_phase and needle_stage == stage.stage.lower():
+                if needle_phase in (phase[0].__name__.lower(), phase[0].name.lower()) and \
+                        needle_stage == stage.stage.lower():
                     self.log.info('Workflow finished due to until-phase flag')
                     return
 
@@ -191,7 +192,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
                 self.log.info('Workflow interrupted due to FailPhase error policy')
                 return
 
-            if phase[0].name == needle_phase:
+            if needle_phase in (phase[0].__name__.lower(), phase[0].name.lower()):
                 self.log.info('Workflow finished due to until-phase flag')
                 return
 

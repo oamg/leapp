@@ -42,14 +42,20 @@ def setup_repo(repository_dir):
         type(repository_dir)(actor_path).join('tests', 'test_this_actor.py').write('print("I am a test")')
         type(repository_dir)(actor_path).mkdir('libraries').mkdir('lib').join('__init__.py').write(
             '''from subprocess import call
+# This is to ensure that actor tools are available on actor library load time
+assert call(['woot-tool']) == 42
+
+# This is to ensure that common tools are available on actor library load time
+assert call(['common-woot-tool']) == 42
+
 def do():
     # This must always fail - This function is crashing the actor ;-)
     assert call(['woot-tool']) == 0
         ''')
         repository_dir.mkdir('libraries').mkdir('lib').join('__init__.py').write(
             '''from subprocess import call
-def do():
-    assert call(['common-woot-tool']) == 42
+# This is to ensure that common tools are available on common library load time
+assert call(['common-woot-tool']) == 42
         ''')
         type(repository_dir)(actor_path).mkdir('files').join('test.data').write('data')
         repository_dir.mkdir('files').join('common-test.data').write('data')
@@ -65,6 +71,8 @@ exit 42
         tool_path.chmod(0o755)
         actor_file = type(repository_dir)(actor_path).join('actor.py')
         actor_content = actor_file.read().replace('pass', '''from leapp.libraries.actor.lib import do
+        import leapp.libraries.common.lib
+
         do()''')
         actor_file.write(actor_content)
 

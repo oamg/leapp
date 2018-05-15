@@ -104,6 +104,11 @@ class Repository(object):
             from leapp.models import resolve_model_references
             resolve_model_references()
 
+        self.log.debug("Extending PATH for common tool paths")
+        self._extend_environ_paths('PATH', self.tools)
+        self.log.debug("Extending LEAPP_COMMON_FILES for common file paths")
+        self._extend_environ_paths('LEAPP_COMMON_FILES', self.files)
+
         if not leapp.libraries.common.LEAPP_BUILTIN_COMMON_INITIALIZED:
             self.log.debug("Loading builtin common libraries")
             self._load_libraries(path=(os.path.dirname(leapp.libraries.common.__file__) + '/',))
@@ -111,11 +116,6 @@ class Repository(object):
 
         self.log.debug("Loading repository provided common libraries")
         self._load_libraries()
-
-        self.log.debug("Extending PATH for common snactor paths")
-        self._extend_environ_paths('PATH', self.tools)
-        self.log.debug("Extending LEAPP_COMMON_FILES for common file paths")
-        self._extend_environ_paths('LEAPP_COMMON_FILES', self.files)
 
         self.log.debug("Running actor discovery")
         for actor in self.actors:
@@ -163,9 +163,9 @@ class Repository(object):
             'libraries': self.relative_paths(self.libraries)
         }
 
-    @staticmethod
-    def _extend_environ_paths(name, paths):
-        os.environ[name] = ':'.join(os.environ.get(name, '').split(':') + list(paths))
+    def _extend_environ_paths(self, name, paths):
+        os.environ[name] = ':'.join(os.environ.get(name, '').split(':') +
+                                    list(os.path.join(self._repo_dir, path) for path in paths))
 
     def relative_paths(self, paths):
         """
