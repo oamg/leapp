@@ -156,4 +156,3 @@ def test_workflow_error_policy_fail_phase(repository):
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('AfterCommonThirdActor', 'AfterThirdActor')
         assert not order
         assert workflow.errors and len(workflow.errors) == 2
-
