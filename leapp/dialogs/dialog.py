@@ -15,7 +15,7 @@ class Dialog(object):
 
     scope = None
     """ Unique scope identifier for the data to be stored in the answer files. Scope + component key is used to
-        address values. 
+        address values.
     """
 
     def __init__(self, scope, reason, title=None, components=None):
