@@ -5,6 +5,7 @@ import multiprocessing
 import os
 import socket
 
+from leapp.dialogs.renderer import CommandlineRenderer
 from leapp.exceptions import CannotConsumeErrorMessages
 from leapp.models import ErrorModel
 
@@ -16,7 +17,9 @@ class BaseMessaging(object):
     """
     def __init__(self, stored=True):
         self._manager = multiprocessing.Manager()
+        self._dialog_renderer = CommandlineRenderer()
         self._data = self._manager.list()
+        self._answers = self._manager.dict()
         self._new_data = self._manager.list()
         self._errors = self._manager.list()
         self._stored = stored
@@ -128,6 +131,14 @@ class BaseMessaging(object):
 
         target.append(message)
         return message
+
+    def request_answers(self, dialog):
+        if dialog.scope in self._answers:
+            for key, value in self._answers.get(dialog.scope).items():
+                component = dialog.component_by_key(key)
+                if component:
+                    dialog.answer(component, value)
+        return dialog.request_answers(self._dialog_renderer)
 
     def consume(self, actor, *types):
         """
