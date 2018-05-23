@@ -45,10 +45,25 @@ class Actor(object):
     :ref:`phases <terminology:phase>` select actors for execution.
     """
 
+    dialogs = ()
+    """
+    Tuple of :py:class:`leapp.dialogs.dialog.Dialog` derived classes that define questions to ask the user.
+    """
+
     def __init__(self, messaging=None, logger=None):
         self._messaging = messaging
         self.log = (logger or logging.getLogger('leapp.actors')).getChild(self.name)
         """ A configured logger instance for the current actor. """
+
+    def request_answers(self, dialog):
+        """
+
+        :param dialog: Dialog instance to show
+        :return: dictionary with the requested answers, None if not a defined dialog
+        """
+        if dialog in type(self).dialogs:
+            return self._messaging.request_answers(dialog)
+        return None
 
     @property
     def actor_files_paths(self):
