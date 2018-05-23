@@ -1,9 +1,10 @@
 import six
 
+
 if six.PY2:
-    globals()['input'] = raw_input
+    input = raw_input  # noqa
 else:
-    from builtins import input
+    from builtins import input  # noqa
 
 
 class DialogRendererBase(object):
