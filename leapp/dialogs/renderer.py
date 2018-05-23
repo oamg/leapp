@@ -1,4 +1,9 @@
-from builtins import input
+import six
+
+if six.PY2:
+    globals()['input'] = raw_input
+else:
+    from builtins import input
 
 
 class DialogRendererBase(object):
