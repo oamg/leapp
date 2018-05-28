@@ -11,7 +11,7 @@ def find_and_scan_repositories(path, manager=None):
         manager = manager or RepositoryManager()
         result = subprocess.check_output(['/usr/bin/find', '-L', path, '-name', '.leapp']).decode('utf-8')
         for directory in result.strip().split('\n'):
-            manager.add_repo(scan_repo(os.path.dirname(directory)))
+            manager.add_repo(scan_repo(os.path.dirname(os.path.realpath(directory))))
     return manager
 
 
