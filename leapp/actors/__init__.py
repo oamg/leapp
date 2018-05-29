@@ -14,15 +14,15 @@ from leapp.models.error_severity import ErrorSeverity
 class Actor(object):
     """
     The Actor class represents the smallest step in the workflow. It defines what kind
-    of data it expects, it consumes (process) a given data and produces data for other
+    of data it expects, it consumes (processes) the given data, and it produces data for other
     actors in the workflow.
     """
 
     ErrorSeverity = ErrorSeverity
-    """ Convenience forward for the :py:class:`leapp.models.error_severity.ErrorSeverity` constants """
+    """ Convenience forward for the :py:class:`leapp.models.error_severity.ErrorSeverity` constants. """
 
     name = None
-    """ Name of the actor that's used to identify data/messages created by the actor. """
+    """ Name of the actor that is used to identify data or messages created by the actor. """
 
     description = None
     """ More verbose actor's description."""
@@ -48,18 +48,18 @@ class Actor(object):
     def __init__(self, messaging=None, logger=None):
         self._messaging = messaging
         self.log = (logger or logging.getLogger('leapp.actors')).getChild(self.name)
-        """ A configured logger instance for the current actor """
+        """ A configured logger instance for the current actor. """
 
     @property
     def actor_files_paths(self):
         """
-        Returns the file paths that are bundled with the actor. (Path to the content of the actor's file directory)
+        Returns the file paths that are bundled with the actor. (Path to the content of the actor's file directory).
         """
         return os.getenv("LEAPP_FILES", "").split(":")
 
     @property
     def files_paths(self):
-        """ Returns all actor file paths (related ones to the actor and common actors files paths). """
+        """ Returns all actor file paths related to the actor and common actors file paths. """
         return self.actor_files_paths + self.common_files_paths
 
     @property
@@ -69,7 +69,7 @@ class Actor(object):
 
     def get_folder_path(self, name):
         """
-        Finds first matching folder path within :py:attr:`files_paths`.
+        Finds the first matching folder path within :py:attr:`files_paths`.
 
         :param name: Name of the folder
         :type name: str
@@ -84,7 +84,7 @@ class Actor(object):
 
     def get_file_path(self, name):
         """
-        Finds first matching file path within :py:attr:`files_paths`.
+        Finds the first matching file path within :py:attr:`files_paths`.
 
         :param name: Name of the file
         :type name: str
@@ -98,7 +98,7 @@ class Actor(object):
         return None
 
     def run(self, *args):
-        """ Runs actor calling method :py:func:`process`. """
+        """ Runs the actor calling the method :py:func:`process`. """
         os.environ['LEAPP_CURRENT_ACTOR'] = self.name
         try:
             self.process(*args)
@@ -106,12 +106,12 @@ class Actor(object):
             os.environ.pop('LEAPP_CURRENT_ACTOR', None)
 
     def process(self, *args, **kwargs):
-        """ Main processing method (in inherited actors, the function needs to be defined to be able process)."""
+        """ Main processing method. In inherited actors, the function needs to be defined to be able to be processed."""
         raise NotImplementedError()
 
     def produce(self, *models):
         """
-        By calling produce model instances are store as messages. Those messages can be then consumed by other actors.
+        By calling produce, model instances are stored as messages. Those messages can be then consumed by other actors.
 
         :param models: Messages to be sent (those model types have to be specified in :py:attr:`produces`
         :type models: Variable number of the derived classes from :py:class:`leapp.models.Model`
@@ -123,10 +123,10 @@ class Actor(object):
 
     def consume(self, *models):
         """
-        Retrieve messages specified in the actors :py:attr:`consumes` attribute and can be filter the message types by
+        Retrieve messages specified in the actors :py:attr:`consumes` attribute, and filter message types by
         models.
 
-        :param models: Models to use as filter for the messages to return
+        :param models: Models to use as a filter for the messages to return
         :type models: Variable number of the derived classes from :py:class:`leapp.models.Model`
         """
         if self._messaging:
@@ -137,11 +137,11 @@ class Actor(object):
         """
         Reports an execution error
 
-        :param message: Message to print for the error
+        :param message: A message to print the possible error
         :type message: str
         :param severity: Severity of the error default :py:attr:`leapp.messaging.errors.ErrorSeverity.ERROR`
         :type severity: str with defined values from :py:attr:`leapp.messaging.errors.ErrorSeverity.ERROR`
-        :param details: A dictionary where additional context information can be passed along with the error
+        :param details: A dictionary where additional context information is passed along with the error
         :type details: dict
         :return: None
         """
@@ -159,7 +159,7 @@ class Actor(object):
 def _is_type(value_type):
     def validate(actor, name, value):
         if not isinstance(value, value_type):
-            raise WrongAttributeTypeError('Actor {} attribute {} should be of type {}'.format(actor, name, value_type))
+            raise WrongAttributeTypeError('Actor {} attribute {} should be of the type {}'.format(actor, name, value_type))
         return value
     return validate
 
@@ -169,17 +169,17 @@ def _is_tuple_of(value_type):
         _is_type(tuple)(actor, name, value)
         if not value:
             raise WrongAttributeTypeError(
-                'Actor {} attribute {} should at least one item of type {}'.format(actor, name, value_type))
+                'Actor {} attribute {} should contain at least one item of the type {}'.format(actor, name, value_type))
         if not all(map(lambda item: isinstance(item, value_type), value)):
             raise WrongAttributeTypeError(
-                'Actor {} attribute {} should contain only value of type {}'.format(actor, name, value_type))
+                'Actor {} attribute {} should contain only values of the type {}'.format(actor, name, value_type))
         return value
     return validate
 
 
 def _is_model_tuple(actor, name, value):
     if isinstance(value, type) and issubclass(value, Model):
-        logging.getLogger("leapp.linter").warning("Actor %s field %s should be a tuple of Models", actor, name)
+        logging.getLogger("leapp.linter").warning("Actor %s field %s should be a tuple of Models.", actor, name)
         value = value,
     _is_type(tuple)(actor, name, value)
     if not all([True] + list(map(lambda item: isinstance(item, type) and issubclass(item, Model), value))):
@@ -190,7 +190,7 @@ def _is_model_tuple(actor, name, value):
 
 def _is_tag_tuple(actor, name, value):
     if isinstance(value, type) and issubclass(value, Tag):
-        logging.getLogger("leapp.linter").warning("Actor %s field %s should be a tuple of Tags", actor, name)
+        logging.getLogger("leapp.linter").warning("Actor %s field %s should be a tuple of Tags.", actor, name)
         value = value,
     _is_type(tuple)(actor, name, value)
     if not all([True] + list(map(lambda item: isinstance(item, type) and issubclass(item, Tag), value))):
@@ -213,9 +213,9 @@ def get_actor_metadata(actor):
     """
     Creates Actor's metadata dictionary
 
-    :param actor: Actor that we want to get its metadata
+    :param actor: Actor whose metadata are needed
     :type actor: derived class from :py:class:`leapp.actors.Actor`
-    :return: Dictionary with name, tags, consumes, produces and description of the actor
+    :return: Dictionary with the name, tags, consumes, produces, and description of the actor
     """
     return dict([
         ('class_name', actor.__name__),
@@ -225,7 +225,7 @@ def get_actor_metadata(actor):
         _get_attribute(actor, 'consumes', _is_model_tuple, required=False, default_value=()),
         _get_attribute(actor, 'produces', _is_model_tuple, required=False, default_value=()),
         _get_attribute(actor, 'description', _is_type(string_types), required=False,
-                       default_value='There has been no description provided for this actor')
+                       default_value='There has been no description provided for this actor.')
     ])
 
 
