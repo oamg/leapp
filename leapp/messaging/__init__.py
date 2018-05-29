@@ -11,8 +11,8 @@ from leapp.models import ErrorModel
 
 class BaseMessaging(object):
     """
-    BaseMessaging is the Base class for all messaging implementations - It provides the basic interface that is
-    supported within the framework - That are the `produce` and `consume` methods.
+    BaseMessaging is the Base class for all messaging implementations. It provides the basic interface that is
+    supported within the framework. These are called the `produce` and `consume` methods.
     """
     def __init__(self, stored=True):
         self._manager = multiprocessing.Manager()
@@ -24,20 +24,20 @@ class BaseMessaging(object):
     @property
     def stored(self):
         """
-        :return: If the messages are stored immediately this returns True otherwise False
+        :return: If the messages are stored immediately, this function returns True, otherwise False.
         """
         return self._stored
 
     def errors(self):
         """
-        Get all produced errors
+        Gets all produced errors.
         :return: List of newly produced errors
         """
         return list(self._errors)
 
     def messages(self):
         """
-        Get all newly produced messages
+        Gets all newly produced messages.
         :return: List of newly processed messages
         """
         return list(self._new_data)
@@ -53,12 +53,12 @@ class BaseMessaging(object):
 
     def _process_message(self, message):
         """
-        This method should perform the actual message sending - Which could be sending it over the network or storing
-        it in a database.
+        This method performs the actual message sending, which can be sent over the network or stored
+        in a database.
 
         :param message: The message data to process
         :type message: dict
-        :return: Pass through message which might get updated through the sending process
+        :return: Pass through a message that might get updated through the sending process.
         """
         raise NotImplementedError()
 
@@ -68,7 +68,7 @@ class BaseMessaging(object):
 
         :param consumes: Tuple or list of :py:class:`leapp.models.Model` types to preload
         :return: None
-        :raises leapp.exceptions.CannotConsumeErrorMessages: When an trying to consume ErrorModel
+        :raises leapp.exceptions.CannotConsumeErrorMessages: When trying to consume ErrorModel
         """
         if ErrorModel in consumes:
             raise CannotConsumeErrorMessages()
@@ -78,7 +78,7 @@ class BaseMessaging(object):
         """
         Reports an execution error
 
-        :param message: Message to print for the error
+        :param message: Message to print the error
         :type message: str
         :param severity: Severity of the error
         :type severity: ErrorSeverity
@@ -96,7 +96,7 @@ class BaseMessaging(object):
 
     def produce(self, model, actor):
         """
-        Called to send a message to be available for other actors.
+        Called to send a message available for other actors.
 
         :param model: Model to send as message payload
         :type model: :py:class:`leapp.models.Model`
@@ -133,7 +133,7 @@ class BaseMessaging(object):
         """
         Returns all consumable messages and filters them by `types`
 
-        :param types: Variable number of :py:class:`leapp.models.Model` derived types to filter messages to consume
+        :param types: Variable number of :py:class:`leapp.models.Model` derived types to filter messages to be consumed
         :param actor: Actor that consumes the data
         :return: Iterable with messages matching the criteria
         """
