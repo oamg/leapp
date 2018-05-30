@@ -13,7 +13,7 @@ except ImportError:
 
 RequestException = requests.exceptions.RequestException
 """
-Exceptions that are raised through the actor API which is retrieved from :py:func:`get_actor_api`
+Exceptions that are raised through the actor API, which is retrieved from :py:func:`get_actor_api`
 """
 _session = None
 
@@ -55,7 +55,7 @@ class _LeappAPIAdapter(requests.adapters.HTTPAdapter):
 
 def get_actor_api():
     """
-    :return: An instance of the leapp actor api session that is using :py:class:`requests.Session` over a
+    :return: An instance of the Leapp actor API session that is using :py:class:`requests.Session` over a
              UNIX domain socket
     """
     global _session
