@@ -100,28 +100,28 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
     @property
     def consumes(self):
-        """ All consumed messaged """
+        """ All consumed messages """
         return self._all_consumed
 
     @property
     def produces(self):
-        """ All produced messaged """
+        """ All produced messages """
         return self._all_produced
 
     def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None):
         """
         Executes the workflow
 
-        :param context: Custom execution id to use instead of a randomly generated UUIDv4
+        :param context: Custom execution ID to be used instead of a randomly generated UUIDv4
         :type context: str
         :param until_phase: Specify until including which phase the execution should run - phase.stage can be used to
-                            control it even more granular. `phase` is any phase name where `stage` refers to `main`,
-                            `before` or `after`. If no stage is defined, `after` is assumed as the default value.
-                            The execution will end when this phase (and stage if specified) have been executed.
+                            control it even more granularly. `phase` is any phase name where `stage` refers to `main`,
+                            `before` or `after`. If no stage is defined, `after` is assumed to be the default value.
+                            The execution ends when this phase (and stage, if specified) has been executed.
         :type until_phase: str
-        :param until_actor: The execution will finish when this actor has been executed.
+        :param until_actor: The execution finishes when this actor has been executed.
         :type until_actor: str
-        :param skip_phases_until: Skips all phases until including the phase specified and then continues execution.
+        :param skip_phases_until: Skips all phases until including the phase specified, and then continues the execution.
         :type skip_phases_until: str or None
 
         """
@@ -175,7 +175,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     checkpoint(actor=actor.name, phase=phase[0].name, context=context,
                                hostname=os.environ['LEAPP_HOSTNAME'])
                     if needle_actor in (actor.name.lower(), actor.class_name.lower()):
-                        self.log.info('Workflow finished due to until-actor flag')
+                        self.log.info('Workflow finished due to the until-actor flag')
                         return
                 if not stage.actors:
                     checkpoint(actor='', phase=phase[0].name + '.' + stage.stage, context=context,
@@ -183,21 +183,21 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
                 if needle_phase in (phase[0].__name__.lower(), phase[0].name.lower()) and \
                         needle_stage == stage.stage.lower():
-                    self.log.info('Workflow finished due to until-phase flag')
+                    self.log.info('Workflow finished due to the until-phase flag')
                     return
 
             checkpoint(actor='', phase=phase[0].name, context=context, hostname=os.environ['LEAPP_HOSTNAME'])
 
             if self._errors and phase[0].policies.error is Policies.Errors.FailPhase:
-                self.log.info('Workflow interrupted due to FailPhase error policy')
+                self.log.info('Workflow interrupted due to the FailPhase error policy')
                 return
 
             if needle_phase in (phase[0].__name__.lower(), phase[0].name.lower()):
-                self.log.info('Workflow finished due to until-phase flag')
+                self.log.info('Workflow finished due to the until-phase flag')
                 return
 
             if phase[0].flags.restart_after_phase:
-                self.log.info('Initiating system reboot due to restart_after_reboot flag')
+                self.log.info('Initiating system reboot due to the restart_after_reboot flag')
                 reboot_system()
                 return
 
