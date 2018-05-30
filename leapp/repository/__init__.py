@@ -15,7 +15,7 @@ from leapp.utils.project import get_project_name
 class Repository(object):
     """
     The Repository class represents a place where all resources (actors, models, tags, etc.) are defined. The
-    repository directory layout looks like
+    repository directory layout looks like:
     :ref:`Repository Directory Layout <best-practises:repository directory layout>`
     """
     def __init__(self, directory):
@@ -27,11 +27,11 @@ class Repository(object):
         self.log = getLogger('leapp.repository').getChild(self.name)
         self._repo_dir = directory
         self._definitions = {}
-        self.log.info("New repository '%s' initialized at %s", self.name, directory)
+        self.log.info("A new repository '%s' is initialized at %s", self.name, directory)
 
     def lookup_actor(self, name):
         """
-        Finds actor in repository
+        Finds an actor in the repository
 
         :param name: Name of the actor
         :type name: str
@@ -48,9 +48,9 @@ class Repository(object):
     @staticmethod
     def lookup_workflow(name):
         """
-        Finds workflow in repository
+        Finds a workflow in the repository
 
-        :param name: Name of the workflow class name, Workflow.name or Workflow.short_name
+        :param name: Name of the workflow class name, Workflow.name, or Workflow.short_name
         :type name: str
         :return: None or Workflow
         """
@@ -65,9 +65,9 @@ class Repository(object):
 
     def add(self, kind, item):
         """
-        Adds any supported kind of resource to the repository
+        Adds any supported kind of a resource to the repository
 
-        :param kind: specific kind of repository resource
+        :param kind: specific kind of the repository resource
         :type kind: :py:class:`leapp.repository.definition.DefinitionKind`
         :param item: Item that will be added
         :type item: :py:class:`leapp.repository.actor_definition.ActorDefiniton` or str
@@ -80,7 +80,7 @@ class Repository(object):
         if not isinstance(item, ActorDefinition):
             full_path = os.path.join(self._repo_dir, item)
             if not os.path.exists(full_path):
-                self.log.error("Attempted to add %s which is not in the repositories path", item)
+                self.log.error("Attempted to add %s, which is not in the repositories path", item)
                 raise RepoItemPathDoesNotExistError(kind, item, full_path)
             item = full_path
 
@@ -90,7 +90,7 @@ class Repository(object):
         """
         Loads the repository resources
 
-        :param resolve: Whether or not to perform the resolving of model references
+        :param resolve: Decides whether or not to perform the resolving of model references
         :type resolve: bool
         """
         self.log.debug("Loading repository %s", self.name)
@@ -110,7 +110,7 @@ class Repository(object):
         self._extend_environ_paths('LEAPP_COMMON_FILES', self.files)
 
         if not leapp.libraries.common.LEAPP_BUILTIN_COMMON_INITIALIZED:
-            self.log.debug("Loading builtin common libraries")
+            self.log.debug("Loading built-in common libraries")
             self._load_libraries(path=(os.path.dirname(leapp.libraries.common.__file__) + '/',))
             leapp.libraries.common.LEAPP_BUILTIN_COMMON_INITIALIZED = True
 
@@ -130,7 +130,7 @@ class Repository(object):
             if mod_full_name in sys.modules:
                 self.log.error("Common library module name clash: %s has been already loaded", mod_full_name)
                 raise ModuleNameAlreadyExistsError(
-                    'Module {name} has been already loaded from somewhere else.\n'
+                    'The {name} module has been already loaded from somewhere else.\n'
                     'Loaded: {loaded}\nNow: {now}'.format(
                         name=mod_full_name,
                         loaded=sys.modules.get(mod_full_name).__file__,
