@@ -13,14 +13,14 @@ def requires_project(f):
     @command_aware_wraps(f)
     def checker(*args, **kwargs):
         if not find_project_basedir('.'):
-            raise UsageError('This command must be executed from the project directory')
+            raise UsageError('This command must be executed from the project directory.')
         return f(*args, **kwargs)
     return checker
 
 
 def to_snake_case(name):
     """
-    Converts a UpperCaseName to a snake_case_name
+    Converts an UpperCaseName to a snake_case_name
 
     :param name: Name to convert
     :return: converted snake case name
@@ -33,7 +33,7 @@ def to_snake_case(name):
 
 def make_class_name(name):
     """
-    Converts a snake_case_name to a UpperCaseName
+    Converts a snake_case_name to an UpperCaseName
 
     :param name: Name to convert
     :return: Converted class name
@@ -43,7 +43,7 @@ def make_class_name(name):
 
 def make_name(name):
     """
-    Converts a given name to lower case snake case
+    Converts a given name to a lower snake case
 
     :param name: Name to convert
     :return: Lower snake case
@@ -53,10 +53,10 @@ def make_name(name):
 
 def find_project_basedir(path):
     """
-    Tries to find .leapp directory recursively ascending until it hits the root directory
+    Tries to find the .leapp directory recursively ascending until it hits the root directory
 
     :param path: Path to start from (can be relative)
-    :return: None if base directory was not found otherwise absolute path to the base directory
+    :return: None if the base directory was not found, otherwise the absolute path to the base directory
     """
     path = os.path.realpath(path)
     while True:
@@ -69,11 +69,11 @@ def find_project_basedir(path):
 
 def get_project_metadata(path):
     """
-    Gets the parsed meta data file as dictionary
+    Gets the parsed metadata file as a dictionary
 
-    :param path: Path to start loading the meta data from (Can be anywhere within the repository it will use
+    :param path: Path to start loading the metadata from (it can be anywhere within the repository it will use
                  :py:func:`find_project_dir` to find the project base directory)
-    :return: Dictionary with the meta data or an empty dictionary
+    :return: Dictionary with the metadata or an empty dictionary
     """
     basedir = find_project_basedir(path)
     if basedir:
@@ -84,7 +84,7 @@ def get_project_metadata(path):
 
 def get_project_name(path):
     """
-    Retrieves the project name from the project meta data from within the given path. (Can be anywhere within the
+    Retrieves the project name from the project metadata from within the given path. (it can be anywhere within the
     repository it will use :py:func:`find_project_dir` to find the project base directory)
     :param path: Path within the leapp repository
     :return: Name of the repository
