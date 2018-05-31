@@ -20,7 +20,7 @@ class _SubParserActionOverride(_SubParsersAction):
     This class implements a workaround for an issue fixed in 2.7.9.
     See https://bugs.python.org/issue9351
 
-    TL,DR: Before, 2.7.9 argparse._SubParserAction did not propagate sub parser default values
+    TL;DR: Before, 2.7.9 argparse._SubParserAction did not propagate sub parser default values
     to the global namespace when they were already defined .
     This implementation is a workaround to override those values additionally.
 
