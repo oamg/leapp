@@ -3,10 +3,10 @@ import itertools
 
 def with_metaclass(meta_class, base_class=object):
     """
-    :param meta_class: The desired meta class to use
-    :param base_class: The desired base class to use, default is object
+    :param meta_class: The desired metaclass to use
+    :param base_class: The desired base class to use, the default one is object
     :type base_class: Type
-    :return: Meta class type to inherit from
+    :return: Metaclass type to inherit from
 
     :Example:
 
@@ -41,7 +41,7 @@ def get_flattened_subclasses(cls):
     Returns all the given subclasses and their subclasses recursively for the given class
     :param cls: Class to check
     :type cls: Type
-    :return: flattened list of subclasses and their subclasses
+    :return: Flattened list of subclasses and their subclasses
     """
     classes = cls.__subclasses__()
     return list(itertools.chain(classes, *map(lambda x: get_flattened_subclasses(x), classes)))
