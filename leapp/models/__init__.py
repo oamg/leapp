@@ -1,7 +1,7 @@
 """ Leapp Models
 
-This packages provides an interface to describe message payload data structure in the form of Models.
-Together with the :py:mod:`leapp.models.fields` package models are defined.
+These packages provide an interface describing a message payload data structure in the form of Models.
+Together with the :py:mod:`leapp.models.fields`, package models are defined.
 
 Example::
 
@@ -14,7 +14,7 @@ Example::
         baz = fields.List(fields.String(), default=[])
         boom = fields.Nested(Boom)
 
-Now the models can be used like this::
+Now, the models can be used like this::
 
     f = Foobar(boom=Boom())
     f.boom.reason = "Example"
@@ -35,9 +35,9 @@ from leapp.models.error_severity import ErrorSeverity
 
 class ModelMeta(type):
     """
-    ModelMeta is the meta class used for Model
+    ModelMeta is a metaclass used for Model
 
-    It verifies the validity of attributes and registers the model as message type with the :py:class:`Topic`
+    It verifies the validity of attributes and registers the model as a message type with the :py:class:`Topic`.
     """
     def __new__(mcs, name, bases, attrs):
         klass = super(ModelMeta, mcs).__new__(mcs, name, bases, attrs)
@@ -68,10 +68,10 @@ class ModelMeta(type):
 
 class Model(with_metaclass(ModelMeta)):
     """
-    Model is the base class for all models
+    Model is a base class for all models.
 
     Models are defining the data structure of the payload of messages and the
-    meta data required around that. Such as name and topic
+    metadata required, such as a name and topic.
     """
     def __init__(self, init_method='from_initialization', **kwargs):
         super(Model, self).__init__()
@@ -86,15 +86,15 @@ class Model(with_metaclass(ModelMeta)):
 
     fields = None
     """
-    `fields` contains a dictionary with all attributes of type py:class:`leapp.models.fields.Field` in the class
+    `fields` contains a dictionary with all attributes of the py:class:`leapp.models.fields.Field` type in the class.
 
-    Note: Dynamically added fields are ignored by the framework
+    Note: Dynamically added fields are ignored by the framework.
     """
 
     @classmethod
     def create(cls, data):
         """
-        Create an instance of this class and use data to initialize the fields within
+        Create an instance of this class and use the data to initialize the fields within.
 
         :param data: Data to initialize the Model from deserialized data
         :type data: dict
@@ -104,9 +104,9 @@ class Model(with_metaclass(ModelMeta)):
 
     def dump(self):
         """
-        Dumps the data in dictionary form that is safe to serialize to JSON
+        Dumps the data in the dictionary form that is safe to serialize to JSON.
 
-        :return: dict with builtin representation of the data that can be safely serialized to JSON
+        :return: dict with a builtin representation of the data that can be safely serialized to JSON
         """
         result = {}
         for field in type(self).fields.keys():
@@ -164,8 +164,8 @@ class _ModelReference(Model):
 def resolve_model_references():
     """
     Resolves all dynamically created model references. When importing a model that has not been loaded
-    yet, a dynamic model reference is created. After the loading of all models, resolve_model_references
-    shall be called, to ensure the consistency of the code.
+    yet, a dynamic model reference is created. After loading all models, resolve_model_references
+    must be called to ensure the consistency of the code.
 
     :return: None
     """
