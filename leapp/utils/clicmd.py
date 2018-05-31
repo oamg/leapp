@@ -17,14 +17,14 @@ class _LeappHelpFormatter(RawDescriptionHelpFormatter):
 
 class _SubParserActionOverride(_SubParsersAction):
     """
-    This class implements a workaround for an issue fixed in 2.7.9
-    Reference: https://bugs.python.org/issue9351
+    This class implements a workaround for an issue fixed in 2.7.9.
+    See https://bugs.python.org/issue9351.
 
-    TLDR: Before 2.7.9 argparse._SubParserAction did not propagate sub parser default values
-    to the global namespace when they were defined already
-    This implementation is a workaround to additionally override those values
+    TL,DR: Before, 2.7.9 argparse._SubParserAction did not propagate sub parser default values
+    to the global namespace when they were already defined .
+    This implementation is a workaround to override those values additionally.
 
-    The additional code will not be executed if python 2.7.9 or higher was found.
+    The additional code will not be executed if python 2.7.9 or higher is found.
     """
     def __call__(self, parser, namespace, values, option_string=None):
         super(_SubParserActionOverride, self).__call__(parser, namespace, values, option_string)
@@ -40,17 +40,17 @@ class _SubParserActionOverride(_SubParsersAction):
 
 class Command(object):
     """
-    Command implements a convenient command based argument parsing framework.
+    Command implements a convenient command-based argument parsing the framework.
     """
     def __init__(self, name, target=None, help='', description=None):
         """
         :param name: Name of the sub command
         :type name: str
-        :param target: Function to call when the command gets invoked
+        :param target: Function called when the command is invoked
         :type target: Callable
-        :param help: Help message to show
+        :param help: Shows a help message
         :type help: str
-        :param description: Extended description of the command (defaults to `help`)
+        :param description: Extended description of the command (the default is `help`)
         :type description: str
         """
         self.name = name
@@ -64,7 +64,7 @@ class Command(object):
 
     def execute(self, version):
         """
-        Entry point to command execution - Used for the main entry function of an application
+        Entry point to the command execution. It is used for the main entry function of an application.
 
         :param version: Version string to display for --version calls
         :type version: str
@@ -88,10 +88,10 @@ class Command(object):
 
     def called(self, args):
         """
-        The actual call is dispatched through this method - It will ensure that the parent is called as well
-        for allowing some generic handling of some flags (especially inherited flags)
+        The actual call is dispatched through this method. It ensures that the parent is also called
+        to allow generic handling of some flags (especially inherited flags).
 
-        :param args: Arguments object that is the result of the `argparse` commandline parser
+        :param args: Arguments object that is a result of the `argparse` commandline parser
         :type args: :py:class:`argparse.Namespace`
         :return: None
         """
@@ -146,7 +146,7 @@ class Command(object):
 
     def add_sub(self, cmd):
         """
-        Add a sub command to this command
+        Adds a sub command to this command
 
         :param cmd: The sub command object
         :type cmd: :py:class:`leapp.utils.clicmd.Command`
@@ -171,13 +171,13 @@ class Command(object):
 
         :param name: Name of the option
         :type name: str
-        :param short_name: short name of the option (One letter)
+        :param short_name: Short name of the option (one letter)
         :type short_name: str
         :param help: Help string for the option
         :type help: str
-        :param is_flag: If it is a flag
+        :param is_flag: Decides if it is a flag
         :type is_flag: bool
-        :param inherit: Should this option be inherited by sub commands?
+        :param inherit: Decides if this option should be inherited by sub commands
         :type inherit: bool
         :param value_type: Type of the value by default string
         :param wrapped: Function that is wrapped (aka the target)
@@ -195,7 +195,7 @@ class Command(object):
         if short_name:
             short_name = short_name.lstrip('-')
             if len(short_name) != 1:
-                raise CommandDefinitionError("Short name should be one letter")
+                raise CommandDefinitionError("Short name should be one letter only")
             names.insert(0, '-' + short_name)
         if not action:
             action = 'store'
@@ -223,13 +223,13 @@ class Command(object):
 
 def command(name, help='', description=None, parent=None):
     """
-    Decorator to mark a function as sub command
+    Decorator to mark a function as a sub command
 
     :param name: Sub command name
     :type name: str
     :param help: Help string for the sub command
     :type help: str
-    :param description: Extended description for the sub command defaults to help if not set
+    :param description: Extended description for the sub command defaults to help if it is not set
     :type description: str
     :param parent: Instance to the parent command if it is a sub-command
     :type parent: Command
@@ -259,7 +259,7 @@ def _ensure_command(wrapped):
 
 def command_arg(name, value_type=None, help=''):
     """
-    Decorator to wrap functions to add command line arguments to the sub command to invoke
+    Decorator wrapping functions to add command line arguments to the sub command to be invoked
 
     :param name: Name of the argument
     :param value_type: Type of the argument
@@ -274,7 +274,7 @@ def command_arg(name, value_type=None, help=''):
 
 def command_opt(name, **kwargs):
     """
-    Decorator to wrap functions to add command line options to the sub command to invoke
+    Decorator wrapping functions to add command line options to the sub command to be invoked
 
     :param name: Name of the option
     :param kwargs: parameters as specified in :py:func:`leapp.utils.clicmd.Command.add_option`
@@ -288,9 +288,9 @@ def command_opt(name, **kwargs):
 
 def command_aware_wraps(f):
     """
-    Decorator to pass through the command attribute of the wrapped function to the wrapper
+    Decorator passing the command attribute of the wrapped function to the wrapper
 
-    This needs to be used by decorators which are trying to wrap clicmd decorated command functions.
+    This needs to be used by decorators that are trying to wrap clicmd decorated command functions.
     """
     additional = ()
     if hasattr(f, 'command'):
