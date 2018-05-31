@@ -17,7 +17,7 @@ def find_and_scan_repositories(path, manager=None):
 
 def scan_repo(path):
     """
-    Scans all related resources of the repository
+    Scans all related repository resources
 
     :param path: path to the repository
     :type path: str
@@ -29,7 +29,7 @@ def scan_repo(path):
 
 def scan(repository, path):
     """
-    Scans all resources of the repository
+    Scans all repository resources
 
     :param repository:
     :type repository: :py:class:`leapp.repository.Repository`
@@ -58,7 +58,7 @@ def scan(repository, path):
 
 def scan_topics(repo, path, repo_path):
     """
-    Scans topics and add them to the repository.
+    Scans topics and adds them to the repository.
 
     :param repo: Instance of the repository
     :type repo: :py:class:`leapp.repository.Repository`
@@ -77,7 +77,7 @@ def scan_topics(repo, path, repo_path):
 
 def scan_actors(repo, path, repo_path):
     """
-    Scans actors and add them to the repository.
+    Scans actors and adds them to the repository.
 
     :param repo: Instance of the repository
     :type repo: :py:class:`leapp.repository.Repository`
@@ -95,7 +95,7 @@ def scan_actors(repo, path, repo_path):
 
 def scan_tags(repo, path, repo_path):
     """
-    Scans tags and add them to the repository.
+    Scans tags and adds them to the repository.
 
     :param repo: Instance of the repository
     :type repo: :py:class:`leapp.repository.Repository`
@@ -114,7 +114,7 @@ def scan_tags(repo, path, repo_path):
 
 def scan_models(repo, path, repo_path):
     """
-    Scans models and add them to the repository.
+    Scans models and adds them to the repository.
 
     :param repo: Instance of the repository
     :type repo: :py:class:`leapp.repository.Repository`
@@ -133,7 +133,7 @@ def scan_models(repo, path, repo_path):
 
 def scan_workflows(repo, path, repo_path):
     """
-    Scans workflows and add them to the repository.
+    Scans workflows and adds them to the repository.
 
     :param repo: Instance of the repository
     :type repo: :py:class:`leapp.repository.Repository`
@@ -152,7 +152,7 @@ def scan_workflows(repo, path, repo_path):
 
 def scan_files(repo, path, repo_path):
     """
-    Scans files and add them to the repository.
+    Scans files and adds them to the repository.
 
     :param repo: Instance of the repository
     :type repo: :py:class:`leapp.repository.Repository`
@@ -167,7 +167,7 @@ def scan_files(repo, path, repo_path):
 
 def scan_libraries(repo, path, repo_path):
     """
-    Scans libraries and add them to the repository.
+    Scans libraries and adds them to the repository.
 
     :param repo: Instance of the repository
     :type repo: :py:class:`leapp.repository.Repository`
@@ -182,7 +182,7 @@ def scan_libraries(repo, path, repo_path):
 
 def scan_tools(repo, path, repo_path):
     """
-    Scans tools and add them to the repository.
+    Scans tools and adds them to the repository.
 
     :param repo: Instance of the repository
     :type repo: :py:class:`leapp.repository.Repository`
@@ -197,7 +197,7 @@ def scan_tools(repo, path, repo_path):
 
 def scan_tests(repo, path, repo_path):
     """
-    Scans tests and add them to the repository.
+    Scans tests and adds them to the repository.
 
     :param repo: Instance of the repository
     :type repo: :py:class:`leapp.repository.Repository`
