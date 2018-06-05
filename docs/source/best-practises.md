@@ -5,10 +5,12 @@
 ### Repository Directory Layout
 
 ```
- .leapp/                            # Repository information. Do not edit it manually. 
+ .leapp/                            # Repository information. Do not edit it manually.
  actors/                            # All actors are stored here in subdirectories.
     actor-name/                     # An actor directory.
-        actor.py                    # The actual actor code. The file name actor.py is required.        
+        actor.py                    # The actual actor code. The file name actor.py is required.
+        Makefile                    # Optional makefile with target install-deps to install
+                                    # actor's dependencies
         tests/                      # Required tests for the actors are stored here.
             test_actor_name.py
         libraries/                  # Private libraries for the actors only.
@@ -29,7 +31,7 @@
         __init__.py
 
  models/                            # All models describing the message payload format are stored here.
-    model.py                        
+    model.py
 
  tags/                              # All tags for this repository are stored here.
     tag.py
@@ -57,7 +59,7 @@ on module level.
 Actors are completely written in Python, however, they are loaded beforehand to get all the meta-information from the actors.
 To avoid slow downs we ask actor writers not to execute any code that is not absolutely necessary on a module level.
 
-### Avoid global non Leapp imports 
+### Avoid global non Leapp imports
 
 Avoid importing system or bundled libraries on a module level. This again has to do with slow down, and also to avoid
 unnecessary complications for our tests automation which needs to inspect the actors beforehand.
