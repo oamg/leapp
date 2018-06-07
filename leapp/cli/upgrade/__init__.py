@@ -1,7 +1,9 @@
 import os
 import uuid
 
+import sys
 from leapp.config import get_config
+from leapp.exceptions import LeappError
 from leapp.logger import configure_logger
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
@@ -57,7 +59,11 @@ def upgrade(args):
     if args.resume:
         logger.info("Resuming execution after phase: %s", skip_phases_until)
 
-    repositories = load_repositories()
+    try:
+        repositories = load_repositories()
+    except LeappError as exc:
+        sys.stderr.write(exc.message)
+        sys.exit(1)
     workflow = repositories.lookup_workflow('IPUWorkflow')()
     workflow.run(context=context, skip_phases_until=skip_phases_until)
     report_errors(workflow.errors)

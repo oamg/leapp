@@ -1,6 +1,7 @@
 import json
 import sys
 
+from leapp.exceptions import LeappError
 from leapp.utils.clicmd import command, command_opt, command_arg
 from leapp.utils.project import requires_project, find_project_basedir
 from leapp.logger import configure_logger
@@ -28,7 +29,11 @@ def cli(args):
     log = configure_logger()
     basedir = find_project_basedir('.')
     repository = scan_repo(basedir)
-    repository.load()
+    try:
+        repository.load()
+    except LeappError as exc:
+        sys.stderr.write(exc.message)
+        sys.exit(1)
     actor_logger = log.getChild('actors')
     actor = repository.lookup_actor(args.actor_name)
     messaging = InProcessMessaging(stored=args.save_output)

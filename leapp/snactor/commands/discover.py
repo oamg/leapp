@@ -2,6 +2,7 @@ import json as json_mod
 import os
 import sys
 
+from leapp.exceptions import LeappError
 from leapp.topics import get_topics
 from leapp.models import get_models
 from leapp.repository.scan import scan_repo
@@ -83,7 +84,11 @@ https://red.ht/leapp-docs
 def cli(args):
     base_dir = find_project_basedir('.')
     repository = scan_repo(base_dir)
-    repository.load()
+    try:
+        repository.load()
+    except LeappError as exc:
+        sys.stderr.write(exc.message)
+        sys.exit(1)
 
     actors = [actor for actor in repository.actors]
     models = [model for model in get_models() if _is_local(base_dir, model)]

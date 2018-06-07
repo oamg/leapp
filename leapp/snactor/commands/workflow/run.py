@@ -1,6 +1,8 @@
 from __future__ import print_function
 
 import leapp.workflows
+import sys
+from leapp.exceptions import LeappError
 from leapp.snactor.commands.workflow import workflow
 from leapp.utils.clicmd import command_arg, command_opt
 from leapp.logger import configure_logger
@@ -30,7 +32,11 @@ https://red.ht/leapp-docs
 def cli(params):
     configure_logger()
     repository = scan_repo(find_project_basedir('.'))
-    repository.load()
+    try:
+        repository.load()
+    except LeappError as exc:
+        sys.stderr.write(exc.message)
+        sys.exit(1)
     for wf in leapp.workflows.get_workflows():
         if wf.name.lower() == params.name.lower():
             instance = wf()
