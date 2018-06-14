@@ -1,4 +1,5 @@
 import os
+import socket
 
 from leapp.utils.clicmd import command, command_opt
 import leapp.cli.upgrade
@@ -12,5 +13,6 @@ def cli(args):
 
 
 def main():
+    os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
     cli.command.add_sub(leapp.cli.upgrade.upgrade.command)
     cli.command.execute('leapp version {}'.format(VERSION))

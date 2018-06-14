@@ -127,7 +127,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
         """
         context = context or str(uuid.uuid4())
         os.environ['LEAPP_EXECUTION_ID'] = context
-        os.environ['LEAPP_HOSTNAME'] = os.environ.get('LEAPP_HOSTNAME', socket.getfqdn())
+        if not os.environ.get('LEAPP_HOSTNAME', None):
+            os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
 
         self.log.info('Starting workflow execution: {name} - ID: {id}'.format(
             name=self.name, id=os.environ['LEAPP_EXECUTION_ID']))

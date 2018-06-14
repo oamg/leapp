@@ -108,6 +108,8 @@ class BaseMessaging(object):
         return self._do_produce(model, actor, self._new_data)
 
     def _do_produce(self, model, actor, target):
+        if not os.environ.get('LEAPP_HOSTNAME', None):
+            os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
         data = json.dumps(model.dump(), sort_keys=True)
         message = {
             'type': type(model).__name__,
@@ -116,7 +118,7 @@ class BaseMessaging(object):
             'stamp': datetime.datetime.utcnow().isoformat() + 'Z',
             'phase': os.environ.get('LEAPP_CURRENT_PHASE', 'NON-WORKFLOW-EXECUTION'),
             'context': os.environ.get('LEAPP_EXECUTION_ID', 'TESTING-CONTEXT'),
-            'hostname': os.environ.get('LEAPP_HOSTNAME', socket.getfqdn()),
+            'hostname': os.environ['LEAPP_HOSTNAME'],
             'message': {
                 'data': data,
                 'hash': hashlib.sha256(data.encode('utf-8')).hexdigest()
