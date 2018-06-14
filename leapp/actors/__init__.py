@@ -177,9 +177,17 @@ def _is_tuple_of(value_type):
     return validate
 
 
+def _lint_warn(actor, name, type_name):
+    warnings = getattr(actor, '_warnings', {})
+    if not warnings.get(name + '_tuple'):
+        warnings[name + '_tuple'] = True
+        setattr(actor, '_warnings', warnings)
+        logging.getLogger("leapp.linter").warning("Actor %s field %s should be a tuple of %s", actor, name, type_name)
+
+
 def _is_model_tuple(actor, name, value):
     if isinstance(value, type) and issubclass(value, Model):
-        logging.getLogger("leapp.linter").warning("Actor %s field %s should be a tuple of Models.", actor, name)
+        _lint_warn(actor, name, "Models")
         value = value,
     _is_type(tuple)(actor, name, value)
     if not all([True] + list(map(lambda item: isinstance(item, type) and issubclass(item, Model), value))):
@@ -190,7 +198,7 @@ def _is_model_tuple(actor, name, value):
 
 def _is_tag_tuple(actor, name, value):
     if isinstance(value, type) and issubclass(value, Tag):
-        logging.getLogger("leapp.linter").warning("Actor %s field %s should be a tuple of Tags.", actor, name)
+        _lint_warn(actor, name, "Tags")
         value = value,
     _is_type(tuple)(actor, name, value)
     if not all([True] + list(map(lambda item: isinstance(item, type) and issubclass(item, Tag), value))):
