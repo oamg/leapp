@@ -6,14 +6,14 @@ if [ -n "$1" ]; then
     OUTDIR="$(realpath $1)"
 fi
 
-dnf -y install which
+command -v which > /dev/null || dnf -y install which
 
 export
 if [ -z "$(which git)" ]; then
     dnf -y install git-core
 fi
 
-if ! git status 2&>1 > /dev/null; then
+if ! git status 2>&1 > /dev/null; then
     rm -rf leapp
     git clone https://github.com/leapp-to/leapp
     POPD=`pushd leapp`
