@@ -1,5 +1,7 @@
 import itertools
 
+from leapp.repository import _LoadStage
+
 
 class RepositoryManager(object):
     """
@@ -60,7 +62,13 @@ class RepositoryManager(object):
         :type resolve: bool
         """
         for repo in self._repos:
-            repo.load(resolve=False)
+            repo.load(resolve=False, stage=_LoadStage.INITIAL)
+
+        for repo in self._repos:
+            repo.load(resolve=False, stage=_LoadStage.ACTORS)
+
+        for repo in self._repos:
+            repo.load(resolve=False, stage=_LoadStage.WORKFLOWS)
 
         if resolve:
             from leapp.models import resolve_model_references

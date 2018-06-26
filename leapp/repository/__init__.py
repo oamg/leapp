@@ -12,6 +12,12 @@ from leapp.repository.actor_definition import ActorDefinition
 from leapp.utils.project import get_project_name
 
 
+class _LoadStage(object):
+    INITIAL = 'initial'
+    ACTORS = 'actors'
+    WORKFLOWS = 'workflows'
+
+
 class Repository(object):
     """
     The Repository class represents a place where all resources (actors, models, tags, etc.) are defined. The
@@ -86,43 +92,48 @@ class Repository(object):
 
         self._definitions.setdefault(kind, []).append(item)
 
-    def load(self, resolve=True):
+    def load(self, resolve=True, stage=None):
         """
         Loads the repository resources
 
         :param resolve: Decides whether or not to perform the resolving of model references
         :type resolve: bool
+        :param stage: Stage to load - Required for repository managers
+        :type stage: _LoadStage value
         """
-        self.log.debug("Loading repository %s", self.name)
-        self.log.debug("Loading tag modules")
-        self._load_modules(self.tags)
-        self.log.debug("Loading topic modules")
-        self._load_modules(self.topics)
-        self.log.debug("Loading model modules")
-        self._load_modules(self.models)
-        if resolve:
-            from leapp.models import resolve_model_references
-            resolve_model_references()
+        if not stage or stage is _LoadStage.INITIAL:
+            self.log.debug("Loading repository %s", self.name)
+            self.log.debug("Loading tag modules")
+            self._load_modules(self.tags)
+            self.log.debug("Loading topic modules")
+            self._load_modules(self.topics)
+            self.log.debug("Loading model modules")
+            self._load_modules(self.models)
+            if resolve:
+                from leapp.models import resolve_model_references
+                resolve_model_references()
 
-        self.log.debug("Extending PATH for common tool paths")
-        self._extend_environ_paths('PATH', self.tools)
-        self.log.debug("Extending LEAPP_COMMON_FILES for common file paths")
-        self._extend_environ_paths('LEAPP_COMMON_FILES', self.files)
+            self.log.debug("Extending PATH for common tool paths")
+            self._extend_environ_paths('PATH', self.tools)
+            self.log.debug("Extending LEAPP_COMMON_FILES for common file paths")
+            self._extend_environ_paths('LEAPP_COMMON_FILES', self.files)
 
-        if not leapp.libraries.common.LEAPP_BUILTIN_COMMON_INITIALIZED:
-            self.log.debug("Loading built-in common libraries")
-            self._load_libraries(path=(os.path.dirname(leapp.libraries.common.__file__) + '/',))
-            leapp.libraries.common.LEAPP_BUILTIN_COMMON_INITIALIZED = True
+            if not leapp.libraries.common.LEAPP_BUILTIN_COMMON_INITIALIZED:
+                self.log.debug("Loading built-in common libraries")
+                self._load_libraries(path=(os.path.dirname(leapp.libraries.common.__file__) + '/',))
+                leapp.libraries.common.LEAPP_BUILTIN_COMMON_INITIALIZED = True
 
-        self.log.debug("Loading repository provided common libraries")
-        self._load_libraries()
+            self.log.debug("Loading repository provided common libraries")
+            self._load_libraries()
 
-        self.log.debug("Running actor discovery")
-        for actor in self.actors:
-            actor.discover()
+        if not stage or stage is _LoadStage.ACTORS:
+            self.log.debug("Running actor discovery")
+            for actor in self.actors:
+                actor.discover()
 
-        self.log.debug("Loading workflow modules")
-        self._load_modules(self.workflows)
+        if not stage or stage is _LoadStage.WORKFLOWS:
+            self.log.debug("Loading workflow modules")
+            self._load_modules(self.workflows)
 
     def _load_libraries(self, path=None, mod=None, prefix='leapp.libraries.common'):
         for importer, name, is_pkg in pkgutil.iter_modules(path or self.libraries):
