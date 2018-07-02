@@ -441,7 +441,7 @@ class Nested(Field):
         self._validate_builtin_value(value, name)
         if value is None:
             return value
-        return self._model_type(**value)
+        return self._model_type(init_method='to_model', **value)
 
     def _convert_from_model(self, value, name):
         self._validate_model_value(value, name)
