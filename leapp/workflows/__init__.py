@@ -121,7 +121,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
         :type until_phase: str
         :param until_actor: The execution finishes when this actor has been executed.
         :type until_actor: str
-        :param skip_phases_until: Skips all phases until including the phase specified, and then continues the execution.
+        :param skip_phases_until: Skips all phases until including the phase specified, and then continues the
+               execution.
         :type skip_phases_until: str or None
 
         """

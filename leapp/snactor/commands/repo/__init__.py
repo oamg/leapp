@@ -98,7 +98,7 @@ def register_path(path):
 
 
 _REGISTER_LONG_DESCRIPTION = '''
-Registers the current user repository in the users repository registry. 
+Registers the current user repository in the users repository registry.
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
@@ -116,21 +116,21 @@ def register_repo(args):
 
 
 _LINK_LONG_DESCRIPTION = '''
-Links a given repository to the current repository. 
+Links a given repository to the current repository.
 
 Linking a repository is needed, when the current repository requires things like
 Tags, Models, Topics, Workflows etc from another repository and needs to be executable
 with `snactor`. Snactor does not know otherwise that it will need to load the content
 from another repository. Linking the repositories will make snactor load the items
-from the linked repositories. 
+from the linked repositories.
 
 Repositories can be linked by path, name and repository id.
 
 When using the repository name, beware that the first matching name will be linked.
 Therefore it's recommended to rather link repositories by path or repository id.
 
-Usage: 
-    $ snactor repo link --path ../../other-repository 
+Usage:
+    $ snactor repo link --path ../../other-repository
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
@@ -171,7 +171,7 @@ leapp repositories and registers all found repositories with the users repositor
 
 By using --skip-registration it can be used to just detect repositories without registering them.
 
-If another path should be scanned than the current working directory pass the --path flag.   
+If another path should be scanned than the current working directory pass the --path flag.
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs

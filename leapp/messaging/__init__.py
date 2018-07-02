@@ -5,7 +5,10 @@ import multiprocessing
 import os
 import socket
 
+from six.moves import configparser
+
 from leapp.dialogs.renderer import CommandlineRenderer
+from leapp.messaging.answerstore import AnswerStore
 from leapp.exceptions import CannotConsumeErrorMessages
 from leapp.models import ErrorModel
 
@@ -19,10 +22,22 @@ class BaseMessaging(object):
         self._manager = multiprocessing.Manager()
         self._dialog_renderer = CommandlineRenderer()
         self._data = self._manager.list()
-        self._answers = self._manager.dict()
+        self._answers = AnswerStore(manager=self._manager)
         self._new_data = self._manager.list()
         self._errors = self._manager.list()
         self._stored = stored
+
+    def load_answers(self, answer_file, workflow):
+        """
+        Loads answers from a given answer file
+
+        :param answer_file: Path to file to load as answer file
+        :type answer_file: str
+        :param workflow: :py:class:`leapp.workflows.Workflow` instance to load the answers for.
+        :type workflow: :py:class:`leapp.workflows.Workflow`
+        :return: None
+        """
+        self._answers.load_and_translate_for_workflow(answer_file, workflow)
 
     @property
     def stored(self):
@@ -148,12 +163,7 @@ class BaseMessaging(object):
         return message
 
     def request_answers(self, dialog):
-        if dialog.scope in self._answers:
-            for key, value in self._answers.get(dialog.scope).items():
-                component = dialog.component_by_key(key)
-                if component:
-                    dialog.answer(component, value)
-        return dialog.request_answers(self._dialog_renderer)
+        return dialog.request_answers(self._answers, self._dialog_renderer)
 
     def consume(self, actor, *types):
         """

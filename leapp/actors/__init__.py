@@ -4,6 +4,7 @@ import sys
 
 
 from leapp.compat import string_types
+from leapp.dialogs import Dialog
 from leapp.exceptions import MissingActorAttributeError, WrongAttributeTypeError
 from leapp.models import Model
 from leapp.tags import Tag
@@ -48,6 +49,7 @@ class Actor(object):
     dialogs = ()
     """
     Tuple of :py:class:`leapp.dialogs.dialog.Dialog` derived classes that define questions to ask the user.
+    Dialogs that are added to this list allow for persisting answers the user has given in the answer file storage.
     """
 
     def __init__(self, messaging=None, logger=None):
@@ -174,7 +176,8 @@ class Actor(object):
 def _is_type(value_type):
     def validate(actor, name, value):
         if not isinstance(value, value_type):
-            raise WrongAttributeTypeError('Actor {} attribute {} should be of the type {}'.format(actor, name, value_type))
+            raise WrongAttributeTypeError('Actor {} attribute {} should be of the type {}'.format(actor, name,
+                                                                                                  value_type))
         return value
     return validate
 
@@ -208,6 +211,17 @@ def _is_model_tuple(actor, name, value):
     if not all([True] + list(map(lambda item: isinstance(item, type) and issubclass(item, Model), value))):
         raise WrongAttributeTypeError(
             'Actor {} attribute {} should contain only Models'.format(actor, name))
+    return value
+
+
+def _is_dialog_tuple(actor, name, value):
+    if isinstance(value, type) and issubclass(value, Dialog):
+        _lint_warn(actor, name, "Dialogs")
+        value = value,
+    _is_type(tuple)(actor, name, value)
+    if not all([True] + list(map(lambda item: isinstance(item, type) and issubclass(item, Dialog), value))):
+        raise WrongAttributeTypeError(
+            'Actor {} attribute {} should contain only Dialogs'.format(actor, name))
     return value
 
 
@@ -247,6 +261,7 @@ def get_actor_metadata(actor):
         _get_attribute(actor, 'tags', _is_tag_tuple, required=True),
         _get_attribute(actor, 'consumes', _is_model_tuple, required=False, default_value=()),
         _get_attribute(actor, 'produces', _is_model_tuple, required=False, default_value=()),
+        _get_attribute(actor, 'dialogs', _is_dialog_tuple, required=False, default_value=()),
         _get_attribute(actor, 'description', _is_type(string_types), required=False,
                        default_value='There has been no description provided for this actor.')
     ])

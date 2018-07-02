@@ -17,7 +17,7 @@ class InProcessMessaging(BaseMessaging):
         message_keys = ('stamp', 'topic', 'actor', 'phase', 'hostname', 'context', 'msg_type')
         audit_keys = ('event', 'stamp', 'data', 'actor', 'phase', 'hostname', 'context')
         message['msg_type'] = message.pop('type')
-        payload = message.pop( 'message')
+        payload = message.pop('message')
         msg = Message(**dict(((k, message[k]) for k in message_keys if k in message)))
         audit = Audit(**dict(((k, message[k]) for k in audit_keys if k in message)))
         audit.message = msg

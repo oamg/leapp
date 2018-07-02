@@ -1,7 +1,7 @@
 import sys
 
 
-__all__ = ('string_types', 'IS_PYTHON2', 'IS_PYTHON3', 'httplib')
+__all__ = ('string_types', 'IS_PYTHON2', 'IS_PYTHON3', 'httplib', 'unicode_type', 'raise_with_traceback')
 
 IS_PYTHON2 = sys.version_info < (3,)
 IS_PYTHON3 = not IS_PYTHON2
@@ -14,6 +14,7 @@ if IS_PYTHON2:
 
     import httplib
     string_types = (str, globals()['__builtins__']['unicode'])
+    unicode_type = string_types[1]
     from leapp.compatpy2only import raise_with_traceback
 
 # Python 3 code
@@ -21,6 +22,7 @@ else:
 
     import http.client as httplib
     string_types = (str,)
+    unicode_type = str
 
     def raise_with_traceback(exc, tb):
         """

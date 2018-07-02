@@ -15,6 +15,7 @@ _FAKE_META_DATA = {
     'tags': (),
     'consumes': (),
     'produces': (),
+    'dialogs': (),
 }
 
 
@@ -39,6 +40,7 @@ def test_actor_definition(repository_dir):
                     assert definition.produces == _FAKE_META_DATA['produces']
                     assert definition.tags == _FAKE_META_DATA['tags']
                     assert definition.class_name == _FAKE_META_DATA['class_name']
+                    assert definition.dialogs == _FAKE_META_DATA['dialogs']
                     assert definition.name == _FAKE_META_DATA['name']
                     assert definition.description == _FAKE_META_DATA['description']
                     dumped = definition.dump()

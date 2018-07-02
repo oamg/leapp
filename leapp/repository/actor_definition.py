@@ -162,6 +162,13 @@ class ActorDefinition(object):
         return ActorCallContext(definition=self, messaging=messaging, logger=logger)
 
     @property
+    def dialogs(self):
+        """
+        :return: Tuple of defined dialogs
+        """
+        return self.discover()['dialogs']
+
+    @property
     def consumes(self):
         """
         :return: Tuple of consumed models

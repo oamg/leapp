@@ -301,7 +301,8 @@ class EnumMixin(Field):
     def _validate_choices(self, value, name):
         if value not in (None, missing) and value not in self._choices:
             values = ", ".join(map(str, self._choices))
-            raise ModelViolationError("The {name} field value must be one of '{values}'".format(name=name, values=values))
+            raise ModelViolationError("The {name} field value must be one of '{values}'".format(name=name,
+                                                                                                values=values))
 
 
 class StringEnum(EnumMixin, String):

@@ -143,6 +143,7 @@ Python 3 leapp framework libraries
 install -m 0755 -d %{buildroot}%{_sharedstatedir}/leapp
 install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp
 install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp/repos.d
+install -m 0600 -d %{buildroot}%{_sysconfdir}/leapp/answers
 install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 
 %if %{with python2}
@@ -163,6 +164,7 @@ install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 %config(noreplace) %{_sysconfdir}/leapp/leapp.conf
 %config(noreplace) %{_sysconfdir}/leapp/logger.conf
 %dir %{_sysconfdir}/leapp
+%dir %{_sysconfdir}/leapp/answers
 %dir %{_sysconfdir}/leapp/repos.d
 %{_bindir}/leapp
 %dir %{_sharedstatedir}/leapp

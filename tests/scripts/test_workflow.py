@@ -28,7 +28,7 @@ def test_workflow(repository):
         assert not workflow.produces
         workflow.run()
         test_log_file.seek(0)
-        order = [json.loads(line)['class_name'] for line in test_log_file]
+        order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('SecondActor', 'SecondCommonActor')
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('BeforeCommonThirdActor', 'BeforeThirdActor')
@@ -45,7 +45,7 @@ def test_workflow_until_actor(repository):
         workflow = repository.lookup_workflow('UnitTest')()
         workflow.run(context='unit-test-context', until_actor='ThirdActor')
         test_log_file.seek(0)
-        order = [json.loads(line)['class_name'] for line in test_log_file]
+        order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('SecondActor', 'SecondCommonActor')
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('BeforeCommonThirdActor', 'BeforeThirdActor')
@@ -59,7 +59,7 @@ def test_workflow_until_phase_main(repository):
         workflow = repository.lookup_workflow('UnitTest')()
         workflow.run(context='unit-test-context', until_phase='ThirdPhase.main')
         test_log_file.seek(0)
-        order = [json.loads(line)['class_name'] for line in test_log_file]
+        order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('SecondActor', 'SecondCommonActor')
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('BeforeCommonThirdActor', 'BeforeThirdActor')
@@ -73,7 +73,7 @@ def test_workflow_until_phase_before(repository):
         workflow = repository.lookup_workflow('UnitTest')()
         workflow.run(context='unit-test-context', until_phase='ThirdPhase.before')
         test_log_file.seek(0)
-        order = [json.loads(line)['class_name'] for line in test_log_file]
+        order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('SecondActor', 'SecondCommonActor')
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('BeforeCommonThirdActor', 'BeforeThirdActor')
@@ -86,7 +86,7 @@ def test_workflow_until_phase_full(repository):
         workflow = repository.lookup_workflow('UnitTest')()
         workflow.run(context='unit-test-context', until_phase='ThirdPhase')
         test_log_file.seek(0)
-        order = [json.loads(line)['class_name'] for line in test_log_file]
+        order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('SecondActor', 'SecondCommonActor')
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('BeforeCommonThirdActor', 'BeforeThirdActor')
@@ -101,7 +101,7 @@ def test_workflow_skip_phases_until(repository):
         workflow = repository.lookup_workflow('UnitTest')()
         workflow.run(context='unit-test-context', skip_phases_until='ThirdPhase')
         test_log_file.seek(0)
-        order = [json.loads(line)['class_name'] for line in test_log_file]
+        order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FourthActor'
         assert order.pop(0) == 'FifthActor'
         assert not order
@@ -118,7 +118,7 @@ def test_workflow_reboot(repository):
             workflow.phase_actors[0][0].flags.restart_after_phase = False
             reboot_system_function.assert_called_once_with()
             test_log_file.seek(0)
-            order = [json.loads(line)['class_name'] for line in test_log_file]
+            order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
             assert order.pop(0) == 'FirstActor'
             assert not order
 
@@ -133,7 +133,7 @@ def test_workflow_error_policy_fail_immediately(repository):
         del os.environ['FirstActor-ReportError']
 
         test_log_file.seek(0)
-        order = [json.loads(line)['class_name'] for line in test_log_file]
+        order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
         assert not order
         assert workflow.errors and len(workflow.errors) == 1
@@ -148,7 +148,7 @@ def test_workflow_error_policy_fail_phase(repository):
         repository.lookup_actor('FirstActor').should_report_error = True
         workflow.run()
         test_log_file.seek(0)
-        order = [json.loads(line)['class_name'] for line in test_log_file]
+        order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('SecondActor', 'SecondCommonActor')
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('BeforeCommonThirdActor', 'BeforeThirdActor')

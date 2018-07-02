@@ -87,8 +87,8 @@ def get_repository_metadata(path):
 
 def get_repository_name(path):
     """
-    Retrieves the repository name from the repository metadata from within the given path. (it can be anywhere within the
-    repository it will use :py:func:`find_repositoryt_dir` to find the repository base directory)
+    Retrieves the repository name from the repository metadata from within the given path. (it can be anywhere within
+    the repository it will use :py:func:`find_repositoryt_dir` to find the repository base directory)
     :param path: Path within the leapp repository
     :return: Name of the repository
     :raises: KeyError if no name was found (e.g. not a valid repository path)

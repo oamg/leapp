@@ -35,7 +35,7 @@ class Dialog(object):
         self.title = title
         self.scope = scope
         self.reason = reason
-        self._answers = {}
+        self._store = None
         self._min_label_width = None
 
     @property
@@ -56,7 +56,8 @@ class Dialog(object):
         :param value: The answer value
         :return: None
         """
-        self._answers[component.key] = value
+        component.value = value
+        self._store.answer(self.scope, component.key, value)
 
     def component_by_key(self, key):
         """
@@ -71,13 +72,14 @@ class Dialog(object):
                 return component
         return None
 
-    def request_answers(self, renderer):
+    def request_answers(self, store, renderer):
         """
-        TODO: Implement dispatching of the dialog to be shown to the user when the questions aren't answered.
-        TODO: This call should be blocking until answers are made available to the user
-
+        :param store: AnswerStore instance
+        :param renderer: Target renderer instance
         :return: Dictionary with answers once retrieved
         """
-
-        renderer.render(self)
-        return dict(self._answers)
+        if any([component.value is None for component in self.components]):
+            self._store = store
+            renderer.render(self)
+            self._store = None
+        return dict(store.get(self.scope))
