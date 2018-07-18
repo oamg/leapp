@@ -12,6 +12,7 @@ Subpackages
     leapp.messaging
     leapp.models
     leapp.repository
+    leapp.snactor.fixture
     leapp.tags
     leapp.topics
     leapp.utils
@@ -40,6 +41,14 @@ leapp\.exceptions module
 ------------------------
 
 .. automodule:: leapp.exceptions
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+leapp\.snactor\.fixture module
+------------------------------
+
+.. automodule:: leapp.snactor.fixture
     :members:
     :undoc-members:
     :show-inheritance:

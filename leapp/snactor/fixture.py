@@ -128,6 +128,20 @@ def loaded_leapp_repository(request):
     This fixture will ensure that the repository for the current test run is loaded with all its links etc.
 
     This enables running actors and using models, tags, topics, workflows etc.
+
+    :Example:
+
+    .. code-block:: python
+
+        from leapp.snactor.fixture import loaded_leapp_repository
+        from leapp.models import ExampleModel, ProcessedExampleModel
+
+        def my_repository_library_test(loaded_leapp_repository):
+            from leapp.libraries.common import global
+            e = ExampleModel(value='Some string')
+            result = global.process_function(e)
+            assert type(result) is ProcessedExampleModel
+
     """
     project_path = find_project_basedir(request.module.__file__)
     os.environ['LEAPP_CONFIG'] = os.path.join(project_path, '.leapp', 'leapp.conf')
@@ -150,6 +164,27 @@ def current_actor_context(loaded_leapp_repository):
     current_actor_context Is an instance of :py:class:`leapp.snactor.fixture.ActorContext` and gives access
     to its methods for feeding an actor with input data, running the actor, and retrieving messages produced
     by the actor during its execution.
+
+
+    :Example:
+
+    .. code-block:: python
+
+        from leapp.snactor.fixture import current_actor_context
+        from leapp.models import ConsumedExampleModel, ProducedExampleModel
+
+        def test_actor_lib_some_function(current_actor_context):
+            # Feed with messages to be consumable by the actor that is going to be executed.
+            current_actor_context.feed(ConsumedExampleModel(value='Some random data'))
+
+            # Execute the actor
+            current_actor_context.run()
+
+            # Ensure that at least one message is produced
+            assert current_actor_context.consume(ProducedExampleModel)
+
+            # Ensure the value is what we expect
+            assert current_actor_context.consume(ProducedExampleModel)[0].value == 42
     """
     return type('CurrentActorContext', (ActorContext,), {'repository': loaded_leapp_repository, 'name': None})()
 
@@ -161,6 +196,8 @@ def current_actor_libraries(request, loaded_leapp_repository):
     test function that uses this fixture.
 
     :Example:
+
+    .. code-block:: python
 
         from leapp.snactor.fixture import current_actor_libraries
 
@@ -215,8 +252,9 @@ def pytest_pyfunc_call(pyfuncitem):
     """
     This function is a hook for pytest implementing the ability to run the actors in tests safely.
 
-    It will call _execute_test in a child process if the current test uses the current_actor_context fixture.
-    If it doesn't use the current_actor_context fixture, it will default to the default implementation.
+    It will call :py:func:`leapp.snactor.fixture._execute_test` in a child process if the current test uses the
+    :py:func:`current_actor_context` fixture. If it doesn't use the :py:func:`current_actor_context` fixture, it will
+    default to the default `pytest_pyfunc_call` implementation.
     """
     if 'current_actor_context' not in pyfuncitem.funcargs:
         return False
