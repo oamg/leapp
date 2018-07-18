@@ -130,6 +130,9 @@ def loaded_leapp_repository(request):
 
     This enables running actors and using models, tags, topics, workflows etc.
 
+    Additionally loaded_leapp_repository gives you access to a :py:class:`leapp.repository.manager.RepositoryManager`
+    instance.
+
     :Example:
 
     .. code-block:: python

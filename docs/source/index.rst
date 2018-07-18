@@ -3,17 +3,18 @@ Welcome to Leapp's documentation!
    Leapp is an OS and Application modernization framework
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 4
     :caption: Contents:
     :glob:
 
     terminology
     tutorials
     debugging
+    unit-testing
     best-practises
     contributing
     python-coding-guidelines
-    modules
+    pydoc/leapp
 
 
 

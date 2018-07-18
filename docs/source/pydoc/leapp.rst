@@ -1,5 +1,5 @@
-leapp package
-=============
+Python documentation for the leapp package
+==========================================
 
 Subpackages
 -----------
@@ -12,7 +12,6 @@ Subpackages
     leapp.messaging
     leapp.models
     leapp.repository
-    leapp.snactor.fixture
     leapp.tags
     leapp.topics
     leapp.utils
