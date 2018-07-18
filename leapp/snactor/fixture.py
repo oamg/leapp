@@ -10,6 +10,7 @@ from leapp.utils.audit import Execution, get_connection
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.project import find_project_basedir
 from leapp.messaging.inprocess import InProcessMessaging
+from leapp.compat import raise_with_traceback
 
 import pytest
 from _pytest.python import pytest_pyfunc_call as original_pytest_pyfunc_call
@@ -267,5 +268,5 @@ def pytest_pyfunc_call(pyfuncitem):
     assert not q.empty()
     r, e = q.get()
     if e:
-        raise e[1], None, _tb_unpack(e[2])
+        raise_with_traceback(e[1], _tb_unpack(e[2]))
     return r

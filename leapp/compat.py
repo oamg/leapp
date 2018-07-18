@@ -15,8 +15,13 @@ if IS_PYTHON2:
     import httplib
     string_types = (str, globals()['__builtins__']['unicode'])
 
+    from leapp.utils.compatpy2only import raise_with_traceback
+
 # Python 3 code
 else:
 
     import http.client as httplib
     string_types = (str,)
+
+    def raise_with_traceback(exc, tb):
+        raise exc.with_traceback(tb)
