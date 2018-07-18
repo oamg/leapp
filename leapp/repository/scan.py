@@ -1,17 +1,57 @@
 import os
-import subprocess
 
 from leapp.repository import Repository, DefinitionKind
 from leapp.repository.manager import RepositoryManager
 from leapp.repository.actor_definition import ActorDefinition
+from leapp.exceptions import RepositoryConfigurationError
+from leapp.utils.project import get_global_repositories_data, get_user_config_repo_data, find_repos
 
 
-def find_and_scan_repositories(path, manager=None):
+def _make_repo_lookup(include_locals):
+    data = {}
+    for entry in get_global_repositories_data().items():
+        if entry['enabled']:
+            data.update({entry['id']: entry['path']})
+
+    if include_locals:
+        # Having it here allows to override global repositories with local ones.
+        data.update(get_user_config_repo_data()['repos'])
+
+    return data
+
+
+def _resolve_repository_links(manager, include_locals):
+    repo_lookup = _make_repo_lookup(include_locals=include_locals)
+    finished = False
+    while not finished:
+        missing = manager.get_missing_repo_links()
+        for repo_id in missing:
+            if repo_id in repo_lookup:
+                manager.add_repo(scan_repo(repo_lookup[repo_id]))
+                break
+        else:
+            finished = True
+
+    if manager.get_missing_repo_links():
+        raise RepositoryConfigurationError('Missing repositories detected: {}'.format(', '.join(missing)))
+
+
+def find_and_scan_repositories(path, manager=None, include_locals=False):
+    """
+    Finds and scans all repositories found in the path and it will also resolve linked repositories.
+    Using include_locals=True will additionally include user local repositories to be considered for
+    resolving linked repositories.
+
+    :param path: Path to scan for repositories
+    :param manager: Optional repository manager to add found repos too
+    :param include_locals: Should repositories linked be searched from the user local registry
+    :return: repository manager instance (either passed through or a new instance if none was passed)
+    """
     if os.path.exists(path):
         manager = manager or RepositoryManager()
-        result = subprocess.check_output(['/usr/bin/find', '-L', path, '-name', '.leapp']).decode('utf-8')
-        for directory in result.strip().split('\n'):
-            manager.add_repo(scan_repo(os.path.dirname(os.path.realpath(directory))))
+        for repository in find_repos(path):
+            manager.add_repo(scan_repo(repository))
+        _resolve_repository_links(manager=manager, include_locals=include_locals)
     return manager
 
 
@@ -19,7 +59,7 @@ def scan_repo(path):
     """
     Scans all related repository resources
 
-    :param path: path to the repository
+    :param path:
     :type path: str
     :return: repository
     """

@@ -18,7 +18,7 @@ def make_project_dir(name, project_name=TESTING_PROJECT_NAME, scope='session'):
 
         root = tmpdir_factory.mktemp('repositories')
         with root.as_cwd():
-            check_call(['snactor', 'new-project', project_name])
+            check_call(['snactor', 'repo', 'new', project_name])
             project = root.join(project_name)
             os.environ['LEAPP_CONFIG'] = project.join('.leapp', 'leapp.conf').strpath
             return project

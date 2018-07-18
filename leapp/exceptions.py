@@ -3,7 +3,12 @@ class LeappError(Exception):
         super(LeappError, self).__init__(message)
 
 
-class CannotConsumeErrorMessages(Exception):
+class RepositoryConfigurationError(LeappError):
+    def __init__(self, message):
+        super(RepositoryConfigurationError, self).__init__(message)
+
+
+class CannotConsumeErrorMessages(LeappError):
     def __init__(self):
         super(CannotConsumeErrorMessages, self).__init__("Actors cannot consume error messages.")
 

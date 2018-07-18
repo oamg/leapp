@@ -18,7 +18,7 @@ def load_repositories_from(name, repo_path, manager=None):
 
 
 def load_repositories():
-    manager = load_repositories_from('repo_path', '/etc/leapp/repos.d/', manager=None)
+    manager = load_repositories_from('repo_path', '/etc/leapp/repo.d/', manager=None)
     manager.load()
     return manager
 

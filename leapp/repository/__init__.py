@@ -9,11 +9,13 @@ from logging import getLogger
 from leapp.exceptions import ModuleNameAlreadyExistsError, RepoItemPathDoesNotExistError, UnsupportedDefinitionKindError
 from leapp.repository.definition import DefinitionKind
 from leapp.repository.actor_definition import ActorDefinition
-from leapp.utils.project import get_project_name
+from leapp.utils.project import get_project_name, get_project_id, get_project_repo_links
 
 
 class _LoadStage(object):
     INITIAL = 'initial'
+    MODELS = 'models'
+    LIBRARIES = 'libraries'
     ACTORS = 'actors'
     WORKFLOWS = 'workflows'
 
@@ -32,8 +34,22 @@ class Repository(object):
         self.name = get_project_name(directory)
         self.log = getLogger('leapp.repository').getChild(self.name)
         self._repo_dir = directory
+        self._repo_id = get_project_id(directory)
+        self._repo_links = get_project_repo_links(directory)
         self._definitions = {}
         self.log.info("A new repository '%s' is initialized at %s", self.name, directory)
+
+    @property
+    def repo_dir(self):
+        return self._repo_dir
+
+    @property
+    def repo_id(self):
+        return self._repo_id
+
+    @property
+    def repo_links(self):
+        return self._repo_links
 
     def lookup_actor(self, name):
         """
@@ -107,12 +123,15 @@ class Repository(object):
             self._load_modules(self.tags)
             self.log.debug("Loading topic modules")
             self._load_modules(self.topics)
+
+        if not stage or stage is _LoadStage.MODELS:
             self.log.debug("Loading model modules")
             self._load_modules(self.models)
             if resolve:
                 from leapp.models import resolve_model_references
                 resolve_model_references()
 
+        if not stage or stage is _LoadStage.LIBRARIES:
             self.log.debug("Extending PATH for common tool paths")
             self._extend_environ_paths('PATH', self.tools)
             self.log.debug("Extending LEAPP_COMMON_FILES for common file paths")

@@ -7,7 +7,7 @@ from leapp.utils.project import requires_project, find_project_basedir
 from leapp.logger import configure_logger
 from leapp.messaging.inprocess import InProcessMessaging
 from leapp.utils.output import report_errors
-from leapp.repository.scan import scan_repo
+from leapp.repository.scan import find_and_scan_repositories
 from leapp.snactor.context import with_snactor_context
 
 
@@ -28,7 +28,7 @@ https://red.ht/leapp-docs
 def cli(args):
     log = configure_logger()
     basedir = find_project_basedir('.')
-    repository = scan_repo(basedir)
+    repository = find_and_scan_repositories(basedir, include_locals=True)
     try:
         repository.load()
     except LeappError as exc:

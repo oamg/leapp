@@ -5,15 +5,18 @@ import sys
 from leapp.exceptions import LeappError
 from leapp.topics import get_topics
 from leapp.models import get_models
-from leapp.repository.scan import scan_repo
+from leapp.repository.scan import find_and_scan_repositories
 from leapp.tags import get_tags
 from leapp.utils.project import requires_project, find_project_basedir, get_project_name
 from leapp.utils.clicmd import command, command_opt
 from leapp.workflows import get_workflows
 
 
-def _is_local(base_dir, cls):
-    return os.path.realpath(sys.modules[cls.__module__].__file__).startswith(base_dir)
+def _is_local(repository, cls, base_dir, all_repos=False):
+    cls_path = os.path.realpath(sys.modules[cls.__module__].__file__)
+    if all_repos:
+        return any((cls_path.startswith(repo.repo_dir) for repo in repository.repos))
+    return cls_path.startswith(base_dir)
 
 
 def _print_group(name, items, name_resolver=lambda item: item.__name__,
@@ -80,10 +83,11 @@ https://red.ht/leapp-docs
 @command('discover', help="Discovers all available entities in the current project repository",
          description=_LONG_DESCRIPTION)
 @command_opt('json', is_flag=True, help='Output in json format instead of human readable form')
+@command_opt('all', is_flag=True, help='Include items from linked repositories')
 @requires_project
 def cli(args):
     base_dir = find_project_basedir('.')
-    repository = scan_repo(base_dir)
+    repository = find_and_scan_repositories(base_dir, include_locals=True)
     try:
         repository.load()
     except LeappError as exc:
@@ -91,10 +95,11 @@ def cli(args):
         sys.exit(1)
 
     actors = [actor for actor in repository.actors]
-    models = [model for model in get_models() if _is_local(base_dir, model)]
-    topics = [topic for topic in get_topics() if _is_local(base_dir, topic)]
-    tags = [tag for tag in get_tags() if _is_local(base_dir, tag)]
-    workflows = [workflow for workflow in get_workflows() if _is_local(base_dir, workflow)]
+    topics = [topic for topic in get_topics() if _is_local(repository, topic, base_dir, all_repos=args.all)]
+    models = [model for model in get_models() if _is_local(repository, model, base_dir, all_repos=args.all)]
+    tags = [tag for tag in get_tags() if _is_local(repository, tag, base_dir, all_repos=args.all)]
+    workflows = [workflow for workflow in get_workflows() if _is_local(repository, workflow, base_dir,
+                                                                       all_repos=args.all)]
     if not args.json:
         sys.stdout.write(
             'Project:\n  Name: {project}\n  Path: {base_dir}\n\n'.format(project=get_project_name(base_dir),

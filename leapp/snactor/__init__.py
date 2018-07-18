@@ -5,6 +5,7 @@ import socket
 from leapp.snactor import commands
 from leapp.snactor.commands import workflow
 from leapp.snactor.commands import messages
+from leapp.snactor.commands import repo
 from leapp.utils.clicmd import command, command_opt
 from leapp.utils.project import find_project_basedir
 from leapp import VERSION
@@ -19,8 +20,10 @@ def load_commands():
     _load_commands_from(commands.__file__)
     _load_commands_from(commands.workflow.__file__)
     _load_commands_from(commands.messages.__file__)
+    _load_commands_from(commands.repo.__file__)
     cli.command.add_sub(messages.messages.command)
     cli.command.add_sub(workflow.workflow.command)
+    cli.command.add_sub(repo.repo.command)
 
 
 def _load_commands_from(path):

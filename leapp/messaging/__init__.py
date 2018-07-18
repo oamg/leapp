@@ -107,7 +107,20 @@ class BaseMessaging(object):
         """
         return self._do_produce(model, actor, self._new_data)
 
-    def _do_produce(self, model, actor, target):
+    def feed(self, model, actor):
+        """
+        Called to pre-fill sent messages and make them available for other actors.
+
+        :param model: Model to send as message payload
+        :type model: :py:class:`leapp.models.Model`
+        :param actor: Actor that sends the message
+        :type actor: :py:class:`leapp.actors.Actor`
+        :return: the updated message dict
+        :rtype: dict
+        """
+        return self._do_produce(model, actor, self._data, stored=False)
+
+    def _do_produce(self, model, actor, target, stored=True):
         if not os.environ.get('LEAPP_HOSTNAME', None):
             os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
         data = json.dumps(model.dump(), sort_keys=True)
@@ -125,7 +138,7 @@ class BaseMessaging(object):
             }
         }
 
-        if self.stored:
+        if stored and self.stored:
             self._process_message(message.copy())
 
         target.append(message)
@@ -139,6 +152,7 @@ class BaseMessaging(object):
         :param actor: Actor that consumes the data
         :return: Iterable with messages matching the criteria
         """
+        types = tuple((getattr(t, '_resolved', t) for t in types))
         messages = list(self._data) + list(self._new_data)
         lookup = dict([(model.__name__, model) for model in type(actor).consumes])
         if types:

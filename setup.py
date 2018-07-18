@@ -23,5 +23,8 @@ setup(
         [console_scripts]
         snactor=leapp.snactor:main
         leapp=leapp.cli:main
+
+        [pytest11]
+        snactor_plugin=leapp.snactor.fixture
     '''
 )
