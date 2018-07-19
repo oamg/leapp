@@ -9,14 +9,14 @@ from leapp.exceptions import UsageError
 from leapp.utils.clicmd import command_aware_wraps
 
 
-def requires_project(f):
+def requires_repository(f):
     """
-    Decorator for snactor commands that require to be run in a project directory.
+    Decorator for snactor commands that require to be run in a repository directory.
     """
     @command_aware_wraps(f)
     def checker(*args, **kwargs):
-        if not find_project_basedir('.'):
-            raise UsageError('This command must be executed from the project directory.')
+        if not find_repository_basedir('.'):
+            raise UsageError('This command must be executed from the repository directory.')
         return f(*args, **kwargs)
     return checker
 
@@ -54,7 +54,7 @@ def make_name(name):
     return to_snake_case(name)
 
 
-def find_project_basedir(path):
+def find_repository_basedir(path):
     """
     Tries to find the .leapp directory recursively ascending until it hits the root directory
 
@@ -70,53 +70,53 @@ def find_project_basedir(path):
             return None
 
 
-def get_project_metadata(path):
+def get_repository_metadata(path):
     """
     Gets the parsed metadata file as a dictionary
 
     :param path: Path to start loading the metadata from (it can be anywhere within the repository it will use
-                 :py:func:`find_project_dir` to find the project base directory)
+                 :py:func:`find_repository_dir` to find the repository base directory)
     :return: Dictionary with the metadata or an empty dictionary
     """
-    basedir = find_project_basedir(path)
+    basedir = find_repository_basedir(path)
     if basedir:
         with open(os.path.join(basedir, '.leapp', 'info'), 'r') as f:
             return json.load(f)
     return {}
 
 
-def get_project_name(path):
+def get_repository_name(path):
     """
-    Retrieves the project name from the project metadata from within the given path. (it can be anywhere within the
-    repository it will use :py:func:`find_project_dir` to find the project base directory)
+    Retrieves the repository name from the repository metadata from within the given path. (it can be anywhere within the
+    repository it will use :py:func:`find_repositoryt_dir` to find the repository base directory)
     :param path: Path within the leapp repository
     :return: Name of the repository
     :raises: KeyError if no name was found (e.g. not a valid repository path)
     """
-    return get_project_metadata(path)['name']
+    return get_repository_metadata(path)['name']
 
 
-def _create_and_set_project_id(path):
-    data = get_project_metadata(path)
+def _create_and_set_repository_id(path):
+    data = get_repository_metadata(path)
     if data:
-        basedir = find_project_basedir(path)
+        basedir = find_repository_basedir(path)
         data['id'] = str(uuid.uuid4())
         with open(os.path.join(basedir, '.leapp', 'info'), 'w') as f:
             json.dump(data, f)
     return data.get('id')
 
 
-def get_project_repo_links(path):
+def get_repository_links(path):
     """
     Retrieves a list of repository ids that are linked to given repository.
 
     :param path: Path within the leapp repository
     :return: List of repository ids this repository is linked to
     """
-    return get_project_metadata(path).get('repos', [])
+    return get_repository_metadata(path).get('repos', [])
 
 
-def add_project_repo_link(path, repo_id):
+def add_repository_link(path, repo_id):
     """
     Add a link from another repository to the current repository.
 
@@ -125,9 +125,9 @@ def add_project_repo_link(path, repo_id):
     :param repo_id: str
     :return: None
     """
-    data = get_project_metadata(path)
+    data = get_repository_metadata(path)
     if data and repo_id != data['id']:
-        basedir = find_project_basedir(path)
+        basedir = find_repository_basedir(path)
         data.setdefault('repos', []).append(repo_id)
         with open(os.path.join(basedir, '.leapp', 'info'), 'w') as f:
             json.dump(data, f)
@@ -135,19 +135,19 @@ def add_project_repo_link(path, repo_id):
     return False
 
 
-def get_project_id(path):
+def get_repository_id(path):
     """
-    Retrieves the project name from the project metadata from within the given path. (it can be anywhere within the
-    repository it will use :py:func:`find_project_dir` to find the project base directory)
+    Retrieves the repository name from the repository metadata from within the given path. (it can be anywhere within
+    the repository it will use :py:func:`find_repository_dir` to find the repository base directory)
     :param path: Path within the leapp repository
     :return: ID of the repository
     :raises: KeyError if no name was found (e.g. not a valid repository path)
     """
     try:
-        return get_project_metadata(path)['id']
+        return get_repository_metadata(path)['id']
     except KeyError:
-        if get_project_metadata(path):
-            return _create_and_set_project_id(path)
+        if get_repository_metadata(path):
+            return _create_and_set_repository_id(path)
         raise
 
 
@@ -214,13 +214,13 @@ def get_global_repositories_data():
     all_repos = set([os.path.realpath(path) for path in find_repos('/usr/share/leapp-repository') if path.strip()])
     repo_data = {}
     for repo in all_repos:
-        repo_id = get_project_metadata(repo).get('uuid', None)
+        repo_id = get_repository_metadata(repo).get('uuid', None)
         if not repo_id:
             continue
         repo_data[repo_id] = {
             'id': repo_id,
             'path': repo,
-            'name': get_project_name(repo),
+            'name': get_repository_name(repo),
             'enabled': repo in enabled
         }
     return repo_data

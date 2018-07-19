@@ -1,10 +1,10 @@
 import os
-from leapp.utils.project import requires_project, to_snake_case, make_class_name, make_name, find_project_basedir,\
-    get_project_name, get_project_metadata
+from leapp.utils.repository import requires_repository, to_snake_case, make_class_name, make_name,\
+    find_repository_basedir, get_repository_name, get_repository_metadata
 from leapp.exceptions import UsageError
 
-from helpers import TESTING_PROJECT_NAME
-from helpers import project_dir  # noqa: F401; pylint: disable=unused-variable
+from helpers import TESTING_REPOSITORY_NAME
+from helpers import repository_dir  # noqa: F401; pylint: disable=unused-variable
 
 import pytest
 
@@ -13,16 +13,16 @@ def setup_module(m):
     os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
 
-@requires_project
-def _test_project_dir_presence():
+@requires_repository
+def _test_repository_dir_presence():
     pass
 
 
-def test_requires_project(project_dir):
+def test_requires_repository(repository_dir):
     with pytest.raises(UsageError):
-        _test_project_dir_presence()
-    with project_dir.as_cwd():
-        _test_project_dir_presence()
+        _test_repository_dir_presence()
+    with repository_dir.as_cwd():
+        _test_repository_dir_presence()
 
 
 _SNAKE_CASE_CONVERSION_FIXTURES = (
@@ -55,14 +55,14 @@ def test_make_name(param):
     assert make_name(param[0]) == param[1]
 
 
-def test_find_project_basedir(project_dir):
-    nested = project_dir.mkdir('a').mkdir('b').mkdir('c')
-    assert project_dir.samefile(find_project_basedir(nested.strpath))
-    assert project_dir.samefile(find_project_basedir(project_dir.strpath))
-    assert find_project_basedir('.') is None
+def test_find_repository_basedir(repository_dir):
+    nested = repository_dir.mkdir('a').mkdir('b').mkdir('c')
+    assert repository_dir.samefile(find_repository_basedir(nested.strpath))
+    assert repository_dir.samefile(find_repository_basedir(repository_dir.strpath))
+    assert find_repository_basedir('.') is None
 
 
-def test_get_project_metadata(project_dir):
-    assert get_project_name(project_dir.strpath) == TESTING_PROJECT_NAME
-    assert get_project_metadata(project_dir.strpath)['name'] == TESTING_PROJECT_NAME
-    assert not get_project_metadata('.')
+def test_get_repository_metadata(repository_dir):
+    assert get_repository_name(repository_dir.strpath) == TESTING_REPOSITORY_NAME
+    assert get_repository_metadata(repository_dir.strpath)['name'] == TESTING_REPOSITORY_NAME
+    assert not get_repository_metadata('.')

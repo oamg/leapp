@@ -2,7 +2,7 @@ import functools
 import re
 
 from six.moves import configparser
-from leapp.utils.project import find_project_basedir
+from leapp.utils.repository import find_repository_basedir
 import os
 
 
@@ -47,14 +47,16 @@ class BetterConfigParser(configparser.ConfigParser):
 def get_config():
     global _LEAPP_CONFIG
     if not _LEAPP_CONFIG:
-        project_defaults = {}
-        if find_project_basedir('.'):
-            project_defaults['project'] = {
-                'root_dir': find_project_basedir('.'),
+        repository_defaults = {}
+        if find_repository_basedir('.'):
+            repository_defaults['repository'] = {
+                'root_dir': find_repository_basedir('.'),
                 'state_dir': '${root_dir}/.leapp',
             }
+            # Backwards compatibility for older repositories that still used the 'project' terminology.
+            repository_defaults['project'] = repository_defaults['repository']
         _LEAPP_CONFIG = BetterConfigParser()
-        for section, values in tuple(_CONFIG_DEFAULTS.items()) + tuple(project_defaults.items()):
+        for section, values in tuple(_CONFIG_DEFAULTS.items()) + tuple(repository_defaults.items()):
             if not _LEAPP_CONFIG.has_section(section):
                 _LEAPP_CONFIG.add_section(section)
             for name, value in values.items():

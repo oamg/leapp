@@ -3,7 +3,7 @@ import pytest
 from leapp.repository.actor_definition import ActorDefinition, ActorInspectionFailedError, MultipleActorsError
 from leapp.exceptions import UnsupportedDefinitionKindError
 from leapp.repository import DefinitionKind
-from helpers import project_dir
+from helpers import repository_dir
 import logging
 import mock
 
@@ -18,8 +18,8 @@ _FAKE_META_DATA = {
 }
 
 
-def test_actor_definition(project_dir):
-    with project_dir.as_cwd():
+def test_actor_definition(repository_dir):
+    with repository_dir.as_cwd():
         logger = logging.getLogger('leapp.actor.test')
         with mock.patch.object(logger, 'log') as log_mock:
             definition = ActorDefinition('actors/test', '.', log=log_mock)

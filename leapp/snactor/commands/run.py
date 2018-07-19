@@ -3,7 +3,7 @@ import sys
 
 from leapp.exceptions import LeappError
 from leapp.utils.clicmd import command, command_opt, command_arg
-from leapp.utils.project import requires_project, find_project_basedir
+from leapp.utils.repository import requires_repository, find_repository_basedir
 from leapp.logger import configure_logger
 from leapp.messaging.inprocess import InProcessMessaging
 from leapp.utils.output import report_errors
@@ -23,11 +23,11 @@ https://red.ht/leapp-docs
 @command_arg('actor-name')
 @command_opt('--save-output', is_flag=True)
 @command_opt('--print-output', is_flag=True)
-@requires_project
+@requires_repository
 @with_snactor_context
 def cli(args):
     log = configure_logger()
-    basedir = find_project_basedir('.')
+    basedir = find_repository_basedir('.')
     repository = find_and_scan_repositories(basedir, include_locals=True)
     try:
         repository.load()

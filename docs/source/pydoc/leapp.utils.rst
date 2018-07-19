@@ -36,10 +36,10 @@ leapp\.utils\.meta module
     :show-inheritance:
 
 
-leapp\.utils\.project module
-----------------------------
+leapp\.utils\.repository module
+-------------------------------
 
-.. automodule:: leapp.utils.project
+.. automodule:: leapp.utils.repository
     :members:
     :undoc-members:
     :show-inheritance:

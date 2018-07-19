@@ -4,7 +4,7 @@ import sys
 
 from leapp.utils.clicmd import command_arg, command
 from leapp.exceptions import UsageError
-from leapp.utils.project import requires_project, make_class_name, make_name, find_project_basedir
+from leapp.utils.repository import requires_repository, make_class_name, make_name, find_repository_basedir
 
 _LONG_DESCRIPTION = '''
 Creates a new Tag in the current repository.
@@ -16,9 +16,9 @@ https://red.ht/leapp-docs
 
 @command('new-tag', help='Create a new tag', description=_LONG_DESCRIPTION)
 @command_arg('tag-name')
-@requires_project
+@requires_repository
 def cli(args):
-    basedir = os.path.join(find_project_basedir('.'), 'tags')
+    basedir = os.path.join(find_repository_basedir('.'), 'tags')
     if not os.path.isdir(basedir):
         os.mkdir(basedir)
 

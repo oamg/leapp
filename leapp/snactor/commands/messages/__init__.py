@@ -1,13 +1,13 @@
 import os
 
 from leapp.utils.clicmd import command
-from leapp.utils.project import requires_project
+from leapp.utils.repository import requires_repository
 from leapp.snactor.context import with_snactor_context
 from leapp.utils.audit import get_connection, get_config
 
 _MAIN_LONG_DESCRIPTION = '''
 This group of commands are around managing messages stored in the
-current project database.
+current repository database.
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
@@ -20,18 +20,18 @@ def messages(args):
 
 
 _CLEAR_LONG_DESCRIPTION = '''
-With this command messages in the current project scope can be wiped.
+With this command messages in the current repository scope can be wiped.
 This gives the developer control over the input data available to actors
-run and developed in this project.
+run and developed in this repository.
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
 '''
 
 
-@messages.command('clear', help='Deletes all messages from the current project scope',
+@messages.command('clear', help='Deletes all messages from the current repository scope',
                   description=_CLEAR_LONG_DESCRIPTION)
-@requires_project
+@requires_repository
 @with_snactor_context
 def clear(args):
     print("Deleting all messages with context = {} in database {}".format(

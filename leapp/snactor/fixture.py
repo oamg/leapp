@@ -8,7 +8,7 @@ from multiprocessing import Queue, Process
 
 from leapp.utils.audit import Execution, get_connection
 from leapp.repository.scan import find_and_scan_repositories
-from leapp.utils.project import find_project_basedir
+from leapp.utils.repository import find_repository_basedir
 from leapp.messaging.inprocess import InProcessMessaging
 from leapp.compat import raise_with_traceback
 
@@ -147,15 +147,15 @@ def loaded_leapp_repository(request):
             assert type(result) is ProcessedExampleModel
 
     """
-    project_path = find_project_basedir(request.module.__file__)
-    os.environ['LEAPP_CONFIG'] = os.path.join(project_path, '.leapp', 'leapp.conf')
+    repository_path = find_repository_basedir(request.module.__file__)
+    os.environ['LEAPP_CONFIG'] = os.path.join(repository_path, '.leapp', 'leapp.conf')
     os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
     context = str(uuid.uuid4())
     with get_connection(None):
         Execution(context=str(uuid.uuid4()), kind='snactor-test-run', configuration='').store()
         os.environ["LEAPP_EXECUTION_ID"] = context
 
-        manager = find_and_scan_repositories(project_path, include_locals=True)
+        manager = find_and_scan_repositories(repository_path, include_locals=True)
         manager.load(resolve=True)
         yield manager
 

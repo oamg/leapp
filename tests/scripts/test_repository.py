@@ -4,15 +4,15 @@ from multiprocessing import Process
 import pytest
 
 from leapp.repository.scan import find_and_scan_repositories, scan_repo
-from helpers import make_project_dir
+from helpers import make_repository_dir
 from leapp.snactor.commands.new_actor import cli as new_actor_cmd
 from leapp.snactor.commands.new_tag import cli as new_tag_cmd
 from leapp.snactor.commands.workflow.new import cli as new_workflow_cmd
 from leapp.exceptions import LeappRuntimeError
 
 
-repository_empty_test_project_dir = make_project_dir('empty_repository_dir', scope='module')
-repository_test_project_dir = make_project_dir('repository_dir', scope='module')
+repository_empty_test_repository_dir = make_repository_dir('empty_repository_dir', scope='module')
+repository_test_repository_dir = make_repository_dir('repository_dir', scope='module')
 
 
 def test_empty_repo(empty_repository_dir):

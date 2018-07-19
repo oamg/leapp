@@ -9,7 +9,7 @@ from logging import getLogger
 from leapp.exceptions import ModuleNameAlreadyExistsError, RepoItemPathDoesNotExistError, UnsupportedDefinitionKindError
 from leapp.repository.definition import DefinitionKind
 from leapp.repository.actor_definition import ActorDefinition
-from leapp.utils.project import get_project_name, get_project_id, get_project_repo_links
+from leapp.utils.repository import get_repository_name, get_repository_id, get_repository_links
 
 
 class _LoadStage(object):
@@ -31,11 +31,11 @@ class Repository(object):
         :param directory: Path to the repository folder
         :type directory: str
         """
-        self.name = get_project_name(directory)
+        self.name = get_repository_name(directory)
         self.log = getLogger('leapp.repository').getChild(self.name)
         self._repo_dir = directory
-        self._repo_id = get_project_id(directory)
-        self._repo_links = get_project_repo_links(directory)
+        self._repo_id = get_repository_id(directory)
+        self._repo_links = get_repository_links(directory)
         self._definitions = {}
         self.log.info("A new repository '%s' is initialized at %s", self.name, directory)
 

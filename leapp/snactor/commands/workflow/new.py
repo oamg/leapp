@@ -5,7 +5,7 @@ from subprocess import check_call
 
 from leapp.snactor.commands.workflow import workflow
 from leapp.utils.clicmd import command_arg, command_opt
-from leapp.utils.project import requires_project, make_class_name, make_name, find_project_basedir
+from leapp.utils.repository import requires_repository, make_class_name, make_name, find_repository_basedir
 
 _LONG_DESCRIPTION = '''
 Creates a new workflow with the given name.
@@ -22,12 +22,12 @@ https://red.ht/leapp-docs
 @command_arg('name')
 @command_opt('short-name', short_name='s', help='Used short name for the workflow')
 @command_opt('class-name', short_name='c', help='Used class name of the workflow')
-@requires_project
+@requires_repository
 def cli(args):
     class_name = args.class_name
     short_name = args.short_name
     name = args.name
-    base_dir = find_project_basedir('.')
+    base_dir = find_repository_basedir('.')
     workflows_dir = os.path.join(base_dir, 'workflows')
 
     class_name = class_name or make_class_name(name)

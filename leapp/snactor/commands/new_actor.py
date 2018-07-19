@@ -1,7 +1,7 @@
 import os
 import sys
 
-from leapp.utils.project import requires_project, make_class_name, make_name, find_project_basedir
+from leapp.utils.repository import requires_repository, make_class_name, make_name, find_repository_basedir
 from leapp.utils.clicmd import command, command_arg, command_opt
 from leapp.exceptions import UsageError
 
@@ -40,10 +40,10 @@ def as_quoted_tuple(values):
              help='Existing Model to add to the consumes field')
 @command_opt('--produces', action='append', metavar='ModelClassName',
              help='Existing Model to add to the produces field')
-@requires_project
+@requires_repository
 def cli(args):
     actor_name = args.actor_name
-    basedir = find_project_basedir('.')
+    basedir = find_repository_basedir('.')
 
     tag_imports = ''
     model_imports = ''

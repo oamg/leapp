@@ -6,7 +6,7 @@ from leapp.exceptions import LeappError
 from leapp.snactor.commands.workflow import workflow
 from leapp.utils.clicmd import command_arg, command_opt
 from leapp.logger import configure_logger
-from leapp.utils.project import requires_project, find_project_basedir
+from leapp.utils.repository import requires_repository, find_repository_basedir
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.output import report_errors
 
@@ -28,10 +28,10 @@ https://red.ht/leapp-docs
 @command_arg('name')
 @command_opt('until-phase', help='Runs until including the given phase but then exits')
 @command_opt('until-actor', help='Runs until including the given actor but then exits')
-@requires_project
+@requires_repository
 def cli(params):
     configure_logger()
-    repository = find_and_scan_repositories(find_project_basedir('.'), include_locals=True)
+    repository = find_and_scan_repositories(find_repository_basedir('.'), include_locals=True)
     try:
         repository.load()
     except LeappError as exc:

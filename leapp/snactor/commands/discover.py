@@ -7,7 +7,7 @@ from leapp.topics import get_topics
 from leapp.models import get_models
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.tags import get_tags
-from leapp.utils.project import requires_project, find_project_basedir, get_project_name
+from leapp.utils.repository import requires_repository, find_repository_basedir, get_repository_name
 from leapp.utils.clicmd import command, command_opt
 from leapp.workflows import get_workflows
 
@@ -27,14 +27,14 @@ def _print_group(name, items, name_resolver=lambda item: item.__name__,
     sys.stdout.write('\n')
 
 
-def _get_actor_path(actor, project_relative=True):
+def _get_actor_path(actor, repository_relative=True):
     path = actor.directory
-    return os.path.relpath(path, find_project_basedir('.') if project_relative else os.getcwd())
+    return os.path.relpath(path, find_repository_basedir('.') if repository_relative else os.getcwd())
 
 
-def _get_class_file(cls, project_relative=True):
+def _get_class_file(cls, repository_relative=True):
     path = os.path.abspath(sys.modules[cls.__module__].__file__.replace('.pyc', '.py'))
-    return os.path.relpath(path, find_project_basedir('.') if project_relative else os.getcwd())
+    return os.path.relpath(path, find_repository_basedir('.') if repository_relative else os.getcwd())
 
 
 def _get_actor_details(actor):
@@ -80,13 +80,13 @@ https://red.ht/leapp-docs
 '''
 
 
-@command('discover', help="Discovers all available entities in the current project repository",
+@command('discover', help="Discovers all available entities in the current repository",
          description=_LONG_DESCRIPTION)
 @command_opt('json', is_flag=True, help='Output in json format instead of human readable form')
 @command_opt('all', is_flag=True, help='Include items from linked repositories')
-@requires_project
+@requires_repository
 def cli(args):
-    base_dir = find_project_basedir('.')
+    base_dir = find_repository_basedir('.')
     repository = find_and_scan_repositories(base_dir, include_locals=True)
     try:
         repository.load()
@@ -102,8 +102,8 @@ def cli(args):
                                                                        all_repos=args.all)]
     if not args.json:
         sys.stdout.write(
-            'Project:\n  Name: {project}\n  Path: {base_dir}\n\n'.format(project=get_project_name(base_dir),
-                                                                         base_dir=base_dir))
+            'Repository:\n  Name: {repository}\n  Path: {base_dir}\n\n'.format(repository=get_repository_name(base_dir),
+                                                                               base_dir=base_dir))
         _print_group('Actors', actors, name_resolver=lambda x: x.class_name, path_resolver=_get_actor_path)
         _print_group('Models', models)
         _print_group('Tags', tags)
@@ -111,7 +111,7 @@ def cli(args):
         _print_group('Workflows', workflows)
     else:
         output = {
-            'project': get_project_name(base_dir),
+            'repository': get_repository_name(base_dir),
             'base_dir': base_dir,
             'topics': dict((topic.__name__, _get_topic_details(topic)) for topic in topics),
             'models': dict((model.__name__, _get_model_details(model)) for model in models),

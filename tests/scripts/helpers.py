@@ -3,10 +3,10 @@ from subprocess import check_call
 
 import pytest
 
-TESTING_PROJECT_NAME = 'testing'
+TESTING_REPOSITORY_NAME = 'testing'
 
 
-def make_project_dir(name, project_name=TESTING_PROJECT_NAME, scope='session'):
+def make_repository_dir(name, repository_name=TESTING_REPOSITORY_NAME, scope='session'):
     @pytest.fixture(scope=scope, name=name)
     def impl(request, tmpdir_factory):
         old_value = os.environ.get('LEAPP_CONFIG', None)
@@ -18,11 +18,11 @@ def make_project_dir(name, project_name=TESTING_PROJECT_NAME, scope='session'):
 
         root = tmpdir_factory.mktemp('repositories')
         with root.as_cwd():
-            check_call(['snactor', 'repo', 'new', project_name])
-            project = root.join(project_name)
-            os.environ['LEAPP_CONFIG'] = project.join('.leapp', 'leapp.conf').strpath
-            return project
+            check_call(['snactor', 'repo', 'new', repository_name])
+            repository = root.join(repository_name)
+            os.environ['LEAPP_CONFIG'] = repository.join('.leapp', 'leapp.conf').strpath
+            return repository
     return impl
 
 
-project_dir = make_project_dir('project_dir')
+repository_dir = make_repository_dir('repository_dir')

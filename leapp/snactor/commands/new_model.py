@@ -2,7 +2,7 @@ import os
 
 import sys
 
-from leapp.utils.project import requires_project, make_class_name, find_project_basedir
+from leapp.utils.repository import requires_repository, make_class_name, find_repository_basedir
 from leapp.utils.clicmd import command_arg, command_opt, command
 from leapp.exceptions import UsageError
 
@@ -19,10 +19,10 @@ https://red.ht/leapp-docs
 @command('new-model', help='Creates a new model', description=_LONG_DESCRIPTION)
 @command_opt('topic', help='Assigns the given topic to the model', metavar='TopicClassName')
 @command_arg('model-name')
-@requires_project
+@requires_repository
 def cli(args):
     model_name = args.model_name
-    basedir = find_project_basedir('.')
+    basedir = find_repository_basedir('.')
 
     basedir = os.path.join(basedir, 'models')
     if not os.path.isdir(basedir):

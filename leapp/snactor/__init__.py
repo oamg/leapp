@@ -7,12 +7,12 @@ from leapp.snactor.commands import workflow
 from leapp.snactor.commands import messages
 from leapp.snactor.commands import repo
 from leapp.utils.clicmd import command, command_opt
-from leapp.utils.project import find_project_basedir
+from leapp.utils.repository import find_repository_basedir
 from leapp import VERSION
 
-SHORT_HELP = "actor-snactor is a leapp actor project management snactor"
+SHORT_HELP = "snactor is a development and repository management tool for Leapp."
 LONG_HELP = """
-This snactor is designed to get quickly started with leapp actor development
+Snactor is designed to get quickly started with leapp actor development.
 """
 
 
@@ -49,8 +49,8 @@ def cli(args):
     if args.config and os.path.isfile(args.config):
         config_file_path = args.config
 
-    if not config_file_path and find_project_basedir('.'):
-        config_file_path = os.path.join(find_project_basedir('.'), '.leapp/leapp.conf')
+    if not config_file_path and find_repository_basedir('.'):
+        config_file_path = os.path.join(find_repository_basedir('.'), '.leapp/leapp.conf')
 
     if not config_file_path or not os.path.isfile(config_file_path):
         config_file_path = os.environ.get('LEAPP_CONFIG')

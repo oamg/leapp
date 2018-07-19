@@ -4,7 +4,7 @@ from leapp.repository import Repository, DefinitionKind
 from leapp.repository.manager import RepositoryManager
 from leapp.repository.actor_definition import ActorDefinition
 from leapp.exceptions import RepositoryConfigurationError
-from leapp.utils.project import get_global_repositories_data, get_user_config_repo_data, find_repos
+from leapp.utils.repository import get_global_repositories_data, get_user_config_repo_data, find_repos
 
 
 def _make_repo_lookup(include_locals):

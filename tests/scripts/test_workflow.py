@@ -11,8 +11,8 @@ from leapp.repository.scan import scan_repo
 
 @pytest.fixture(scope='module')
 def repository():
-    project_path = py.path.local(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'workflow-tests'))
-    with project_path.as_cwd():
+    repository_path = py.path.local(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'workflow-tests'))
+    with repository_path.as_cwd():
         repo = scan_repo('.')
         repo.load(resolve=True)
         yield repo

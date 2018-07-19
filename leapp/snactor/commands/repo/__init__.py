@@ -4,13 +4,13 @@ import subprocess
 import sys
 
 from leapp.utils.clicmd import command, command_opt, command_arg
-from leapp.utils.project import requires_project, find_project_basedir, get_project_name, \
-    get_project_id, add_project_repo_link, get_user_config_repos, get_user_config_repo_data, \
+from leapp.utils.repository import requires_repository, find_repository_basedir, get_repository_name, \
+    get_repository_id, add_repository_link, get_user_config_repos, get_user_config_repo_data, \
     get_global_repositories_data
 from leapp.exceptions import UsageError
 
 _MAIN_LONG_DESCRIPTION = '''
-This group of commands are around managing repositories to link with the current repository
+This group of commands are around managing repositories.
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
@@ -75,15 +75,15 @@ def list_repos(args):
         user_repos = get_user_config_repo_data()
         for path in user_repos.get('repos', {}).values():
             if os.path.isdir(path):
-                name = get_project_name(path)
-                uuid = get_project_id(path)
+                name = get_repository_name(path)
+                uuid = get_repository_id(path)
                 print('{name:<35} [{uuid}] => {path}'.format(name=name, path=path, uuid=uuid))
 
 
 def register_path(path):
     """
     Calling this function will register a path to be a well
-    :param path: Path to the repository
+    :param path: Path to the repository repository
     :return:
     """
     path = os.path.abspath(os.path.realpath(path))
@@ -92,13 +92,13 @@ def register_path(path):
     if os.path.isfile(repos):
         with open(repos) as f:
             data = json.load(f)
-    data.setdefault('repos', {}).update({get_project_id(path): path})
+    data.setdefault('repos', {}).update({get_repository_id(path): path})
     with open(repos, 'w') as f:
         json.dump(data, f)
 
 
 _REGISTER_LONG_DESCRIPTION = '''
-Registers the current user repository in the users repository registry.
+Registers the current user repository in the users repository registry. 
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
@@ -107,30 +107,30 @@ https://red.ht/leapp-docs
 
 @repo.command('register', help='Registers the current repository in the user repository registry.',
               description=_REGISTER_LONG_DESCRIPTION)
-@requires_project
+@requires_repository
 def register_repo(args):
-    base_dir = find_project_basedir('.')
+    base_dir = find_repository_basedir('.')
     if base_dir:
         register_path(base_dir)
         print('Repository successfully registered')
 
 
 _LINK_LONG_DESCRIPTION = '''
-Links a given repository to the current repository.
+Links a given repository to the current repository. 
 
 Linking a repository is needed, when the current repository requires things like
 Tags, Models, Topics, Workflows etc from another repository and needs to be executable
 with `snactor`. Snactor does not know otherwise that it will need to load the content
 from another repository. Linking the repositories will make snactor load the items
-from the linked repositories.
+from the linked repositories. 
 
 Repositories can be linked by path, name and repository id.
 
 When using the repository name, beware that the first matching name will be linked.
 Therefore it's recommended to rather link repositories by path or repository id.
 
-Usage:
-    $ snactor repo link --path ../../other-repository
+Usage: 
+    $ snactor repo link --path ../../other-repository 
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
@@ -141,7 +141,7 @@ https://red.ht/leapp-docs
 @command_opt('path', help='Path to the repository to link')
 @command_opt('name', help='Name of the repository to link')
 @command_opt('uuid', help='UUID of the repository to link', )
-@requires_project
+@requires_repository
 def link_repo(args):
     if not any((args.path, args.name, args.uuid)):
         raise UsageError('Please specify either --path, --name or --uuid to link another repository.')
@@ -151,16 +151,16 @@ def link_repo(args):
         if args.uuid:
             path = data.get('repos', {}).get(args.uuid, None)
         elif args.name:
-            for project_path in data.get('repos', {}).values():
-                if os.path.isdir(project_path):
-                    if args.name == get_project_name(project_path):
-                        path = project_path
+            for repository_path in data.get('repos', {}).values():
+                if os.path.isdir(repository_path):
+                    if args.name == get_repository_name(repository_path):
+                        path = repository_path
                         break
     if not path:
-        raise UsageError('Please specify a valid project name, uuid or path')
+        raise UsageError('Please specify a valid repository name, uuid or path')
 
-    if add_project_repo_link('.', get_project_id(path)):
-        print('Added link to repository {path} - {name}'.format(path=path, name=get_project_name(path)))
+    if add_repository_link('.', get_repository_id(path)):
+        print('Added link to repository {path} - {name}'.format(path=path, name=get_repository_name(path)))
 
 
 _FIND_LONG_DESCRIPTION = '''
@@ -171,7 +171,7 @@ leapp repositories and registers all found repositories with the users repositor
 
 By using --skip-registration it can be used to just detect repositories without registering them.
 
-If another path should be scanned than the current working directory pass the --path flag.
+If another path should be scanned than the current working directory pass the --path flag.   
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
@@ -194,12 +194,12 @@ def find_repositories(args):
                 print(repository)
 
 
-_PROJECT_CONFIG = '''
+_REPOSITORY_CONFIG = '''
 [repositories]
-repo_path=${project:root_dir}
+repo_path=${repository:root_dir}
 
 [database]
-path=${project:state_dir}/leapp.db
+path=${repository:state_dir}/leapp.db
 '''
 _LONG_DESCRIPTION = '''
 Creates a new local repository for writing Actors, Models, Tags,
@@ -212,19 +212,19 @@ https://red.ht/leapp-docs
 
 @repo.command('new', help='Creates a new repository', description=_LONG_DESCRIPTION)
 @command_arg('name')
-def new_project(args):
+def new_repository(args):
     name = args.name
     basedir = os.path.join('.', name)
     if not os.path.isdir(basedir):
         os.mkdir(basedir)
-        project_dir = os.path.join(basedir, '.leapp')
-        os.mkdir(project_dir)
-        with open(os.path.join(project_dir, 'info'), 'w') as f:
+        repository_dir = os.path.join(basedir, '.leapp')
+        os.mkdir(repository_dir)
+        with open(os.path.join(repository_dir, 'info'), 'w') as f:
             json.dump({
                 'name': name
             }, f)
-        with open(os.path.join(project_dir, 'leapp.conf'), 'w') as f:
-            f.write(_PROJECT_CONFIG)
+        with open(os.path.join(repository_dir, 'leapp.conf'), 'w') as f:
+            f.write(_REPOSITORY_CONFIG)
 
         register_path(basedir)
         sys.stdout.write("New repository {} has been created in {}\n".format(name, os.path.realpath(name)))

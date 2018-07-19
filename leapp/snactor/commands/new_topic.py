@@ -2,7 +2,7 @@ import os
 
 import sys
 
-from leapp.utils.project import make_class_name, make_name, find_project_basedir
+from leapp.utils.repository import make_class_name, make_name, find_repository_basedir
 from leapp.utils.clicmd import command_arg, command
 from leapp.exceptions import UsageError
 
@@ -18,7 +18,7 @@ https://red.ht/leapp-docs
 @command_arg('topic-name')
 def cli(args):
     topic_name = args.topic_name
-    basedir = find_project_basedir('.')
+    basedir = find_repository_basedir('.')
 
     basedir = os.path.join(basedir, 'topics')
     if not os.path.isdir(basedir):
