@@ -10,7 +10,7 @@ from leapp.utils.project import requires_project, find_project_basedir, get_proj
 from leapp.exceptions import UsageError
 
 _MAIN_LONG_DESCRIPTION = '''
-This group of commands are around managing repositories to link with the current project
+This group of commands are around managing repositories to link with the current repository
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
@@ -39,7 +39,7 @@ def health_check(args):
         return
     for uuid, path in data.get('repos', {}).items():
         if not os.path.isdir(path):
-            print('Removing project {uuid} => {path}'.format(uuid=uuid, path=path))
+            print('Removing repository {uuid} => {path}'.format(uuid=uuid, path=path))
             to_remove.append(uuid)
     for uuid in to_remove:
         data.get('repos', {}).pop(uuid, None)
@@ -48,7 +48,7 @@ def health_check(args):
 
 
 _LIST_LONG_DESCRIPTION = '''
-Lists repositories on the system. By default it will list all registered user repositories/projects.
+Lists repositories on the system. By default it will list all registered user repositories.
 
 It also can list global repositories on the system which usually reside in /usr/share/leapp-repository/
 by using the --global commandline flag.
@@ -83,7 +83,7 @@ def list_repos(args):
 def register_path(path):
     """
     Calling this function will register a path to be a well
-    :param path: Path to the project repository
+    :param path: Path to the repository
     :return:
     """
     path = os.path.abspath(os.path.realpath(path))
@@ -98,7 +98,7 @@ def register_path(path):
 
 
 _REGISTER_LONG_DESCRIPTION = '''
-Registers the current user project in the users repository registry. 
+Registers the current user repository in the users repository registry.
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
@@ -112,25 +112,25 @@ def register_repo(args):
     base_dir = find_project_basedir('.')
     if base_dir:
         register_path(base_dir)
-        print('Project successfully registered')
+        print('Repository successfully registered')
 
 
 _LINK_LONG_DESCRIPTION = '''
-Links a given repository to the current project. 
+Links a given repository to the current repository.
 
 Linking a repository is needed, when the current repository requires things like
 Tags, Models, Topics, Workflows etc from another repository and needs to be executable
 with `snactor`. Snactor does not know otherwise that it will need to load the content
 from another repository. Linking the repositories will make snactor load the items
-from the linked repositories. 
+from the linked repositories.
 
 Repositories can be linked by path, name and repository id.
 
 When using the repository name, beware that the first matching name will be linked.
 Therefore it's recommended to rather link repositories by path or repository id.
 
-Usage: 
-    $ snactor repo link --path ../../other-repository 
+Usage:
+    $ snactor repo link --path ../../other-repository
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
@@ -171,7 +171,7 @@ leapp repositories and registers all found repositories with the users repositor
 
 By using --skip-registration it can be used to just detect repositories without registering them.
 
-If another path should be scanned than the current working directory pass the --path flag.   
+If another path should be scanned than the current working directory pass the --path flag.
 
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
@@ -227,4 +227,4 @@ def new_project(args):
             f.write(_PROJECT_CONFIG)
 
         register_path(basedir)
-        sys.stdout.write("New project {} has been created in {}\n".format(name, os.path.realpath(name)))
+        sys.stdout.write("New repository {} has been created in {}\n".format(name, os.path.realpath(name)))

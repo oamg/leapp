@@ -86,7 +86,7 @@ class IpResolver(Actor):
             self.produce(ResolvedHostname(name=hostname.name, ips=ips))
 ```
 
-### Storing messages in the project data for reuse
+### Storing messages in the repository data for reuse
 
 The `snactor` framework tool saves the output of actors as locally stored messages,
 so that they can be consumed by other actors that are being developed.
@@ -97,7 +97,7 @@ To make the data consumable, run the actor producing the data with the --save-ou
 $ snactor run --save-output HostnameScanner
 ```
 
-The output of the actor is stored in the local project data file, and it can be used
+The output of the actor is stored in the local repository data file, and it can be used
 by other actors.
 
 ### Testing the new actor

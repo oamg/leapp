@@ -5,7 +5,7 @@ Leapp tutorials
     :caption: Contents:
 
     devenv-install
-    create-project
+    create-repository
     first-actor
     messaging
     working-with-workflows

@@ -27,10 +27,6 @@ A phase consists of three [stages](#stage): Before, Main, and After.
 Phases are defined by assigning one or more tags to them, which will be used
 to find actors in the [repositories](#repository) loaded.
 
-### Project
-
-A project is a [repository](#repository) in the Leapp actor development environment.
-
 ### Repository
 
 A repository is the place where all actors, models, tags, topics, and workflows are defined.

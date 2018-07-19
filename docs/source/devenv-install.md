@@ -45,27 +45,31 @@ Then, install the framework by using the pip package management system:
 Once the framework is installed in your virtual environment, you can use the snactor tool.
 ```shell
 	$ snactor -h
-	Usage: snactor [OPTIONS] COMMAND [ARGS]...
+    usage: snactor [-h] [--version] [--logger-config LOGGER_CONFIG]
+                   [--config CONFIG] [--debug]
+                   ...
 
-	  This tool is designed to get quickly started with leapp actor development
+    Optional arguments:
+      -h, --help            show this help message and exit
+      --version             show program's version number and exit
+      --logger-config LOGGER_CONFIG
+                            Allows to override the logger.conf location
+      --config CONFIG       Allows to override the leapp.conf location
+      --debug               Enables debug logging
 
-	Options:
-	  --debug / --no-debug
-	  --version             Show the version and exit.
-	  -h, --help            Show this message and exit.
+    Main commands:
 
-	Commands:
-	  discover
-	  dump
-	  new
-	  new-actor
-	  new-topic
-	  new-model
-	  new-project
-	  new-tag
-	  run
-	  runx
-	  workflow
+        new-tag             Create a new tag
+        new-model           Creates a new model
+        run                 Execute the given actor
+        workflow            Workflow related commands
+        new-topic           Creates a new topic
+        messages            Messaging related commands
+        discover            Discovers all available entities in the current
+                            repository
+        new-project         [DEPRECATED] Creates a new project
+        repo                Repository related commands
+        new-actor           Creates a new actor
 ```
 
 ### A screen cast of the steps above

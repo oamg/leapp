@@ -123,7 +123,7 @@ class ExampleWorkflow(Workflow):
 
 To test the execution of workflows, use the snactor tool.
 
-The snactor tool is run with the above workflow in the tutorial project, which contains the HostnameScanner
+The snactor tool is run with the above workflow in the tutorial repository, which contains the HostnameScanner
 and IpResolver actors.
 
 ```shell

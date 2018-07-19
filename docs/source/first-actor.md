@@ -27,7 +27,7 @@ Tags are defined there as well for the reasons outlined above.
 
 ## Getting started
 
-First, create and go to your project directory. See [Creating a new project project tutorial](create-project).
+First, create and go to your repository directory. See [Creating a new repository tutorial](create-repository).
 
 ### Creating a tag
 
