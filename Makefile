@@ -23,5 +23,6 @@ container-test:
 
 test:
 	py.test --flake8 --cov-report term-missing --cov=leapp tests/scripts
+	py.test --flake8 leapp
 
 .PHONY: install-deps install install-test test
