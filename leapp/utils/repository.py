@@ -199,7 +199,7 @@ def find_repos(path):
         with open(os.devnull, 'w') as devnull:
             data = subprocess.check_output(
                 ['/usr/bin/find', '-L', path, '-name', '.leapp'], stderr=devnull).decode('utf-8').split('\n')
-            return [os.path.abspath(os.path.dirname(path)) for path in data if path.strip()]
+            return [os.path.abspath(os.path.dirname(rpath)) for rpath in data if rpath.strip()]
     except subprocess.CalledProcessError:
         return ()
 
