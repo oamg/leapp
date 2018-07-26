@@ -151,6 +151,7 @@ install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 %endif
 
 %if %{with python3}
+/bin/rm -f leapp/compatpy2only.py
 %py3_install
 %endif
 
