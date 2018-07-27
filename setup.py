@@ -15,7 +15,7 @@ with open('res/schema/schemas.py', 'r') as orig:
         target.write(orig.read())
 
 EXCLUSION = []
-if sys.version_info > (2,):
+if sys.version_info[0] > 2:
     # Python 2 only
     EXCLUSION.append('leapp.compatpy2only')
 
