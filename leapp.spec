@@ -132,7 +132,6 @@ Python 3 leapp framework libraries
 %endif
 
 %if %{with python3}
-/bin/rm -f leapp/compatpy2only.py
 %py3_build
 %endif
 

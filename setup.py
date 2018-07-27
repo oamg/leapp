@@ -14,10 +14,15 @@ with open('res/schema/schemas.py', 'r') as orig:
     with open('leapp/utils/schemas.py', 'w') as target:
         target.write(orig.read())
 
+EXCLUSION = []
+if sys.version_info > (2,):
+    # Python 2 only
+    EXCLUSION.append('leapp.compatpy2only')
+
 setup(
     name='leapp',
     version=main_ns['VERSION'],
-    packages=find_packages(),
+    packages=find_packages(exclude=EXCLUSION),
     install_requires=['six'],
     entry_points='''
         [console_scripts]
