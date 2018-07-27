@@ -11,4 +11,3 @@ def raise_with_traceback(exc, tb):
     :return: Nothing
     """
     raise exc, None, tb
-
