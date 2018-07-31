@@ -35,7 +35,7 @@ actors\
 Now let's assume you would want to write a test that executes the actor.
 This is how your `tests.py` from above could look like:
 ```python
-from leapp.snactor.fixtures import current_actor_context
+from leapp.snactor.fixture import current_actor_context
 
 def test_actor_execution(current_actor_context):
     current_actor_context.run()
@@ -49,7 +49,7 @@ Now if you would want to check that it produced an imaginary model
 called `ProducedExampleModel` you can check this with the help of the
 `consume` method:
 ```python
-from leapp.snactor.fixtures import current_actor_context
+from leapp.snactor.fixture import current_actor_context
 from leapp.models import ProducedExampleModel
 
 def test_actor_execution(current_actor_context):
@@ -62,7 +62,7 @@ the input data with the help of the `feed` method of the
 `current_actor_context` fixture.
 
 ```python
-from leapp.snactor.fixtures import current_actor_context
+from leapp.snactor.fixture import current_actor_context
 from leapp.models import ConsumedExampleModel, ProducedExampleModel
 
 def test_actor_execution(current_actor_context):
