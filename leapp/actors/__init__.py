@@ -215,11 +215,11 @@ def _is_model_tuple(actor, name, value):
 
 
 def _is_dialog_tuple(actor, name, value):
-    if isinstance(value, type) and issubclass(value, Dialog):
+    if isinstance(value, Dialog):
         _lint_warn(actor, name, "Dialogs")
         value = value,
     _is_type(tuple)(actor, name, value)
-    if not all([True] + list(map(lambda item: isinstance(item, type) and issubclass(item, Dialog), value))):
+    if not all([True] + list(map(lambda item: isinstance(item, Dialog), value))):
         raise WrongAttributeTypeError(
             'Actor {} attribute {} should contain only Dialogs'.format(actor, name))
     return value

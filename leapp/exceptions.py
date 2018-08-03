@@ -1,6 +1,7 @@
 class LeappError(Exception):
     def __init__(self, message):
         super(LeappError, self).__init__(message)
+        self.message = message
 
 
 class RepositoryConfigurationError(LeappError):
