@@ -46,7 +46,8 @@ class ActorCallContext(object):
         self.messaging = messaging
 
     @staticmethod
-    def _do_run(logger, messaging, definition, args, kwargs):
+    def _do_run(stdin, logger, messaging, definition, args, kwargs):
+        sys.stdin = os.fdopen(stdin)
         definition.load()
         with definition.injected_context():
             target_actor = [actor for actor in get_actors() if actor.name == definition.name][0]
@@ -56,7 +57,8 @@ class ActorCallContext(object):
         """
         Performs the actor execution in the child process.
         """
-        p = Process(target=self._do_run, args=(self.logger, self.messaging, self.definition, args, kwargs))
+        stdin = sys.stdin.fileno()
+        p = Process(target=self._do_run, args=(stdin, self.logger, self.messaging, self.definition, args, kwargs))
         p.start()
         p.join()
         if p.exitcode != 0:
