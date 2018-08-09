@@ -12,6 +12,13 @@ from leapp.exceptions import ActorInspectionFailedError, MultipleActorsError, Un
 from leapp.repository import DefinitionKind
 from leapp.repository.loader import library_loader
 
+# THE MOST DIRTY HACK
+# In case the open function is mocked, e.g. inside a unit test, the run of an
+# actor files on most systems when os.fdopen is called. Store the original
+# function and restore it temporary to be able to set up actor correctly.
+import __builtin__
+__orig_builtin_open = __unsafe_open = __builtin__.open
+
 
 def inspect_actor(definition, result_queue):
     """
@@ -48,6 +55,7 @@ class ActorCallContext(object):
     @staticmethod
     def _do_run(stdin, logger, messaging, definition, args, kwargs):
         sys.stdin = os.fdopen(stdin)
+        __builtin__.open = __unsafe_open
         definition.load()
         with definition.injected_context():
             target_actor = [actor for actor in get_actors() if actor.name == definition.name][0]
@@ -57,10 +65,14 @@ class ActorCallContext(object):
         """
         Performs the actor execution in the child process.
         """
+        global __unsafe_open
+        __unsafe_open = __builtin__.open
+        __builtin__.open = __orig_builtin_open
         stdin = sys.stdin.fileno()
         p = Process(target=self._do_run, args=(stdin, self.logger, self.messaging, self.definition, args, kwargs))
         p.start()
         p.join()
+        __builtin__.open = __unsafe_open
         if p.exitcode != 0:
             raise LeappRuntimeError(
                 'Actor {actorname} unexpectedly terminated with exit code: {exitcode}'
