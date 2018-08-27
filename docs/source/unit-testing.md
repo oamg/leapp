@@ -17,7 +17,7 @@ encourage but basically require you to write tests if you want them to
 be accepted into the git repository.
 
 Tests for actors are located within the actors directory, in a sub
-directory called `tests`
+directory called `tests`.
 
 The layout for an actor `MyActor` in the repository could look like
 this:
@@ -27,13 +27,25 @@ actors\
     myactor\
         actor.py
         tests\
-            tests.py
+            test_mytest.py
 ```
+
+### Naming conventions
+
+To have the tests found and carried out by
+[pytest framework](https://pytest.org), follow these rules:
+
+- All tests have to reside in the `test_*.py` or `*_test.py` files.
+- Test functions outside of the class have to be prefixed by `test_`.
+- Test methods with the `test_` prefix have to reside in the `Test` prefixed classes.
+- Tests should have unique filenames.
+
+See the pytest [documentation](https://docs.pytest.org/en/latest/goodpractices.html#tests-outside-application-code).
 
 ### Writing tests that execute the whole actor
 
 Now let's assume you would want to write a test that executes the actor.
-This is how your `tests.py` from above could look like:
+This is how your `test_mytest.py` from above could look like:
 ```python
 from leapp.snactor.fixture import current_actor_context
 
@@ -99,7 +111,7 @@ actors\
         libraries\
             private.py
         tests\
-            tests.py
+            test_mytest.py
 ```
 
 And your `private.py` looks like this:
