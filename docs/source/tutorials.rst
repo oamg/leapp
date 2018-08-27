@@ -8,4 +8,5 @@ Leapp tutorials
     create-repository
     first-actor
     messaging
+    repo-linking
     working-with-workflows
