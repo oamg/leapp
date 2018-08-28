@@ -261,7 +261,7 @@ def pytest_pyfunc_call(pyfuncitem):
     default to the default `pytest_pyfunc_call` implementation.
     """
     if 'current_actor_context' not in pyfuncitem.funcargs:
-        return False
+        return None
     q = Queue()
     p = Process(target=_execute_test, args=(q, pyfuncitem))
     p.start()
