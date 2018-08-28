@@ -92,6 +92,11 @@ class UsageError(LeappError):
         super(UsageError, self).__init__(message)
 
 
+class CommandError(LeappError):
+    def __init__(self, message):
+        super(CommandError, self).__init__(message)
+
+
 class CommandDefinitionError(LeappError):
     def __init__(self, message):
         super(CommandDefinitionError, self).__init__(message)

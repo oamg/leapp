@@ -90,7 +90,7 @@ class ActorDefinition(object):
 
     @property
     def full_path(self):
-        return os.path.join(self._repo_dir, self._directory)
+        return os.path.realpath(os.path.join(self._repo_dir, self._directory))
 
     def add(self, kind, path):
         """

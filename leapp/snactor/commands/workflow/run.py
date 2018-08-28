@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import leapp.workflows
 import sys
-from leapp.exceptions import LeappError
+from leapp.exceptions import LeappError, UsageError, CommandError
 from leapp.snactor.commands.workflow import workflow
 from leapp.utils.clicmd import command_arg, command_opt
 from leapp.logger import configure_logger
@@ -37,8 +37,11 @@ def cli(params):
     except LeappError as exc:
         sys.stderr.write(exc.message)
         sys.exit(1)
-    for wf in leapp.workflows.get_workflows():
-        if wf.name.lower() == params.name.lower():
-            instance = wf()
-            instance.run(until_phase=params.until_phase, until_actor=params.until_actor)
-            report_errors(instance.errors)
+
+    wf = repository.lookup_workflow(params.name)
+    if not wf:
+        raise CommandError('Could not find any workflow named "{}"'.format(params.name))
+
+    instance = wf()
+    instance.run(until_phase=params.until_phase, until_actor=params.until_actor)
+    report_errors(instance.errors)

@@ -3,7 +3,7 @@ import os
 import sys
 
 from leapp.utils.clicmd import command_arg, command
-from leapp.exceptions import UsageError
+from leapp.exceptions import CommandError
 from leapp.utils.repository import requires_repository, make_class_name, make_name, find_repository_basedir
 
 _LONG_DESCRIPTION = '''
@@ -24,7 +24,7 @@ def cli(args):
 
     tag_path = os.path.join(basedir, args.tag_name.lower() + '.py')
     if os.path.exists(tag_path):
-        raise UsageError("File already exists: {}".format(tag_path))
+        raise CommandError("File already exists: {}".format(tag_path))
 
     with open(tag_path, 'w') as f:
         f.write('''from leapp.tags import Tag

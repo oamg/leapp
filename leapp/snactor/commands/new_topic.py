@@ -4,7 +4,7 @@ import sys
 
 from leapp.utils.repository import make_class_name, make_name, find_repository_basedir
 from leapp.utils.clicmd import command_arg, command
-from leapp.exceptions import UsageError
+from leapp.exceptions import CommandError
 
 _LONG_DESCRIPTION = '''
 Creates a new Topic in the current repository.
@@ -26,7 +26,7 @@ def cli(args):
 
     topic_path = os.path.join(basedir, topic_name.lower() + '.py')
     if os.path.exists(topic_path):
-        raise UsageError("File already exists: {}".format(topic_path))
+        raise CommandError("File already exists: {}".format(topic_path))
 
     topic_path = os.path.join(basedir, topic_name.lower() + '.py')
     with open(topic_path, 'w') as f:

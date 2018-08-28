@@ -3,7 +3,7 @@ import sys
 
 from leapp.utils.repository import requires_repository, make_class_name, make_name, find_repository_basedir
 from leapp.utils.clicmd import command, command_arg, command_opt
-from leapp.exceptions import UsageError
+from leapp.exceptions import CommandError
 
 
 _LONG_DESCRIPTION = '''
@@ -71,7 +71,7 @@ def cli(args):
 
     actor_path = os.path.join(actor_dir, 'actor.py')
     if os.path.exists(actor_path):
-        raise UsageError("File already exists: {}".format(actor_path))
+        raise CommandError("File already exists: {}".format(actor_path))
 
     with open(actor_path, 'w') as f:
         f.write('''from leapp.actors import Actor{model_imports}{tag_imports}

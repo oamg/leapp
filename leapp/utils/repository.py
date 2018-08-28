@@ -5,7 +5,7 @@ import re
 import subprocess
 import uuid
 
-from leapp.exceptions import UsageError
+from leapp.exceptions import CommandError
 from leapp.utils.clicmd import command_aware_wraps
 
 
@@ -16,7 +16,7 @@ def requires_repository(f):
     @command_aware_wraps(f)
     def checker(*args, **kwargs):
         if not find_repository_basedir('.'):
-            raise UsageError('This command must be executed from the repository directory.')
+            raise CommandError('This command must be executed from the repository directory.')
         return f(*args, **kwargs)
     return checker
 

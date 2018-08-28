@@ -4,7 +4,7 @@ import sys
 
 from leapp.utils.repository import requires_repository, make_class_name, find_repository_basedir
 from leapp.utils.clicmd import command_arg, command_opt, command
-from leapp.exceptions import UsageError
+from leapp.exceptions import CommandError
 
 
 _LONG_DESCRIPTION = '''
@@ -30,7 +30,7 @@ def cli(args):
 
     model_path = os.path.join(basedir, model_name.lower() + '.py')
     if os.path.exists(model_path):
-        raise UsageError("File already exists: {}".format(model_path))
+        raise CommandError("File already exists: {}".format(model_path))
     topic_usage = 'None #  TODO: import appropriate topic and set it here'
     topic_import = ''
     if args.topic:
