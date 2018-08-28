@@ -45,3 +45,4 @@ def cli(args):
 
     if args.print_output:
         json.dump(messaging.messages(), sys.stdout, indent=2)
+        sys.stdout.write('\n')
