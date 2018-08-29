@@ -236,10 +236,10 @@ def _is_tag_tuple(actor, name, value):
     return value
 
 
-def _get_attribute(actor, name, validator, required=False, default_value=None):
+def _get_attribute(actor, name, validator, required=False, default_value=None, additional_info=''):
     value = getattr(actor, name, None)
     if not value and required:
-        raise MissingActorAttributeError('Actor {} is missing attribute {}'.format(actor, name))
+        raise MissingActorAttributeError('Actor {} is missing attribute {}.{}'.format(actor, name, additional_info))
     value = validator(actor, name, value)
     if not value and default_value is not None:
         value = default_value
@@ -254,11 +254,12 @@ def get_actor_metadata(actor):
     :type actor: derived class from :py:class:`leapp.actors.Actor`
     :return: Dictionary with the name, tags, consumes, produces, and description of the actor
     """
+    additional_tag_info = ' At least one tag is required for actors. Please fill the tags field'
     return dict([
         ('class_name', actor.__name__),
         ('path', os.path.dirname(sys.modules[actor.__module__].__file__)),
         _get_attribute(actor, 'name', _is_type(string_types), required=True),
-        _get_attribute(actor, 'tags', _is_tag_tuple, required=True),
+        _get_attribute(actor, 'tags', _is_tag_tuple, required=True, additional_message=additional_tag_info),
         _get_attribute(actor, 'consumes', _is_model_tuple, required=False, default_value=()),
         _get_attribute(actor, 'produces', _is_model_tuple, required=False, default_value=()),
         _get_attribute(actor, 'dialogs', _is_dialog_tuple, required=False, default_value=()),
