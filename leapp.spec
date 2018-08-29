@@ -84,6 +84,7 @@ Requires: python-setuptools
 Requires: python2-six
 Requires: python2-setuptools
 %endif
+Requires: findutils
 
 %description -n python2-%{name}
 Python 2 leapp framework libraries
@@ -110,6 +111,7 @@ BuildRequires:  python3-pytest-cov
 %endif
 
 Requires: python3-six
+Requires: findutils
 
 %description -n python3-%{name}
 Python 3 leapp framework libraries
