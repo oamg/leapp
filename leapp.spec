@@ -30,6 +30,7 @@ Requires: python3-%{name} = %{version}-%{release}
 Requires: python2-%{name} = %{version}-%{release}
 %endif
 Requires: leapp-repository >= %{version}
+Requires: ethtool
 
 %description
 Leapp tool for handling upgrades
