@@ -17,7 +17,7 @@ def with_snactor_context(f):
                 context = row[0]
             else:
                 context = str(uuid.uuid4())
-                Execution(context=str(uuid.uuid4()), kind='snactor-run', configuration='').store()
+                Execution(context=context, kind='snactor-run', configuration='').store()
             os.environ["LEAPP_EXECUTION_ID"] = context
         return f(*args, **kwargs)
     return wrapper
