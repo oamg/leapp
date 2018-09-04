@@ -92,7 +92,7 @@ from leapp.topics import TestTopic
 
 class A(Model):
     topic = TestTopic
-    referenced = fields.Nested(TestModel)
+    referenced = fields.Model(TestModel)
 ''')
         check_call(['snactor', 'discover'])
 

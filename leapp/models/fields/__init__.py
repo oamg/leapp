@@ -404,9 +404,9 @@ class List(Field):
         return list(converter(entry, name='{}[{}]'.format(name, idx)) for idx, entry in enumerate(value))
 
 
-class Nested(Field):
+class Model(Field):
     """
-    Nested is used to use other Models as fields
+    Model is used to use other Models as fields
     """
     def __init__(self, model_type, **kwargs):
         """
@@ -421,20 +421,20 @@ class Nested(Field):
         :param help: Documentation string for generating the model documentation
         :type help: str
         """
-        super(Nested, self).__init__(**kwargs)
-        from leapp.models import Model
-        if not isinstance(model_type, type) or not issubclass(model_type, Model):
+        super(Model, self).__init__(**kwargs)
+        from leapp.models import Model as ModelType
+        if not isinstance(model_type, type) or not issubclass(model_type, ModelType):
             raise ModelMisuseError("{} must be a type derived from Field".format(model_type))
         self._model_type = model_type
 
     def _validate_model_value(self, value, name):
-        super(Nested, self)._validate_model_value(value, name)
+        super(Model, self)._validate_model_value(value, name)
         if value and value is not missing and not isinstance(value, self._model_type):
             raise ModelViolationError('Expected an instance of {} for the {} attribute but got {}'.format(
                 self._model_type.__name__, name, type(value)))
 
     def _validate_builtin_value(self, value, name):
-        super(Nested, self)._validate_model_value(value, name)
+        super(Model, self)._validate_model_value(value, name)
         if value and not isinstance(value, dict):
             raise ModelViolationError('Expected a value for the {} field and got {}'.format(name, type(value).__name__))
 
@@ -449,3 +449,8 @@ class Nested(Field):
         if value in (None, missing):
             return value
         return value.dump()
+
+
+class Nested(Model):
+    def __init__(self, *args, **kwargs):
+        raise ModelMisuseError('Please use leapp.models.fields.Model instead of leapp.models.fields.Nested')

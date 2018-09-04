@@ -12,7 +12,7 @@ Example::
     class Foobar(Model):
         topic = SomeTopic
         baz = fields.List(fields.String(), default=[])
-        boom = fields.Nested(Boom)
+        boom = fields.Model(Boom)
 
 Now, the models can be used like this::
 

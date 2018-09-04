@@ -28,17 +28,17 @@ class WithStringListModel(Model):
 
 class WithNestedModel(Model):
     topic = ModelTestTopic
-    basic = fields.Nested(BasicModel, required=False, allow_null=True)
+    basic = fields.Model(BasicModel, required=False, allow_null=True)
 
 
 class WithRequiredNestedModel(Model):
     topic = ModelTestTopic
-    basic = fields.Nested(BasicModel, required=True)
+    basic = fields.Model(BasicModel, required=True)
 
 
 class WithNestedListModel(Model):
     topic = ModelTestTopic
-    items = fields.List(fields.Nested(BasicModel), required=False)
+    items = fields.List(fields.Model(BasicModel), required=False)
 
 
 class AllFieldTypesModel(Model):
@@ -102,10 +102,10 @@ def test_nested_model():
     assert m.basic == m2.basic
 
     with pytest.raises(fields.ModelMisuseError):
-        fields.Nested(fields.String())
+        fields.Model(fields.String())
 
     with pytest.raises(fields.ModelMisuseError):
-        fields.Nested(fields.String)
+        fields.Model(fields.String)
 
     with pytest.raises(fields.ModelViolationError):
         WithNestedModel(basic='Some message')
@@ -216,10 +216,10 @@ def test_datetime_field():
 
 def test_nested_field():
     with pytest.raises(fields.ModelViolationError):
-        fields.Nested(BasicModel, allow_null=False)._convert_to_model('something', 'test-value')
+        fields.Model(BasicModel, allow_null=False)._convert_to_model('something', 'test-value')
     with pytest.raises(fields.ModelViolationError):
-        fields.Nested(BasicModel, allow_null=False)._convert_to_model(None, 'test-value')
-    fields.Nested(BasicModel, allow_null=True)._convert_to_model(None, 'test-value')
+        fields.Model(BasicModel, allow_null=False)._convert_to_model(None, 'test-value')
+    fields.Model(BasicModel, allow_null=True)._convert_to_model(None, 'test-value')
 
 
 def test_required_field_types():
@@ -283,7 +283,7 @@ def _create_field_string_list(**kwargs):
 
 
 def _create_nested_base_model_field(**kwargs):
-    return fields.Nested(BasicModel, **kwargs)
+    return fields.Model(BasicModel, **kwargs)
 
 
 def _create_string_enum_(*choices):
