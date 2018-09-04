@@ -259,7 +259,7 @@ def get_actor_metadata(actor):
         ('class_name', actor.__name__),
         ('path', os.path.dirname(sys.modules[actor.__module__].__file__)),
         _get_attribute(actor, 'name', _is_type(string_types), required=True),
-        _get_attribute(actor, 'tags', _is_tag_tuple, required=True, additional_message=additional_tag_info),
+        _get_attribute(actor, 'tags', _is_tag_tuple, required=True, additional_info=additional_tag_info),
         _get_attribute(actor, 'consumes', _is_model_tuple, required=False, default_value=()),
         _get_attribute(actor, 'produces', _is_model_tuple, required=False, default_value=()),
         _get_attribute(actor, 'dialogs', _is_dialog_tuple, required=False, default_value=()),
