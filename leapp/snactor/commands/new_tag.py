@@ -26,7 +26,7 @@ def cli(args):
     if os.path.exists(tag_path):
         raise CommandError("File already exists: {}".format(tag_path))
 
-    tag_class_name = make_class_name(tag_name)
+    tag_class_name = make_class_name(args.tag_name)
     if not tag_class_name.endswith('Tag'):
         tag_class_name += 'Tag'
     with open(tag_path, 'w') as f:

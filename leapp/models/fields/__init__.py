@@ -127,7 +127,9 @@ class Field(object):
         :return: None
         """
         source_value = source.get(name, self._default)
-        target_value = self._convert_to_model(value=source_value, name=name)
+        target_value = source_value
+        if not (source_value is missing and not self._required):
+            target_value = self._convert_to_model(value=source_value, name=name)
         setattr(target, name, target_value)
 
     def to_builtin(self, source, name, target):

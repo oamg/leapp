@@ -3,6 +3,7 @@ import logging
 import os
 import pkgutil
 import sys
+from io import UnsupportedOperation
 from multiprocessing import Process, Queue
 
 import leapp.libraries.actor
@@ -47,7 +48,8 @@ class ActorCallContext(object):
 
     @staticmethod
     def _do_run(stdin, logger, messaging, definition, args, kwargs):
-        sys.stdin = os.fdopen(stdin)
+        if stdin is not None:
+            sys.stdin = os.fdopen(stdin)
         definition.load()
         with definition.injected_context():
             target_actor = [actor for actor in get_actors() if actor.name == definition.name][0]
@@ -57,7 +59,10 @@ class ActorCallContext(object):
         """
         Performs the actor execution in the child process.
         """
-        stdin = sys.stdin.fileno()
+        try:
+            stdin = sys.stdin.fileno()
+        except UnsupportedOperation:
+            stdin = None
         p = Process(target=self._do_run, args=(stdin, self.logger, self.messaging, self.definition, args, kwargs))
         p.start()
         p.join()
