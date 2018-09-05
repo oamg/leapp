@@ -28,6 +28,8 @@ https://red.ht/leapp-docs
 @command_arg('name')
 @command_opt('until-phase', help='Runs until including the given phase but then exits')
 @command_opt('until-actor', help='Runs until including the given actor but then exits')
+@command_opt('--whitelist-experimental', action='append', metavar='ActorName',
+             help='Enables experimental actors')
 @requires_repository
 def cli(params):
     configure_logger()
@@ -43,5 +45,9 @@ def cli(params):
         raise CommandError('Could not find any workflow named "{}"'.format(params.name))
 
     instance = wf()
+    for actor_name in params.whitelist_experimental:
+        actor = repository.lookup_actor(actor_name)
+        if actor:
+            instance.whitelist_experimental_actor(actor)
     instance.run(until_phase=params.until_phase, until_actor=params.until_actor)
     report_errors(instance.errors)
