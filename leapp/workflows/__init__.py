@@ -10,6 +10,7 @@ from leapp.workflows.phases import Phase
 from leapp.workflows.policies import Policies
 from leapp.workflows.phaseactors import PhaseActors
 from leapp.messaging.inprocess import InProcessMessaging
+from leapp.tags import ExperimentalTag
 from leapp.utils.audit import checkpoint, get_errors
 
 
@@ -72,6 +73,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self._all_produced = set()
         self._initial = set()
         self._phase_actors = []
+        self._experimental_whitelist = set()
 
         for phase in self.phases:
             phase.filter.tags += (self.tag,)
@@ -87,6 +89,22 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self._all_consumed.update(phase_actors.consumes)
         self._all_produced.update(phase_actors.produces)
         return phase_actors
+
+    @property
+    def experimental_whitelist(self):
+        """ Whitelist of actors that may be executed even that they are marked experimental """
+        return self._experimental_whitelist
+
+    def whitelist_experimental_actor(self, actor):
+        """
+        Adds an actor to the experimental whitelist and allows them to be executed.
+
+        :param actor: Actor to be whitelisted
+        :type actor: class derived from py:class:`leapp.actors.Actor`
+        :return: None
+        """
+        if actor:
+            self._experimental_whitelist.add(actor)
 
     @property
     def phase_actors(self):
@@ -161,7 +179,14 @@ class Workflow(with_metaclass(WorkflowMeta)):
                 current_logger.info("Starting stage {stage} of phase {phase}".format(
                     phase=phase[0].name, stage=stage.stage))
                 for actor in stage.actors:
-                    current_logger.info("Executing actor {actor}".format(actor=actor.name))
+                    designation = ''
+                    if ExperimentalTag in actor.tags:
+                        designation = '[EXPERIMENTAL]'
+                        if actor not in self.experimental_whitelist:
+                            current_logger.info("Skipping experimental actor {actor}".format(actor=actor.name))
+                            continue
+                    current_logger.info("Executing actor {actor} %{designation}".format(designation=designation,
+                                                                                        actor=actor.name))
                     messaging = InProcessMessaging()
                     messaging.load(actor.consumes)
                     actor(logger=current_logger, messaging=messaging).run()

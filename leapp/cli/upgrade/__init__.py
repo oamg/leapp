@@ -43,6 +43,8 @@ def get_last_phase(context):
 
 @command('upgrade', help='Upgrades the current system to the next available major version.')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
+@command_opt('--whitelist-experimental', action='append', metavar='ActorName',
+             help='Enables experimental actors')
 def upgrade(args):
     skip_phases_until = None
     context = str(uuid.uuid4())
@@ -65,5 +67,9 @@ def upgrade(args):
         sys.stderr.write(exc.message)
         sys.exit(1)
     workflow = repositories.lookup_workflow('IPUWorkflow')()
+    for actor_name in args.whitelist_experimental:
+        actor = repositories.lookup_actor(actor_name)
+        if actor:
+            workflow.whitelist_experimental_actor(actor)
     workflow.run(context=context, skip_phases_until=skip_phases_until)
     report_errors(workflow.errors)
