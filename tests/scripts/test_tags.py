@@ -1,7 +1,7 @@
 import pytest
 
 from leapp.exceptions import InvalidTagDefinitionError
-from leapp.tags import Tag, get_tags
+from leapp.tags import Tag, get_tags, ExperimentalTag, DisabledTag
 
 
 class TestTag(Tag):
@@ -36,7 +36,7 @@ def test_tag_members_correctly_set():
 
 
 def test_get_tags():
-    tags = get_tags()
+    tags = [tag for tag in get_tags() if tag not in (ExperimentalTag, DisabledTag)]
     assert len(tags) % 6 == 0
     assert TestTag in tags
     assert TestTag.Common in tags

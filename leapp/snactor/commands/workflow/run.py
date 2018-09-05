@@ -45,7 +45,7 @@ def cli(params):
         raise CommandError('Could not find any workflow named "{}"'.format(params.name))
 
     instance = wf()
-    for actor_name in params.whitelist_experimental:
+    for actor_name in params.whitelist_experimental or ():
         actor = repository.lookup_actor(actor_name)
         if actor:
             instance.whitelist_experimental_actor(actor)

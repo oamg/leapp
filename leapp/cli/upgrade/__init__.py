@@ -67,7 +67,7 @@ def upgrade(args):
         sys.stderr.write(exc.message)
         sys.exit(1)
     workflow = repositories.lookup_workflow('IPUWorkflow')()
-    for actor_name in args.whitelist_experimental:
+    for actor_name in args.whitelist_experimental or ():
         actor = repositories.lookup_actor(actor_name)
         if actor:
             workflow.whitelist_experimental_actor(actor)
