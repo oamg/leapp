@@ -43,6 +43,7 @@ def _get_actor_details(actor):
     meta['consumes'] = tuple(model.__name__ for model in meta['consumes'])
     meta['tags'] = tuple(tag.name for tag in meta['tags'])
     meta['path'] = _get_class_file(actor)
+    meta.pop('dialogs', None)
     return meta
 
 
@@ -120,3 +121,4 @@ def cli(args):
             'workflows': dict((workflow.__name__, _get_workflow_details(workflow)) for workflow in workflows)
         }
         json_mod.dump(output, sys.stdout, indent=2)
+        sys.stdout.write('\n')
