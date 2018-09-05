@@ -185,8 +185,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
                         if actor not in self.experimental_whitelist:
                             current_logger.info("Skipping experimental actor {actor}".format(actor=actor.name))
                             continue
-                    current_logger.info("Executing actor {actor} %{designation}".format(designation=designation,
-                                                                                        actor=actor.name))
+                    current_logger.info("Executing actor {actor} {designation}".format(designation=designation,
+                                                                                       actor=actor.name))
                     messaging = InProcessMessaging()
                     messaging.load(actor.consumes)
                     actor(logger=current_logger, messaging=messaging).run()
