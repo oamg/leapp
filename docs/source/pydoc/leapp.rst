@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
 
     leapp.actors
+    leapp.dialogs
     leapp.libraries
     leapp.logger
     leapp.messaging
