@@ -26,3 +26,12 @@ class TagFilter(object):
         [result.intersection_update(tag.actors) for tag in self.tags]
         result.update(self.phase.Common.actors)
         return tuple(result)
+
+    def serialize(self):
+        """
+        :return: Serialized data for tag filter
+        """
+        return {
+            'phase': self.phase.__name__,
+            'tags': [tag.__name__ for tag in self.tags],
+        }

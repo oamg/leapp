@@ -142,6 +142,17 @@ class Field(object):
         """
         target[name] = self._convert_from_model(getattr(source, name, None), name=name)
 
+    def serialize(self):
+        """
+        :return: Serialized form of the workflow
+        """
+        return {
+            'nullable': self._nullable,
+            'type': type(self).__name__,
+            'default': self._default,
+            'help': self._help
+        }
+
 
 class BuiltinField(Field):
     """

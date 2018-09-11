@@ -44,12 +44,12 @@ def _get_actor_details(actor):
     meta['consumes'] = tuple(model.__name__ for model in meta['consumes'])
     meta['tags'] = tuple(tag.name for tag in meta['tags'])
     meta['path'] = _get_class_file(actor)
-    meta.pop('dialogs', None)
+    meta['dialogs'] = [dialog.serialize() for dialog in actor.dialogs]
     return meta
 
 
 def _get_workflow_details(workflow):
-    return {'name': workflow.name, 'description': workflow.description, 'short_name': workflow.short_name}
+    return workflow.serialize()
 
 
 def _get_tag_details(tag):

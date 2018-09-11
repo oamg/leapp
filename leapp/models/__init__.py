@@ -127,6 +127,15 @@ class Model(with_metaclass(ModelMeta)):
         return isinstance(other, type(self)) and \
             all(getattr(self, name) == getattr(other, name) for name in sorted(type(self).fields.keys()))
 
+    @classmethod
+    def serialize(cls):
+        """ Returns serialized data of the model """
+        return {
+            'name': cls.__name__,
+            'fields': dict([(name, field.serialize()) for name, field in cls.fields.items()]),
+            'topic': cls.topic.__name__
+        }
+
 
 class ErrorModel(Model):
     topic = ErrorTopic
