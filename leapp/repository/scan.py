@@ -107,9 +107,9 @@ def scan_topics(repo, path, repo_path):
     :param repo_path: path to the repository
     :type repo_path: str
     """
-    for root, _, files in os.walk(path):
+    for root, unused, files in os.walk(path):
         for module in files:
-            _, ext = os.path.splitext(module)
+            unused, ext = os.path.splitext(module)
             if ext == '.py':
                 path = os.path.join(root, module)
                 repo.add(DefinitionKind.TOPIC, os.path.relpath(path, repo_path))
@@ -126,7 +126,7 @@ def scan_actors(repo, path, repo_path):
     :param repo_path: path to the repository
     :type repo_path: str
     """
-    for root, _, files in os.walk(path):
+    for root, unused, files in os.walk(path):
         for module in files:
             if module == 'actor.py':
                 rel_path = os.path.relpath(root, repo_path)
@@ -144,9 +144,9 @@ def scan_tags(repo, path, repo_path):
     :param repo_path: path to the repository
     :type repo_path: str
     """
-    for root, _, files in os.walk(path):
+    for root, unused, files in os.walk(path):
         for module in files:
-            _, ext = os.path.splitext(module)
+            unused, ext = os.path.splitext(module)
             if ext == '.py':
                 path = os.path.join(root, module)
                 repo.add(DefinitionKind.TAG, os.path.relpath(path, repo_path))
@@ -163,9 +163,9 @@ def scan_models(repo, path, repo_path):
     :param repo_path: path to the repository
     :type repo_path: str
     """
-    for root, _, files in os.walk(path):
+    for root, unused, files in os.walk(path):
         for module in files:
-            _, ext = os.path.splitext(module)
+            unused, ext = os.path.splitext(module)
             if ext == '.py':
                 path = os.path.join(root, module)
                 repo.add(DefinitionKind.MODEL, os.path.relpath(path, repo_path))
@@ -182,9 +182,9 @@ def scan_workflows(repo, path, repo_path):
     :param repo_path: path to the repository
     :type repo_path: str
     """
-    for root, _, files in os.walk(path):
+    for root, unused, files in os.walk(path):
         for module in files:
-            _, ext = os.path.splitext(module)
+            unused, ext = os.path.splitext(module)
             if ext == '.py':
                 path = os.path.join(root, module)
                 repo.add(DefinitionKind.WORKFLOW, os.path.relpath(path, repo_path))

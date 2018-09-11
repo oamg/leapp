@@ -2,7 +2,6 @@ import ast
 import functools
 import itertools
 import os
-import six
 
 
 def print_section(data, section, pivot):
@@ -26,7 +25,7 @@ def format_file_path(pivot, path):
 
 def get_candidate_files(start='.'):
     "Find all .py files in a directory tree"
-    for root, _, files in os.walk(start):
+    for root, unused, files in os.walk(start):
         for f in files:
             if not f.endswith('py'):
                 continue
