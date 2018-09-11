@@ -2,6 +2,7 @@ import os
 import pkgutil
 import socket
 
+from leapp.utils.i18n import _
 from leapp.snactor import commands
 from leapp.snactor.commands import workflow
 from leapp.snactor.commands import messages
@@ -10,10 +11,8 @@ from leapp.utils.clicmd import command, command_opt
 from leapp.utils.repository import find_repository_basedir
 from leapp import VERSION
 
-SHORT_HELP = "snactor is a development and repository management tool for Leapp."
-LONG_HELP = """
-Snactor is designed to get quickly started with leapp actor development.
-"""
+SHORT_HELP = _("snactor is a development and repository management tool for Leapp.")
+LONG_HELP = _("""Snactor is designed to get quickly started with leapp actor development.""")
 
 
 def load_commands():
@@ -38,9 +37,9 @@ def _load_commands_from(path):
 
 
 @command('', help=LONG_HELP)
-@command_opt('debug', is_flag=True, help='Enables debug logging', inherit=True)
-@command_opt('config', help='Allows to override the leapp.conf location', inherit=True)
-@command_opt('logger-config', help='Allows to override the logger.conf location', inherit=True)
+@command_opt('debug', is_flag=True, help=_('Enables debug logging'), inherit=True)
+@command_opt('config', help=_('Allows to override the leapp.conf location'), inherit=True)
+@command_opt('logger-config', help=_('Allows to override the logger.conf location'), inherit=True)
 def cli(args):
     if args.logger_config and os.path.isfile(args.logger_config):
         os.environ['LEAPP_LOGGER_CONFIG'] = args.logger_config
@@ -65,4 +64,4 @@ def cli(args):
 def main():
     os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
     load_commands()
-    cli.command.execute(version='snactor version {}'.format(VERSION))
+    cli.command.execute(version=_('snactor version {}').format(VERSION))

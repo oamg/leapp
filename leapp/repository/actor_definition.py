@@ -272,7 +272,7 @@ class ActorDefinition(object):
                 leapp.libraries.actor.__dict__.pop(symbol)
 
             # Remove all modules from the sys.modules dict or restore from backup if it was there
-            for name, _ in to_add:
+            for name, unused in to_add:
                 if name in backup:
                     sys.modules[name] = backup[name]
                 else:

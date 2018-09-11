@@ -8,6 +8,7 @@ from leapp.dialogs import Dialog
 from leapp.exceptions import MissingActorAttributeError, WrongAttributeTypeError
 from leapp.models import Model
 from leapp.tags import Tag
+from leapp.utils.i18n import install_translation_for_actor
 from leapp.utils.meta import get_flattened_subclasses
 from leapp.models.error_severity import ErrorSeverity
 
@@ -52,7 +53,14 @@ class Actor(object):
     Dialogs that are added to this list allow for persisting answers the user has given in the answer file storage.
     """
 
+    text_domain = None
+    """
+    Using text domain allows to override the default gettext text domain, for custom localization support.
+    The default locale installation location is used which usually is /usr/share/locale
+    """
+
     def __init__(self, messaging=None, logger=None):
+        install_translation_for_actor(type(self))
         self._messaging = messaging
         self.log = (logger or logging.getLogger('leapp.actors')).getChild(self.name)
         """ A configured logger instance for the current actor. """
