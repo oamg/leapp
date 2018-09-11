@@ -32,6 +32,20 @@ class Component(object):
     def dispatch(self, renderer, dialog):
         raise NotImplementedError()
 
+    def serialize(self):
+        """
+        :return: Serialized component information
+        """
+        return {
+            'key': self.key,
+            'label': self.label,
+            'description': self.description,
+            'default': self.default,
+            'value': self.value,
+            'reason': self.reason,
+            'value_type': str(self.value_type) if self.value_type else None
+        }
+
 
 class TextComponent(Component):
     """

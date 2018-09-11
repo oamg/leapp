@@ -38,6 +38,17 @@ class Dialog(object):
         self._store = None
         self._min_label_width = None
 
+    def serialize(self):
+        """
+        :return: Dictionary with the serialized representation of a component
+        """
+        return {
+            'components': [component.serialize() for component in self.components],
+            'title': self.title,
+            'reason': self.reason,
+            'scope': self.scope
+        }
+
     @property
     def min_label_width(self):
         """

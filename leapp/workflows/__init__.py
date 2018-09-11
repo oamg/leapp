@@ -128,6 +128,19 @@ class Workflow(with_metaclass(WorkflowMeta)):
         """ All produced messages """
         return self._all_produced
 
+    @classmethod
+    def serialize(cls):
+        """
+        :return: Serialized form of the workflow
+        """
+        return {
+            'name': cls.name,
+            'short_name': cls.short_name,
+            'tag': cls.tag.__name__,
+            'description': cls.description,
+            'phases': [phase.serialize() for phase in cls.phases],
+        }
+
     def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None):
         """
         Executes the workflow

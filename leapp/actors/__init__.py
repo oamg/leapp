@@ -59,6 +59,21 @@ class Actor(object):
     The default locale installation location is used which usually is /usr/share/locale
     """
 
+    def serialize(self):
+        """
+        :return: Serialized information for the actor
+        """
+        return {
+            'name': self.name,
+            'path': os.path.dirname(sys.modules[type(self).__module__].__file__),
+            'class_name': type(self).__name__,
+            'description': self.description,
+            'consumes': [c.__name__ for c in self.consumes],
+            'produces': [p.__name__ for p in self.produces],
+            'tags': [t.__name__ for t in self.tags],
+            'dialogs': [d.serialize() for d in self.dialogs],
+        }
+
     def __init__(self, messaging=None, logger=None):
         install_translation_for_actor(type(self))
         self._messaging = messaging

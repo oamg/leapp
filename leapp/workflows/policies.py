@@ -22,3 +22,9 @@ class Policies(object):
     def __init__(self, error=Errors.ReportOnly, retry=Retry.Disabled):
         self.error = error
         self.retry = retry
+
+    def serialize(self):
+        return {
+            'error': self.error.__name__,
+            'retry': self.retry.__name__
+        }
