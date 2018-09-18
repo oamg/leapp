@@ -180,6 +180,7 @@ install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 # snactor files
 ##################################################
 %files -n snactor
+%license COPYING
 %{_bindir}/snactor
 
 
@@ -189,6 +190,7 @@ install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 %if %{with python2}
 
 %files -n python2-%{name}
+%license COPYING
 %{python2_sitelib}/*
 
 %endif
@@ -198,6 +200,7 @@ install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 ##################################################
 %if %{with python3}
 %files -n python3-%{name}
+%license COPYING
 %{python3_sitelib}/*
 
 %endif
