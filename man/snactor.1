@@ -1,0 +1,68 @@
+.TH SNACTOR "1" "30/09/2018" "snactor 0.3" "User Commands"
+.SH NAME
+snactor - development and repository management tool for App & OS Modernization Framework Leapp
+.SH SYNOPSIS
+snactor [-h|--help] [--version] [--logger-config <LOGGER_CONFIG>]
+        [--config <CONFIG>] [--debug] <command>
+.SH DESCRIPTION
+Snactor is designed to get quickly started with leapp actor development and allows you to run custom workflows.
+.SH OPTIONS
+-h, --help
+    show this help message and exit
+
+--version
+    show program's version number and exit
+
+--logger-config <LOGGER_CONFIG>
+    Allows to override the logger.conf location
+
+--config <CONFIG>
+    Allows to override the leapp.conf location
+
+--debug
+    Enables debug logging
+.SH "SNACTOR COMMANDS"
+discover
+    Discovers all available entities in the current repository
+
+new-actor
+    Creates a new actor
+
+new-model
+    Creates a new model
+
+new-project
+    [DEPRECATED] Creates a new repository
+
+new-tag
+    Create a new tag
+
+new-topic
+    Creates a new topic
+
+run
+    Execute the given actor
+
+messages
+    Messaging related commands
+
+workflow
+    Workflow related commands
+
+repo
+    Repository related commands
+.SH "ENVIRONMENT VARIABLES"
+LEAPP_CONFIG
+.RS 4
+This environment variable allows to override the default location of leapp.conf. If not specified, .leapp/leapp.conf is used when the command is executed inside a leapp repository, otherwise the default /etc/leapp/leapp.conf is used.
+.RE
+
+LEAPP_LOGGER_CONFIG
+.RS 4
+This environment variable allows to override the default location of logger.conf. If not specified, the default /etc/leapp/logger.conf is used.
+.RE
+.SH "REPORTING BUGS"
+Report bugs to the issue tracker <https://github.com/leapp-to/leapp/issues> or to the mailing list <leapp-devel@redhat.com>.
+.SH "SEE ALSO"
+leapp(1)
+More info available at <https://leapp.readthedocs.io/>.

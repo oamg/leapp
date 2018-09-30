@@ -146,7 +146,10 @@ install -m 0755 -d %{buildroot}%{_sharedstatedir}/leapp
 install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp
 install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp/repos.d
 install -m 0600 -d %{buildroot}%{_sysconfdir}/leapp/answers
+install -m 0755 -d %{buildroot}%{_mandir}/man1
 install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
+install -m 0644 -p man/leapp.1 %{buildroot}%{_mandir}/man1/
+install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
 
 %if %{with python2}
 %py2_install
@@ -163,6 +166,7 @@ install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 %defattr(-,root,root,-)
 %doc README.md
 %license COPYING
+%{_mandir}/man1/leapp.1*
 %config(noreplace) %{_sysconfdir}/leapp/leapp.conf
 %config(noreplace) %{_sysconfdir}/leapp/logger.conf
 %dir %{_sysconfdir}/leapp
@@ -178,6 +182,7 @@ install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 # snactor files
 ##################################################
 %files -n snactor
+%{_mandir}/man1/snactor.1*
 %{_bindir}/snactor
 
 
