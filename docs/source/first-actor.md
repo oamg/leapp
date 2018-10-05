@@ -17,7 +17,7 @@ Topics are used to classify the purpose of a message, and they are a necessary p
 
 ### Tags
 Tags are used by the framework to be able to query the repository for actors that should be
-executed at the same time in a [phase of a workflow](terminlogy.html#phase). This is necessary when you want to have your actor being included into a [workflow](terminology.html#workflow) in a phase. For keeping the tutorial simpler, we will not discuss the tags now.
+executed at the same time in a [phase of a workflow](terminology.html#phase). This is necessary when you want to have your actor being included into a [workflow](terminology.html#workflow) in a phase. For keeping the tutorial simpler, we will not discuss the tags now.
 
 ### Actors
 Actors define what messages they consume and what they produce by importing the
