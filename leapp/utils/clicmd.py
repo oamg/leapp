@@ -71,7 +71,6 @@ class Command(object):
         :return: None
         """
         parser = ArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=_LeappHelpFormatter)
-        parser.add_help
         parser.register('action', 'parsers', _SubParserActionOverride)
         parser.add_argument('--version', action='version', version=version)
         parser.set_defaults(func=None)
