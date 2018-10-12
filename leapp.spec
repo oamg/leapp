@@ -146,7 +146,9 @@ Python 3 leapp framework libraries.
 install -m 0755 -d %{buildroot}%{_sharedstatedir}/leapp
 install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp
 install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp/repos.d
-install -m 0600 -d %{buildroot}%{_sysconfdir}/leapp/answers
+# standard directory should have permission set to 0755, however this directory
+# could contain sensitive data, hence permission for root only
+install -m 0700 -d %{buildroot}%{_sysconfdir}/leapp/answers
 install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 
 %if %{with python2}
