@@ -163,7 +163,6 @@ install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 # leapp files
 ##################################################
 %files
-%defattr(-,root,root,-)
 %doc README.md
 %license COPYING
 %config(noreplace) %{_sysconfdir}/leapp/leapp.conf
