@@ -32,7 +32,7 @@ Requires: python2-%{name} = %{version}-%{release}
 Requires: leapp-repository >= %{version}
 
 %description
-Leapp tool for handling upgrades
+Leapp tool for handling upgrades.
 
 
 ##################################################
@@ -47,7 +47,8 @@ Requires: python2-%{name} = %{version}-%{release}
 %endif
 
 %description -n snactor
-Leapp's snactor tool - Actor development environment utility for creating and managing actor projects.
+Leapp's snactor tool - actor development environment utility for creating and
+managing actor projects.
 
 ##################################################
 # Python 2 library package
@@ -87,7 +88,7 @@ Requires: python2-setuptools
 Requires: findutils
 
 %description -n python2-%{name}
-Python 2 leapp framework libraries
+Python 2 leapp framework libraries.
 
 %endif
 
@@ -114,7 +115,7 @@ Requires: python3-six
 Requires: findutils
 
 %description -n python3-%{name}
-Python 3 leapp framework libraries
+Python 3 leapp framework libraries.
 
 %endif
 
