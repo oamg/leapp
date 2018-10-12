@@ -17,7 +17,7 @@
 Name:       leapp
 Version:    0.3
 Release:    1%{?dist}
-Summary:    Leapp is an OS & Application modernization framework
+Summary:    OS & Application modernization framework
 
 License:    ASL 2.0
 URL:        https://leapp-to.github.io
@@ -39,7 +39,7 @@ Leapp tool for handling upgrades
 # snactor package
 ##################################################
 %package -n snactor
-Summary:        %{sum}
+Summary: %{summary}
 %if %{with python3}
 Requires: python3-%{name} = %{version}-%{release}
 %else
@@ -56,7 +56,7 @@ Leapp's snactor tool - Actor development environment utility for creating and ma
 
 %package -n python2-%{name}
 
-Summary:        %{sum}
+Summary: %{summary}
 %{?python_provide:%python_provide python2-%{name}}
 
 %if 0%{?rhel} && 0%{?rhel} == 7
@@ -98,7 +98,7 @@ Python 2 leapp framework libraries
 %if %{with python3}
 
 %package -n python3-%{name}
-Summary:        %{sum}
+Summary: %{summary}
 %{?system_python_abi}
 %{?python_provide:%python_provide python3-%{name}}
 
