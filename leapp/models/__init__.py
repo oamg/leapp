@@ -28,6 +28,7 @@ import sys
 from leapp.models import fields
 
 from leapp.exceptions import ModelDefinitionError
+from leapp.models.fields import ModelMisuseError
 from leapp.utils.meta import get_flattened_subclasses, with_metaclass
 from leapp.topics import Topic, ErrorTopic
 from leapp.models.error_severity import ErrorSeverity
@@ -75,8 +76,13 @@ class Model(with_metaclass(ModelMeta)):
     """
     def __init__(self, init_method='from_initialization', **kwargs):
         super(Model, self).__init__()
-        for field in type(self).fields.keys():
-            getattr(type(self).fields[field], init_method)(kwargs, field, self)
+        defined_fields = type(self).fields
+        for key in kwargs.keys():
+            if key not in defined_fields:
+                raise ModelMisuseError(
+                    'Trying to initialize model {} with value for undefined field {}'.format(type(self).__name__, key))
+        for field in defined_fields.keys():
+            getattr(defined_fields[field], init_method)(kwargs, field, self)
 
     topic = None
     """
