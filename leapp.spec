@@ -17,7 +17,7 @@
 Name:       leapp
 Version:    0.3
 Release:    1%{?dist}
-Summary:    Leapp is an OS & Application modernization framework
+Summary:    OS & Application modernization framework
 
 License:    ASL 2.0
 URL:        https://leapp-to.github.io
@@ -32,14 +32,14 @@ Requires: python2-%{name} = %{version}-%{release}
 Requires: leapp-repository >= %{version}
 
 %description
-Leapp tool for handling upgrades
+Leapp tool for handling upgrades.
 
 
 ##################################################
 # snactor package
 ##################################################
 %package -n snactor
-Summary:        %{sum}
+Summary: %{summary}
 %if %{with python3}
 Requires: python3-%{name} = %{version}-%{release}
 %else
@@ -47,7 +47,8 @@ Requires: python2-%{name} = %{version}-%{release}
 %endif
 
 %description -n snactor
-Leapp's snactor tool - Actor development environment utility for creating and managing actor projects.
+Leapp's snactor tool - actor development environment utility for creating and
+managing actor projects.
 
 ##################################################
 # Python 2 library package
@@ -56,7 +57,7 @@ Leapp's snactor tool - Actor development environment utility for creating and ma
 
 %package -n python2-%{name}
 
-Summary:        %{sum}
+Summary: %{summary}
 %{?python_provide:%python_provide python2-%{name}}
 
 %if 0%{?rhel} && 0%{?rhel} == 7
@@ -87,7 +88,7 @@ Requires: python2-setuptools
 Requires: findutils
 
 %description -n python2-%{name}
-Python 2 leapp framework libraries
+Python 2 leapp framework libraries.
 
 %endif
 
@@ -98,7 +99,7 @@ Python 2 leapp framework libraries
 %if %{with python3}
 
 %package -n python3-%{name}
-Summary:        %{sum}
+Summary: %{summary}
 %{?system_python_abi}
 %{?python_provide:%python_provide python3-%{name}}
 
@@ -114,7 +115,7 @@ Requires: python3-six
 Requires: findutils
 
 %description -n python3-%{name}
-Python 3 leapp framework libraries
+Python 3 leapp framework libraries.
 
 %endif
 
@@ -147,6 +148,9 @@ install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp
 install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp/repos.d
 install -m 0600 -d %{buildroot}%{_sysconfdir}/leapp/answers
 install -m 0755 -d %{buildroot}%{_mandir}/man1
+# standard directory should have permission set to 0755, however this directory
+# could contain sensitive data, hence permission for root only
+install -m 0700 -d %{buildroot}%{_sysconfdir}/leapp/answers
 install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 install -m 0644 -p man/leapp.1 %{buildroot}%{_mandir}/man1/
 install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
@@ -163,7 +167,6 @@ install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
 # leapp files
 ##################################################
 %files
-%defattr(-,root,root,-)
 %doc README.md
 %license COPYING
 %{_mandir}/man1/leapp.1*
@@ -182,6 +185,7 @@ install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
 # snactor files
 ##################################################
 %files -n snactor
+%license COPYING
 %{_mandir}/man1/snactor.1*
 %{_bindir}/snactor
 
@@ -192,6 +196,7 @@ install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
 %if %{with python2}
 
 %files -n python2-%{name}
+%license COPYING
 %{python2_sitelib}/*
 
 %endif
@@ -201,6 +206,7 @@ install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
 ##################################################
 %if %{with python3}
 %files -n python3-%{name}
+%license COPYING
 %{python3_sitelib}/*
 
 %endif
