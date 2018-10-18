@@ -1,0 +1,34 @@
+.TH LEAPP "1" "30/09/2018" "leapp 0.3" "User Commands"
+.SH NAME
+leapp - command-line interface to for App & OS Modernization Framework Leapp
+.SH SYNOPSIS
+leapp [-h|--help] [--version] [--debug] <command>
+.SH DESCRIPTION
+The leapp tool is an end-user application designed to run specific workflows.
+.SH OPTIONS
+-h, --help
+    show this help message and exit
+
+--version
+    show program's version number and exit
+
+--debug
+    Enables debug logging
+.SH "LEAPP COMMANDS"
+upgrade
+    Upgrades the current system to the next available major version.
+.SH "ENVIRONMENT VARIABLES"
+LEAPP_CONFIG
+.RS 4
+This environment variable allows to override the default location of leapp.conf. If not specified, .leapp/leapp.conf is used when the command is executed inside a leapp repository, otherwise the default /etc/leapp/leapp.conf is used.
+.RE
+
+LEAPP_LOGGER_CONFIG
+.RS 4
+This environment variable allows to override the default location of logger.conf. If not specified, the default /etc/leapp/logger.conf is used.
+.RE
+.SH "REPORTING BUGS"
+Report bugs to the issue tracker <https://github.com/leapp-to/leapp/issues> or to the mailing list <leapp-devel@redhat.com>.
+.SH "SEE ALSO"
+snactor(1)
+More info available at <https://leapp.readthedocs.io/>.
