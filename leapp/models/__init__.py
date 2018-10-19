@@ -57,7 +57,8 @@ class ModelMeta(type):
                 raise ModelDefinitionError('Missing topic in Model {}'.format(name))
             topic.messages = tuple(set(topic.messages + (klass,)))
 
-        kls_attrs = {name: value for name, value in attrs.items() if isinstance(value, fields.Field)}
+        kls_attrs = (getattr(klass, 'fields', None) or {}).copy()
+        kls_attrs.update({name: value for name, value in attrs.items() if isinstance(value, fields.Field)})
         klass.fields = kls_attrs.copy()
 
         setattr(sys.modules[mcs.__module__], name, klass)
