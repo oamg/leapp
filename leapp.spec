@@ -79,8 +79,8 @@ BuildRequires:  python2-setuptools
 
 %endif
 %if 0%{?rhel} && 0%{?rhel} == 7
-Requires: python-six
-Requires: python-setuptools
+Requires: /usr/lib/python2.7/site-packages/six.py
+Requires: /usr/lib/python2.7/site-packages/setuptools/__init__.py
 %else
 Requires: python2-six
 Requires: python2-setuptools
