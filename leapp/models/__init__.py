@@ -133,7 +133,7 @@ class ErrorModel(Model):
 
     message = fields.String(required=True)
     severity = fields.StringEnum(required=True, choices=ErrorSeverity.ALLOWED_VALUES, default=ErrorSeverity.ERROR)
-    details = fields.String(required=True, allow_null=True, default=None)
+    details = fields.String(required=True, default=None)
     actor = fields.String(required=True)
     time = fields.DateTime(required=True)
 

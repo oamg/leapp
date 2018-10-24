@@ -3,10 +3,6 @@ import datetime
 import six
 
 
-def missing():
-    pass
-
-
 class ModelViolationError(Exception):
     """
     ModelViolationError is raised if the data in the instances is not matching its definition.
@@ -34,20 +30,17 @@ class Field(object):
         """
         return self._help or 'No documentation provided for this field `{}`'.format(type(self).__name__)
 
-    def __init__(self, default=missing, required=False, allow_null=False, help=None):
+    def __init__(self, default=None, required=False, help=None):
         """
         :param default: Default value to be used if the field is not set
         :param required: Marks the field as mandatory
         :type required: bool
-        :param allow_null: Decides whether or not the field is allowed to be None
-        :type allow_null: bool
         :param help: Documentation string for generating model documentation
         :type help: str
         """
         self._help = help
         self._default = default
         self._required = required
-        self._allow_null = allow_null
 
         if type(self) == Field:
             raise ModelMisuseError("Do not use this type directly.")
@@ -60,10 +53,8 @@ class Field(object):
         :param name: Name of the field (used for a better error reporting only)
         :return: None
         """
-        if value is None and not self._allow_null:
-            raise ModelViolationError('The {name} attribute is None, but this is not allowed'.format(name=name))
-        if value is missing and self._required:
-            raise ModelViolationError('The {name} attribute is not set, but it is required'.format(name=name))
+        if value is None and self._required:
+            raise ModelViolationError('The {name} attribute is None, but it is required.'.format(name=name))
 
     def _validate_builtin_value(self, value, name):
         """
@@ -73,8 +64,8 @@ class Field(object):
         :param name: Name of the field (used for a better error reporting only)
         :return: None
         """
-        if value is None and not self._allow_null:
-            raise ModelViolationError('The {name} field is null, but this is not allowed'.format(name=name))
+        if value is None and self._required:
+            raise ModelViolationError('The {name} attribute is None, but it is required.'.format(name=name))
 
     def _convert_to_model(self, value, name):
         """
@@ -128,7 +119,7 @@ class Field(object):
         """
         source_value = source.get(name, self._default)
         target_value = source_value
-        if not (source_value is missing and not self._required):
+        if not (source_value is None and not self._required):
             target_value = self._convert_to_model(value=source_value, name=name)
         setattr(target, name, target_value)
 
@@ -144,9 +135,7 @@ class Field(object):
         :type target: dict
         :return: None
         """
-        target_value = self._convert_from_model(getattr(source, name, None), name=name)
-        if target_value is not missing:
-            target[name] = target_value
+        target[name] = self._convert_from_model(getattr(source, name, None), name=name)
 
 
 class BuiltinField(Field):
@@ -179,7 +168,7 @@ class BuiltinField(Field):
     def _validate(self, value, name, expected_type):
         if not isinstance(expected_type, tuple):
             expected_type = (expected_type,)
-        if not self._required and value is missing:
+        if not self._required and value is None:
             return
         if value is not None and not any(isinstance(value, t) for t in expected_type):
             names = ', '.join(['{}'.format(t.__name__) for t in expected_type])
@@ -271,7 +260,7 @@ class DateTime(BuiltinField):
     def _convert_from_model(self, value, name):
         self._validate_model_value(value=value, name=name)
 
-        if value in (None, missing):
+        if value is None:
             return value
 
         if not value.utcoffset():
@@ -301,7 +290,7 @@ class EnumMixin(Field):
         self._validate_choices(value, name)
 
     def _validate_choices(self, value, name):
-        if value not in (None, missing) and value not in self._choices:
+        if value is not None and value not in self._choices:
             values = ", ".join(map(str, self._choices))
             raise ModelViolationError("The {name} field value must be one of '{values}'".format(name=name,
                                                                                                 values=values))
@@ -351,14 +340,12 @@ class List(Field):
         :type default: A list of elements with the value type as specified in `elem_field`
         :param required: Marks the field as mandatory
         :type required: bool
-        :param allow_null: Decides whether or not the field is allowed to be None
-        :type allow_null: bool
         :param help: Documentation string for generating model documentation
         :type help: str
         """
         super(List, self).__init__(**kwargs)
         # We do a copy of the data in default, to avoid some unwanted side effects
-        if self._default not in (missing, None):
+        if self._default is not None:
             self._default = copy.copy(self._default)
         if not isinstance(elem_field, Field):
             raise ModelMisuseError("elem_field must be an instance of a type derived from Field")
@@ -379,7 +366,8 @@ class List(Field):
             self._validate_count(value, name)
             for idx, entry in enumerate(value):
                 self._elem_type._validate_model_value(entry, name='{}[{}]'.format(name, idx))
-        elif value and value is not missing:
+        # None can be valid value
+        elif value is not None:
             raise ModelViolationError('Expected list but got {} for the {} field'.format(type(value).__name__, name))
 
     def _validate_builtin_value(self, value, name):
@@ -400,7 +388,7 @@ class List(Field):
 
     def _convert_from_model(self, value, name):
         self._validate_model_value(value=value, name=name)
-        if value in (None, missing):
+        if value is None:
             return value
         converter = self._elem_type._convert_from_model
         return list(converter(entry, name='{}[{}]'.format(name, idx)) for idx, entry in enumerate(value))
@@ -418,8 +406,6 @@ class Model(Field):
         :type default: An instance of the type specified in `model_type` or None
         :param required: Marks the field as mandatory
         :type required: bool
-        :param allow_null: Decides whether or not the field is allowed to be None
-        :type allow_null: bool
         :param help: Documentation string for generating the model documentation
         :type help: str
         """
@@ -431,7 +417,7 @@ class Model(Field):
 
     def _validate_model_value(self, value, name):
         super(Model, self)._validate_model_value(value, name)
-        if value and value is not missing and not isinstance(value, self._model_type):
+        if value and not isinstance(value, self._model_type):
             raise ModelViolationError('Expected an instance of {} for the {} attribute but got {}'.format(
                 self._model_type.__name__, name, type(value)))
 
@@ -448,7 +434,7 @@ class Model(Field):
 
     def _convert_from_model(self, value, name):
         self._validate_model_value(value, name)
-        if value in (None, missing):
+        if value is None:
             return value
         return value.dump()
 
