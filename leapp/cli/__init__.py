@@ -9,7 +9,7 @@ from leapp import VERSION
 @command('')
 @command_opt('debug', is_flag=True, help='Enable debug logging', inherit=True)
 def cli(args):
-    os.environ['LEAPP_DEBUG'] = '1' if args.debug else '0'
+    os.environ['LEAPP_DEBUG'] = '1' if args.debug else os.environ.get('LEAPP_DEBUG', '0')
 
 
 def main():
