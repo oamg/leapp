@@ -59,7 +59,7 @@ def cli(args):
         config_file_path = '/etc/leapp/leapp.conf'
 
     os.environ['LEAPP_CONFIG'] = config_file_path
-    os.environ['LEAPP_DEBUG'] = '1' if args.debug else '0'
+    os.environ['LEAPP_DEBUG'] = '1' if args.debug else os.environ.get('LEAPP_DEBUG', '0')
 
 
 def main():
