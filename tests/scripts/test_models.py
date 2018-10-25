@@ -9,7 +9,7 @@ from test_topics import UnitTestTopic
 
 class UnitTestModel(leapp.models.Model):
     topic = UnitTestTopic
-    strings = leapp.models.fields.List(leapp.models.fields.String(), allow_null=True)
+    strings = leapp.models.fields.List(leapp.models.fields.String(), required=False)
     integer = leapp.models.fields.Integer()
 
 
