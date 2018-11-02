@@ -194,8 +194,8 @@ class Repository(object):
         }
 
     def _extend_environ_paths(self, name, paths):
-        os.environ[name] = ':'.join(os.environ.get(name, '').split(':') +
-                                    list(os.path.join(self._repo_dir, path) for path in paths))
+        os.environ[name] = ':'.join(os.environ.get(name, '').split(':') + list(
+            os.path.join(self._repo_dir, path) for path in paths))
 
     def relative_paths(self, paths):
         """

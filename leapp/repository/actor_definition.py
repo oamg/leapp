@@ -228,8 +228,8 @@ class ActorDefinition(object):
         """
         # Backup of the path variable
         path_backup = os.environ.get('PATH', '')
-        os.environ['PATH'] = ':'.join(path_backup.split(':') +
-                                      list(os.path.join(self._repo_dir, self._directory, path) for path in self.tools))
+        os.environ['PATH'] = ':'.join(path_backup.split(':') + list(
+            os.path.join(self._repo_dir, self._directory, path) for path in self.tools))
 
         files_backup = os.environ.get('LEAPP_FILES', None)
         if self.files:
