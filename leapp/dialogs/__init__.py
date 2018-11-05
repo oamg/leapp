@@ -19,3 +19,12 @@ class RawMessageDialog(Dialog):
 
     def __init__(self, message):
         super(RawMessageDialog, self).__init__(scope=None, reason=message)
+
+    def request_answers(self, store, renderer):
+        """
+        :param store: AnswerStore instance
+        :param renderer: Target renderer instance
+        :return: Dictionary with answers once retrieved
+        """
+        renderer.render(self)
+        return {}
