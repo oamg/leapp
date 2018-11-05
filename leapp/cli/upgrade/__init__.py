@@ -43,6 +43,7 @@ def get_last_phase(context):
 
 @command('upgrade', help='Upgrades the current system to the next available major version.')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
+@command_opt('reboot', is_flag=True, help='Automatically performs reboot when requested.')
 @command_opt('--whitelist-experimental', action='append', metavar='ActorName',
              help='Enables experimental actors')
 def upgrade(args):
@@ -66,7 +67,7 @@ def upgrade(args):
     except LeappError as exc:
         sys.stderr.write(exc.message)
         sys.exit(1)
-    workflow = repositories.lookup_workflow('IPUWorkflow')()
+    workflow = repositories.lookup_workflow('IPUWorkflow')(auto_reboot=args.reboot)
     for actor_name in args.whitelist_experimental or ():
         actor = repositories.lookup_actor(actor_name)
         if actor:
