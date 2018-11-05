@@ -10,6 +10,7 @@ from leapp.workflows.phases import Phase
 from leapp.workflows.policies import Policies
 from leapp.workflows.phaseactors import PhaseActors
 from leapp.messaging.inprocess import InProcessMessaging
+from leapp.dialogs import RawMessageDialog
 from leapp.tags import ExperimentalTag
 from leapp.utils.audit import checkpoint, get_errors
 
@@ -62,7 +63,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         """
         return self._errors
 
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, auto_reboot=False):
         """
         :param logger: Optional logger to be used instead of leapp.workflow
         :type logger: Instance of :py:class:`logging.Logger`
@@ -74,6 +75,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self._initial = set()
         self._phase_actors = []
         self._experimental_whitelist = set()
+        self._auto_reboot = auto_reboot
 
         for phase in self.phases:
             phase.filter.tags += (self.tag,)
@@ -223,9 +225,16 @@ class Workflow(with_metaclass(WorkflowMeta)):
                 self.log.info('Workflow finished due to the until-phase flag')
                 return
 
-            if phase[0].flags.restart_after_phase:
-                self.log.info('Initiating system reboot due to the restart_after_reboot flag')
-                reboot_system()
+            if phase[0].flags.request_restart_after_phase or phase[0].flags.restart_after_phase:
+                reboot = True
+                if phase[0].flags.request_restart_after_phase and not self._auto_reboot:
+                    reboot = False
+                    messaging.request_answers(
+                        RawMessageDialog(message='A reboot is required to continue. Please reboot your system.')
+                    )
+                if reboot:
+                    self.log.info('Initiating system reboot due to the restart_after_reboot flag')
+                    reboot_system()
                 return
 
 
