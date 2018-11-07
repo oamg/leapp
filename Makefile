@@ -9,6 +9,7 @@ install:
 	install -m 0744 etc/leapp/leapp.conf ${CONFDIR}
 	install -m 0744 etc/leapp/logger.conf ${CONFDIR}
 	install -dm 0755 ${LIBDIR}
+	umask 0600
 	python -c "import sqlite3; sqlite3.connect('${LIBDIR}/audit.db').executescript(open('res/audit-layout.sql', 'r').read())"
 
 install-container-test:
