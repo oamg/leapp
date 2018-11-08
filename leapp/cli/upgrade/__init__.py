@@ -1,9 +1,10 @@
+import itertools
 import os
 import uuid
 
 import sys
 from leapp.config import get_config
-from leapp.exceptions import LeappError
+from leapp.exceptions import LeappError, CommandError
 from leapp.logger import configure_logger
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
@@ -47,6 +48,8 @@ def get_last_phase(context):
 @command_opt('--whitelist-experimental', action='append', metavar='ActorName',
              help='Enables experimental actors')
 def upgrade(args):
+    if args.whitelist_experimental:
+        args.whitelist_experimental = list(itertools.chain(*[i.split(',') for i in args.whitelist_experimental]))
     skip_phases_until = None
     context = str(uuid.uuid4())
     if args.resume:
@@ -66,11 +69,15 @@ def upgrade(args):
         repositories = load_repositories()
     except LeappError as exc:
         sys.stderr.write(exc.message)
-        sys.exit(1)
+        raise CommandError(exc.message)
     workflow = repositories.lookup_workflow('IPUWorkflow')(auto_reboot=args.reboot)
     for actor_name in args.whitelist_experimental or ():
         actor = repositories.lookup_actor(actor_name)
         if actor:
             workflow.whitelist_experimental_actor(actor)
+        else:
+            msg = 'No such Actor --whitelist-experimental {}'.format(actor_name)
+            logger.error(msg)
+            raise CommandError(msg)
     workflow.run(context=context, skip_phases_until=skip_phases_until)
     report_errors(workflow.errors)
