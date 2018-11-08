@@ -48,6 +48,9 @@ def get_last_phase(context):
 @command_opt('--whitelist-experimental', action='append', metavar='ActorName',
              help='Enables experimental actors')
 def upgrade(args):
+    if os.getuid():
+        raise CommandError('This command has to be run under the root user.')
+
     if args.whitelist_experimental:
         args.whitelist_experimental = list(itertools.chain(*[i.split(',') for i in args.whitelist_experimental]))
     skip_phases_until = None
@@ -76,7 +79,7 @@ def upgrade(args):
         if actor:
             workflow.whitelist_experimental_actor(actor)
         else:
-            msg = 'No such Actor --whitelist-experimental {}'.format(actor_name)
+            msg = 'No such Actor: {}'.format(actor_name)
             logger.error(msg)
             raise CommandError(msg)
     workflow.run(context=context, skip_phases_until=skip_phases_until)
