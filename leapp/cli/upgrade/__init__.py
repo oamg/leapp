@@ -58,7 +58,8 @@ def upgrade(args):
     if args.resume:
         context = fetch_last_upgrade_context()
         if not context:
-            raise CommandError('No previous upgrade run to continue, remove `--resume` from leapp invocation to start a new upgrade flow')
+            raise CommandError('No previous upgrade run to continue, remove `--resume` from leapp invocation to'
+                               'start a new upgrade flow')
         skip_phases_until = get_last_phase(context)
     else:
         e = Execution(context=context, kind='upgrade', configuration={})

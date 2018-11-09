@@ -48,7 +48,7 @@ def create_connection(path):
     :param path: Path to the database
     :return: Connection object
     """
-    with _umask(0o600):
+    with _umask(0o177):
         return _initialize_database(sqlite3.connect(path))
 
 
