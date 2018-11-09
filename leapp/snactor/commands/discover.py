@@ -10,6 +10,7 @@ from leapp.tags import get_tags
 from leapp.utils.repository import requires_repository, find_repository_basedir, get_repository_name
 from leapp.utils.clicmd import command, command_opt
 from leapp.workflows import get_workflows
+from leapp.snactor.utils import safe_discover
 
 
 def _is_local(repository, cls, base_dir, all_repos=False):
@@ -85,9 +86,22 @@ https://red.ht/leapp-docs
          description=_LONG_DESCRIPTION)
 @command_opt('json', is_flag=True, help='Output in json format instead of human readable form')
 @command_opt('all', is_flag=True, help='Include items from linked repositories')
+@command_opt('safe', is_flag=True, help='Analyze actor files statically to work around runtime errors')
 @requires_repository
 def cli(args):
     base_dir = find_repository_basedir('.')
+
+    if args.safe and args.json:
+        sys.stderr.write('The options --safe and --json are currently mutually exclusive\n')
+        sys.exit(1)
+
+    if args.safe:
+        sys.stdout.write(
+            'Repository:\n  Name: {repository}\n  Path: {base_dir}\n\n'.format(repository=get_repository_name(base_dir),
+                                                                               base_dir=base_dir))
+        safe_discover(base_dir)
+        sys.exit(0)
+
     repository = find_and_scan_repositories(base_dir, include_locals=True)
     try:
         repository.load()
