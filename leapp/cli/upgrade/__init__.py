@@ -1,8 +1,9 @@
 import itertools
+import json
 import os
+import sys
 import uuid
 
-import sys
 from leapp.config import get_config
 from leapp.exceptions import CommandError, LeappError
 from leapp.logger import configure_logger
@@ -29,11 +30,12 @@ def fetch_last_upgrade_context():
     :return: Context of the last execution
     """
     with get_connection(None) as db:
-        cursor = db.execute("SELECT context, stamp FROM execution WHERE kind = 'upgrade' ORDER BY stamp DESC LIMIT 1")
+        cursor = db.execute(
+            "SELECT context, stamp, configuration FROM execution WHERE kind = 'upgrade' ORDER BY stamp DESC LIMIT 1")
         row = cursor.fetchone()
         if row:
-            return row[0]
-    return None
+            return row[0], json.loads(row[2])
+    return None, {}
 
 
 def get_last_phase(context):
@@ -55,14 +57,19 @@ def upgrade(args):
         args.whitelist_experimental = list(itertools.chain(*[i.split(',') for i in args.whitelist_experimental]))
     skip_phases_until = None
     context = str(uuid.uuid4())
+    configuration = {
+        'debug': os.getenv('LEAPP_DEBUG', '0'),
+        'whitelist_experimental': args.whitelist_experimental or ()
+    }
     if args.resume:
-        context = fetch_last_upgrade_context()
+        context, configuration = fetch_last_upgrade_context()
         if not context:
             raise CommandError('No previous upgrade run to continue, remove `--resume` from leapp invocation to'
                                'start a new upgrade flow')
+        os.environ['LEAPP_DEBUG'] = '1' if os.getenv('LEAPP_DEBUG', configuration.get('debug', '0')) == '1' else '0'
         skip_phases_until = get_last_phase(context)
     else:
-        e = Execution(context=context, kind='upgrade', configuration={})
+        e = Execution(context=context, kind='upgrade', configuration=configuration)
         e.store()
     os.environ['LEAPP_EXECUTION_ID'] = context
 
@@ -70,14 +77,13 @@ def upgrade(args):
 
     if args.resume:
         logger.info("Resuming execution after phase: %s", skip_phases_until)
-
     try:
         repositories = load_repositories()
     except LeappError as exc:
         sys.stderr.write(exc.message)
         raise CommandError(exc.message)
     workflow = repositories.lookup_workflow('IPUWorkflow')(auto_reboot=args.reboot)
-    for actor_name in args.whitelist_experimental or ():
+    for actor_name in configuration.get('whitelist_experimental', ()):
         actor = repositories.lookup_actor(actor_name)
         if actor:
             workflow.whitelist_experimental_actor(actor)
