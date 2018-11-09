@@ -1,11 +1,20 @@
+from contextlib import contextmanager
 import datetime
 import json
+import os
 import sqlite3
 
 import six
 
 from leapp.config import get_config
 from leapp.utils.schemas import CURRENT_SCHEMA, MIGRATIONS
+
+
+@contextmanager
+def _umask(new_mask):
+    cur_mask = os.umask(new_mask)
+    yield
+    os.umask(cur_mask)
 
 
 def _initialize_database(db):
@@ -39,7 +48,8 @@ def create_connection(path):
     :param path: Path to the database
     :return: Connection object
     """
-    return _initialize_database(sqlite3.connect(path))
+    with _umask(0o177):
+        return _initialize_database(sqlite3.connect(path))
 
 
 def get_connection(db):

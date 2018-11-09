@@ -4,7 +4,7 @@ import uuid
 
 import sys
 from leapp.config import get_config
-from leapp.exceptions import LeappError, CommandError
+from leapp.exceptions import CommandError, LeappError
 from leapp.logger import configure_logger
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
@@ -57,6 +57,9 @@ def upgrade(args):
     context = str(uuid.uuid4())
     if args.resume:
         context = fetch_last_upgrade_context()
+        if not context:
+            raise CommandError('No previous upgrade run to continue, remove `--resume` from leapp invocation to'
+                               'start a new upgrade flow')
         skip_phases_until = get_last_phase(context)
     else:
         e = Execution(context=context, kind='upgrade', configuration={})
