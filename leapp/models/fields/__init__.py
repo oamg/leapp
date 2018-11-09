@@ -431,9 +431,10 @@ class Model(Field):
 
     def _validate_model_value(self, value, name):
         super(Model, self)._validate_model_value(value, name)
-        if value and value is not missing and not isinstance(value, self._model_type):
+        resolved_model = getattr(self._model_type, '_resolved', self._model_type)
+        if value and value is not missing and not isinstance(value, resolved_model):
             raise ModelViolationError('Expected an instance of {} for the {} attribute but got {}'.format(
-                self._model_type.__name__, name, type(value)))
+                resolved_model.__name__, name, type(value)))
 
     def _validate_builtin_value(self, value, name):
         super(Model, self)._validate_model_value(value, name)
