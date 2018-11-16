@@ -152,11 +152,13 @@ def loaded_leapp_repository(request):
     os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
     context = str(uuid.uuid4())
     with get_connection(None):
-        Execution(context=str(uuid.uuid4()), kind='snactor-test-run', configuration='').store()
+        Execution(context=context, kind='snactor-test-run', configuration='').store()
         os.environ["LEAPP_EXECUTION_ID"] = context
 
-        manager = find_and_scan_repositories(repository_path, include_locals=True)
-        manager.load(resolve=True)
+        manager = getattr(request.session, 'leapp_repository', None)
+        if not manager:
+            manager = find_and_scan_repositories(repository_path, include_locals=True)
+            manager.load(resolve=True)
         yield manager
 
 
