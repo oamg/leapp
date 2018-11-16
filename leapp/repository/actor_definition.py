@@ -49,7 +49,10 @@ class ActorCallContext(object):
     @staticmethod
     def _do_run(stdin, logger, messaging, definition, args, kwargs):
         if stdin is not None:
-            sys.stdin = os.fdopen(stdin)
+            try:
+                sys.stdin = os.fdopen(stdin)
+            except OSError:
+                pass
         definition.load()
         with definition.injected_context():
             target_actor = [actor for actor in get_actors() if actor.name == definition.name][0]
