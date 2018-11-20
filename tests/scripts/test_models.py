@@ -9,8 +9,8 @@ from test_topics import UnitTestTopic
 
 class UnitTestModel(leapp.models.Model):
     topic = UnitTestTopic
-    strings = leapp.models.fields.List(leapp.models.fields.String(), allow_null=True)
-    integer = leapp.models.fields.Integer()
+    strings = leapp.models.fields.Nullable(leapp.models.fields.List(leapp.models.fields.String()))
+    integer = leapp.models.fields.Nullable(leapp.models.fields.Integer())
 
 
 class InheritedUnitTestModel(UnitTestModel):
@@ -18,7 +18,7 @@ class InheritedUnitTestModel(UnitTestModel):
 
 
 class ExtendedInheritedUnitTestModel(InheritedUnitTestModel):
-    boolean = leapp.models.fields.Boolean(default=False, required=True)
+    boolean = leapp.models.fields.Boolean(default=False)
 
 
 class ExtendedOverriddenInheritedUnitTestModel(ExtendedInheritedUnitTestModel):
