@@ -3,10 +3,6 @@ import datetime
 import six
 
 
-def missing():
-    pass
-
-
 class ModelViolationError(Exception):
     """
     ModelViolationError is raised if the data in the instances is not matching its definition.
@@ -34,20 +30,22 @@ class Field(object):
         """
         return self._help or 'No documentation provided for this field `{}`'.format(type(self).__name__)
 
-    def __init__(self, default=missing, required=False, allow_null=False, help=None):
+    def as_nullable(self):
+        """
+        Set object` "_nullable_" field to True and return the object back
+        """
+        self._nullable = True
+        return self
+
+    def __init__(self, default=None, help=None):
         """
         :param default: Default value to be used if the field is not set
-        :param required: Marks the field as mandatory
-        :type required: bool
-        :param allow_null: Decides whether or not the field is allowed to be None
-        :type allow_null: bool
         :param help: Documentation string for generating model documentation
         :type help: str
         """
         self._help = help
+        self._nullable = False
         self._default = default
-        self._required = required
-        self._allow_null = allow_null
 
         if type(self) == Field:
             raise ModelMisuseError("Do not use this type directly.")
@@ -60,10 +58,8 @@ class Field(object):
         :param name: Name of the field (used for a better error reporting only)
         :return: None
         """
-        if value is None and not self._allow_null:
-            raise ModelViolationError('The {name} attribute is None, but this is not allowed'.format(name=name))
-        if value is missing and self._required:
-            raise ModelViolationError('The {name} attribute is not set, but it is required'.format(name=name))
+        if value is None and not self._nullable:
+            raise ModelViolationError('The value of "{name}" field is None, but this is not allowed'.format(name=name))
 
     def _validate_builtin_value(self, value, name):
         """
@@ -73,8 +69,8 @@ class Field(object):
         :param name: Name of the field (used for a better error reporting only)
         :return: None
         """
-        if value is None and not self._allow_null:
-            raise ModelViolationError('The {name} field is null, but this is not allowed'.format(name=name))
+        if value is None and not self._nullable:
+            raise ModelViolationError('The value of "{name}" field is None, but this is not allowed'.format(name=name))
 
     def _convert_to_model(self, value, name):
         """
@@ -127,10 +123,10 @@ class Field(object):
         :return: None
         """
         source_value = source.get(name, self._default)
-        target_value = source_value
-        if not (source_value is missing and not self._required):
-            target_value = self._convert_to_model(value=source_value, name=name)
-        setattr(target, name, target_value)
+        if source_value is not None:
+            source_value = self._convert_to_model(source_value, name=name)
+        self._validate_model_value(value=source_value, name=name)
+        setattr(target, name, source_value)
 
     def to_builtin(self, source, name, target):
         """
@@ -144,9 +140,7 @@ class Field(object):
         :type target: dict
         :return: None
         """
-        target_value = self._convert_from_model(getattr(source, name, None), name=name)
-        if target_value is not missing:
-            target[name] = target_value
+        target[name] = self._convert_from_model(getattr(source, name, None), name=name)
 
 
 class BuiltinField(Field):
@@ -179,9 +173,9 @@ class BuiltinField(Field):
     def _validate(self, value, name, expected_type):
         if not isinstance(expected_type, tuple):
             expected_type = (expected_type,)
-        if not self._required and value is missing:
+        if value is None and self._nullable:
             return
-        if value is not None and not any(isinstance(value, t) for t in expected_type):
+        if not any(isinstance(value, t) for t in expected_type):
             names = ', '.join(['{}'.format(t.__name__) for t in expected_type])
             raise ModelViolationError("Fields {} is of type: {} expected: {}".format(name, type(value).__name__,
                                                                                      names))
@@ -271,7 +265,7 @@ class DateTime(BuiltinField):
     def _convert_from_model(self, value, name):
         self._validate_model_value(value=value, name=name)
 
-        if value in (None, missing):
+        if not value:
             return value
 
         if not value.utcoffset():
@@ -301,10 +295,17 @@ class EnumMixin(Field):
         self._validate_choices(value, name)
 
     def _validate_choices(self, value, name):
-        if value not in (None, missing) and value not in self._choices:
+        if value is not None and value not in self._choices:
             values = ", ".join(map(str, self._choices))
-            raise ModelViolationError("The {name} field value must be one of '{values}'".format(name=name,
-                                                                                                values=values))
+            raise ModelViolationError(
+                'The value of "{name}" field must be one of "{values}"'.format(name=name, values=values))
+
+
+def Nullable(elem_field):
+    """
+    Helper function to make a field nullable
+    """
+    return elem_field.as_nullable()
 
 
 class StringEnum(EnumMixin, String):
@@ -349,16 +350,13 @@ class List(Field):
         :type maximum: int or None
         :param default: Default value to use if the field is not set
         :type default: A list of elements with the value type as specified in `elem_field`
-        :param required: Marks the field as mandatory
-        :type required: bool
-        :param allow_null: Decides whether or not the field is allowed to be None
-        :type allow_null: bool
         :param help: Documentation string for generating model documentation
         :type help: str
         """
         super(List, self).__init__(**kwargs)
         # We do a copy of the data in default, to avoid some unwanted side effects
-        if self._default not in (missing, None):
+        # Comparison to None is necessary
+        if self._default is not None:
             self._default = copy.copy(self._default)
         if not isinstance(elem_field, Field):
             raise ModelMisuseError("elem_field must be an instance of a type derived from Field")
@@ -379,7 +377,7 @@ class List(Field):
             self._validate_count(value, name)
             for idx, entry in enumerate(value):
                 self._elem_type._validate_model_value(entry, name='{}[{}]'.format(name, idx))
-        elif value and value is not missing:
+        elif value is not None:
             raise ModelViolationError('Expected list but got {} for the {} field'.format(type(value).__name__, name))
 
     def _validate_builtin_value(self, value, name):
@@ -400,7 +398,7 @@ class List(Field):
 
     def _convert_from_model(self, value, name):
         self._validate_model_value(value=value, name=name)
-        if value in (None, missing):
+        if value is None:
             return value
         converter = self._elem_type._convert_from_model
         return list(converter(entry, name='{}[{}]'.format(name, idx)) for idx, entry in enumerate(value))
@@ -414,25 +412,19 @@ class Model(Field):
         """
         :param model_type: A :py:class:`leapp.model.Model` derived class
         :type model_type: :py:class:`leapp.model.Model` derived class
-        :param default: Default value to use if the field is not set
-        :type default: An instance of the type specified in `model_type` or None
-        :param required: Marks the field as mandatory
-        :type required: bool
-        :param allow_null: Decides whether or not the field is allowed to be None
-        :type allow_null: bool
         :param help: Documentation string for generating the model documentation
         :type help: str
         """
         super(Model, self).__init__(**kwargs)
         from leapp.models import Model as ModelType
         if not isinstance(model_type, type) or not issubclass(model_type, ModelType):
-            raise ModelMisuseError("{} must be a type derived from Field".format(model_type))
+            raise ModelMisuseError("{} must be a type derived from Model".format(model_type))
         self._model_type = model_type
 
     def _validate_model_value(self, value, name):
         super(Model, self)._validate_model_value(value, name)
         resolved_model = getattr(self._model_type, '_resolved', self._model_type)
-        if value and value is not missing and not isinstance(value, resolved_model):
+        if value and not isinstance(value, resolved_model):
             raise ModelViolationError('Expected an instance of {} for the {} attribute but got {}'.format(
                 resolved_model.__name__, name, type(value)))
 
@@ -449,11 +441,6 @@ class Model(Field):
 
     def _convert_from_model(self, value, name):
         self._validate_model_value(value, name)
-        if value in (None, missing):
+        if value is None:
             return value
         return value.dump()
-
-
-class Nested(Model):
-    def __init__(self, *args, **kwargs):
-        raise ModelMisuseError('Please use leapp.models.fields.Model instead of leapp.models.fields.Nested')

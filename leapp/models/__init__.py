@@ -131,11 +131,11 @@ class Model(with_metaclass(ModelMeta)):
 class ErrorModel(Model):
     topic = ErrorTopic
 
-    message = fields.String(required=True)
-    severity = fields.StringEnum(required=True, choices=ErrorSeverity.ALLOWED_VALUES, default=ErrorSeverity.ERROR)
-    details = fields.String(required=True, allow_null=True, default=None)
-    actor = fields.String(required=True)
-    time = fields.DateTime(required=True)
+    message = fields.String()
+    severity = fields.StringEnum(choices=ErrorSeverity.ALLOWED_VALUES, default=ErrorSeverity.ERROR)
+    details = fields.Nullable(fields.String())
+    actor = fields.String()
+    time = fields.DateTime()
 
 
 def get_models():
