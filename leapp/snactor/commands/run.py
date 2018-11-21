@@ -6,7 +6,7 @@ from leapp.utils.clicmd import command, command_opt, command_arg
 from leapp.utils.repository import requires_repository, find_repository_basedir
 from leapp.logger import configure_logger
 from leapp.messaging.inprocess import InProcessMessaging
-from leapp.utils.output import report_errors
+from leapp.utils.output import report_errors, beautify_actor_exception
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.snactor.context import with_snactor_context
 
@@ -41,7 +41,8 @@ def cli(args):
     messaging = InProcessMessaging(stored=args.save_output)
     messaging.load(actor.consumes)
 
-    actor(messaging=messaging, logger=actor_logger).run()
+    with beautify_actor_exception():
+        actor(messaging=messaging, logger=actor_logger).run()
 
     report_errors(messaging.errors())
 

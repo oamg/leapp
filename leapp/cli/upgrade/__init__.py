@@ -10,7 +10,7 @@ from leapp.logger import configure_logger
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
-from leapp.utils.output import report_errors
+from leapp.utils.output import report_errors, beautify_actor_exception
 
 
 def load_repositories_from(name, repo_path, manager=None):
@@ -91,5 +91,7 @@ def upgrade(args):
             msg = 'No such Actor: {}'.format(actor_name)
             logger.error(msg)
             raise CommandError(msg)
-    workflow.run(context=context, skip_phases_until=skip_phases_until)
+    with beautify_actor_exception():
+        workflow.run(context=context, skip_phases_until=skip_phases_until)
+
     report_errors(workflow.errors)

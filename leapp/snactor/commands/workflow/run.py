@@ -8,7 +8,7 @@ from leapp.utils.clicmd import command_arg, command_opt
 from leapp.logger import configure_logger
 from leapp.utils.repository import requires_repository, find_repository_basedir
 from leapp.repository.scan import find_and_scan_repositories
-from leapp.utils.output import report_errors
+from leapp.utils.output import report_errors, beautify_actor_exception
 
 _LONG_DESCRIPTION = '''
 Executes the given workflow.
@@ -49,5 +49,8 @@ def cli(params):
         actor = repository.lookup_actor(actor_name)
         if actor:
             instance.whitelist_experimental_actor(actor)
-    instance.run(until_phase=params.until_phase, until_actor=params.until_actor)
+
+    with beautify_actor_exception():
+        instance.run(until_phase=params.until_phase, until_actor=params.until_actor)
+
     report_errors(instance.errors)
