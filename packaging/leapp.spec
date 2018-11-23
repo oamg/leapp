@@ -14,7 +14,7 @@
 %endif
 
 Name:       leapp
-Version:    0.3
+Version:    0.4.0
 Release:    1%{?dist}
 Summary:    OS & Application modernization framework
 
@@ -211,5 +211,5 @@ install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
 %endif
 
 %changelog
-* Mon Apr 16 2018 Vinzenz Feenstra <evilissimo@gmail.com> - 0.3-1
+* Mon Apr 16 2018 Vinzenz Feenstra <evilissimo@gmail.com> - %{version}-%{release}
 - Initial rpm
