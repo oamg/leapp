@@ -6,25 +6,6 @@ system and to send it as a message into the system, so that other actors can con
 
 We will start at the very beginning, so we will assume that all things have to be created.
 
-## Terminology
-
-### Models
-To send messages between actors, a model has to be created. The model describes the format of the
-message and acts as an object to access the data. This principle is similar to ORM libraries.
-
-### Topics
-Topics are used to classify the purpose of a message, and they are a necessary part of every model.
-
-### Tags
-Tags are used by the framework to be able to query the repository for actors that should be
-executed at the same time in a [phase of a workflow](terminology.html#phase). This is necessary when you want to have your actor being included into a [workflow](terminology.html#workflow) in a phase. For keeping the tutorial simpler, we will not discuss the tags now.
-
-### Actors
-Actors define what messages they consume and what they produce by importing the
-classes and assigning them to a tuple in the actor class definition.
-Tags are defined there as well for the reasons outlined above.
-
-
 ## Getting started
 
 First, create and go to your repository directory. See [Creating a new repository tutorial](create-repository).
