@@ -18,7 +18,7 @@ MASTER_BRANCH=master
 # upstream solution). For upstream builds N_REL=1;
 N_REL=`_NR=$${PR:+0}; if test "$${_NR:-1}" == "1"; then _NR=$${MR:+0}; fi; git rev-parse --abbrev-ref HEAD | grep -q "^$(MASTER_BRANCH)$$" || _NR=0;  echo $${_NR:-1}`
 
-TIMESTAMP=`date +%Y%m%d%H%MZ -u`
+TIMESTAMP:=$${__TIMESTAMP:-$(shell /bin/date "+%Y%m%d%H%MZ" -u)}
 SHORT_SHA=`git rev-parse --short HEAD`
 BRANCH=`git rev-parse --abbrev-ref HEAD | tr '-' '_'`
 
