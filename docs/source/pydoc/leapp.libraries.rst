@@ -8,6 +8,7 @@ Subpackages
 
     leapp.libraries.actor
     leapp.libraries.common
+    leapp.libraries.stdlib
 
 Module contents
 ---------------
