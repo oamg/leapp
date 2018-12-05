@@ -9,8 +9,6 @@ Welcome to Leapp's documentation!
 
     terminology
     tutorials
-    debugging
-    unit-testing
     best-practises
     repository-dir-layout
     contributing

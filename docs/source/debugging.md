@@ -1,4 +1,4 @@
-## Debugging
+## Debugging actors
 
 The snactor tool is used to debug your actors. You can execute actors
 and save their output, so that it can be consumed by other actors. 
