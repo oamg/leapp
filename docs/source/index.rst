@@ -12,6 +12,7 @@ Welcome to Leapp's documentation!
     debugging
     unit-testing
     best-practises
+    repository-dir-layout
     contributing
     python-coding-guidelines
     pydoc/leapp
