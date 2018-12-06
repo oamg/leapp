@@ -9,8 +9,8 @@ Welcome to Leapp's documentation!
 
     terminology
     tutorials
-    best-practises
     repository-dir-layout
+    best-practices
     contributing
     python-coding-guidelines
     pydoc/leapp
