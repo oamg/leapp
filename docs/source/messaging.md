@@ -106,7 +106,7 @@ $ snactor run --save-output HostnameScanner
 ```
 
 The output of the actor is stored in the local repository data file, and it can be used
-by other actors.
+by other actors. To flush all saved messages from the repository database, run `snactor messages clear`.
 
 ### Testing the new actor
 
