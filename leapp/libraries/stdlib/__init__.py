@@ -8,7 +8,7 @@ import subprocess
 import os
 
 
-def check_output(args, split=True):
+def call(args, split=True):
     """
     Call an external program, capture and automatically utf-8 decode its ouput.
     Then, supress output to stderr and redirect to /dev/null.
