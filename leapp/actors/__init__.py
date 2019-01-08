@@ -20,6 +20,12 @@ class Actor(object):
     actors in the workflow.
     """
 
+    current_instance = None
+    """
+    Instance of the currently executed actor. Within a process only exist one Actor instance. This will allow
+    convenience functions for library developers to be available.
+    """
+
     ErrorSeverity = ErrorSeverity
     """ Convenience forward for the :py:class:`leapp.models.error_severity.ErrorSeverity` constants. """
 
@@ -60,6 +66,7 @@ class Actor(object):
     """
 
     def __init__(self, messaging=None, logger=None):
+        Actor.current_instance = self
         install_translation_for_actor(type(self))
         self._messaging = messaging
         self.log = (logger or logging.getLogger('leapp.actors')).getChild(self.name)
@@ -67,6 +74,7 @@ class Actor(object):
 
     def request_answers(self, dialog):
         """
+        Requests the answers for a dialog. The dialog needs be predefined in :py:attr:`dialogs`.
 
         :param dialog: Dialog instance to show
         :return: dictionary with the requested answers, None if not a defined dialog
@@ -92,6 +100,21 @@ class Actor(object):
         """ Returns all common repository file paths. """
         return os.getenv("LEAPP_COMMON_FILES", "").split(":")
 
+    def _get_folder_path(self, directories, name):
+        """
+        Finds the first matching folder path within directories.
+
+        :param name: Name of the folder
+        :type name: str
+        :return: Found folder path
+        :rtype: str or None
+        """
+        for path in directories:
+            path = os.path.join(path, name)
+            if os.path.isdir(path):
+                return path
+        return None
+
     def get_folder_path(self, name):
         """
         Finds the first matching folder path within :py:attr:`files_paths`.
@@ -101,9 +124,42 @@ class Actor(object):
         :return: Found folder path
         :rtype: str or None
         """
-        for path in self.files_paths:
+        return self._get_folder_path(self.files_paths, name)
+
+    def get_common_folder_path(self, name):
+        """
+        Finds the first matching folder path within :py:attr:`common_files_paths`.
+
+        :param name: Name of the folder
+        :type name: str
+        :return: Found folder path
+        :rtype: str or None
+        """
+        return self._get_folder_path(self.common_files_paths, name)
+
+    def get_actor_folder_path(self, name):
+        """
+        Finds the first matching folder path within :py:attr:`actor_files_paths`.
+
+        :param name: Name of the folder
+        :type name: str
+        :return: Found folder path
+        :rtype: str or None
+        """
+        return self._get_folder_path(self.actor_files_paths, name)
+
+    def _get_file_path(self, directories, name):
+        """
+        Finds the first matching file path within directories.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        for path in directories:
             path = os.path.join(path, name)
-            if os.path.isdir(path):
+            if os.path.isfile(path):
                 return path
         return None
 
@@ -116,11 +172,29 @@ class Actor(object):
         :return: Found file path
         :rtype: str or None
         """
-        for path in self.files_paths:
-            path = os.path.join(path, name)
-            if os.path.isfile(path):
-                return path
-        return None
+        return self._get_file_path(self.files_paths, name)
+
+    def get_common_file_path(self, name):
+        """
+        Finds the first matching file path within :py:attr:`common_files_paths`.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        return self._get_file_path(self.common_files_paths, name)
+
+    def get_actor_file_path(self, name):
+        """
+        Finds the first matching file path within :py:attr:`actor_files_paths`.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        return self._get_file_path(self.actor_files_paths, name)
 
     def run(self, *args):
         """ Runs the actor calling the method :py:func:`process`. """

@@ -234,6 +234,11 @@ def _get_actor(module, repository):
     return None
 
 
+@pytest.fixture(scope='module')
+def leapp_forked():
+    pass
+
+
 def _execute_test(q, pyfuncitem):
     """
     This function is called in the child process from pytest_pyfunc_call via multiprocessing.Process.
@@ -243,8 +248,9 @@ def _execute_test(q, pyfuncitem):
     :return: None
     """
     try:
-        actor = _get_actor(pyfuncitem.module, pyfuncitem.funcargs['current_actor_context'].repository)
-        pyfuncitem.funcargs['current_actor_context'].set_actor(actor)
+        if 'current_actor_context' in pyfuncitem.funcargs:
+            actor = _get_actor(pyfuncitem.module, pyfuncitem.funcargs['current_actor_context'].repository)
+            pyfuncitem.funcargs['current_actor_context'].set_actor(actor)
         original_pytest_pyfunc_call(pyfuncitem=pyfuncitem)
         q.put((True, None))
     except BaseException:  # noqa
@@ -263,7 +269,7 @@ if hasattr(pytest, 'hookimpl'):
         :py:func:`current_actor_context` fixture. If it doesn't use the :py:func:`current_actor_context` fixture, it
         will default to the default `pytest_pyfunc_call` implementation.
         """
-        if 'current_actor_context' not in pyfuncitem.funcargs:
+        if not any([arg in pyfuncitem.funcargs for arg in ('current_actor_context', 'leapp_forked')]):
             return None
         q = Queue()
         p = Process(target=_execute_test, args=(q, pyfuncitem))
