@@ -33,7 +33,7 @@ class ActorCallContext(object):
     """
     Wraps the actor execution into child process.
     """
-    def __init__(self, definition, logger, messaging):
+    def __init__(self, definition, logger, messaging, within_pytest=False):
         """
         :param definition: Actor definition
         :type definition: :py:class:`leapp.repository.actor_definition.ActorDefinition`
@@ -45,6 +45,7 @@ class ActorCallContext(object):
         self.definition = definition
         self.logger = logger
         self.messaging = messaging
+        self.within_pytest = within_pytest
 
     @staticmethod
     def _do_run(stdin, logger, messaging, definition, args, kwargs):
@@ -53,6 +54,10 @@ class ActorCallContext(object):
                 sys.stdin = os.fdopen(stdin)
             except OSError:
                 pass
+        self._do_run_impl(logger, messaging, definition, args, kwargs)
+
+    @staticmethod
+    def _do_run_impl(logger, messaging, definition, args, kwargs):
         definition.load()
         with definition.injected_context():
             target_actor = [actor for actor in get_actors() if actor.name == definition.name][0]
@@ -62,17 +67,20 @@ class ActorCallContext(object):
         """
         Performs the actor execution in the child process.
         """
-        try:
-            stdin = sys.stdin.fileno()
-        except UnsupportedOperation:
-            stdin = None
-        p = Process(target=self._do_run, args=(stdin, self.logger, self.messaging, self.definition, args, kwargs))
-        p.start()
-        p.join()
-        if p.exitcode != 0:
-            raise LeappRuntimeError(
-                'Actor {actorname} unexpectedly terminated with exit code: {exitcode}'
-                .format(actorname=self.definition.name, exitcode=p.exitcode))
+        if self.within_pytest:
+            self._do_run_impl(self.logger, self.messaging, self.definition, args, kwargs)
+        else:
+            try:
+                stdin = sys.stdin.fileno()
+            except UnsupportedOperation:
+                stdin = None
+            p = Process(target=self._do_run, args=(stdin, self.logger, self.messaging, self.definition, args, kwargs))
+            p.start()
+            p.join()
+            if p.exitcode != 0:
+                raise LeappRuntimeError(
+                    'Actor {actorname} unexpectedly terminated with exit code: {exitcode}'
+                    .format(actorname=self.definition.name, exitcode=p.exitcode))
 
 
 class ActorDefinition(object):
@@ -168,8 +176,8 @@ class ActorDefinition(object):
                     tag.actors += (self,)
         return self._discovery
 
-    def __call__(self, messaging=None, logger=None):
-        return ActorCallContext(definition=self, messaging=messaging, logger=logger)
+    def __call__(self, messaging=None, logger=None, within_pytest=False):
+        return ActorCallContext(definition=self, messaging=messaging, logger=logger, within_pytest=within_pytest)
 
     @property
     def dialogs(self):

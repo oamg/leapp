@@ -101,7 +101,7 @@ class ActorContext(object):
 
         :return: None
         """
-        self._actor(messaging=self._messaging).run()
+        self._actor(messaging=self._messaging, within_pytest=True).run()
 
     def messages(self):
         """
