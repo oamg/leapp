@@ -85,6 +85,8 @@ Requires: python2-six
 Requires: python2-setuptools
 %endif
 Requires: findutils
+# selinux dependancy to be uncommented when it is suitable later
+# Requires: libselinux-python
 
 %description -n python2-%{name}
 Python 2 leapp framework libraries.
