@@ -253,25 +253,26 @@ def _execute_test(q, pyfuncitem):
         q.put((False, (e_type, e_exc, _tb_pack(e_tb))))
 
 
-@pytest.hookimpl(tryfirst=True)
-def pytest_pyfunc_call(pyfuncitem):
-    """
-    This function is a hook for pytest implementing the ability to run the actors in tests safely.
+if hasattr(pytest, 'hookimpl'):
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_pyfunc_call(pyfuncitem):
+        """
+        This function is a hook for pytest implementing the ability to run the actors in tests safely.
 
-    It will call :py:func:`leapp.snactor.fixture._execute_test` in a child process if the current test uses the
-    :py:func:`current_actor_context` fixture. If it doesn't use the :py:func:`current_actor_context` fixture, it will
-    default to the default `pytest_pyfunc_call` implementation.
-    """
-    if 'current_actor_context' not in pyfuncitem.funcargs:
-        return None
-    q = Queue()
-    p = Process(target=_execute_test, args=(q, pyfuncitem))
-    p.start()
-    p.join()
+        It will call :py:func:`leapp.snactor.fixture._execute_test` in a child process if the current test uses the
+        :py:func:`current_actor_context` fixture. If it doesn't use the :py:func:`current_actor_context` fixture, it
+        will default to the default `pytest_pyfunc_call` implementation.
+        """
+        if 'current_actor_context' not in pyfuncitem.funcargs:
+            return None
+        q = Queue()
+        p = Process(target=_execute_test, args=(q, pyfuncitem))
+        p.start()
+        p.join()
 
-    # Ensure we are actually getting a result - Otherwise ensure this is marked as failure
-    assert not q.empty()
-    r, e = q.get()
-    if e:
-        raise_with_traceback(e[1], _tb_unpack(e[2]))
-    return r
+        # Ensure we are actually getting a result - Otherwise ensure this is marked as failure
+        assert not q.empty()
+        r, e = q.get()
+        if e:
+            raise_with_traceback(e[1], _tb_unpack(e[2]))
+        return r
