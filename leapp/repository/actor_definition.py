@@ -9,7 +9,7 @@ from multiprocessing import Process, Queue
 import leapp.libraries.actor
 from leapp.actors import get_actors, get_actor_metadata
 from leapp.exceptions import ActorInspectionFailedError, MultipleActorsError, UnsupportedDefinitionKindError, \
-    LeappRuntimeError, StopActorExecutionError, StopActorExecution
+    LeappRuntimeError
 from leapp.repository import DefinitionKind
 from leapp.repository.loader import library_loader
 
@@ -56,13 +56,7 @@ class ActorCallContext(object):
         definition.load()
         with definition.injected_context():
             target_actor = [actor for actor in get_actors() if actor.name == definition.name][0]
-            try:
-                actor = target_actor(logger=logger, messaging=messaging)
-                actor.run(*args, **kwargs)
-            except StopActorExecutionError as err:
-                target_actor.report_error(err.message)
-            except StopActorExecution:
-                pass
+            target_actor(logger=logger, messaging=messaging).run(*args, **kwargs)
 
     def run(self, *args, **kwargs):
         """

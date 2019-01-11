@@ -113,5 +113,7 @@ class StopActorExecution(Exception):
 
 
 class StopActorExecutionError(LeappError):
-    def __init__(self, message):
+    def __init__(self, message,  severity='error', details=None):
         super(StopActorExecutionError, self).__init__(message)
+        self.severity = severity
+        self.details = details
