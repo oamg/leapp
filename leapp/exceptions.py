@@ -105,3 +105,13 @@ class CommandDefinitionError(LeappError):
 class LeappRuntimeError(LeappError):
     def __init__(self, message):
         super(LeappRuntimeError, self).__init__(message)
+
+
+class StopActorExecution(Exception):
+    def __init__(self):
+        super(StopActorExecution, self).__init__()
+
+
+class StopActorExecutionError(LeappError):
+    def __init__(self, message):
+        super(StopActorExecutionError, self).__init__(message)
