@@ -108,11 +108,13 @@ class LeappRuntimeError(LeappError):
 
 
 class StopActorExecution(Exception):
+    """ This exception is used to gracefully stop execution of actor, but allows the workflow to continue. """
     def __init__(self):
         super(StopActorExecution, self).__init__()
 
 
 class StopActorExecutionError(LeappError):
+    """ This exception is used to gracefully stop execution of actor and report error. """
     def __init__(self, message,  severity='error', details=None):
         super(StopActorExecutionError, self).__init__(message)
         self.severity = severity
