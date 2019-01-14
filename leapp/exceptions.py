@@ -121,7 +121,7 @@ class StopActorExecutionError(LeappError):
     # import here to break import cycle
     from leapp.models.error_severity import ErrorSeverity
 
-    def __init__(self, message,  severity=ErrorSeverity.ERROR, details=None):
+    def __init__(self, message, severity=ErrorSeverity.ERROR, details=None):
         """
         :param message: A message to print the possible error
         :type message: str
