@@ -33,6 +33,7 @@ def cli(args):
         repository.load()
     except LeappError as exc:
         sys.stderr.write(exc.message)
+        sys.stderr.write('\n')
         sys.exit(1)
     actor_logger = log.getChild('actors')
     actor = repository.lookup_actor(args.actor_name)

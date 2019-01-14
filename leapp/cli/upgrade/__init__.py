@@ -81,6 +81,7 @@ def upgrade(args):
         repositories = load_repositories()
     except LeappError as exc:
         sys.stderr.write(exc.message)
+        sys.stderr.write('\n')
         raise CommandError(exc.message)
     workflow = repositories.lookup_workflow('IPUWorkflow')(auto_reboot=args.reboot)
     for actor_name in configuration.get('whitelist_experimental', ()):
