@@ -114,8 +114,22 @@ class StopActorExecution(Exception):
 
 
 class StopActorExecutionError(LeappError):
-    """ This exception is used to gracefully stop execution of actor and report error. """
-    def __init__(self, message,  severity='error', details=None):
+    """
+    This exception is used to gracefully stop execution of actor and it will call
+    :py:func:`leapp.actors.Actor.report_error`.
+    """
+    # import here to break import cycle
+    from leapp.models.error_severity import ErrorSeverity
+
+    def __init__(self, message,  severity=ErrorSeverity.ERROR, details=None):
+        """
+        :param message: A message to print the possible error
+        :type message: str
+        :param severity: Severity of the error default :py:attr:`leapp.messaging.errors.ErrorSeverity.ERROR`
+        :type severity: str with defined values from :py:attr:`leapp.messaging.errors.ErrorSeverity.ERROR`
+        :param details: A dictionary where additional context information is passed along with the error
+        :type details: dict
+        """
         super(StopActorExecutionError, self).__init__(message)
         self.severity = severity
         self.details = details

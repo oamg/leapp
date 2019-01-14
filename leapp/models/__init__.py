@@ -26,12 +26,12 @@ Now, the models can be used like this::
 import sys
 
 from leapp.models import fields
+from leapp.models.error_severity import ErrorSeverity
 
 from leapp.exceptions import ModelDefinitionError
 from leapp.models.fields import ModelMisuseError
 from leapp.utils.meta import get_flattened_subclasses, with_metaclass
 from leapp.topics import Topic, ErrorTopic
-from leapp.models.error_severity import ErrorSeverity
 
 
 class ModelMeta(type):
