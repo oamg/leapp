@@ -38,6 +38,7 @@ def cli(params):
         repository.load()
     except LeappError as exc:
         sys.stderr.write(exc.message)
+        sys.stderr.write('\n')
         sys.exit(1)
 
     wf = repository.lookup_workflow(params.name)

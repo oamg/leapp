@@ -107,6 +107,7 @@ def cli(args):
         repository.load()
     except LeappError as exc:
         sys.stderr.write(exc.message)
+        sys.stderr.write('\n')
         sys.exit(1)
 
     actors = [actor for actor in repository.actors]
