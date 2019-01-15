@@ -2,74 +2,50 @@
 
 ---
 
-[Click here to open diagram of the phases](img/phases.png)
+[Click here to open a diagram  the phases](img/phases.png)
 
 ---
 
-## Facts Collection
-- Operating System Version Detection, IP, Hostname, RPMs, Services, Augeas run
+## FactsCollection
+- Get information (facts) about the system (e.g. installed packages, configuration, ...). No decision should be done in this phase. Scan the system to get information you need and provide
+it to other actors in the following phases.
 
 ## Checks
-- ### Preupgrade Checks
- - Inhibitors - Blockers, Shared Objects, Binaries, Languages, Packages, Load Balance Support, User Management, Version Control Systems, FreeRADIUS, IPA Bind Dyndb LDAP, SSSD, NTP, OpenLDAP, YPSERV, Network, Databases, SELinux, Storage, System
+- Check upgradability of the system, produce user question if needed and produce output for the report. Check whether it is possible to upgrade the system and detect potential risks. It is not expected to get additional information about the system in this phase, but rather work with data provided by the actors from the FactsCollection. When a potential risk is detected for upgrade, produce messages for the Reports phase.
 
-- ### Services
- - HTTPD, OpenSSH, Postfix, SQUID, DoveCot, Bind9 Configuration
-
-- ### Backup
- - Untracked Files
-
-- ### Others
- - RSYSLOG
-
-## Report
-- Provide user with the result of the checks
-- Let user interactively decide on multiple-choice solution for specific upgrade issues
-
-## Attach package repositories
-- Make sure the repositories of the new system are available
-
-## Planning
-- RPM Install transaction (feasibility checks)
+## Reports
+- Provide user with the result of the checks.
 
 ## Download
-- Download of all things needed (RPMs, Kernel images, Anaconda image (very big maybe), etc.)
+- Download data needed for the upgrade and prepare RPM transaction for the upgrade.
 
-## Upgrade RamDisk Preparation
-- Preparation of initial ramdisk (if required)
-- Setup bootloaderGrub
+## InterimPreparation
+- Prepare an initial RAM file system (if required). Setup bootloader.
 
-## Upgrade RamDisk Start (Actual reboot)
-- Reboot into the next system therefore not a real step, however the before and post parts are interesting to have for hooking
+_(Reboot happens here between the phases)_
 
-## Network
-- Bring up the network
+## InitRamStart
+- Boot into the upgrade initramfs, mount disks, etc.
 
-## Storage
-- Mount all storage points
-
-## Late Tests
-- Tests that need to be executed later
+## LateTests
+- Last tests before the RPM upgrade that have to be done with the new kernel and systemd.
 
 ## Preparation
-- YUM Configurations
-- Backup not upgradable configurations (No Verify Configs)
+- Prepare the environment to ascertain success of the RPM upgrade transaction.
 
-## RPM Upgrade
-- Upgrade RPMs
-- Check all files are installed (troubles with handling dirs/symlinks), includes reinstallation of affected packages
+## RPMUpgrade
+- Perform the RPM transaction, i.e. upgrade the RPMs.
 
-## Application Upgrade
-- Application of changes on configuration files, move various directores, etc.
+## Applications
+- Perform the neccessary steps to finish upgrade of applications provided by Red Hat. This may include moving/renaming of configuration files, modifying configuration of applications to be able to run correctly and with as similar behaviour to the original as possible.
 
-## Third Party Applications
-- A place for custom actors for third party applications to be upgraded
+## ThirdPartyApplications
+- Analogy to the Applications phase, but for third party and custom applications.
 
 ## Finalization
-- Plan SELinux relabeling
-- Labels Bootloader settings
+- Additional actions that should be done before rebooting into the upgraded system. For example SELinux relabeling.
 
-## Reboot
-- Reboot into the new system
+_(Reboot happens here between the phases)_
 
 ## First Boot
+- Actions to be done right after booting into the upgraded system.
