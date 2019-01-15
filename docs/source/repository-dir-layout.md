@@ -3,12 +3,12 @@
 ```
  .leapp/                            # Repository information. Do not edit it manually.
  actors/                            # All actors are stored here in subdirectories.
-    actor-name/                     # An actor directory.
+    actorname/                      # An actor directory.
         actor.py                    # The actual actor code. The file name actor.py is required.
         Makefile                    # Optional makefile with target install-deps to install
-                                    # actor's dependencies
-        tests/                      # Required tests for the actors are stored here.
-            test_actor_name.py
+                                    # actor's dependencies for tests execution.
+        tests/                      # Unit and component tests for the actors are to be stored here.
+            test_actor.py
         libraries/                  # Private libraries for the actors only.
             private.py              # These can be modules
             actorpkg/               # or packages.
