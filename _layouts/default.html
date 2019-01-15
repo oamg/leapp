@@ -80,20 +80,21 @@
             }
 
             switch (window.location.pathname) {
-                case ".":
+                case "/leapp/":
                     swapActive("home");
                     break;
-                case "architecture":
-                    swapActive("architecture");
-                    break;
-                case "actors":
-                    swapActive("actors");
-                    break;
-                case "gettingstarted":
+                case "/leapp/gettingstarted":
                     swapActive("gettingstarted");
                     break;
-                case "upgrades":
+                case "/leapp/actors":
+                    swapActive("actors");
+                    break;
+                case "/leapp/architecture":
+                    swapActive("architecture");
+                    break;
+                case "/leapp/upgrades":
                     swapActive("upgrades");
+                    break;
             }
   </script>
 </body>
