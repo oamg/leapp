@@ -8,5 +8,4 @@ Actors scan the system and produce the found information as messages. Other acto
 There are multiple situations in which you will need to write your own actors. For example, if you want to migrate or upgrade an application that is not supported by the leapp tool or a supported application with a special configuration that cannot be migrated or upgraded by using default actors. Another situation might be that you want to introduce a new functionality using the Leapp framework.
 
 To learn how to write actors, see the [tutorial](http://leapp.readthedocs.io/en/latest/tutorials.html).
-Follow the [best practices](http://leapp.readthedocs.io/en/latest/best-practises.html) while writing actors. 
-
+Follow the [contributing guidelines for writing actors](https://github.com/oamg/leapp-repository/blob/master/CONTRIBUTING.md).
