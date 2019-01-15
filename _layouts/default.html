@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leapp doc</title>
+  <link rel="stylesheet" href="css/bulma.min.css" />
+</head>
+<body>
+  <section class="hero is-fullheight is-default is-bold">
+    <div class="hero-head">
+      <div class="container">
+        <nav class="nav has-shadow">
+          <div class="container">
+            <div>
+              <a class="nav-item" href=".">
+                <img src="img/leapp-logo.png" alt="Leapp">
+              </a>
+            </div>
+            <span class="nav-toggle">
+              <span></span>
+              <span></span>
+              <span></span>
+            </span>
+            <div class="nav-right nav-menu">
+              <a class="nav-item is-tab is-active" href="." id="home">
+                Home
+              </a>
+              <a class="nav-item is-tab" href="gettingstarted" id="gettingstarted">
+                Getting started
+              </a>
+              <a class="nav-item is-tab" href="actors" id="actors">
+                Actors
+              </a>
+              <a class="nav-item is-tab" href="architecture" id="architecture">
+                Architecture
+              </a>
+              <a class="nav-item is-tab" href="upgrades" id="upgrades">
+                In-place Upgrades
+              </a>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </div>
+
+    <div class="hero-body">
+    {{ content }}
+    </div>
+
+    <div class="hero-foot">
+      <div class="container">
+        <div class="tabs is-centered">
+          <ul>
+            <li><a></a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+  <style type="text/css">
+    body .hero-body {
+        width: 1200px;
+        margin: auto;
+    }
+
+    body .hero-body p {
+        margin: 10px;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: #d10000;
+    }
+  </style>
+  <script type="text/javascript">
+            function swapActive(clsName) {
+                document.getElementsByClassName("is-active")[0].classList.remove("is-active");
+                document.getElementById(clsName).className += " is-active";
+            }
+
+            switch (window.location.pathname) {
+                case ".":
+                    swapActive("home");
+                    break;
+                case "architecture":
+                    swapActive("architecture");
+                    break;
+                case "actors":
+                    swapActive("actors");
+                    break;
+                case "gettingstarted":
+                    swapActive("gettingstarted");
+                    break;
+                case "upgrades":
+                    swapActive("upgrades");
+            }
+  </script>
+</body>
+</html>
+
