@@ -1,10 +1,10 @@
 # Leapp - App & OS Modernization Framework
-Please visit [our homepage](https://leapp-to.github.io/)
+Please visit [our homepage](https://oamg.github.io/leapp/)
 for more infomation and documenation.
 
 ## Contributing
 If you are looking for information about contributing into this project, kindly
-visit: [Contributing to LeApp](CONTRIBUTING.rst).
+visit: [Contributing to Leapp](CONTRIBUTING.rst).
 
 
 ## Your friendly Snactor
