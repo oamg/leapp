@@ -53,22 +53,23 @@ def configure_logger():
     global _logger
     if not _logger:
         path = os.getenv('LEAPP_LOGGER_CONFIG', '/etc/leapp/logger.conf')
+        log_format = '%(asctime)s.%(msecs)-3d %(levelname)-8s PID: %(process)d %(name)s: %(message)s'
+        log_date_format = '%Y-%m-%d %H:%M:%S'
         if path and os.path.isfile(path):
             logging.config.fileConfig(path)
         else:  # Fall back logging configuration
             logging.Formatter.converter = time.gmtime
-            log_format = '%(asctime)s.%(msecs)-3d %(levelname)-8s PID: %(process)d %(name)s: %(message)s'
-            log_date_format = '%Y-%m-%d %H:%M:%S'
-            logging.basicConfig(
-                level=logging.DEBUG if os.getenv('LEAPP_DEBUG', '0') == '1' else logging.INFO,
-                format=log_format,
-                datefmt=log_date_format,
-                stream=sys.stderr,
-            )
             logging.getLogger('urllib3').setLevel(logging.WARN)
             handler = LeappAuditHandler()
             handler.setFormatter(logging.Formatter(fmt=log_format, datefmt=log_date_format))
             logging.getLogger('leapp').addHandler(handler)
+
+        if os.getenv('LEAPP_DEBUG', '0') == '1':
+            handler = logging.StreamHandler(sys.stderr)
+            handler.setLevel(logging.DEBUG)
+            handler.setFormatter(logging.Formatter(fmt=log_format, datefmt=log_date_format))
+            logging.getLogger('').addHandler(handler)
+            logging.getLogger('leapp').setLevel(logging.DEBUG)
 
         _logger = logging.getLogger('leapp')
         _logger.info('Logging has been initialized')
