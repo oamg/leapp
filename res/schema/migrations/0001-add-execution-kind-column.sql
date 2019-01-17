@@ -3,6 +3,6 @@ BEGIN;
 ALTER TABLE execution
   ADD COLUMN kind VARCHAR(256) DEFAULT NULL;
 
-PRAGMA user_version = 1;
+PRAGMA user_version = 2;
 
 COMMIT;
