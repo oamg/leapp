@@ -257,6 +257,17 @@ class Message(DataSource):
         self._message_id = cursor.lastrowid
 
 
+def create_audit_entry(event, data):
+    Audit(**{
+        'actor': os.environ.get('LEAPP_CURRENT_ACTOR', 'NO-ACTOR-SET'),
+        'phase': os.environ.get('LEAPP_CURRENT_PHASE', 'NON-WORKFLOW-EXECUTION'),
+        'context': os.environ.get('LEAPP_EXECUTION_ID', 'TESTING-CONTEXT'),
+        'hostname': os.environ['LEAPP_HOSTNAME'],
+        'event': event,
+        'data': data
+    }).store()
+
+
 class Audit(DataSource):
     def __init__(self, event=None, stamp=None, message=None, data=None, actor=None, phase=None, hostname=None,
                  context=None):
