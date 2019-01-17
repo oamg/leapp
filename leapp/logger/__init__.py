@@ -65,11 +65,10 @@ def configure_logger():
             logging.getLogger('leapp').addHandler(handler)
 
         if os.getenv('LEAPP_DEBUG', '0') == '1':
+            logging.getLogger('').setLevel(logging.DEBUG)
             handler = logging.StreamHandler(sys.stderr)
-            handler.setLevel(logging.DEBUG)
             handler.setFormatter(logging.Formatter(fmt=log_format, datefmt=log_date_format))
             logging.getLogger('').addHandler(handler)
-            logging.getLogger('leapp').setLevel(logging.DEBUG)
 
         _logger = logging.getLogger('leapp')
         _logger.info('Logging has been initialized')
