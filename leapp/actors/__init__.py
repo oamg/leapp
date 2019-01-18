@@ -91,6 +91,15 @@ class Actor(object):
             return self._messaging.request_answers(dialog)
         return None
 
+    def show_message(self, message):
+        """
+        Used to display messages to the user
+
+        :param message: Message to show
+        :type message: str
+        """
+        self._messaging.show_message(message)
+
     @property
     def actor_files_paths(self):
         """
