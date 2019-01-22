@@ -3,9 +3,19 @@
 represents a location for functions that otherwise would be defined multiple times across leapp actors
 and at the same time, they are really useful for other actors.
 """
+import os
+import sys
+
 import six
 import subprocess
-import os
+import uuid
+
+from leapp.utils.audit import create_audit_entry
+from leapp.libraries.stdlib import call
+
+
+class CalledProcessError(Exception):
+    pass
 
 from leapp.libraries.stdlib import api
 
@@ -32,3 +42,31 @@ def call(args, split=True):
     if split:
         return r.splitlines()
     return r
+
+
+def _logging_handler(fd, buffer):
+    if os.getenv('LEAPP_DEBUG', '0') == '1':
+        if fd == call.STDOUT:
+            sys.stdout.write(buffer)
+        else:
+            sys.stderr.write(buffer)
+
+
+def new_call(args, split=False):
+    _id = str(uuid.uuid4())
+    result_data = None
+    try:
+        create_audit_entry('process-start', {'id': _id, 'parameters': args})
+        result_data = call._call(args, callback_raw=_logging_handler)
+    finally:
+        create_audit_entry('process-end', _id)
+        create_audit_entry('process-result', {'id': _id, 'parameters': args, 'result': result_data})
+    return result_data
+
+
+def new_checked_call(args, split=False):
+    result = new_call(args)
+    if result['exit_code'] != 0:
+        raise CalledProcessError("A Leapp CalledProcessError occured." + "Command: " + str(args[0]))
+    else:
+        return result

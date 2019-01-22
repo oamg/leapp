@@ -37,17 +37,18 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
     while not ep.closed and len(hupped) != num_expected:
         events = ep.poll(timeout)
         for fd, event in events:
+            translated_fd = read_fds.index(fd) + 1
             if event == select.EPOLLHUP:
                 hupped.add(fd)
                 ep.unregister(fd)
             if event & (select.EPOLLIN | select.EPOLLPRI) != 0:
                 read = os.read(fd, buffer_size)
-                callback_raw(fd, read)
+                callback_raw(translated_fd, read)
                 linebufs[fd] += read.decode(encoding)
                 while '\n' in linebufs[fd]:
                     pre, post = linebufs[fd].split('\n', 1)
                     linebufs[fd] = post
-                    callback_linebuffered(fd, pre)
+                    callback_linebuffered(translated_fd, pre)
                 buf[fd] += read
             elif event == select.EPOLLOUT:
                 # Write data to pipe, `os.write` returns the number of bytes written,
@@ -64,7 +65,7 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
     # Process leftovers from line buffering
     for (fd, lb) in linebufs.items():
         if lb:
-            callback_linebuffered(fd, lb)
+            callback_linebuffered(read_fds.index(fd) + 1, lb)
 
     return buf
 
