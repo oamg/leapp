@@ -30,6 +30,7 @@ Requires: python2-%{name} = %{version}-%{release}
 %endif
 Requires: leapp-repository >= %{version}
 
+
 %description
 Leapp tool for handling upgrades.
 
@@ -77,20 +78,47 @@ BuildRequires:  python2-pytest-cov
 BuildRequires:  python2-setuptools
 
 %endif
-%if 0%{?rhel} && 0%{?rhel} == 7
-Requires: /usr/lib/python2.7/site-packages/six.py
-Requires: /usr/lib/python2.7/site-packages/setuptools/__init__.py
-%else
-Requires: python2-six
-Requires: python2-setuptools
-%endif
-Requires: findutils
+
+# IMPORTANT: everytime the requirements are changed, increment number by one
+# - same for Provides in deps subpackage
+Requires: leapp-framework-dependencies = 1
 
 %description -n python2-%{name}
 Python 2 leapp framework libraries.
 
 %endif
 
+# FIXME:
+# this subpackages should be used by python2-%{name} - so it makes sense to
+# improve name and dependencies inside - do same subpackage for python3-%{name}
+%package deps
+Summary:    Meta-package with system dependencies of %{name} package
+
+# IMPORTANT: everytime the requirements are changed, increment number by one
+# same for requiremenrs in main package above
+Provides: leapp-framework-dependencies = 1
+##################################################
+# Real requirements for the leapp HERE
+##################################################
+# NOTE: ignore Python3 completely now
+%if 0%{?rhel} && 0%{?rhel} == 7
+Requires: python-six
+Requires: python-setuptools
+%else
+%if %{with python3}
+Requires: python3-six
+Requires: python3-setuptools
+%else # with python2
+Requires: python2-six
+Requires: python2-setuptools
+%endif
+%endif
+Requires: findutils
+##################################################
+# end requirements here
+##################################################
+%description deps
+%{summary}
 
 ##################################################
 # Python 3 library package
@@ -110,8 +138,7 @@ BuildRequires:  python3-setuptools
 BuildRequires:  python3-pytest-cov
 %endif
 
-Requires: python3-six
-Requires: findutils
+Requires: leapp-framework-dependencies = 1
 
 %description -n python3-%{name}
 Python 3 leapp framework libraries.
@@ -209,6 +236,10 @@ install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
 %{python3_sitelib}/*
 
 %endif
+
+#FIXME: in case of rename, put those subpkgs under relevant if statement
+%files deps
+# no files here
 
 %changelog
 * Mon Apr 16 2018 Vinzenz Feenstra <evilissimo@gmail.com> - %{version}-%{release}
