@@ -65,8 +65,8 @@ def new_call(args, split=False):
 
 
 def new_checked_call(args, split=False):
-    result = new_call(args)
+    result = new_call(args, split=split)
     if result['exit_code'] != 0:
-        raise CalledProcessError("A Leapp CalledProcessError occured." + "Command: " + str(args[0]))
+        raise CalledProcessError("A Leapp CalledProcessError occurred." + "Command: " + str(args[0]))
     else:
         return result

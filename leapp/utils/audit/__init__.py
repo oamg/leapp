@@ -258,6 +258,12 @@ class Message(DataSource):
 
 
 def create_audit_entry(event, data):
+    """
+    Create an audit entry
+    :param event: Type of this event e.g. process-start or process-end but can be anything
+    :param data: Data related to Type of the event, e.g. a command and its arguments
+    :return:
+    """
     Audit(**{
         'actor': os.environ.get('LEAPP_CURRENT_ACTOR', 'NO-ACTOR-SET'),
         'phase': os.environ.get('LEAPP_CURRENT_PHASE', 'NON-WORKFLOW-EXECUTION'),
