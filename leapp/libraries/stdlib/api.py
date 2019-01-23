@@ -34,6 +34,16 @@ def report_error(message, severity=ErrorSeverity.ERROR, details=None):
     return current_actor().report_error(message=message, severity=severity, details=details)
 
 
+def show_message(message):
+    """
+    Used to display messages to the user
+
+    :param message: Message to show
+    :type message: str
+    """
+    return current_actor().show_message(message=message)
+
+
 def current_logger():
     """
     Retrieve the logger of the current active actor.
