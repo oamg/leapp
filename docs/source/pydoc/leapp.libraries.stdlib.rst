@@ -8,3 +8,8 @@ Module contents
     :members:
     :undoc-members:
     :show-inheritance:
+
+.. automodule:: leapp.libraries.stdlib.api
+    :members:
+    :undoc-members:
+    :show-inheritance:
