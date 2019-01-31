@@ -74,7 +74,7 @@ class Actor(object):
             'name': self.name,
             'path': os.path.dirname(sys.modules[type(self).__module__].__file__),
             'class_name': type(self).__name__,
-            'description': self.description,
+            'description': self.description or type(self).__doc__,
             'consumes': [c.__name__ for c in self.consumes],
             'produces': [p.__name__ for p in self.produces],
             'tags': [t.__name__ for t in self.tags],
@@ -351,7 +351,8 @@ def _get_attribute(actor, name, validator, required=False, default_value=None, a
     value = getattr(actor, name, None)
     if not value and required:
         raise MissingActorAttributeError('Actor {} is missing attribute {}.{}'.format(actor, name, additional_info))
-    value = validator(actor, name, value)
+    if value or required:
+        value = validator(actor, name, value)
     if not value and default_value is not None:
         value = default_value
     return name, value
@@ -375,7 +376,7 @@ def get_actor_metadata(actor):
         _get_attribute(actor, 'produces', _is_model_tuple, required=False, default_value=()),
         _get_attribute(actor, 'dialogs', _is_dialog_tuple, required=False, default_value=()),
         _get_attribute(actor, 'description', _is_type(string_types), required=False,
-                       default_value='There has been no description provided for this actor.')
+                       default_value=actor.__doc__ or 'There has been no description provided for this actor.')
     ])
 
 
