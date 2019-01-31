@@ -37,11 +37,11 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
     while not ep.closed and len(hupped) != num_expected:
         events = ep.poll(timeout)
         for fd, event in events:
-            fd_type = read_fds.index(fd) + 1
             if event == select.EPOLLHUP:
                 hupped.add(fd)
                 ep.unregister(fd)
             if event & (select.EPOLLIN | select.EPOLLPRI) != 0:
+                fd_type = read_fds.index(fd) + 1
                 read = os.read(fd, buffer_size)
                 callback_raw((fd, fd_type), read)
                 linebufs[fd] += read.decode(encoding)
@@ -144,7 +144,7 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
 
         read = _multiplex(
             ep,
-            (stdout, stderr,),
+            [stdout, stderr],
             callback_raw,
             callback_linebuffered,
             timeout=poll_timeout,
