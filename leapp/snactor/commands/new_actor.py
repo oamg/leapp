@@ -78,8 +78,11 @@ def cli(args):
 
 
 class {actor_class}(Actor):
+    """
+    No documentation has been provided for the {actor_name} actor.
+    """
+
     name = '{actor_name}'
-    description = 'No description has been provided for the {actor_name} actor.'
     consumes = {consumes_content}
     produces = {produces_content}
     tags = {tags_content}
