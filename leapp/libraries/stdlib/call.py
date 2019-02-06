@@ -17,7 +17,7 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
     for fd in read_fds:
         ep.register(fd, select.EPOLLIN | select.EPOLLPRI)
 
-    # Register a write file descritpr
+    # Register a write file descriptor
     if write:
         ep.register(write[0], select.EPOLLOUT)
 

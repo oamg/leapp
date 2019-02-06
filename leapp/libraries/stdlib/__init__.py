@@ -52,7 +52,12 @@ def _logging_handler(fd, buffer):
             sys.stderr.write(buffer)
 
 
-def new_call(args, split=False):
+def new_call(args):
+    """
+    Call the Leapp's stdlib _call
+    :param args:
+    :return:
+    """
     _id = str(uuid.uuid4())
     result_data = None
     try:
@@ -65,8 +70,17 @@ def new_call(args, split=False):
 
 
 def new_checked_call(args, split=False):
-    result = new_call(args, split=split)
+    """
+    Call the audited call and check result split the result into multiple lines if requested
+
+    :param args:
+    :param split:
+    :return:
+    """
+    result = new_call(args)
     if result['exit_code'] != 0:
         raise CalledProcessError("A Leapp CalledProcessError occurred." + "Command: " + str(args[0]))
     else:
-        return result
+        if split:
+            return result['stdout'].splitlines()
+        return result['stdout']
