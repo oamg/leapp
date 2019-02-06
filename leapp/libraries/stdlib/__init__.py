@@ -7,6 +7,8 @@ import six
 import subprocess
 import os
 
+from leapp.libraries.stdlib import api
+
 
 def call(args, split=True):
     """
