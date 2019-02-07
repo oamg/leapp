@@ -15,13 +15,16 @@ def _make_repo_lookup(include_locals):
 
     if include_locals:
         # Having it here allows to override global repositories with local ones.
-        data.update(get_user_config_repo_data()['repos'])
+        data.update(get_user_config_repo_data().get('repos', {}))
 
     return data
 
 
 def _resolve_repository_links(manager, include_locals):
     repo_lookup = _make_repo_lookup(include_locals=include_locals)
+    if not repo_lookup and manager.get_missing_repo_links():
+        # No repositories configured at all though missing links present
+        raise RepositoryConfigurationError('No repos configured? Try adding some with "snactor repo find"')
     finished = False
     while not finished:
         missing = manager.get_missing_repo_links()
