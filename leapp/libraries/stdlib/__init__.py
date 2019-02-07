@@ -6,24 +6,20 @@ and at the same time, they are really useful for other actors.
 import os
 import sys
 
-import six
 import subprocess
 import uuid
 
+import six
+
+from leapp.exceptions import CommandError
 from leapp.utils.audit import create_audit_entry
-from leapp.libraries.stdlib import call
-
-
-class CalledProcessError(Exception):
-    pass
-
-from leapp.libraries.stdlib import api
+from leapp.libraries.stdlib import call, api
 
 
 def call(args, split=True):
     """
-    Call an external program, capture and automatically utf-8 decode its ouput.
-    Then, supress output to stderr and redirect to /dev/null.
+    Call an external program, capture and automatically utf-8 decode its output.
+    Then, suppress output to stderr and redirect to /dev/null.
 
     :param args: Command to execute
     :type args: list
@@ -55,8 +51,9 @@ def _logging_handler(fd, buffer):
 def new_call(args):
     """
     Call the Leapp's stdlib _call
-    :param args:
-    :return:
+
+    :param args: Command to execute
+    :return: stdout output, 'utf-8' decoded
     """
     _id = str(uuid.uuid4())
     result_data = None
@@ -71,15 +68,20 @@ def new_call(args):
 
 def new_checked_call(args, split=False):
     """
-    Call the audited call and check result split the result into multiple lines if requested
+    Call the audited call and check result, split the result into multiple lines if requested
 
-    :param args:
-    :param split:
-    :return:
+    :param args: Command to execute
+    :param split: Split the output on newlines
+    :return: stdout output, 'utf-8' decoded, split by lines if split=True
     """
     result = new_call(args)
     if result['exit_code'] != 0:
-        raise CalledProcessError("A Leapp CalledProcessError occurred." + "Command: " + str(args[0]))
+        failed_command = "Command: " + str(args[0])
+        command_stdout = "Result stdout: " + result['stdout']
+        error_message = " stderr: " + result['stderr']
+        raise CommandError(
+            message="A Leapp Command Error occurred. " + failed_command + command_stdout + error_message
+        )
     else:
         if split:
             return result['stdout'].splitlines()
