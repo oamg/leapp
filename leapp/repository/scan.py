@@ -9,7 +9,7 @@ from leapp.utils.repository import get_global_repositories_data, get_user_config
 
 def _make_repo_lookup(include_locals):
     data = {}
-    for entry in get_global_repositories_data().items():
+    for id, entry in get_global_repositories_data().items():
         if entry['enabled']:
             data.update({entry['id']: entry['path']})
 
