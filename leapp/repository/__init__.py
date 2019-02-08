@@ -120,13 +120,13 @@ class Repository(object):
         if not stage or stage is _LoadStage.INITIAL:
             self.log.debug("Loading repository %s", self.name)
             self.log.debug("Loading tag modules")
-            self._load_modules(self.tags)
+            self._load_modules(self.tags, 'leapp.tags')
             self.log.debug("Loading topic modules")
-            self._load_modules(self.topics)
+            self._load_modules(self.topics, 'leapp.topics')
 
         if not stage or stage is _LoadStage.MODELS:
             self.log.debug("Loading model modules")
-            self._load_modules(self.models)
+            self._load_modules(self.models, 'leapp.models')
             if resolve:
                 from leapp.models import resolve_model_references
                 resolve_model_references()
@@ -152,7 +152,7 @@ class Repository(object):
 
         if not stage or stage is _LoadStage.WORKFLOWS:
             self.log.debug("Loading workflow modules")
-            self._load_modules(self.workflows)
+            self._load_modules(self.workflows, 'leapp.workflows')
 
     def _load_libraries(self, path=None, mod=None, prefix='leapp.libraries.common'):
         for importer, name, is_pkg in pkgutil.iter_modules(path or self.libraries):
@@ -172,9 +172,16 @@ class Repository(object):
             if is_pkg:
                 self._load_libraries(path=(os.path.dirname(loaded.__file__),), mod=loaded, prefix=mod_full_name)
 
-    def _load_modules(self, modules):
-        directories = tuple(os.path.join(self._repo_dir, os.path.dirname(module)) for module in modules)
-        for importer, name, is_pkg in pkgutil.iter_modules(directories):
+    def _load_modules(self, modules, prefix):
+        """
+        :param modules: Paths to modules of the same type to be imported
+        :type list of str
+        :param prefix: A prefix to be appended to module name in sys.modules
+        :type str
+        """
+        directories = [os.path.join(self._repo_dir, os.path.dirname(module)) for module in modules]
+        prefix = prefix + '.' if not prefix.endswith('.') else prefix
+        for importer, name, _ in pkgutil.iter_modules(directories, prefix=prefix):
             importer.find_module(name).load_module(name)
 
     def dump(self):

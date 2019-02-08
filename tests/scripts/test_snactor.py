@@ -47,6 +47,19 @@ def test_new_topic(repository_dir):
         check_call(['snactor', 'discover'])
 
 
+def test_different_objects_same_name_discover(repository_dir):
+    with repository_dir.as_cwd():
+        check_call(['snactor', 'new-tag', 'winteriscoming'])
+        check_call(['snactor', 'new-topic', 'winteriscoming'])
+        check_call(['snactor', 'new-model', 'winteriscoming', '--topic', 'WinteriscomingTopic'])
+        objs = ['tags/winteriscoming.py', 'topics/winteriscoming.py', 'models/winteriscoming.py']
+        for obj in objs:
+            assert repository_dir.join(obj).check(file=True)
+        out = check_output(['snactor', 'discover'])
+        for obj in objs:
+            assert obj.encode('utf-8') in out
+
+
 def test_new_model(repository_dir):
     # We need the topic to be created already
     if not repository_dir.join('topics/test.py').check(file=True):
