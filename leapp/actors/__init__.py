@@ -90,14 +90,12 @@ class Actor(object):
 
     def request_answers(self, dialog):
         """
-        Requests the answers for a dialog. The dialog needs be predefined in :py:attr:`dialogs`.
+        Requests the answers for a dialog. The dialog class needs be predefined within the actor.
 
-        :param dialog: Dialog instance to show
-        :return: dictionary with the requested answers, None if not a defined dialog
+        :param dialog: Dialog class to show
+        :return: dictionary with the requested answers
         """
-        if dialog in type(self).dialogs:
-            return self._messaging.request_answers(dialog)
-        return None
+        return self._messaging.request_answers(dialog().serialize())
 
     def show_message(self, message):
         """
@@ -366,14 +364,15 @@ def get_actor_metadata(actor):
     :return: Dictionary with the name, tags, consumes, produces, and description of the actor
     """
     additional_tag_info = ' At least one tag is required for actors. Please fill the tags field'
+
     return dict([
         ('class_name', actor.__name__),
         ('path', os.path.dirname(sys.modules[actor.__module__].__file__)),
+#        ('dialogs', tuple([(dlg.__name__, dlg().serialize()) for dlg in get_flattened_subclasses(Dialog)])),
         _get_attribute(actor, 'name', _is_type(string_types), required=True),
         _get_attribute(actor, 'tags', _is_tag_tuple, required=True, additional_info=additional_tag_info),
         _get_attribute(actor, 'consumes', _is_model_tuple, required=False, default_value=()),
         _get_attribute(actor, 'produces', _is_model_tuple, required=False, default_value=()),
-        _get_attribute(actor, 'dialogs', _is_dialog_tuple, required=False, default_value=()),
         _get_attribute(actor, 'description', _is_type(string_types), required=False,
                        default_value='There has been no description provided for this actor.')
     ])

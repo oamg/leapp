@@ -1,4 +1,21 @@
-class Dialog(object):
+from leapp.utils.meta import with_metaclass
+import leapp.dialogs.components
+from leapp.dialogs.questions import Question
+
+
+class DialogMeta(type):
+    def __new__(mcs, name, bases, attrs):
+        klass = super(DialogMeta, mcs).__new__(mcs, name, bases, attrs)
+        klass.scope = name.lower()
+        if getattr(klass, '__doc__', None):
+            klass.reason = klass.__doc__.strip()
+        for attr_name, attr in attrs.items():
+            if isinstance(attr, Question):
+                klass.components += (attr.make_component(key=attr_name),)
+        return klass
+
+
+class Dialog(with_metaclass(DialogMeta)):
     """
     The dialog class is used to declare the information passed to the user and retrieved from the user
     during an interaction.
@@ -18,7 +35,7 @@ class Dialog(object):
         address values.
     """
 
-    def __init__(self, scope, reason, title=None, components=None):
+    def __init__(self, scope=None, reason=None, title=None, components=None):
         """
 
         :param scope: Unique scope identifier for the data to be stored in the answer files. Scope + component key
@@ -32,9 +49,9 @@ class Dialog(object):
         :type components: tuple(leapp.dialogs.components.Component)
         """
         self.components = components or self.components
-        self.title = title
-        self.scope = scope
-        self.reason = reason
+        self.title = title or self.title
+        self.scope = scope or self.scope
+        self.reason = reason or self.reason
         self._store = None
         self._min_label_width = None
 
@@ -89,7 +106,16 @@ class Dialog(object):
         :param renderer: Target renderer instance
         :return: Dictionary with answers once retrieved
         """
-        if any([component.value is None for component in self.components]):
+        def make_component(component):
+            component = component.copy()
+            value = component.pop('value', None)
+            component.pop('value_type', None)
+            comp = getattr(leapp.dialogs.components, component.pop('class_type'))(**component)
+            comp.value = value
+            return comp
+
+        used_comps = (comp if isinstance(comp, leapp.dialogs.components.Component) else make_component(comp) for comp in self.components)
+        if any([component.value is None for component in used_comps]):
             self._store = store
             renderer.render(self)
             self._store = None

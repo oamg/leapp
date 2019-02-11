@@ -43,7 +43,8 @@ class Component(object):
             'default': self.default,
             'value': self.value,
             'reason': self.reason,
-            'value_type': str(self.value_type) if self.value_type else None
+            'value_type': str(self.value_type) if self.value_type else None,
+            'class_type': type(self).__name__
         }
 
 
@@ -103,6 +104,13 @@ class BooleanComponent(Component):
 
     def dispatch(self, renderer, dialog):
         renderer.render_bool_component(self, dialog=dialog)
+    
+    def serialize(self):
+        result = super(BooleanComponent, self).serialize()
+        result.update({
+            'values': self.values
+        })
+        return result
 
 
 class ChoiceComponent(Component):
@@ -129,6 +137,12 @@ class ChoiceComponent(Component):
     def dispatch(self, renderer, dialog):
         renderer.render_choice_component(self, dialog=dialog)
 
+    def serialize(self):
+        result = super(ChoiceComponent, self).serialize()
+        result.update({
+            'choices': self.choices
+        })
+        return result
 
 class MultipleChoiceComponent(ChoiceComponent):
     """

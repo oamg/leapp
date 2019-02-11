@@ -7,7 +7,7 @@ import socket
 
 from six.moves import configparser
 
-from leapp.dialogs import RawMessageDialog
+from leapp.dialogs import RawMessageDialog, Dialog
 from leapp.dialogs.renderer import CommandlineRenderer
 from leapp.messaging.answerstore import AnswerStore
 from leapp.exceptions import CannotConsumeErrorMessages
@@ -164,7 +164,7 @@ class BaseMessaging(object):
         return message
 
     def request_answers(self, dialog):
-        return dialog.request_answers(self._answers, self._dialog_renderer)
+        return Dialog(**dialog).request_answers(self._answers, self._dialog_renderer)
 
     def show_message(self, message):
         """
