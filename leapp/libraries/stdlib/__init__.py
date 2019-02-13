@@ -40,9 +40,9 @@ def call(args, split=True):
     return r
 
 
-def _logging_handler(fd, buffer):
+def _logging_handler((fd, fd_type), buffer):
     if os.getenv('LEAPP_DEBUG', '0') == '1':
-        if fd == call.STDOUT:
+        if fd_type == call.STDOUT:
             sys.stdout.write(buffer)
         else:
             sys.stderr.write(buffer)

@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import select
 import os
-import sys
 
 
 STDIN = 0
