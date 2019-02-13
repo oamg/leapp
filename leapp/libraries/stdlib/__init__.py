@@ -11,9 +11,38 @@ import uuid
 
 import six
 
-from leapp.exceptions import CommandError
+from leapp.exceptions import LeappError
 from leapp.utils.audit import create_audit_entry
 from leapp.libraries.stdlib import call, api
+
+
+class CalledProcessError(LeappError):
+    """ Leap Call Process Exception Error
+    """
+    def __init__(self, message, command, result):
+        super(CalledProcessError, self).__init__(message)
+        self._result = result
+        self.command = command
+
+    @property
+    def stdout(self):
+        return self._result.get('stdout')
+
+    @property
+    def stderr(self):
+        return self._result.get('stderr')
+
+    @property
+    def exit_code(self):
+        return self._result.get('exit_code')
+
+    @property
+    def signal(self):
+        return self._result.get('signal')
+
+    @property
+    def pid(self):
+        return self._result.get('pid')
 
 
 def call(args, split=True):
@@ -40,7 +69,8 @@ def call(args, split=True):
     return r
 
 
-def _logging_handler((fd, fd_type), buffer):
+def _logging_handler(fd_info, buffer):
+    (_unused, fd_type) = fd_info
     if os.getenv('LEAPP_DEBUG', '0') == '1':
         if fd_type == call.STDOUT:
             sys.stdout.write(buffer)
@@ -76,11 +106,10 @@ def new_checked_call(args, split=False):
     """
     result = new_call(args)
     if result['exit_code'] != 0:
-        failed_command = "Command: " + str(args[0])
-        command_stdout = "Result stdout: " + result['stdout']
-        error_message = " stderr: " + result['stderr']
-        raise CommandError(
-            message="A Leapp Command Error occurred. " + failed_command + command_stdout + error_message
+        raise CalledProcessError(
+            message="A Leapp Command Error occurred. ",
+            command=str(args[0]),
+            result=result
         )
     else:
         if split:
