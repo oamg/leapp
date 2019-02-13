@@ -157,7 +157,7 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         ep.close()
 
         # The status variable is a 16 bit value, where the lower octet describes
-        # the signal which killed the proces, and the upper octet is the exit code
+        # the signal which killed the process, and the upper octet is the exit code
         signal, exit_code = status & 0xff, status >> 8 & 0xff
         ret = {'signal': signal, 'exit_code': exit_code, 'pid': pid}
         if not encoding:

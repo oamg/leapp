@@ -17,7 +17,9 @@ from leapp.libraries.stdlib import call, api
 
 
 class CalledProcessError(LeappError):
-    """ Leap Call Process Exception Error
+    """ Leapp Call Process Exception Error
+
+    Raised when the result of a called process is a none zero return code.
     """
     def __init__(self, message, command, result):
         super(CalledProcessError, self).__init__(message)
@@ -26,22 +28,42 @@ class CalledProcessError(LeappError):
 
     @property
     def stdout(self):
+        """
+        Retrieve the stdout.
+        :return:
+        """
         return self._result.get('stdout')
 
     @property
     def stderr(self):
+        """
+        Retrieve the stderr.
+        :return:
+        """
         return self._result.get('stderr')
 
     @property
     def exit_code(self):
+        """
+        Retrieve the exit code.
+        :return:
+        """
         return self._result.get('exit_code')
 
     @property
     def signal(self):
+        """
+        Retrieve the signal which the process was signalled by.
+        :return:
+        """
         return self._result.get('signal')
 
     @property
     def pid(self):
+        """
+        Retrieve the pid of the finished process.
+        :return:
+        """
         return self._result.get('pid')
 
 
@@ -70,6 +92,11 @@ def call(args, split=True):
 
 
 def _logging_handler(fd_info, buffer):
+    """
+    Log while in a leapp debug mode
+    :param fd_info:
+    :param buffer:
+    """
     (_unused, fd_type) = fd_info
     if os.getenv('LEAPP_DEBUG', '0') == '1':
         if fd_type == call.STDOUT:
@@ -78,9 +105,11 @@ def _logging_handler(fd_info, buffer):
             sys.stderr.write(buffer)
 
 
-def new_call(args):
+def run(args):
     """
-    Call the Leapp's stdlib _call
+    Run the program described by args
+    and wait for the program to complete and return the results as a dict.
+    The execution of the program and it's results are captured by the audit.
 
     :param args: Command to execute
     :return: stdout output, 'utf-8' decoded
@@ -96,19 +125,21 @@ def new_call(args):
     return result_data
 
 
-def new_checked_call(args, split=False):
+def checked_call(args, split=False):
     """
-    Call the audited call and check result, split the result into multiple lines if requested
+    Run the program described by args and wait for the program to complete and return the results as a dict.
+    The execution of the program and it's results are captured by the audit.
+
 
     :param args: Command to execute
     :param split: Split the output on newlines
     :return: stdout output, 'utf-8' decoded, split by lines if split=True
     """
-    result = new_call(args)
+    result = run(args)
     if result['exit_code'] != 0:
         raise CalledProcessError(
             message="A Leapp Command Error occurred. ",
-            command=str(args[0]),
+            command=args,
             result=result
         )
     else:
