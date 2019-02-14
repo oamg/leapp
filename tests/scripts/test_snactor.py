@@ -6,6 +6,8 @@ from helpers import repository_dir
 from leapp.exceptions import CommandError
 
 import pytest
+from leapp.snactor import context
+from leapp.utils import audit
 
 
 def setup_module(m):
@@ -143,7 +145,7 @@ class Test(Actor):
     tags = (TestTag.Common,)
 
     def process(self):
-        pass
+        self.produce(TestModel(value='Some testing value'))
 ''')
         check_call(['snactor', 'discover'])
 
@@ -180,6 +182,19 @@ def test_run_workflow(repository_dir):
         check_call(['snactor', '--debug', 'workflow', 'run', 'Test'])
         check_call(['snactor', 'workflow', '--debug', 'run', 'Test'])
         check_call(['snactor', 'workflow', 'run', '--debug', 'Test'])
+        test_clear_messages(repository_dir)
+        connection = audit.create_connection('.leapp/leapp.db')
+        assert len(audit.get_messages(names=('TestModel',),
+                                      context=context.last_snactor_context(connection), connection=connection)) == 0
+        check_call(['snactor', 'workflow', 'run', '--debug', '--save-output', 'Test'])
+        assert len(audit.get_messages(names=('TestModel',),
+                                      context=context.last_snactor_context(connection), connection=connection)) == 1
+        check_call(['snactor', 'workflow', 'run', 'Test'])
+        assert len(audit.get_messages(names=('TestModel',),
+                                      context=context.last_snactor_context(connection), connection=connection)) == 1
+        check_call(['snactor', 'workflow', 'run', '--save-output', 'Test'])
+        assert len(audit.get_messages(names=('TestModel',),
+                                      context=context.last_snactor_context(connection), connection=connection)) == 2
 
 
 def test_run_actor(repository_dir):
