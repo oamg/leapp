@@ -21,15 +21,16 @@ Summary:    OS & Application modernization framework
 License:    ASL 2.0
 URL:        https://leapp-to.github.io
 Source0:    https://github.com/leapp-to/%{name}/archive/%{gittag}/%{name}-%{version}.tar.gz
-
 BuildArch:  noarch
+
+%if !0%{?fedora}
 %if %{with python3}
 Requires: python3-%{name} = %{version}-%{release}
 %else
 Requires: python2-%{name} = %{version}-%{release}
 %endif
 Requires: leapp-repository >= %{version}
-
+%endif # !fedora
 
 %description
 Leapp tool for handling upgrades.
@@ -169,17 +170,21 @@ Python 3 leapp framework libraries.
 # Install
 ##################################################
 %install
+
+install -m 0755 -d %{buildroot}%{_mandir}/man1
+install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
+
+%if !0%{?fedora}
 install -m 0755 -d %{buildroot}%{_sharedstatedir}/leapp
 install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp
 install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp/repos.d
 install -m 0600 -d %{buildroot}%{_sysconfdir}/leapp/answers
-install -m 0755 -d %{buildroot}%{_mandir}/man1
 # standard directory should have permission set to 0755, however this directory
 # could contain sensitive data, hence permission for root only
 install -m 0700 -d %{buildroot}%{_sysconfdir}/leapp/answers
 install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 install -m 0644 -p man/leapp.1 %{buildroot}%{_mandir}/man1/
-install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
+%endif # !fedora
 
 %if %{with python2}
 %py2_install
@@ -189,9 +194,16 @@ install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
 %py3_install
 %endif
 
+%if 0%{?fedora}
+rm -f %{buildroot}/%{_bindir}/leapp
+%endif
+
+
 ##################################################
 # leapp files
 ##################################################
+
+%if !0%{?fedora}
 %files
 %doc README.md
 %license COPYING
@@ -203,7 +215,7 @@ install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
 %dir %{_sysconfdir}/leapp/repos.d
 %{_bindir}/leapp
 %dir %{_sharedstatedir}/leapp
-
+%endif
 
 
 
@@ -231,6 +243,7 @@ install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
 # python3-leapp files
 ##################################################
 %if %{with python3}
+
 %files -n python3-%{name}
 %license COPYING
 %{python3_sitelib}/*
