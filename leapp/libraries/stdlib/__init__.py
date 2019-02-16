@@ -13,7 +13,8 @@ import six
 
 from leapp.exceptions import LeappError
 from leapp.utils.audit import create_audit_entry
-from leapp.libraries.stdlib import call, api
+from leapp.libraries.stdlib import api
+from leapp.libraries.stdlib.call import _call
 
 
 class CalledProcessError(LeappError):
@@ -99,7 +100,7 @@ def _logging_handler(fd_info, buffer):
     """
     (_unused, fd_type) = fd_info
     if os.getenv('LEAPP_DEBUG', '0') == '1':
-        if fd_type == call.STDOUT:
+        if fd_type == _call.STDOUT:
             sys.stdout.write(buffer)
         else:
             sys.stderr.write(buffer)
@@ -118,7 +119,7 @@ def run(args):
     result_data = None
     try:
         create_audit_entry('process-start', {'id': _id, 'parameters': args})
-        result_data = call._call(args, callback_raw=_logging_handler)
+        result_data = _call(args, callback_raw=_logging_handler)
     finally:
         create_audit_entry('process-end', _id)
         create_audit_entry('process-result', {'id': _id, 'parameters': args, 'result': result_data})
