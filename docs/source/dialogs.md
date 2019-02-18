@@ -22,8 +22,10 @@ from leapp.dialogs import Dialog
 from leapp.dialogs.components import MultipleChoiceComponent
 
 class IpResolver(Actor):
+    """
+    No description has been provided for the ip_resolver actor.
+    """
     name = 'ip_resolver'
-    description = 'No description has been provided for the ip_resolver actor.'
     consumes = (Hostname,)
     produces = (ResolvedHostname,)
     tags = (ScanTag,)
