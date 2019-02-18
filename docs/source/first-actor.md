@@ -114,14 +114,14 @@ from leapp.actors import Actor
 
 
 class HostnameScanner(Actor):
-     name = 'hostname_scanner'
-     description = 'No description has been provided for the hostname_scanner actor.'
-     consumes = ()
-     produces = ()
-     tags = ()
+    name = 'hostname_scanner'
+    description = 'No description has been provided for the hostname_scanner actor.'
+    consumes = ()
+    produces = ()
+    tags = ()
 
-     def process(self):
-         pass
+    def process(self):
+        pass
 ```
 
 Import the model and the tag we have previously created to
@@ -173,7 +173,7 @@ You can edit the description of the actor now.
 Save the file, and it is ready to be run from the commandline:
 
 ```shell
-    $ snactor run HostnameScanner
+    $ snactor run --debug HostnameScanner
     2018-03-20 13:24:06.20  INFO     PID: 6256 leapp: Logging has been initialized
     2018-03-20 13:24:06.22  INFO     PID: 6256 leapp.repository.tutorial: New repository 'tutorial' initialized at /home/evilissimo/devel/tutorial
     2018-03-20 13:24:06.67  INFO     PID: 6273 leapp.actors.hostname_scanner: Starting to scan for the hostname
@@ -183,7 +183,7 @@ Save the file, and it is ready to be run from the commandline:
 To see the message it generated, use the --print-output option:
 
 ```shell
-    $ snactor run --print-output HostnameScanner
+    $ snactor run --debug --print-output HostnameScanner
     2018-03-20 13:24:32.333 INFO     PID: 6300 leapp: Logging has been initialized
     2018-03-20 13:24:32.335 INFO     PID: 6300 leapp.repository.tutorial: New repository 'tutorial' initialized at /home/evilissimo/devel/tutorial
     2018-03-20 13:24:32.372 INFO     PID: 6317 leapp.actors.hostname_scanner: Starting to scan for the hostname
