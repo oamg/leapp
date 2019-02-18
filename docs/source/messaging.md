@@ -77,8 +77,10 @@ from leapp.models import Hostname, ResolvedHostname
 
 
 class IpResolver(Actor):
+    """
+    No description is provided for the ip_resolver actor.
+    """
     name = 'ip_resolver'
-    description = 'No description is provided for the ip_resolver actor.'
     consumes = (Hostname,)
     produces = (ResolvedHostname,)
     tags = (ScanTag,)
