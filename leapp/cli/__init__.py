@@ -2,7 +2,11 @@ import os
 import socket
 
 from leapp.utils.clicmd import command, command_opt
-import leapp.cli.upgrade
+from leapp.cli import upgrade
+try:
+    from leapp.cli import report
+except ImportError:
+    report = None
 from leapp import VERSION
 
 
@@ -19,5 +23,8 @@ def cli(args):
 
 def main():
     os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
-    cli.command.add_sub(leapp.cli.upgrade.upgrade.command)
+    if report:
+        cli.command.add_sub(report.report.command)
+    cli.command.add_sub(upgrade.list_runs.command)
+    cli.command.add_sub(upgrade.upgrade.command)
     cli.command.execute('leapp version {}'.format(VERSION))
