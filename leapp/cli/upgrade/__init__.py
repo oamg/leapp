@@ -1,3 +1,4 @@
+from __future__ import print_function
 import itertools
 import json
 import os
@@ -36,6 +37,19 @@ def fetch_last_upgrade_context():
         if row:
             return row[0], json.loads(row[2])
     return None, {}
+
+
+def fetch_all_upgrade_contexts():
+    """
+    :return: All upgrade execution contexts
+    """
+    with get_connection(None) as db:
+        cursor = db.execute(
+            "SELECT context, stamp, configuration FROM execution WHERE kind = 'upgrade' ORDER BY stamp DESC")
+        row = cursor.fetchall()
+        if row:
+            return row
+    return None
 
 
 def get_last_phase(context):
@@ -103,3 +117,14 @@ def upgrade(args):
         workflow.run(context=context, skip_phases_until=skip_phases_until)
 
     report_errors(workflow.errors)
+
+
+@command('list-runs', help='List previous Leapp upgrade executions')
+def list_runs(args):
+    contexts = fetch_all_upgrade_contexts()
+    if contexts:
+        for context in contexts:
+            print('Context ID: {} - time: {} - details: {}'.format(context[0], context[1], json.loads(context[2])),
+                  file=sys.stdout)
+    else:
+        raise CommandError('No previous run found!')

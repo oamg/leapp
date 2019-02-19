@@ -36,6 +36,13 @@ class ErrorTopic(Topic):
     name = 'errors'
 
 
+class ReportTopic(Topic):
+    """
+    A special topic for reporting purposes.
+    """
+    name = 'report_topic'
+
+
 def get_topics():
     """
     :return: All registered :py:class:`leapp.topics.Topic` derived classes
