@@ -14,13 +14,14 @@ import six
 from leapp.exceptions import LeappError
 from leapp.utils.audit import create_audit_entry
 from leapp.libraries.stdlib import api
-from leapp.libraries.stdlib.call import _call
+from leapp.libraries.stdlib.call import _call, STDOUT
 
 
 class CalledProcessError(LeappError):
-    """ Leapp Call Process Exception Error.
+    """
+    Leapp Call Process Exception Error.
 
-    Raised when the result of a called process is a none zero return code.
+    Raised when the result of a called process is of a none zero return code.
     """
     def __init__(self, message, command, result):
         """
@@ -101,55 +102,50 @@ def call(args, split=True):
 def _logging_handler(fd_info, buffer):
     """
     Log while in a leapp debug mode
-    :param fd_info:
-    :param buffer:
+
+    :param fd_info: Contains File descriptor type
+    :type fd_info: tuple
+    :param buffer: buffer interface
+    :type buffer: bytes array
     """
     (_unused, fd_type) = fd_info
     if os.getenv('LEAPP_DEBUG', '0') == '1':
-        if fd_type == _call.STDOUT:
+        if fd_type == STDOUT:
             sys.stdout.write(buffer)
         else:
             sys.stderr.write(buffer)
 
 
-def run(args):
+def run(args, split=False):
     """
-    Run the program described by args
-    and wait for the program to complete and return the results as a dict.
+    Run a command and return its result as a dict.
+
     The execution of the program and it's results are captured by the audit.
 
     :param args: Command to execute
-    :return: stdout output, 'utf-8' decoded
+    :type args: list or tuple
+    :param split: Split the output on newlines
+    :type split: bool
+    :return: {'stdout' : stdout, 'stderr': 'signal': signal, 'exit_code': exit_code, 'pid': pid}
+    :rtype: dict
     """
     _id = str(uuid.uuid4())
-    result_data = None
+    result = None
     try:
         create_audit_entry('process-start', {'id': _id, 'parameters': args})
-        result_data = _call(args, callback_raw=_logging_handler)
+        result = _call(args, callback_raw=_logging_handler)
+        if result['exit_code'] != 0:
+            raise CalledProcessError(
+                message="A Leapp Command Error occurred. ",
+                command=args,
+                result=result
+            )
+        else:
+            if split:
+                result.update({
+                    'stdout': result['stdout'].splitlines()
+                })
     finally:
         create_audit_entry('process-end', _id)
-        create_audit_entry('process-result', {'id': _id, 'parameters': args, 'result': result_data})
-    return result_data
-
-
-def checked_call(args, split=False):
-    """
-    Run the program described by args and wait for the program to complete and return the results as a dict.
-    The execution of the program and it's results are captured by the audit.
-
-
-    :param args: Command to execute
-    :param split: Split the output on newlines
-    :return: stdout output, 'utf-8' decoded, split by lines if split=True
-    """
-    result = run(args)
-    if result['exit_code'] != 0:
-        raise CalledProcessError(
-            message="A Leapp Command Error occurred. ",
-            command=args,
-            result=result
-        )
-    else:
-        if split:
-            return result['stdout'].splitlines()
-        return result['stdout']
+        create_audit_entry('process-result', {'id': _id, 'parameters': args, 'result': result})
+    return result

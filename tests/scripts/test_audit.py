@@ -236,10 +236,10 @@ def test_checkpoints():
 
 
 def test_create_audit_entry(monkeypatch):
-    monkeypatch.setenv('LEAPP_CURRENT_ACTOR', '_ACTOR_NAME')
-    monkeypatch.setenv('LEAPP_CURRENT_PHASE', '_PHASE_NAME')
-    monkeypatch.setenv('LEAPP_EXECUTION_ID', '_CONTEXT_NAME')
-    monkeypatch.setenv('LEAPP_HOSTNAME', '_HOSTNAME')
+    monkeypatch.setenv('LEAPP_CURRENT_ACTOR', _ACTOR_NAME)
+    monkeypatch.setenv('LEAPP_CURRENT_PHASE', _PHASE_NAME)
+    monkeypatch.setenv('LEAPP_EXECUTION_ID', _CONTEXT_NAME)
+    monkeypatch.setenv('LEAPP_HOSTNAME', _HOSTNAME)
     _id = str(uuid.uuid4())
     event = 'process-start'
     create_audit_entry(event, {'id': _id, 'parameters': 'ls'})
@@ -247,14 +247,15 @@ def test_create_audit_entry(monkeypatch):
 
 
 def test_audit_command_in_db(monkeypatch):
-    monkeypatch.setenv('LEAPP_CURRENT_ACTOR', '_ACTOR_NAME')
-    monkeypatch.setenv('LEAPP_CURRENT_PHASE', '_PHASE_NAME')
-    monkeypatch.setenv('LEAPP_EXECUTION_ID', '_CONTEXT_NAME')
-    monkeypatch.setenv('LEAPP_HOSTNAME', '_HOSTNAME')
+    monkeypatch.setenv('LEAPP_CURRENT_ACTOR', _ACTOR_NAME)
+    monkeypatch.setenv('LEAPP_CURRENT_PHASE', _PHASE_NAME)
+    monkeypatch.setenv('LEAPP_EXECUTION_ID', _CONTEXT_NAME)
+    monkeypatch.setenv('LEAPP_HOSTNAME', _HOSTNAME)
     _id = str(uuid.uuid4())
-    cmd = ['ls']
+    cmd = ['whoami']
     monkeypatch.setattr(uuid, 'uuid4', lambda: _id)
-    run(cmd)
+    result = run(cmd)
+    assert result['stdout'] in ['travis\n', 'root\n']
     event = 'process-start'
     assert get_audit_entry(event, _CONTEXT_NAME)
     event = 'process-end'

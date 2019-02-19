@@ -78,7 +78,7 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         :type encoding: str
         :param poll_timeout: Timeout used by epoll to wait certain amount of time for activity on file descriptors
         :type poll_timeout: int
-        :param read_buffer_size: How much data are we going to read form the file descriptors each iteration.
+        :param read_buffer_size: How much data are we going to read from the file descriptors each iteration.
                                  The default value of 80 chosen to correspond with suggested terminal line width
         :type read_buffer_size: int
         :param callback_raw: Callback executed on raw data (before decoding) as they are read from file descriptors
