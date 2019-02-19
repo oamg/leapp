@@ -18,11 +18,17 @@ from leapp.libraries.stdlib.call import _call
 
 
 class CalledProcessError(LeappError):
-    """ Leapp Call Process Exception Error
+    """ Leapp Call Process Exception Error.
 
     Raised when the result of a called process is a none zero return code.
     """
     def __init__(self, message, command, result):
+        """
+        Initialize CalledProcessError Exception.
+        :param message: An CalledProcessError exception message.
+        :param command: The command that has been executed, with its arguments.
+        :param result: A non-zero whatever result that the command returned.
+        """
         super(CalledProcessError, self).__init__(message)
         self._result = result
         self.command = command
@@ -31,7 +37,7 @@ class CalledProcessError(LeappError):
     def stdout(self):
         """
         Retrieve the stdout.
-        :return:
+        :return: Standard Output.
         """
         return self._result.get('stdout')
 
@@ -39,7 +45,7 @@ class CalledProcessError(LeappError):
     def stderr(self):
         """
         Retrieve the stderr.
-        :return:
+        :return: Standard Error.
         """
         return self._result.get('stderr')
 
@@ -47,7 +53,7 @@ class CalledProcessError(LeappError):
     def exit_code(self):
         """
         Retrieve the exit code.
-        :return:
+        :return: An exit code.
         """
         return self._result.get('exit_code')
 
@@ -55,7 +61,7 @@ class CalledProcessError(LeappError):
     def signal(self):
         """
         Retrieve the signal which the process was signalled by.
-        :return:
+        :return: A signal that the process received.
         """
         return self._result.get('signal')
 
@@ -63,7 +69,7 @@ class CalledProcessError(LeappError):
     def pid(self):
         """
         Retrieve the pid of the finished process.
-        :return:
+        :return: The pid of the process.
         """
         return self._result.get('pid')
 
