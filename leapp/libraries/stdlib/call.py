@@ -64,6 +64,8 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
     # Process leftovers from line buffering
     for (fd, lb) in linebufs.items():
         if lb:
+            # [stdout, stderr] is relayed, stdout=1 a stderr=2
+            # as the field starting indexed is 0, so the +1 needs to be added
             callback_linebuffered(read_fds.index(fd) + 1, lb)
 
     return buf
@@ -87,6 +89,8 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         :type callback_linebuffered: (fd, buffer) -> None
         :param stdin: String or a file descriptor that will be written to stdin of the child process
         :type stdin: int, str
+        :return: {'stdout' : stdout, 'stderr': 'signal': signal, 'exit_code': exit_code, 'pid': pid}
+        :rtype: dict
     """
     if not isinstance(command, (list, tuple)):
         raise TypeError('command parameter has to be a list or tuple')

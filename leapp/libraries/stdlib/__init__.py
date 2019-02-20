@@ -101,7 +101,9 @@ def call(args, split=True):
 
 def _logging_handler(fd_info, buffer):
     """
-    Log while in a leapp debug mode
+    Log into either STDOUT or to STDERR.
+
+    Buffer Output Discrimination is based on fd_type in fd_info while in a leapp debug mode.
 
     :param fd_info: Contains File descriptor type
     :type fd_info: tuple
