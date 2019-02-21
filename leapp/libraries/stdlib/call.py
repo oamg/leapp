@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import select
 import os
-import sys
 
 
 STDIN = 0
@@ -17,7 +16,7 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
     for fd in read_fds:
         ep.register(fd, select.EPOLLIN | select.EPOLLPRI)
 
-    # Register a write file descritpr
+    # Register a write file descriptor
     if write:
         ep.register(write[0], select.EPOLLOUT)
 
@@ -41,13 +40,14 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
                 hupped.add(fd)
                 ep.unregister(fd)
             if event & (select.EPOLLIN | select.EPOLLPRI) != 0:
+                fd_type = read_fds.index(fd) + 1
                 read = os.read(fd, buffer_size)
-                callback_raw(fd, read)
+                callback_raw((fd, fd_type), read)
                 linebufs[fd] += read.decode(encoding)
                 while '\n' in linebufs[fd]:
                     pre, post = linebufs[fd].split('\n', 1)
                     linebufs[fd] = post
-                    callback_linebuffered(fd, pre)
+                    callback_linebuffered((fd, fd_type), pre)
                 buf[fd] += read
             elif event == select.EPOLLOUT:
                 # Write data to pipe, `os.write` returns the number of bytes written,
@@ -64,7 +64,9 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
     # Process leftovers from line buffering
     for (fd, lb) in linebufs.items():
         if lb:
-            callback_linebuffered(fd, lb)
+            # [stdout, stderr] is relayed, stdout=1 a stderr=2
+            # as the field starting indexed is 0, so the +1 needs to be added
+            callback_linebuffered(read_fds.index(fd) + 1, lb)
 
     return buf
 
@@ -78,7 +80,7 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         :type encoding: str
         :param poll_timeout: Timeout used by epoll to wait certain amount of time for activity on file descriptors
         :type poll_timeout: int
-        :param read_buffer_size: How much data are we going to read form the file descriptors each iteration.
+        :param read_buffer_size: How much data are we going to read from the file descriptors each iteration.
                                  The default value of 80 chosen to correspond with suggested terminal line width
         :type read_buffer_size: int
         :param callback_raw: Callback executed on raw data (before decoding) as they are read from file descriptors
@@ -87,6 +89,8 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         :type callback_linebuffered: (fd, buffer) -> None
         :param stdin: String or a file descriptor that will be written to stdin of the child process
         :type stdin: int, str
+        :return: {'stdout' : stdout, 'stderr': 'signal': signal, 'exit_code': exit_code, 'pid': pid}
+        :rtype: dict
     """
     if not isinstance(command, (list, tuple)):
         raise TypeError('command parameter has to be a list or tuple')
@@ -143,7 +147,7 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
 
         read = _multiplex(
             ep,
-            (stdout, stderr,),
+            [stdout, stderr],
             callback_raw,
             callback_linebuffered,
             timeout=poll_timeout,
@@ -157,7 +161,7 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         ep.close()
 
         # The status variable is a 16 bit value, where the lower octet describes
-        # the signal which killed the proces, and the upper octet is the exit code
+        # the signal which killed the process, and the upper octet is the exit code
         signal, exit_code = status & 0xff, status >> 8 & 0xff
         ret = {'signal': signal, 'exit_code': exit_code, 'pid': pid}
         if not encoding:

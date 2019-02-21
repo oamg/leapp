@@ -257,6 +257,53 @@ class Message(DataSource):
         self._message_id = cursor.lastrowid
 
 
+def create_audit_entry(event, data, message=None):
+    """
+    Create an audit entry
+
+    :param event: Type of this event e.g. process-start or process-end but can be anything
+    :param data: Data related to Type of the event, e.g. a command and its arguments
+    :param message: An optional message.
+    :return:
+    """
+    Audit(**{
+        'actor': os.environ.get('LEAPP_CURRENT_ACTOR', 'NO-ACTOR-SET'),
+        'phase': os.environ.get('LEAPP_CURRENT_PHASE', 'NON-WORKFLOW-EXECUTION'),
+        'context': os.environ.get('LEAPP_EXECUTION_ID', 'TESTING-CONTEXT'),
+        'hostname': os.environ.get('LEAPP_HOSTNAME', 'TESTING-LEAPP-HOSTNAME'),
+        'message': message,
+        'event': event,
+        'data': data
+    }).store()
+
+
+def get_audit_entry(event, context):
+    """
+    Retrieve audit entries stored in the database for the given context
+
+    :param context: The execution context
+    :type context: str
+    :param event: Type of this event e.g. process-start or process-end but can be anything
+    :type event: str
+    :return: list of dicts with id, time stamp, actor and phase fields
+    """
+    with get_connection(None) as conn:
+        cursor = conn.execute('''
+            SELECT
+                audit.id          AS id,
+                audit.stamp       AS stamp,
+                audit.data        AS data,
+                audit.context     AS context
+              FROM
+                audit
+              WHERE
+                audit.context = ? AND audit.event = ?
+              ORDER BY stamp ASC;
+        ''', (context, event))
+        cursor.row_factory = _dict_factory
+        return cursor.fetchall()
+
+
 class Audit(DataSource):
     def __init__(self, event=None, stamp=None, message=None, data=None, actor=None, phase=None, hostname=None,
                  context=None):
