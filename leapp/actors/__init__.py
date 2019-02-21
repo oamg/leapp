@@ -34,7 +34,10 @@ class Actor(object):
     """ Name of the actor that is used to identify data or messages created by the actor. """
 
     description = None
-    """ More verbose actor's description."""
+    """
+    .. deprecated:: 0.5.0
+       Write the actor's description as a docstring.
+    """
 
     consumes = ()
     """
@@ -256,6 +259,8 @@ class Actor(object):
 
         :param models: Models to use as a filter for the messages to return
         :type models: Variable number of the derived classes from :py:class:`leapp.models.Model`
+        :return: All messages of the specified model(s) produced by other actors
+        :rtype: Iterable with messages or an empty tuple
         """
         if self._messaging:
             return self._messaging.consume(self, *models)
