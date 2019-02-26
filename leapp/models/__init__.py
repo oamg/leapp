@@ -42,7 +42,10 @@ class ModelMeta(type):
     """
     def __new__(mcs, name, bases, attrs):
         klass = super(ModelMeta, mcs).__new__(mcs, name, bases, attrs)
-
+        for base in bases:
+            if getattr(base, '__non_inheritable__', False):
+                raise TypeError('{cls} cannot inherit from {base} because {base} is not inheritable'.format(
+                    cls=name, base=base.__name__))
         model_ref_cls = globals().get('_ModelReference')
         if name == '_ModelReference' or (model_ref_cls and issubclass(klass, model_ref_cls)):
             setattr(sys.modules[mcs.__module__], name, klass)

@@ -27,6 +27,8 @@ class Report(Model):
     a special meaning using "flags" field.
     """
 
+    __non_inheritable__ = True
+
     topic = ReportTopic
 
     severity = fields.StringEnum(choices=['low', 'medium', 'high'])
