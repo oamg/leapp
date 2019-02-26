@@ -86,7 +86,7 @@ BuildRequires:  python2-setuptools
 
 # IMPORTANT: everytime the requirements are changed, increment number by one
 # - same for Provides in deps subpackage
-Requires: leapp-framework-dependencies = 1
+Requires: leapp-framework-dependencies = 2
 
 %description -n python2-%{name}
 Python 2 leapp framework libraries.
@@ -101,7 +101,7 @@ Summary:    Meta-package with system dependencies of %{name} package
 
 # IMPORTANT: everytime the requirements are changed, increment number by one
 # same for requiremenrs in main package above
-Provides: leapp-framework-dependencies = 1
+Provides: leapp-framework-dependencies = 2
 ##################################################
 # Real requirements for the leapp HERE
 ##################################################
@@ -109,13 +109,16 @@ Provides: leapp-framework-dependencies = 1
 %if 0%{?rhel} && 0%{?rhel} == 7
 Requires: python-six
 Requires: python-setuptools
+Requires: python-jinja2
 %else
 %if %{with python3}
 Requires: python3-six
 Requires: python3-setuptools
+Requires: python3-jinja2
 %else # with python2
 Requires: python2-six
 Requires: python2-setuptools
+Requires: python2-jinja2
 %endif
 %endif
 Requires: findutils
@@ -143,7 +146,7 @@ BuildRequires:  python3-setuptools
 BuildRequires:  python3-pytest-cov
 %endif
 
-Requires: leapp-framework-dependencies = 1
+Requires: leapp-framework-dependencies = 2
 
 %description -n python3-%{name}
 Python 3 leapp framework libraries.
