@@ -251,6 +251,10 @@ class Actor(object):
             for model in models:
                 if isinstance(model, type(self).produces):
                     self._messaging.produce(model, self)
+                else:
+                    self.log.warning('Actor is trying to produce a message of type "{}" without mentioning it '
+                                     'explicitely in the actor\'s "produces" tuple. The message will be ignored'.format(
+                                         type(model)))
 
     def consume(self, *models):
         """
