@@ -372,19 +372,20 @@ _MESSAGE_QUERY_TEMPLATE = '''
         WHERE context = ? AND type IN (%s)'''
 
 
-def get_messages(names, context):
+def get_messages(names, context, connection=None):
     """
     Queries all messages from the database for the given context and the list of model names
     :param names: List of names that should be messages returned for
     :type names: list or tuple of str
     :param context: Execution id the message should be queried from.
+    :param connection: Database connection to use instead of the default one.
     :return: Iterable with messages
     :rtype: iterable
     """
     if not names:
         return ()
 
-    with get_connection(None) as conn:
+    with get_connection(db=connection) as conn:
         cursor = conn.execute(_MESSAGE_QUERY_TEMPLATE % ', '.join('?' * len(names)), (context,) + tuple(names))
         cursor.row_factory = _dict_factory
         result = cursor.fetchall()
