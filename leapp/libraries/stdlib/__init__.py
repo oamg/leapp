@@ -128,7 +128,7 @@ def run(args, split=False):
     :type args: list or tuple
     :param split: Split the output on newlines
     :type split: bool
-    :return: {'stdout' : stdout, 'stderr': 'signal': signal, 'exit_code': exit_code, 'pid': pid}
+    :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
     :rtype: dict
     """
     _id = str(uuid.uuid4())
