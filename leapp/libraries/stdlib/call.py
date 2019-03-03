@@ -89,7 +89,7 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         :type callback_linebuffered: (fd, buffer) -> None
         :param stdin: String or a file descriptor that will be written to stdin of the child process
         :type stdin: int, str
-        :return: {'stdout' : stdout, 'stderr': 'signal': signal, 'exit_code': exit_code, 'pid': pid}
+        :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
         :rtype: dict
     """
     if not isinstance(command, (list, tuple)):
