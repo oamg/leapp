@@ -1,8 +1,9 @@
 import json
 import os
-from subprocess import check_call, check_output, CalledProcessError
+from subprocess import check_call, check_output, CalledProcessError, STDOUT
 
 from helpers import repository_dir
+from leapp.exceptions import CommandError
 
 import pytest
 
@@ -28,6 +29,16 @@ def test_discovery(repository_dir):
     with type(repository_dir)(path=repository_dir.dirname).as_cwd():
         with pytest.raises(CalledProcessError):
             check_call(['snactor', 'discover'])
+
+
+def test_raises_create_outside_repository():
+    for cmd in ([['snactor', 'new-tag', 'winteriscoming'],
+                 ['snactor', 'new-topic', 'winteriscoming'],
+                 ['snactor', 'new-model', 'winteriscoming', '--topic', 'WinteriscomingTopic']]):
+        with pytest.raises(CalledProcessError) as err:
+            check_output(cmd, stderr=STDOUT)
+        assert ('This command must be executed from the repository directory' in
+                err.value.output.decode('utf-8'))
 
 
 def test_new_tag(repository_dir):
