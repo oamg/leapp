@@ -2,7 +2,8 @@ import os
 
 import sys
 
-from leapp.utils.repository import make_class_name, make_name, find_repository_basedir
+from leapp.utils.repository import (make_class_name, make_name, find_repository_basedir,
+                                    requires_repository)
 from leapp.utils.clicmd import command_arg, command
 from leapp.exceptions import CommandError
 
@@ -16,6 +17,7 @@ https://red.ht/leapp-docs
 
 @command('new-topic', help='Creates a new topic')
 @command_arg('topic-name')
+@requires_repository
 def cli(args):
     topic_name = args.topic_name
     basedir = find_repository_basedir('.')
