@@ -64,8 +64,8 @@ def configure_logger():
             handler.setFormatter(logging.Formatter(fmt=log_format, datefmt=log_date_format))
             logging.getLogger('leapp').addHandler(handler)
 
-        if os.getenv('LEAPP_DEBUG', '0') == '1':
-            logging.getLogger('').setLevel(logging.DEBUG)
+        if os.getenv('LEAPP_VERBOSE', '0') == '1':
+            logging.getLogger('').setLevel(logging.DEBUG if os.getenv('LEAPP_DEBUG', '0') == '1' else logging.INFO)
             handler = logging.StreamHandler(sys.stderr)
             handler.setFormatter(logging.Formatter(fmt=log_format, datefmt=log_date_format))
             logging.getLogger('').addHandler(handler)

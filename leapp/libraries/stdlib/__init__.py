@@ -111,14 +111,14 @@ def _logging_handler(fd_info, buffer):
     :type buffer: bytes array
     """
     (_unused, fd_type) = fd_info
-    if os.getenv('LEAPP_DEBUG', '0') == '1':
+    if os.getenv('LEAPP_VERBOSE', '0') == '1':
         if fd_type == STDOUT:
             sys.stdout.write(buffer)
         else:
             sys.stderr.write(buffer)
 
 
-def run(args, split=False):
+def run(args, split=False, callback_raw=_logging_handler):
     """
     Run a command and return its result as a dict.
 
@@ -128,6 +128,8 @@ def run(args, split=False):
     :type args: list or tuple
     :param split: Split the output on newlines
     :type split: bool
+    :param callback_raw: Optional custom callback executed on raw data to print in console
+    :type callback_raw: (fd: int, buffer: bytes) -> None
     :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
     :rtype: dict
     """
@@ -135,7 +137,7 @@ def run(args, split=False):
     result = None
     try:
         create_audit_entry('process-start', {'id': _id, 'parameters': args})
-        result = _call(args, callback_raw=_logging_handler)
+        result = _call(args, callback_raw=callback_raw)
         if result['exit_code'] != 0:
             raise CalledProcessError(
                 message="A Leapp Command Error occurred. ",

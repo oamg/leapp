@@ -37,7 +37,8 @@ def _load_commands_from(path):
 
 
 @command('', help=LONG_HELP)
-@command_opt('debug', is_flag=True, help=_('Enables debug logging'), inherit=True)
+@command_opt('debug', is_flag=True, help=_('Enables debug mode'), inherit=True)
+@command_opt('verbose', is_flag=True, help=_('Enables verbose logging'), inherit=True)
 @command_opt('config', help=_('Allows to override the leapp.conf location'), inherit=True)
 @command_opt('logger-config', help=_('Allows to override the logger.conf location'), inherit=True)
 def cli(args):
@@ -59,6 +60,11 @@ def cli(args):
 
     os.environ['LEAPP_CONFIG'] = config_file_path
     os.environ['LEAPP_DEBUG'] = '1' if args.debug else os.environ.get('LEAPP_DEBUG', '0')
+
+    if os.environ['LEAPP_DEBUG'] == '1' or args.verbose:
+        os.environ['LEAPP_VERBOSE'] = '1'
+    else:
+        os.environ['LEAPP_VERBOSE'] = os.environ.get('LEAPP_VERBOSE', '0')
 
 
 def main():
