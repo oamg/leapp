@@ -59,6 +59,7 @@ def upgrade(args):
     context = str(uuid.uuid4())
     configuration = {
         'debug': os.getenv('LEAPP_DEBUG', '0'),
+        'verbose': os.getenv('LEAPP_VERBOSE', '0'),
         'whitelist_experimental': args.whitelist_experimental or ()
     }
     if args.resume:
@@ -67,6 +68,12 @@ def upgrade(args):
             raise CommandError('No previous upgrade run to continue, remove `--resume` from leapp invocation to'
                                'start a new upgrade flow')
         os.environ['LEAPP_DEBUG'] = '1' if os.getenv('LEAPP_DEBUG', configuration.get('debug', '0')) == '1' else '0'
+
+        if os.environ['LEAPP_DEBUG'] == '1' or os.getenv('LEAPP_VERBOSE', configuration.get('verbose', '0')) == '1':
+            os.environ['LEAPP_VERBOSE'] = '1'
+        else:
+            os.environ['LEAPP_VERBOSE'] = '0'
+
         skip_phases_until = get_last_phase(context)
     else:
         e = Execution(context=context, kind='upgrade', configuration=configuration)
