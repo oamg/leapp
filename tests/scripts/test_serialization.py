@@ -304,6 +304,13 @@ BASIC_TYPE_FIXTURES = (
     create_fixture(_create_field_string_list, ['a', 'b', 'c'], 'string_list_value'),
     create_fixture(_create_nested_base_model_field, BasicModel(message='Test message'), 'nested_model_value'),
     create_fixture(_create_string_enum_('YES', 'NO', 'MAYBE'), 'YES', 'string_enum_value', fail_values=('Woot',)),
+    create_fixture(fields.JSON, 2, 'json_integral_value'),
+    create_fixture(fields.JSON, 3.14, 'json_float_value'),
+    create_fixture(fields.JSON, 'some string', 'json_string_value'),
+    create_fixture(fields.JSON, ['a', 'b', 1, 2], 'json_list_value'),
+    create_fixture(fields.JSON, ('a', 'b', 1, 2), 'json_tuple_value'),
+    create_fixture(fields.JSON, {'a': [None, {'b': 'c'}], 'b': 2}, 'json_dict_value'),
+    create_fixture(fields.JSON, True, 'json_bool_value'),
 )
 
 

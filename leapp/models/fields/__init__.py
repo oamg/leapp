@@ -1,5 +1,7 @@
 import copy
 import datetime
+import json
+
 import six
 
 
@@ -455,3 +457,36 @@ class Model(Field):
         if value is None:
             return value
         return value.dump()
+
+
+class JSON(String):
+    """
+    The JSON field allows to use json encodable python types as a value.
+
+    The value will be internally encoded to a JSON string and converted back into, whatever the result of json.loads
+    is for that value passed.
+
+        Note: The value `None`, however follows the same rules as for all fields and requires the field to be nullable,
+              to allow this value. Within nested values such as lists or dicts, a None value is perfectly valid.
+    """
+
+    @property
+    def _model_type(self):
+        return six.integer_types + (float, tuple, dict, list) + six.string_types
+
+    def _convert_from_model(self, value, name):
+        if value is None:
+            if not self._nullable:
+                raise ModelViolationError(
+                    'The value of "{name}" field is None, but this is not allowed'.format(name=name))
+            return value
+        try:
+            return json.dumps(value, sort_keys=True)
+        except (TypeError, ValueError):
+            raise ModelViolationError('Expected a json encodable value for the field {}'.format(name))
+
+    def _convert_to_model(self, value, name):
+        self._validate_builtin_value(value, name)
+        if value is None:
+            return value
+        return json.loads(value)
