@@ -299,7 +299,7 @@ def get_audit_entry(event, context):
                 audit.context = ? AND audit.event = ?
               ORDER BY stamp ASC;
         ''', (context, event))
-        cursor.row_factory = _dict_factory
+        cursor.row_factory = dict_factory
         return cursor.fetchall()
 
 
@@ -356,7 +356,7 @@ class Audit(DataSource):
         self._audit_id = cursor.lastrowid
 
 
-def _dict_factory(cursor, row):
+def dict_factory(cursor, row):
     d = {}
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
@@ -386,7 +386,7 @@ def get_messages(names, context, connection=None):
 
     with get_connection(db=connection) as conn:
         cursor = conn.execute(_MESSAGE_QUERY_TEMPLATE % ', '.join('?' * len(names)), (context,) + tuple(names))
-        cursor.row_factory = _dict_factory
+        cursor.row_factory = dict_factory
         result = cursor.fetchall()
 
         # Transform to expected format
@@ -451,5 +451,5 @@ def get_checkpoints(context):
                 audit.context = ? AND audit.event = ?
               ORDER BY audit.id ASC;
         ''', (context, _AUDIT_CHECKPOINT_EVENT))
-        cursor.row_factory = _dict_factory
+        cursor.row_factory = dict_factory
         return cursor.fetchall()

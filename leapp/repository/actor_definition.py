@@ -6,11 +6,11 @@ import sys
 from io import UnsupportedOperation
 from multiprocessing import Process, Queue
 
-import leapp.libraries.actor # noqa # pylint: disable=unused-import
-from leapp.actors import get_actors, get_actor_metadata
-from leapp.exceptions import ActorInspectionFailedError, MultipleActorsError, UnsupportedDefinitionKindError, \
-    LeappRuntimeError
-from leapp.repository import DefinitionKind
+import leapp.libraries.actor  # noqa # pylint: disable=unused-import
+from leapp.actors import get_actor_metadata, get_actors
+from leapp.exceptions import (ActorInspectionFailedError, LeappRuntimeError, MultipleActorsError,
+                              UnsupportedDefinitionKindError)
+from leapp.repository.definition import DefinitionKind
 from leapp.utils.libraryfinder import LeappLibrariesFinder
 
 
@@ -123,13 +123,19 @@ class ActorDefinition(object):
             raise UnsupportedDefinitionKindError('Actors do not support {kind}.'.format(kind=kind.name))
         self._definitions.setdefault(kind, []).append(path)
 
-    def dump(self):
+    def serialize(self):
         """
         :return: dump of actor resources (path, name, tools, files, libraries, tests)
         """
         return {
             'path': self.directory,
             'name': self.name,
+            'class_name': self.class_name,
+            'description': self.description,
+            'tags': self.tags,
+            'consumes': self.consumes,
+            'produces': self.produces,
+            'dialogs': [dialog.serialize() for dialog in self.dialogs],
             'tools': self.tools,
             'files': self.files,
             'libraries': self.libraries,

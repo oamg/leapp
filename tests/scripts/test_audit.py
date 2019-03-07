@@ -1,3 +1,4 @@
+import getpass
 import json
 import os
 import sqlite3
@@ -255,7 +256,7 @@ def test_audit_command_in_db(monkeypatch):
     cmd = ['whoami']
     monkeypatch.setattr(uuid, 'uuid4', lambda: _id)
     result = run(cmd)
-    assert result['stdout'] in ['travis\n', 'root\n']
+    assert result['stdout'] == '{}\n'.format(getpass.getuser())
     event = 'process-start'
     assert get_audit_entry(event, _CONTEXT_NAME)
     event = 'process-result'

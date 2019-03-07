@@ -1,17 +1,17 @@
-import json as json_mod
+import json
 import logging
 import os
 import sys
 
 from leapp.exceptions import LeappError
-from leapp.topics import get_topics
 from leapp.models import get_models
 from leapp.repository.scan import find_and_scan_repositories
-from leapp.tags import get_tags
-from leapp.utils.repository import requires_repository, find_repository_basedir, get_repository_name
-from leapp.utils.clicmd import command, command_opt
-from leapp.workflows import get_workflows
 from leapp.snactor.utils import safe_discover
+from leapp.tags import get_tags
+from leapp.topics import get_topics
+from leapp.utils.clicmd import command, command_opt
+from leapp.utils.repository import find_repository_basedir, get_repository_name, requires_repository
+from leapp.workflows import get_workflows
 
 
 def _is_local(repository, cls, base_dir, all_repos=False):
@@ -136,5 +136,5 @@ def cli(args):
             'tags': dict((tag.name, _get_tag_details(tag)) for tag in tags),
             'workflows': dict((workflow.__name__, _get_workflow_details(workflow)) for workflow in workflows)
         }
-        json_mod.dump(output, sys.stdout, indent=2)
+        json.dump(output, sys.stdout, indent=2)
         sys.stdout.write('\n')

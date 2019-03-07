@@ -140,6 +140,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
                 else:
                     config_actor_names = [a.name for a in config_actors]
                     raise MultipleConfigActorsError(config_actor_names)
+        self.description = self.description or type(self).__doc__
 
         for phase in self.phases:
             phase.filter.tags += (self.tag,)

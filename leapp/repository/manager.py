@@ -102,11 +102,11 @@ class RepositoryManager(object):
         if resolve:
             resolve_model_references()
 
-    def dump(self):
+    def serialize(self):
         """
         :return: List of resources in all known repositories
         """
-        return [repo.dump() for repo in self._repos.values()]
+        return [repo.serialize() for repo in self._repos.values()]
 
     @property
     def actors(self):
