@@ -1,3 +1,7 @@
+# IMPORTANT:
+# Please read the documentation on how to deal with dependencies before adding a new one.
+# https://github.com/oamg/leapp/blob/master/docs/source/dependencies.md
+
 %global debug_package %{nil}
 %global gittag master
 
