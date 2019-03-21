@@ -22,10 +22,7 @@ visit: [Contributing to Leapp](CONTRIBUTING.rst).
 We’ll gladly answer your questions and lead you to through any troubles with the
 actor development.
 
-You can reach us at:
-
-- IRC on freenode: `#leapp`
-- mailing list: leapp-devel@redhat.com
+You can reach us at IRC: `#leapp` on freenode.
 
 ## Your friendly Snactor
 ![Image of Snactor](docs/source/_static/images/snactor256.png)
