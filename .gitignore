@@ -29,3 +29,4 @@ pip-selfcheck.json
 */.Python/*
 leapp/utils/schemas.py
 res/schema/schemas.py
+.vscode/
