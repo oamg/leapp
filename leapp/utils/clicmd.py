@@ -74,7 +74,10 @@ class Command(object):
         parser.register('action', 'parsers', _SubParserActionOverride)
         parser.add_argument('--version', action='version', version=version)
         parser.set_defaults(func=None)
-        s = parser.add_subparsers(title='Main commands', metavar='')
+        if self._sub_commands:
+            s = parser.add_subparsers(title='Main commands', metavar='')
+        else:
+            s = parser
         self.apply_parser(s, parser=parser)
         args = parser.parse_args()
         args.func(args)
