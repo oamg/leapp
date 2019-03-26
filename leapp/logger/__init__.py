@@ -5,6 +5,7 @@ import os
 import time
 import sys
 
+from leapp.libraries.stdlib.config import is_debug, is_verbose
 from leapp.utils.audit import Audit
 _logger = None
 
@@ -72,10 +73,10 @@ def configure_logger():
             logging.getLogger('leapp').addHandler(handler)
             logging.StreamHandler().setLevel(logging.ERROR)
 
-        if os.getenv('LEAPP_VERBOSE', '0') == '1':
+        if is_verbose():
             for handler in logging.getLogger().handlers:
                 if isinstance(handler, logging.StreamHandler):
-                    handler.setLevel(logging.DEBUG if os.getenv('LEAPP_DEBUG', '0') == '1' else logging.INFO)
+                    handler.setLevel(logging.DEBUG if is_debug() else logging.INFO)
 
         _logger = logging.getLogger('leapp')
         _logger.info('Logging has been initialized')
