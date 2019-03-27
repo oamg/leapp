@@ -58,6 +58,13 @@ def get_last_phase(context):
         return checkpoints[-1]['phase']
 
 
+def check_env_and_conf(env_var, conf_var, configuration):
+    """
+    Checks whether the given environment variable or the given configuration value are set to '1'
+    """
+    return os.getenv(env_var, '0') == '1' or configuration.get(conf_var, '0') == '1'
+
+
 @command('upgrade', help='Upgrades the current system to the next available major version.')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
 @command_opt('reboot', is_flag=True, help='Automatically performs reboot when requested.')
@@ -81,9 +88,9 @@ def upgrade(args):
         if not context:
             raise CommandError('No previous upgrade run to continue, remove `--resume` from leapp invocation to'
                                'start a new upgrade flow')
-        os.environ['LEAPP_DEBUG'] = '1' if os.getenv('LEAPP_DEBUG', configuration.get('debug', '0')) == '1' else '0'
+        os.environ['LEAPP_DEBUG'] = '1' if check_env_and_conf('LEAPP_DEBUG', 'debug', configuration) else '0'
 
-        if os.environ['LEAPP_DEBUG'] == '1' or os.getenv('LEAPP_VERBOSE', configuration.get('verbose', '0')) == '1':
+        if os.environ['LEAPP_DEBUG'] == '1' or check_env_and_conf('LEAPP_VERBOSE', 'verbose', configuration):
             os.environ['LEAPP_VERBOSE'] = '1'
         else:
             os.environ['LEAPP_VERBOSE'] = '0'
