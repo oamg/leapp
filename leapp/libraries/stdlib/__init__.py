@@ -76,30 +76,6 @@ class CalledProcessError(LeappError):
         return self._result.get('pid')
 
 
-def call(args, split=True):
-    """
-    Call an external program, capture and automatically utf-8 decode its output.
-    Then, suppress output to stderr and redirect to /dev/null.
-
-    :param args: Command to execute
-    :type args: list
-    :param split: Split the output on newlines
-    :type split: bool
-    :return: stdout output, 'utf-8' decoded, split by lines if split=True
-    :rtype: unicode/str or [unicode/str] if split=True
-    """
-
-    r = None
-    with open(os.devnull, mode='w') as err:
-        if six.PY3:
-            r = subprocess.check_output(args, stderr=err, encoding='utf-8')
-        else:
-            r = subprocess.check_output(args, stderr=err).decode('utf-8')
-    if split:
-        return r.splitlines()
-    return r
-
-
 def _logging_handler(fd_info, buffer):
     """
     Log into either STDOUT or to STDERR.
