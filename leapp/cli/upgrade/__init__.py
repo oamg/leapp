@@ -125,6 +125,9 @@ def upgrade(args):
 
     report_errors(workflow.errors)
 
+    if workflow.errors:
+        sys.exit(1)
+
 
 @command('list-runs', help='List previous Leapp upgrade executions')
 def list_runs(args):
