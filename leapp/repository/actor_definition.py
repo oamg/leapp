@@ -238,6 +238,10 @@ class ActorDefinition(object):
         if self.files:
             os.environ['LEAPP_FILES'] = os.path.join(self._repo_dir, self._directory, self.files[0])
 
+        tools_backup = os.environ.get('LEAPP_TOOLS', None)
+        if self.tools:
+            os.environ['LEAPP_TOOLS'] = os.path.join(self._repo_dir, self._directory, self.tools[0])
+
         # We make a snapshot of the symbols in the module
         before = leapp.libraries.actor.__dict__.keys()
         # Now we are loading all modules and packages and injecting them at the same time into the modules at hand
@@ -264,6 +268,13 @@ class ActorDefinition(object):
             # Restoration of the LEAPP_FILES environment variable
             if files_backup is not None:
                 os.environ['LEAPP_FILES'] = files_backup
+            else:
+                os.environ.pop('LEAPP_FILES', None)
+
+            if tools_backup is not None:
+                os.environ['LEAPP_TOOLS'] = tools_backup
+            else:
+                os.environ.pop('LEAPP_TOOLS', None)
 
             # Remove all symbols in the actor lib before the execution
             current = leapp.libraries.actor.__dict__.keys()

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo "repository"
+echo "Should not be executed"
+exit 1

@@ -8,10 +8,10 @@ import pytest
 from leapp.actors import Actor, get_actors
 from leapp.libraries.stdlib import api
 from leapp.messaging import BaseMessaging
-from leapp.models import Model, fields
 from leapp.repository.scan import scan_repo
 from leapp.snactor.fixture import leapp_forked
-from leapp.topics import Topic
+from subprocess import check_output
+
 
 logging.basicConfig(format='%(asctime)-15s %(clientip)s %(user)-8s %(message)s')
 
@@ -106,10 +106,15 @@ def test_actor_all_files_paths(leapp_forked, repository, actor_name):
         # Ensure environment and actor api results are the same
         assert ':'.join(actor.actor_files_paths) == os.getenv('LEAPP_FILES')
         assert ':'.join(actor.common_files_paths) == os.getenv('LEAPP_COMMON_FILES')
+        assert ':'.join(actor.actor_tools_paths) == os.getenv('LEAPP_TOOLS')
+        assert ':'.join(actor.common_tools_paths) == os.getenv('LEAPP_COMMON_TOOLS')
 
         # Here we must ensure that the sorted list of entries are correct
         assert sorted(actor.files_paths) == sorted(
             os.getenv('LEAPP_FILES').split(':') + os.getenv('LEAPP_COMMON_FILES').split(':'))
+
+        assert sorted(actor.tools_paths) == sorted(
+            os.getenv('LEAPP_TOOLS').split(':') + os.getenv('LEAPP_COMMON_TOOLS').split(':'))
 
         # Ensure LEAPP_FILES/actor_files_paths are really actor private
         for directory in actor.actor_files_paths:
@@ -134,6 +139,16 @@ def test_actor_all_files_paths(leapp_forked, repository, actor_name):
         assert api.get_common_file_path('duplicate')
         with open(api.get_common_file_path('duplicate')) as f:
             assert f.read().strip() == 'repository'
+
+        # Ensure tools files api
+        assert api.get_common_tool_path('directory/exec_script')
+        assert check_output(api.get_common_tool_path('directory/exec_script')).decode('utf-8').strip() == 'repository'
+        assert not api.get_common_tool_path('directory/nonexec_script')
+
+        assert api.get_actor_tool_path('directory/exec_script')
+        assert check_output(api.get_actor_tool_path('directory/exec_script'))\
+            .decode('utf-8').strip() == actor_name + '-actor'
+        assert not api.get_actor_tool_path('directory/nonexec_script')
 
         # Ensure some file is resolvable from the repository files or the actor private files
         assert actor.get_file_path('duplicate')
