@@ -15,6 +15,7 @@ from leapp.exceptions import LeappError
 from leapp.utils.audit import create_audit_entry
 from leapp.libraries.stdlib import api
 from leapp.libraries.stdlib.call import _call, STDOUT
+from leapp.libraries.stdlib.config import is_debug
 
 
 class CalledProcessError(LeappError):
@@ -111,7 +112,7 @@ def _logging_handler(fd_info, buffer):
     :type buffer: bytes array
     """
     (_unused, fd_type) = fd_info
-    if os.getenv('LEAPP_VERBOSE', '0') == '1':
+    if is_debug():
         if fd_type == STDOUT:
             sys.stdout.write(buffer)
         else:
@@ -133,6 +134,7 @@ def run(args, split=False, callback_raw=_logging_handler):
     :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
     :rtype: dict
     """
+    api.current_logger().debug('External command is started: [%s]', ' '.join(args))
     _id = str(uuid.uuid4())
     result = None
     try:
@@ -152,4 +154,5 @@ def run(args, split=False, callback_raw=_logging_handler):
     finally:
         create_audit_entry('process-end', _id)
         create_audit_entry('process-result', {'id': _id, 'parameters': args, 'result': result})
+        api.current_logger().debug('External command is finished: [%s]', ' '.join(args))
     return result
