@@ -101,6 +101,23 @@ def common_files_paths():
     return current_actor().common_files_paths
 
 
+def actor_tools_paths():
+    """
+    Returns the tool paths that are bundled with the actor. (Path to the content of the actor's tools directory).
+    """
+    return current_actor().actor_tools_paths
+
+
+def tools_paths():
+    """ Returns all actor tools paths related to the actor and common actors tools paths. """
+    return current_actor().tools_paths
+
+
+def common_tools_paths():
+    """ Returns all common repository tool paths. """
+    return current_actor().common_tools_paths
+
+
 def get_common_folder_path(name):
     """
     Finds the first matching folder path within :py:attr:`files_paths`.
@@ -171,3 +188,39 @@ def get_file_path(name):
     :rtype: str or None
     """
     return current_actor().get_file_path(name)
+
+
+def get_tool_path(name):
+    """
+    Finds the first matching executable file path within :py:attr:`tools_paths`.
+
+    :param name: Name of the file
+    :type name: str
+    :return: Found file path
+    :rtype: str or None
+    """
+    return current_actor().get_tool_path(name)
+
+
+def get_common_tool_path(name):
+    """
+    Finds the first matching executable file path within :py:attr:`common_tools_paths`.
+
+    :param name: Name of the file
+    :type name: str
+    :return: Found file path
+    :rtype: str or None
+    """
+    return current_actor().get_common_tool_path(name)
+
+
+def get_actor_tool_path(name):
+    """
+    Finds the first matching executable file path within :py:attr:`actor_tools_paths`.
+
+    :param name: Name of the file
+    :type name: str
+    :return: Found file path
+    :rtype: str or None
+    """
+    return current_actor().get_actor_tool_path(name)

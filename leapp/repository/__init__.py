@@ -134,6 +134,8 @@ class Repository(object):
         if not stage or stage is _LoadStage.LIBRARIES:
             self.log.debug("Extending PATH for common tool paths")
             self._extend_environ_paths('PATH', self.tools)
+            self.log.debug("Extending LEAPP_COMMON_TOOLS for common tool paths")
+            self._extend_environ_paths('LEAPP_COMMON_TOOLS', self.tools)
             self.log.debug("Extending LEAPP_COMMON_FILES for common file paths")
             self._extend_environ_paths('LEAPP_COMMON_FILES', self.files)
 

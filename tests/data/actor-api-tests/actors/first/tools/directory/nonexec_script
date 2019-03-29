@@ -1,0 +1,5 @@
+#!/bin/bash
+
+echo "first-actor"
+echo "Should not be executed"
+exit 1

@@ -128,7 +128,25 @@ class Actor(object):
         """ Returns all common repository file paths. """
         return os.getenv("LEAPP_COMMON_FILES", "").split(":")
 
-    def _get_folder_path(self, directories, name):
+    @property
+    def actor_tools_paths(self):
+        """
+        Returns the tool paths that are bundled with the actor. (Path to the content of the actor's tools directory).
+        """
+        return os.getenv("LEAPP_TOOLS", "").split(":")
+
+    @property
+    def common_tools_paths(self):
+        """ Returns all common repository tool paths. """
+        return os.getenv("LEAPP_COMMON_TOOLS", "").split(":")
+
+    @property
+    def tools_paths(self):
+        """ Returns all actor tools paths related to the actor and common actors tools paths. """
+        return self.actor_tools_paths + self.common_tools_paths
+
+    @staticmethod
+    def _get_folder_path(directories, name):
         """
         Finds the first matching folder path within directories.
 
@@ -176,7 +194,8 @@ class Actor(object):
         """
         return self._get_folder_path(self.actor_files_paths, name)
 
-    def _get_file_path(self, directories, name):
+    @staticmethod
+    def _get_file_path(directories, name):
         """
         Finds the first matching file path within directories.
 
@@ -223,6 +242,55 @@ class Actor(object):
         :rtype: str or None
         """
         return self._get_file_path(self.actor_files_paths, name)
+
+    @staticmethod
+    def _get_tool_path(directories, name):
+        """
+        Finds the first matching executable file within directories.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        for path in directories:
+            path = os.path.join(path, name)
+            if os.path.isfile(path) and os.access(path, os.X_OK):
+                return path
+        return None
+
+    def get_tool_path(self, name):
+        """
+        Finds the first matching executable file path within :py:attr:`tools_paths`.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        return self._get_tool_path(self.tools_paths, name)
+
+    def get_common_tool_path(self, name):
+        """
+        Finds the first matching executable file path within :py:attr:`common_tools_paths`.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        return self._get_tool_path(self.common_tools_paths, name)
+
+    def get_actor_tool_path(self, name):
+        """
+        Finds the first matching executable file path within :py:attr:`actor_tools_paths`.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        return self._get_tool_path(self.actor_tools_paths, name)
 
     def run(self, *args):
         """ Runs the actor calling the method :py:func:`process`. """
