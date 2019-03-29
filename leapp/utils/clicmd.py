@@ -7,6 +7,13 @@ from argparse import ArgumentParser, _SubParsersAction, RawDescriptionHelpFormat
 from leapp.exceptions import CommandDefinitionError, UsageError, CommandError
 
 
+class _LeappArgumentParser(ArgumentParser):
+    def error(self, message):
+        self.print_help()
+        sys.stderr.write('error: %s\n' % message)
+        sys.exit(2)
+
+
 class _LeappHelpFormatter(RawDescriptionHelpFormatter):
     """
     Capitalizes section headings in the help output
@@ -70,7 +77,7 @@ class Command(object):
         :type version: str
         :return: None
         """
-        parser = ArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=_LeappHelpFormatter)
+        parser = _LeappArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=_LeappHelpFormatter)
         parser.register('action', 'parsers', _SubParserActionOverride)
         parser.add_argument('--version', action='version', version=version)
         parser.set_defaults(func=None)
