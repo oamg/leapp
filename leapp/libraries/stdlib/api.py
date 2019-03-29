@@ -4,6 +4,8 @@ This module implements a convenience API for actions that are accessible to acto
 Any code that wants use this convenience library has to be called from within the actors context.
 This is true for actors, actor private libraries and repository libraries.
 """
+import logging
+
 from leapp.actors import Actor
 
 
@@ -50,7 +52,7 @@ def current_logger():
     :return: Logger instance for the current actor.
     :rtype: logging.Logger
     """
-    return current_actor().log
+    return current_actor().log if current_actor() else logging.getLogger('leapp.fallback')
 
 
 def produce(*model_instances):
