@@ -13,7 +13,13 @@ The leapp tool is an end-user application designed to run specific workflows.
     show program's version number and exit
 
 --debug
-    Enables debug logging
+    Prints all available log messages (debug, info, warning, error, critical) and output of executed commands to stderr.
+    By default only error and critical level messages are printed.
+
+--verbose
+    Prints all but debug log messages (info, warning, error, critical) to stderr.
+    By default only error and critical level messages are printed.
+
 .SH "LEAPP COMMANDS"
 upgrade
     Upgrades the current system to the next available major version.
@@ -27,8 +33,18 @@ LEAPP_LOGGER_CONFIG
 .RS 4
 This environment variable allows to override the default location of logger.conf. If not specified, the default /etc/leapp/logger.conf is used.
 .RE
+
+LEAPP_DEBUG
+.RS 4
+This environment variable enables debug logging, see --debug for more information
+.RE
+
+LEAPP_VERBOSE
+.RS 4
+This environment variable enables verbose logging, see --verbose for more information
+.RE
 .SH "REPORTING BUGS"
-Report bugs to the issue tracker <https://github.com/leapp-to/leapp/issues> or to the mailing list <leapp-devel@redhat.com>.
+Report bugs to the issue tracker <https://github.com/oamg/leapp-repository/issues> or to bugzilla <https://bugzilla.redhat.com> under the `Red Hat Enterprise Linux 7` product and the `leapp-repository` component.
 .SH "SEE ALSO"
 snactor(1)
 More info available at <https://leapp.readthedocs.io/>.
