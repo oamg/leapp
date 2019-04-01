@@ -1,6 +1,6 @@
-Welcome to Leapp's documentation!
+Welcome to developer documentation for Leapp!
 =================================
-   Leapp is an OS and Application modernization framework
+   `Leapp <https://oamg.github.io/leapp/>`_ is an OS and application modernization framework
 
 .. toctree::
     :maxdepth: 4
