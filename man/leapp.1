@@ -43,8 +43,17 @@ LEAPP_VERBOSE
 .RS 4
 This environment variable enables verbose logging, see --verbose for more information
 .RE
+
+.SH "RETURN CODES"
+
+0 - No error occurred.
+
+1 - Any actor in a workflow reported an error (through report_error function or StopActorExecutionError exception).
+
+
 .SH "REPORTING BUGS"
 Report bugs to the issue tracker <https://github.com/oamg/leapp-repository/issues> or to bugzilla <https://bugzilla.redhat.com> under the `Red Hat Enterprise Linux 7` product and the `leapp-repository` component.
+
 .SH "SEE ALSO"
 snactor(1)
 More info available at <https://leapp.readthedocs.io/>.
