@@ -13,6 +13,10 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
                encoding='utf-8', write=None, timeout=1, buffer_size=80):
     # Register the file descriptors (stdout + stderr) with the epoll object
     # so that we'll get notifications when data are ready to read
+    # FIXME: the callback_linebuffered buffer is ignored now as the input stream
+    # # is not handled properly, all realted FIXME parts in the functions
+    # # are marked by (**LINE_BUFFER**) comment
+
     for fd in read_fds:
         ep.register(fd, select.EPOLLIN | select.EPOLLPRI)
 
@@ -31,7 +35,8 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
     num_expected = len(read_fds) + (1 if write else 0)
     # Set up file-descriptor specific buffers where we'll buffer the output
     buf = {fd: bytes() for fd in read_fds}
-    linebufs = {fd: '' for fd in read_fds}
+    # FIXME: (**LINE_BUFFER**)
+    # linebufs = {fd: '' for fd in read_fds}
 
     while not ep.closed and len(hupped) != num_expected:
         events = ep.poll(timeout)
@@ -43,11 +48,12 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
                 fd_type = read_fds.index(fd) + 1
                 read = os.read(fd, buffer_size)
                 callback_raw((fd, fd_type), read)
-                linebufs[fd] += read.decode(encoding)
-                while '\n' in linebufs[fd]:
-                    pre, post = linebufs[fd].split('\n', 1)
-                    linebufs[fd] = post
-                    callback_linebuffered((fd, fd_type), pre)
+                # FIXME: (**LINE_BUFFER**)
+                # linebufs[fd] += read.decode(encoding)
+                # while '\n' in linebufs[fd]:
+                #     pre, post = linebufs[fd].split('\n', 1)
+                #     linebufs[fd] = post
+                #     callback_linebuffered((fd, fd_type), pre)
                 buf[fd] += read
             elif event == select.EPOLLOUT:
                 # Write data to pipe, `os.write` returns the number of bytes written,
@@ -61,12 +67,13 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
                     hupped.add(fd)
                     ep.unregister(fd)
 
-    # Process leftovers from line buffering
-    for (fd, lb) in linebufs.items():
-        if lb:
-            # [stdout, stderr] is relayed, stdout=1 a stderr=2
-            # as the field starting indexed is 0, so the +1 needs to be added
-            callback_linebuffered(read_fds.index(fd) + 1, lb)
+    # FIXME: (**LINE_BUFFER**)
+    # # Process leftovers from line buffering
+    # for (fd, lb) in linebufs.items():
+    #     if lb:
+    #         # [stdout, stderr] is relayed, stdout=1 a stderr=2
+    #         # as the field starting indexed is 0, so the +1 needs to be added
+    #         callback_linebuffered(read_fds.index(fd) + 1, lb)
 
     return buf
 
