@@ -29,14 +29,14 @@ def test_stdin_fd():
     os.close(r)
     assert ret['stdout'] == '<LOREM IPSUM>\n'
 
-
-def test_linebuffer_callback():
-    buffered = []
-
-    def callback(fd, data):
-        buffered.append(data)
-    _call(('bash', '-c', 'echo 1; echo 2; echo 3'), callback_linebuffered=callback)
-    assert buffered == ['1', '2', '3']
+# FIXME: (**LINE_BUFFER**)
+# def test_linebuffer_callback():
+#     buffered = []
+#
+#     def callback(fd, data):
+#         buffered.append(data)
+#     _call(('bash', '-c', 'echo 1; echo 2; echo 3'), callback_linebuffered=callback)
+#     assert buffered == ['1', '2', '3']
 
 
 @pytest.mark.parametrize('p', _STDIN)
@@ -75,10 +75,11 @@ def test_callability_check(p):
         _call(('true',), callback_raw='nope')
 
 
-@pytest.mark.parametrize('p', _CALLBACKS)
-def test_callability_check(p):
-    with pytest.raises(TypeError):
-        _call(('true',), callback_linebuffered=p)
+# FIXME: (**LINE_BUFFER**)
+# @pytest.mark.parametrize('p', _CALLBACKS)
+# def test_callability_check(p):
+#     with pytest.raises(TypeError):
+#         _call(('true',), callback_linebuffered=p)
 
 
 @pytest.mark.parametrize('p', _POSITIVE_INTEGERS)
