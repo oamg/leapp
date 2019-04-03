@@ -69,6 +69,13 @@ def test_output_2():
     assert ret['signal'] == 0
 
 
+def test_env_injection():
+    ret = _call(('bash', '-c', 'echo $TEST'), env={'TEST': 'SUCCESS'})
+    assert isinstance(ret['exit_code'], int)
+    assert ret['exit_code'] == 0
+    assert ret['stdout'] == 'SUCCESS\n'
+
+
 @pytest.mark.parametrize('p', _CALLBACKS)
 def test_callability_check(p):
     with pytest.raises(TypeError):
