@@ -119,7 +119,7 @@ def _logging_handler(fd_info, buffer):
         __write_raw(fd_info, buffer)
 
 
-def run(args, split=False, callback_raw=_logging_handler):
+def run(args, split=False, callback_raw=_logging_handler, env=None):
     """
     Run a command and return its result as a dict.
 
@@ -138,8 +138,8 @@ def run(args, split=False, callback_raw=_logging_handler):
     _id = str(uuid.uuid4())
     result = None
     try:
-        create_audit_entry('process-start', {'id': _id, 'parameters': args})
-        result = _call(args, callback_raw=callback_raw)
+        create_audit_entry('process-start', {'id': _id, 'parameters': args, 'env': env})
+        result = _call(args, callback_raw=callback_raw, env=env)
         if result['exit_code'] != 0:
             raise CalledProcessError(
                 message="A Leapp Command Error occurred. ",
@@ -153,6 +153,6 @@ def run(args, split=False, callback_raw=_logging_handler):
                 })
     finally:
         create_audit_entry('process-end', _id)
-        create_audit_entry('process-result', {'id': _id, 'parameters': args, 'result': result})
+        create_audit_entry('process-result', {'id': _id, 'parameters': args, 'result': result, 'env': env})
         api.current_logger().debug('External command is finished: [%s]', ' '.join(args))
     return result

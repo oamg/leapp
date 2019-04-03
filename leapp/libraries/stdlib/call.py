@@ -82,7 +82,7 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
 
 # FIXME: Issue #488
 def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=lambda fd, value: None,
-          encoding='utf-8', poll_timeout=1, read_buffer_size=80, stdin=None):
+          encoding='utf-8', poll_timeout=1, read_buffer_size=80, stdin=None, env=None):
     """
         :param command: The command to execute
         :type command: list, tuple
@@ -99,6 +99,8 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         :type callback_linebuffered: (fd, buffer) -> None
         :param stdin: String or a file descriptor that will be written to stdin of the child process
         :type stdin: int, str
+        :param env: Environment variables to use for execution of the command
+        :type env: dict
         :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
         :rtype: dict
     """
@@ -113,6 +115,11 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
     if not isinstance(read_buffer_size, int) or isinstance(read_buffer_size, bool) or read_buffer_size <= 0:
         raise ValueError('read_buffer_size parameter has to be integer greater than zero')
 
+    environ = os.environ
+    if env:
+        if not isinstance(env, dict):
+            raise TypeError('env parameter has to be a dictionary')
+        environ.update(env)
     # Create a separate pipe for stdout/stderr
     #
     # The parent process is going to use the read-end of the pipes for reading child's
@@ -201,4 +208,4 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         os.close(stderr)
         os.dup2(wstdout, STDOUT)
         os.dup2(wstderr, STDERR)
-        os.execlp(command[0], *command)
+        os.execvpe(command[0], command, env=environ)
