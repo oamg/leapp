@@ -249,6 +249,9 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     self.log.info('Initiating system reboot due to the restart_after_reboot flag')
                     reboot_system()
                 return
+            if phase[0].flags.is_checkpoint:
+                self.log.info('Stopping the workflow execution due to the is_checkpoint flag')
+                return
 
 
 def get_workflows():
