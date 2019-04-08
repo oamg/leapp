@@ -76,6 +76,27 @@ class CalledProcessError(LeappError):
         return self._result.get('pid')
 
 
+def __write_raw(fd_info, buffer):
+    """
+    Raw write to fd compatible in Py2 and Py3 (3.3+)
+
+    Buffer Output Discrimination is based on fd_type in fd_info.
+
+    :param fd_info: Contains File descriptor type
+    :type fd_info: tuple
+    :param buffer: buffer interface
+    :type buffer: bytes array
+    """
+    (fd, fd_type) = fd_info
+    if sys.version_info > (3, 0):
+        os.writev(fd, [buffer])
+    else:
+        if fd_type == STDOUT:
+            sys.stdout.write(buffer)
+        else:
+            sys.stderr.write(buffer)
+
+
 def _logging_handler(fd_info, buffer):
     """
     Log into either STDOUT or to STDERR.
@@ -87,12 +108,8 @@ def _logging_handler(fd_info, buffer):
     :param buffer: buffer interface
     :type buffer: bytes array
     """
-    (_unused, fd_type) = fd_info
     if is_debug():
-        if fd_type == STDOUT:
-            sys.stdout.write(buffer)
-        else:
-            sys.stderr.write(buffer)
+        __write_raw(fd_info, buffer)
 
 
 def run(args, split=False, callback_raw=_logging_handler):
