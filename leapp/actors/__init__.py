@@ -446,7 +446,10 @@ def get_actor_metadata(actor):
     additional_tag_info = ' At least one tag is required for actors. Please fill the tags field'
     return dict([
         ('class_name', actor.__name__),
-        ('path', os.path.dirname(sys.modules[actor.__module__].__file__)),
+        # TODO: missing tests. We need to ensure this doesn't break anything.
+        # # OTOH, actor_definition.inspect_actor ends with empty list on Python3
+        # # if path is not transformed into the realpath.
+        ('path', os.path.dirname(os.path.realpath(sys.modules[actor.__module__].__file__))),
         _get_attribute(actor, 'name', _is_type(string_types), required=True),
         _get_attribute(actor, 'tags', _is_tag_tuple, required=True, additional_info=additional_tag_info),
         _get_attribute(actor, 'consumes', _is_model_tuple, required=False, default_value=()),
