@@ -2,6 +2,7 @@ from leapp.libraries.stdlib.call import _call
 
 import os
 import pytest
+import sys
 
 
 _CALLBACKS = [{}, [], 'string', lambda v: None, lambda a, b, c: None, None]
@@ -29,14 +30,14 @@ def test_stdin_fd():
     os.close(r)
     assert ret['stdout'] == '<LOREM IPSUM>\n'
 
-# FIXME: (**LINE_BUFFER**)
-# def test_linebuffer_callback():
-#     buffered = []
-#
-#     def callback(fd, data):
-#         buffered.append(data)
-#     _call(('bash', '-c', 'echo 1; echo 2; echo 3'), callback_linebuffered=callback)
-#     assert buffered == ['1', '2', '3']
+
+def test_linebuffer_callback():
+    buffered = []
+
+    def callback(fd, data):
+        buffered.append(data)
+    _call(('bash', '-c', 'echo 1; echo 2; echo 3'), callback_linebuffered=callback)
+    assert buffered == ['1', '2', '3']
 
 
 @pytest.mark.parametrize('p', _STDIN)
@@ -75,11 +76,10 @@ def test_callability_check(p):
         _call(('true',), callback_raw='nope')
 
 
-# FIXME: (**LINE_BUFFER**)
-# @pytest.mark.parametrize('p', _CALLBACKS)
-# def test_callability_check(p):
-#     with pytest.raises(TypeError):
-#         _call(('true',), callback_linebuffered=p)
+@pytest.mark.parametrize('p', _CALLBACKS)
+def test_callability_check(p):
+    with pytest.raises(TypeError):
+        _call(('true',), callback_linebuffered=p)
 
 
 @pytest.mark.parametrize('p', _POSITIVE_INTEGERS)
@@ -92,3 +92,28 @@ def test_polltime(p):
 def test_buffer_size(p):
     with pytest.raises(ValueError):
         _call(('true',), read_buffer_size=p)
+
+
+def test_utf8_panagrams():
+    panagrams_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        'data',
+        'call_data',
+        'panagrams'
+    )
+
+    with open(panagrams_path) as f:
+        if sys.version_info > (3, 0):
+            panagrams = f.read()
+        else:
+            panagrams = f.read().decode('utf-8')
+
+    primes = [
+        2, 3, 5, 7, 11, 13, 17, 19,
+        23, 29, 31, 37, 41, 43, 47, 53, 59,
+        61, 67, 71, 73, 79, 83, 89, 97,
+        101, 103, 107, 109, 113
+    ]
+
+    for prime in primes:
+        assert _call(('cat', panagrams_path,), read_buffer_size=prime)['stdout'] == panagrams

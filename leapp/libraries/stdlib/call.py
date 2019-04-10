@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import select
 import os
+import codecs
 
 
 STDIN = 0
@@ -13,10 +14,6 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
                encoding='utf-8', write=None, timeout=1, buffer_size=80):
     # Register the file descriptors (stdout + stderr) with the epoll object
     # so that we'll get notifications when data are ready to read
-    # FIXME: the callback_linebuffered buffer is ignored now as the input stream
-    # # is not handled properly, all realted FIXME parts in the functions
-    # # are marked by (**LINE_BUFFER**) comment
-
     for fd in read_fds:
         ep.register(fd, select.EPOLLIN | select.EPOLLPRI)
 
@@ -35,8 +32,9 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
     num_expected = len(read_fds) + (1 if write else 0)
     # Set up file-descriptor specific buffers where we'll buffer the output
     buf = {fd: bytes() for fd in read_fds}
-    # FIXME: (**LINE_BUFFER**)
-    # linebufs = {fd: '' for fd in read_fds}
+    if encoding:
+        linebufs = {fd: '' for fd in read_fds}
+        decoders = {fd: codecs.getincrementaldecoder(encoding)() for fd in read_fds}
 
     while not ep.closed and len(hupped) != num_expected:
         events = ep.poll(timeout)
@@ -45,16 +43,15 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
                 hupped.add(fd)
                 ep.unregister(fd)
             if event & (select.EPOLLIN | select.EPOLLPRI) != 0:
-                # FIXME: Issue #488
                 fd_type = read_fds.index(fd) + 1
                 read = os.read(fd, buffer_size)
                 callback_raw((fd, fd_type), read)
-                # FIXME: (**LINE_BUFFER**)
-                # linebufs[fd] += read.decode(encoding)
-                # while '\n' in linebufs[fd]:
-                #     pre, post = linebufs[fd].split('\n', 1)
-                #     linebufs[fd] = post
-                #     callback_linebuffered((fd, fd_type), pre)
+                if encoding:
+                    linebufs[fd] += decoders[fd].decode(read)
+                    while '\n' in linebufs[fd]:
+                        pre, post = linebufs[fd].split('\n', 1)
+                        linebufs[fd] = post
+                        callback_linebuffered((fd, fd_type), pre)
                 buf[fd] += read
             elif event == select.EPOLLOUT:
                 # Write data to pipe, `os.write` returns the number of bytes written,
@@ -68,21 +65,19 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
                     hupped.add(fd)
                     ep.unregister(fd)
 
-    # FIXME: (**LINE_BUFFER**)
-    # FIXME: Issue #488
-    # # Process leftovers from line buffering
-    # for (fd, lb) in linebufs.items():
-    #     if lb:
-    #         # [stdout, stderr] is relayed, stdout=1 a stderr=2
-    #         # as the field starting indexed is 0, so the +1 needs to be added
-    #         callback_linebuffered(read_fds.index(fd) + 1, lb)
+    # Process leftovers from line buffering
+    if encoding:
+        for (fd, lb) in linebufs.items():
+            if lb:
+                # [stdout, stderr] is relayed, stdout=1 a stderr=2
+                # as the field starting indexed is 0, so the +1 needs to be added
+                callback_linebuffered(read_fds.index(fd) + 1, lb)
 
     return buf
 
 
-# FIXME: Issue #488
 def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=lambda fd, value: None,
-          encoding='utf-8', poll_timeout=1, read_buffer_size=80, stdin=None):
+          encoding='utf-8', poll_timeout=1, read_buffer_size=80, stdin=None, env=None):
     """
         :param command: The command to execute
         :type command: list, tuple
@@ -94,11 +89,13 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
                                  The default value of 80 chosen to correspond with suggested terminal line width
         :type read_buffer_size: int
         :param callback_raw: Callback executed on raw data (before decoding) as they are read from file descriptors
-        :type callback_raw: (fd: int, buffer: bytes) -> None
+        :type callback_raw: ((fd: int, fd_type: int), buffer: bytes) -> None
         :param callback_linebuffered: Callback executed on decoded lines as they are read from the file descriptors
-        :type callback_linebuffered: (fd, buffer) -> None
+        :type callback_linebuffered: ((fd: int, fd_type: int), value: str) -> None
         :param stdin: String or a file descriptor that will be written to stdin of the child process
         :type stdin: int, str
+        :param env: Environment variables to use for execution of the command
+        :type env: dict
         :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
         :rtype: dict
     """
@@ -113,6 +110,11 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
     if not isinstance(read_buffer_size, int) or isinstance(read_buffer_size, bool) or read_buffer_size <= 0:
         raise ValueError('read_buffer_size parameter has to be integer greater than zero')
 
+    environ = os.environ
+    if env:
+        if not isinstance(env, dict):
+            raise TypeError('env parameter has to be a dictionary')
+        environ.update(env)
     # Create a separate pipe for stdout/stderr
     #
     # The parent process is going to use the read-end of the pipes for reading child's
@@ -201,4 +203,4 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         os.close(stderr)
         os.dup2(wstdout, STDOUT)
         os.dup2(wstderr, STDERR)
-        os.execlp(command[0], *command)
+        os.execvpe(command[0], command, env=environ)
