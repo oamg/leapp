@@ -3,6 +3,7 @@ from leapp.libraries.stdlib.call import _call
 import os
 import pytest
 import sys
+import functools
 
 
 _CALLBACKS = [{}, [], 'string', lambda v: None, lambda a, b, c: None, None]
@@ -94,6 +95,14 @@ def test_buffer_size(p):
         _call(('true',), read_buffer_size=p)
 
 
+class ArrayTracer(object):
+    def __init__(self):
+        self.value = []
+
+    def __call__(self, unused, value):
+        self.value.append(value)
+
+
 def test_utf8_panagrams():
     panagrams_path = os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
@@ -102,11 +111,9 @@ def test_utf8_panagrams():
         'panagrams'
     )
 
-    with open(panagrams_path) as f:
-        if sys.version_info > (3, 0):
-            panagrams = f.read()
-        else:
-            panagrams = f.read().decode('utf-8')
+    with open(panagrams_path, 'rb') as f:
+        p_raw = f.read()
+        panagrams = p_raw.decode('utf-8')
 
     primes = [
         2, 3, 5, 7, 11, 13, 17, 19,
@@ -116,4 +123,11 @@ def test_utf8_panagrams():
     ]
 
     for prime in primes:
-        assert _call(('cat', panagrams_path,), read_buffer_size=prime)['stdout'] == panagrams
+        _lines, _raw = ArrayTracer(), ArrayTracer()
+        r = _call(
+            ('cat', panagrams_path,), read_buffer_size=prime, 
+            callback_linebuffered=_lines, callback_raw=_raw
+        )
+        assert r['stdout'] == panagrams
+        assert panagrams.splitlines() == _lines.value
+        assert p_raw == bytes(functools.reduce(lambda x, xs: x + xs, _raw.value, bytes()))

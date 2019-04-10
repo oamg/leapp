@@ -101,9 +101,12 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
     """
     if not isinstance(command, (list, tuple)):
         raise TypeError('command parameter has to be a list or tuple')
-    if not callable(callback_raw) or callback_raw.__code__.co_argcount != 2:
-        raise TypeError('callback_raw parameter has to be callable accepting 2 parameters')
-    if not callable(callback_linebuffered) or callback_linebuffered.__code__.co_argcount != 2:
+    if not callable(callback_raw) or\
+            (getattr(callback_raw, '__code__', None) and callback_raw.__code__.co_argcount != 2):
+            raise TypeError('callback_raw parameter has to be callable accepting 2 parameters')
+    if not callable(callback_linebuffered)\
+            or (getattr(callback_linebuffered, '__code__', None)
+                and callback_linebuffered.__code__.co_argcount != 2):
         raise TypeError('callback_linebuffered parameter has to be callable accepting 2 parameters')
     if not isinstance(poll_timeout, int) or isinstance(poll_timeout, bool) or poll_timeout <= 0:
         raise ValueError('poll_timeout parameter has to be integer greater than zero')
