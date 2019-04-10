@@ -76,6 +76,7 @@ class CalledProcessError(LeappError):
         return self._result.get('pid')
 
 
+# FIXME: Issue #488
 def __write_raw(fd_info, buffer):
     """
     Raw write to fd compatible in Py2 and Py3 (3.3+)
@@ -87,8 +88,13 @@ def __write_raw(fd_info, buffer):
     :param buffer: buffer interface
     :type buffer: bytes array
     """
-    (fd, fd_type) = fd_info
+    (unused_fd, fd_type) = fd_info
     if sys.version_info > (3, 0):
+        if fd_type == STDOUT:
+            fd = sys.stdout.fileno()
+        else:
+            # FIXME: Issue #488 - what to do in case fd_type != STDERR?
+            fd = sys.stderr.fileno()
         os.writev(fd, [buffer])
     else:
         if fd_type == STDOUT:
@@ -97,6 +103,7 @@ def __write_raw(fd_info, buffer):
             sys.stderr.write(buffer)
 
 
+# FIXME: Issue #488
 def _logging_handler(fd_info, buffer):
     """
     Log into either STDOUT or to STDERR.

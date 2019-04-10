@@ -45,6 +45,7 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
                 hupped.add(fd)
                 ep.unregister(fd)
             if event & (select.EPOLLIN | select.EPOLLPRI) != 0:
+                # FIXME: Issue #488
                 fd_type = read_fds.index(fd) + 1
                 read = os.read(fd, buffer_size)
                 callback_raw((fd, fd_type), read)
@@ -68,6 +69,7 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
                     ep.unregister(fd)
 
     # FIXME: (**LINE_BUFFER**)
+    # FIXME: Issue #488
     # # Process leftovers from line buffering
     # for (fd, lb) in linebufs.items():
     #     if lb:
@@ -78,6 +80,7 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
     return buf
 
 
+# FIXME: Issue #488
 def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=lambda fd, value: None,
           encoding='utf-8', poll_timeout=1, read_buffer_size=80, stdin=None):
     """
