@@ -37,9 +37,10 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
         decoders = {fd: codecs.getincrementaldecoder(encoding)() for fd in read_fds}
 
     def _get_fd_type(fd):
-        """ File descriptors passed via `read_fds` are always representing [stdout, stderr],
-            since arrays start at index 0, we need to add 1 to get the real symbolic value
-            `STDOUT` or `STDERR`.
+        """
+        File descriptors passed via `read_fds` are always representing [stdout, stderr],
+        since arrays start at index 0, we need to add 1 to get the real symbolic value
+        `STDOUT` or `STDERR`.
         """
         return read_fds.index(fd) + 1
 

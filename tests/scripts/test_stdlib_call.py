@@ -125,7 +125,7 @@ def test_utf8_panagrams():
     for prime in primes:
         _lines, _raw = ArrayTracer(), ArrayTracer()
         r = _call(
-            ('cat', panagrams_path,), read_buffer_size=prime, 
+            ('cat', panagrams_path,), read_buffer_size=prime,
             callback_linebuffered=_lines, callback_raw=_raw
         )
         assert r['stdout'] == panagrams
