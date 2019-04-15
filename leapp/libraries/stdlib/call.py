@@ -114,7 +114,7 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
             raise TypeError('callback_raw parameter has to be callable accepting 2 parameters')
     if not callable(callback_linebuffered)\
             or (getattr(callback_linebuffered, '__code__', None)
-                and callback_linebuffered.__code__.co_argcount != 2):
+                and callback_linebuffered.__code__.co_argcount != 2): # noqa
         raise TypeError('callback_linebuffered parameter has to be callable accepting 2 parameters')
     if not isinstance(poll_timeout, int) or isinstance(poll_timeout, bool) or poll_timeout <= 0:
         raise ValueError('poll_timeout parameter has to be integer greater than zero')
