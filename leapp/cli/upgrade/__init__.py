@@ -2,8 +2,11 @@ from __future__ import print_function
 import itertools
 import json
 import os
+import shutil
 import sys
+import tarfile
 import uuid
+from datetime import datetime
 
 from leapp.config import get_config
 from leapp.exceptions import CommandError, LeappError
@@ -12,6 +15,48 @@ from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
 from leapp.utils.output import report_errors, beautify_actor_exception
+
+
+def archive_logfiles():
+    """ Archive log files from a previous run of Leapp """
+    # FIXME: The files in /var/log/leapp/ needs to be defined on one place. They are defined also in actors.
+    archive_dir = '/var/log/leapp/archive/'
+    logs_directory = '/var/log/leapp'
+    debug_dir = '/var/log/leapp/dnf-debugdata/'
+    leapp_db = '/var/lib/leapp/leapp.db'
+    log_files = [
+        '/var/log/leapp/leapp-upgrade.log',
+        '/var/log/leapp/leapp-report.txt',
+        '/var/log/leapp/dnf-plugin-data.txt'
+    ]
+
+    if not os.path.isdir(logs_directory):
+        os.makedirs(logs_directory)
+
+    files_to_archive = [file for file in log_files if os.path.isfile(file)]
+
+    if not os.path.isdir(archive_dir):
+        os.makedirs(archive_dir)
+
+    if files_to_archive:
+        if os.path.isdir(debug_dir):
+            files_to_archive.append(debug_dir)
+
+        now = datetime.now().strftime('%Y%m%d%H%M%S')
+        archive_file = os.path.join(archive_dir, 'leapp-{}-logs.tar.gz'.format(now))
+
+        with tarfile.open(archive_file, "w:gz") as tar:
+            for file_to_add in files_to_archive:
+                tar.add(file_to_add)
+                if os.path.isdir(file_to_add):
+                    shutil.rmtree(file_to_add, ignore_errors=True)
+                try:
+                    os.remove(file_to_add)
+                except OSError:
+                    pass
+            # leapp_db is not in files_to_archive to not have it removed
+            if os.path.isfile(leapp_db):
+                tar.add(leapp_db)
 
 
 def load_repositories_from(name, repo_path, manager=None):
@@ -96,12 +141,13 @@ def upgrade(args):
             os.environ['LEAPP_VERBOSE'] = '0'
 
         skip_phases_until = get_last_phase(context)
+        logger = configure_logger()
     else:
         e = Execution(context=context, kind='upgrade', configuration=configuration)
         e.store()
+        archive_logfiles()
+        logger = configure_logger('leapp-upgrade.log')
     os.environ['LEAPP_EXECUTION_ID'] = context
-
-    logger = configure_logger()
 
     if args.resume:
         logger.info("Resuming execution after phase: %s", skip_phases_until)
