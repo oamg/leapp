@@ -110,7 +110,7 @@ class BaseMessaging(object):
         if details:
             details = json.dumps(details)
         model = ErrorModel(message=message, actor=actor.name, severity=severity, details=details,
-                           time=datetime.datetime.utcnow())
+                           time=datetime.datetime.now())
         self._do_produce(model, actor, self._errors)
 
     def produce(self, model, actor):
