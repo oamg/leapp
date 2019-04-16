@@ -12,6 +12,7 @@ Subpackages
     leapp.logger
     leapp.messaging
     leapp.models
+    leapp.reporting
     leapp.repository
     leapp.tags
     leapp.topics
