@@ -38,7 +38,9 @@ def report_error(message, severity=ErrorSeverity.ERROR, details=None):
 
 def show_message(message):
     """
-    Used to display messages to the user
+    Display a message in user interterface currently in use (CLI, GUI).
+
+    It uses one of the dialog renderers in :py:mod:`leapp.dialogs.renderer`.
 
     :param message: Message to show
     :type message: str

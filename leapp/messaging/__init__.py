@@ -168,9 +168,11 @@ class BaseMessaging(object):
 
     def show_message(self, message):
         """
-        Used to display messages to the user
+        Display a message in user interterface currently in use (CLI, GUI).
 
-        :param message: Dialog instance to show
+        It uses one of the dialog renderers in :py:mod:`leapp.dialogs.renderer`.
+
+        :param message: Message to show
         :type message: str
         """
         RawMessageDialog(message=message).request_answers(self._answers, self._dialog_renderer)
