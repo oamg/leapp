@@ -23,8 +23,8 @@ Release:    1%{?dist}
 Summary:    OS & Application modernization framework
 
 License:    ASL 2.0
-URL:        https://leapp-to.github.io
-Source0:    https://github.com/leapp-to/%{name}/archive/%{gittag}/%{name}-%{version}.tar.gz
+URL:        https://oamg.github.io/leapp/
+Source0:    https://github.com/oamg/%{name}/archive/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
 BuildArch:  noarch
 
 %if !0%{?fedora}
@@ -94,8 +94,8 @@ Python 2 leapp framework libraries.
 %endif
 
 # FIXME:
-# this subpackages should be used by python2-%{name} - so it makes sense to
-# improve name and dependencies inside - do same subpackage for python3-%{name}
+# this subpackages should be used by python2-%%{name} - so it makes sense to
+# improve name and dependencies inside - do same subpackage for python3-%%{name}
 %package deps
 Summary:    Meta-package with system dependencies of %{name} package
 
@@ -157,7 +157,7 @@ Python 3 leapp framework libraries.
 # Prep
 ##################################################
 %prep
-%autosetup
+%autosetup -n %{name}-%{version}
 
 ##################################################
 # Build
