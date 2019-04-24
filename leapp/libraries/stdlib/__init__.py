@@ -119,7 +119,7 @@ def _logging_handler(fd_info, buffer):
         __write_raw(fd_info, buffer)
 
 
-def run(args, split=False, callback_raw=_logging_handler, env=None):
+def run(args, split=False, callback_raw=_logging_handler, env=None, checked=True):
     """
     Run a command and return its result as a dict.
 
@@ -131,6 +131,8 @@ def run(args, split=False, callback_raw=_logging_handler, env=None):
     :type split: bool
     :param callback_raw: Optional custom callback executed on raw data to print in console
     :type callback_raw: (fd: int, buffer: bytes) -> None
+    :param checked: Raise an exception on a non-zero exit code, default True
+    :type checked: bool
     :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
     :rtype: dict
     """
@@ -140,7 +142,7 @@ def run(args, split=False, callback_raw=_logging_handler, env=None):
     try:
         create_audit_entry('process-start', {'id': _id, 'parameters': args, 'env': env})
         result = _call(args, callback_raw=callback_raw, env=env)
-        if result['exit_code'] != 0:
+        if checked and result['exit_code'] != 0:
             raise CalledProcessError(
                 message="A Leapp Command Error occurred. ",
                 command=args,
