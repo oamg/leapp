@@ -77,7 +77,7 @@ def fetch_last_upgrade_context():
     """
     with get_connection(None) as db:
         cursor = db.execute(
-            "SELECT context, stamp, configuration FROM execution WHERE kind = 'upgrade' ORDER BY stamp DESC LIMIT 1")
+            "SELECT context, stamp, configuration FROM execution WHERE kind = 'upgrade' ORDER BY id DESC LIMIT 1")
         row = cursor.fetchone()
         if row:
             return row[0], json.loads(row[2])
@@ -90,7 +90,7 @@ def fetch_all_upgrade_contexts():
     """
     with get_connection(None) as db:
         cursor = db.execute(
-            "SELECT context, stamp, configuration FROM execution WHERE kind = 'upgrade' ORDER BY stamp DESC")
+            "SELECT context, stamp, configuration FROM execution WHERE kind = 'upgrade' ORDER BY id DESC")
         row = cursor.fetchall()
         if row:
             return row
