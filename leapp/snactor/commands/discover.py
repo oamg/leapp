@@ -1,4 +1,5 @@
 import json as json_mod
+import logging
 import os
 import sys
 
@@ -89,6 +90,7 @@ https://red.ht/leapp-docs
 @command_opt('safe', is_flag=True, help='Analyze actor files statically to work around runtime errors')
 @requires_repository
 def cli(args):
+    logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
     base_dir = find_repository_basedir('.')
 
     if args.safe and args.json:
