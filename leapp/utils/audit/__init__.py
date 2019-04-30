@@ -450,7 +450,7 @@ def get_checkpoints(context):
                 data_source ON data_source.id = audit.data_source_id
               WHERE
                 audit.context = ? AND audit.event = ?
-              ORDER BY stamp ASC;
+              ORDER BY audit.id ASC;
         ''', (context, _AUDIT_CHECKPOINT_EVENT))
         cursor.row_factory = _dict_factory
         return cursor.fetchall()

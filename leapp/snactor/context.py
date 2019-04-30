@@ -14,7 +14,7 @@ def last_snactor_context(connection=None):
     """
     with get_connection(db=connection) as db:
         cursor = db.execute('''
-            SELECT context, stamp FROM execution WHERE kind = 'snactor-run' ORDER BY stamp DESC LIMIT 1
+            SELECT context, stamp FROM execution WHERE kind = 'snactor-run' ORDER BY id DESC LIMIT 1
         ''')
         row = cursor.fetchone()
         if row:
