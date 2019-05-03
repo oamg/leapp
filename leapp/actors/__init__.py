@@ -324,6 +324,35 @@ class Actor(object):
                                      'explicitely in the actor\'s "produces" tuple. The message will be ignored'.format(
                                          type(model)))
 
+    def consume_first_default(self, model):
+        """
+        Retrieves the first message found as specified in the actors :py:attr:`consumes` attribute, and filter message
+        types by model. This additionally returns as fallback value an instance of model with the default
+        initialization
+
+        :param model: Model to use as a filter for the messages to return
+        :type model: A derived class from :py:class:`leapp.models.Model`
+        :return: The first message of the specified model produced by other a fallback instance of model
+        :rtype: The message or a default initialized instance of the model type.
+        """
+        return self.consume_first(model, default=model())
+
+    def consume_first(self, model, default=None):
+        """
+        Retrieves the first message found as specified in the actors :py:attr:`consumes` attribute, and filter message
+        types by model.
+
+        :param model: Model to use as a filter for the messages to return
+        :type model: A derived class from :py:class:`leapp.models.Model`
+        :param default: Fallback value in case there are no messages
+        :type default: Any
+        :return: The first message of the specified model produced by other actors or the value passed as `default`
+        :rtype: The message or the value passed as ``default``
+        """
+        # One cannot iterate over tuples, so we make a generator that iterates over the value returned by self.consume.
+        # This way we can workaround both cases.
+        return next((message for message in self.consume(model)), default)
+
     def consume(self, *models):
         """
         Retrieve messages specified in the actors :py:attr:`consumes` attribute, and filter message types by

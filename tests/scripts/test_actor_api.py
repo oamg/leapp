@@ -72,13 +72,24 @@ def test_actor_messaging_paths(leapp_forked, repository, actor_name):
     messaging = _TestableMessaging()
     with _with_loaded_actor(repository, actor_name, messaging) as (_unused, actor):
         from leapp.models import ApiTestConsume, ApiTestProduce
+        assert len(list(actor.consume(ApiTestConsume))) == 0
+        assert next(actor.consume(ApiTestConsume), None) is None
+        assert actor.consume_first(ApiTestConsume) is None
+        assert api.consume_first(ApiTestConsume) is None
+        assert api.consume_first_default(ApiTestConsume).data == 'not-filled'
+        assert actor.consume_first_default(ApiTestConsume).data == 'not-filled'
+        assert actor.consume_first(ApiTestConsume, default='default') == 'default'
+        assert api.consume_first(ApiTestConsume, default='default') == 'default'
+
         messaging.feed(ApiTestConsume(data='prefilled'), actor)
 
         assert len(list(actor.consume(ApiTestConsume))) == 1
         assert next(actor.consume(ApiTestConsume)).data == 'prefilled'
+        assert actor.consume_first(ApiTestConsume).data == 'prefilled'
 
         assert len(list(api.consume(ApiTestConsume))) == 1
         assert next(api.consume(ApiTestConsume)).data == 'prefilled'
+        assert api.consume_first(ApiTestConsume).data == 'prefilled'
 
         actor_message = 'Actor {} sent message via Actor'.format(actor_name)
         api_message = 'Actor {} sent message via API'.format(actor_name)

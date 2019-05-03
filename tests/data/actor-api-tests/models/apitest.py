@@ -5,7 +5,7 @@ from leapp.topics import ApiTestTopic
 class ApiTest(Model):
     topic = ApiTestTopic
 
-    data = fields.String()
+    data = fields.String(default='not-filled')
 
 
 class ApiTestProduce(ApiTest):
