@@ -1,6 +1,7 @@
 import os
+import pytest
 
-from leapp.libraries.stdlib import run
+from leapp.libraries.stdlib import CalledProcessError, run
 from leapp.libraries.stdlib.config import is_debug, is_verbose
 
 
@@ -22,6 +23,17 @@ def test_check_multiline_output():
 def test_check_multiline_output_no_split():
     a_command = ['echo', 'This a multi-\nline No Split test!']
     assert run(a_command, split=False)['stdout'] == u'This a multi-\nline No Split test!\n'
+
+
+def test_check_error():
+    a_command = ['false']
+    with pytest.raises(CalledProcessError):
+        run(a_command, checked=True)
+
+
+def test_check_error_no_checked():
+    a_command = ['false']
+    assert run(a_command, checked=False)['exit_code'] == 1
 
 
 def test_is_verbose(monkeypatch):
