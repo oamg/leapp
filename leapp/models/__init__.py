@@ -71,6 +71,41 @@ class ModelMeta(type):
         super(ModelMeta, cls).__init__(name, bases, attrs)
 
 
+class MetaData(object):
+    def __init__(self, data):
+        self._data = data
+
+    @property
+    def row_id(self):
+        """ Returns the row id of the message in the message table.  """
+        return self._data.get('id')
+
+    @property
+    def actor(self):
+        """ Returns the name of the actor that has sent this message.  """
+        return self._data.get('actor')
+
+    @property
+    def phase(self):
+        """ Returns the name of the phase in which this message has been sent.  """
+        return self._data.get('phase')
+
+    @property
+    def timestamp(self):
+        """ Returns the timestamp string in ISO formst from when this message has been sent.  """
+        return self._data.get('stamp')
+
+    @property
+    def topic(self):
+        """ Returns the name of the topic of this message. """
+        return self._data.get('topic')
+
+    @property
+    def hostname(self):
+        """ Returns the name of the host (FQDN) from where this message originates. """
+        return self._data.get('hostname')
+
+
 class Model(with_metaclass(ModelMeta)):
     """
     Model is a base class for all models.
@@ -78,7 +113,8 @@ class Model(with_metaclass(ModelMeta)):
     Models are defining the data structure of the payload of messages and the
     metadata required, such as a name and topic.
     """
-    def __init__(self, init_method='from_initialization', **kwargs):
+    def __init__(self, metadata=None, init_method='from_initialization', **kwargs):
+        self._metadata = MetaData(metadata or {})
         super(Model, self).__init__()
         defined_fields = type(self).fields
         for key in kwargs.keys():
@@ -101,8 +137,17 @@ class Model(with_metaclass(ModelMeta)):
     Note: Dynamically added fields are ignored by the framework.
     """
 
+    def message_metadata(self):
+        """
+        Provides the message meta data of a message.
+
+        :returns: An instance of :py:class:`leapp.models.MetaData` or None
+        :rtype: :py:class:`leapp.models.MetaData` or `NoneType`
+        """
+        return self._metadata
+
     @classmethod
-    def create(cls, data):
+    def create(cls, metadata, data):
         """
         Create an instance of this class and use the data to initialize the fields within.
 
@@ -110,7 +155,7 @@ class Model(with_metaclass(ModelMeta)):
         :type data: dict
         :return: Instance of this class
         """
-        return cls(init_method='to_model', **data)
+        return cls(metadata=metadata, init_method='to_model', **data)
 
     def dump(self):
         """

@@ -189,4 +189,4 @@ class BaseMessaging(object):
         if types:
             filtered = set(requested.__name__ for requested in types)
             messages = [message for message in messages if message['type'] in filtered]
-        return (lookup[message['type']].create(json.loads(message['message']['data'])) for message in messages)
+        return (lookup[msg['type']].create(msg, json.loads(msg['message']['data'])) for msg in messages)
