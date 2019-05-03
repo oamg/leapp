@@ -80,7 +80,7 @@ class Model(with_metaclass(ModelMeta)):
     """
     def __init__(self, init_method='from_initialization', **kwargs):
         super(Model, self).__init__()
-        defined_fields = type(self).fields
+        defined_fields = type(self).fields or {}
         for key in kwargs.keys():
             if key not in defined_fields:
                 raise ModelMisuseError(
