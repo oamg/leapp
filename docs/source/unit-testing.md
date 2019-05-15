@@ -179,9 +179,10 @@ The _-s_ option of _pytest_ allows you to see standard output of the test code.
 That is useful when you are debugging using printing to standard output.
 
 To execute unit tests of all actors from all Leapp repositories in the
-`leapp-repository` GitHub repository, issue `make test` in the root directory
-of the `leapp-repository`. Though running all tests this way is useful mostly
-for CI.
+`leapp-repository` GitHub repository, first install test dependencies for each
+actor by running  `make install-deps` and then issue `make test` in the root
+directory of the `leapp-repository`.
+Though running all tests this way is useful mostly for CI.
 
 ### Test dependencies
 
