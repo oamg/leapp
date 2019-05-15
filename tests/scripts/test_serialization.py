@@ -18,49 +18,49 @@ class ModelTestTopic(Topic):
 
 class BasicModel(Model):
     topic = ModelTestTopic
-    message = fields.String(required=True, default='Default Value')
+    message = fields.String(default='Default Value')
 
 
 class WithStringListModel(Model):
     topic = ModelTestTopic
-    messages = fields.List(fields.String(), required=True)
+    messages = fields.List(fields.String())
 
 
 class WithNestedModel(Model):
     topic = ModelTestTopic
-    basic = fields.Nested(BasicModel, required=False, allow_null=True)
+    basic = fields.Model(BasicModel)
 
 
-class WithRequiredNestedModel(Model):
+class WithNullableNestedModel(Model):
     topic = ModelTestTopic
-    basic = fields.Nested(BasicModel, required=True)
+    basic = fields.Nullable(fields.Model(BasicModel))
 
 
 class WithNestedListModel(Model):
     topic = ModelTestTopic
-    items = fields.List(fields.Nested(BasicModel), required=False)
+    items = fields.List(fields.Model(BasicModel))
 
 
 class AllFieldTypesModel(Model):
     topic = ModelTestTopic
-    float_field = fields.Float(default=3.14, required=True)
-    number_int_field = fields.Number(default=1.2, required=True)
-    number_float_field = fields.Number(default=2, required=True)
-    integer_field = fields.Integer(default=1, required=True)
-    str_field = fields.String(default='string', required=True)
-    unicode_field = fields.String(default=u'Unicode string', required=True)
-    date_field = fields.DateTime(default=datetime.utcnow(), required=True)
-    bool_field = fields.Boolean(default=True, required=True)
+    float_field = fields.Float(default=3.14)
+    number_int_field = fields.Number(default=1.2)
+    number_float_field = fields.Number(default=2)
+    integer_field = fields.Integer(default=1)
+    str_field = fields.String(default='string')
+    unicode_field = fields.String(default=u'Unicode string')
+    date_field = fields.DateTime(default=datetime.utcnow())
+    bool_field = fields.Boolean(default=True)
 
 
 class RequiredFieldModel(Model):
     topic = ModelTestTopic
-    field = fields.String(required=True)
+    field = fields.String()
 
 
 def test_builtin_needs_override():
     with pytest.raises(NotImplementedError):
-        BadBuiltinField(allow_null=True, required=False).to_builtin(None, '', None)
+        fields.Nullable(BadBuiltinField()).to_builtin(None, '', None)
 
 
 def test_base_usage():
@@ -102,31 +102,31 @@ def test_nested_model():
     assert m.basic == m2.basic
 
     with pytest.raises(fields.ModelMisuseError):
-        fields.Nested(fields.String())
+        fields.Model(fields.String())
 
     with pytest.raises(fields.ModelMisuseError):
-        fields.Nested(fields.String)
+        fields.Model(fields.String)
 
     with pytest.raises(fields.ModelViolationError):
         WithNestedModel(basic='Some message')
 
-    m = WithNestedModel()
+    m = WithNullableNestedModel()
     m.basic = None
     m.dump()
 
     with pytest.raises(fields.ModelViolationError):
-        x = WithRequiredNestedModel(basic=BasicModel(message='Some message'))
+        x = WithNestedModel(basic=BasicModel(message='Some message'))
         x.basic = None
         x.dump()
 
     with pytest.raises(fields.ModelViolationError):
-        WithRequiredNestedModel.create(dict(basic=None))
+        WithNestedModel.create(dict(basic=None))
 
     with pytest.raises(fields.ModelViolationError):
-        WithRequiredNestedModel(basic=None)
+        WithNestedModel(basic=None)
 
-    assert WithRequiredNestedModel.create({'basic': {'message': 'test-message'}}).basic.message == 'test-message'
-    assert WithRequiredNestedModel(basic=BasicModel(message='test-message')).basic.message == 'test-message'
+    assert WithNestedModel.create({'basic': {'message': 'test-message'}}).basic.message == 'test-message'
+    assert WithNestedModel(basic=BasicModel(message='test-message')).basic.message == 'test-message'
 
 
 def test_nested_list_model():
@@ -160,23 +160,23 @@ def test_misuse_wrong_list_element_parameter():
 
 def test_list_field():
     with pytest.raises(fields.ModelViolationError):
-        fields.List(fields.String(), required=True, allow_null=False)._validate_builtin_value('something', 'test-value')
+        fields.List(fields.String())._validate_builtin_value('something', 'test-value')
 
     with pytest.raises(fields.ModelViolationError):
-        fields.List(fields.String(), required=True, allow_null=False)._convert_to_model(None, 'test-value')
+        fields.List(fields.String())._convert_to_model(None, 'test-value')
 
-    fields.List(fields.String(), required=True, allow_null=True)._convert_to_model(None, 'test-value')
-
-    with pytest.raises(fields.ModelViolationError):
-        fields.List(fields.String(), required=True, allow_null=False)._convert_from_model(None, 'test-value')
-
-    fields.List(fields.String(), required=True, allow_null=True)._convert_from_model(None, 'test-value')
+    fields.Nullable(fields.List(fields.String()))._convert_to_model(None, 'test-value')
 
     with pytest.raises(fields.ModelViolationError):
-        fields.List(fields.Integer(), minimum=1)._validate_builtin_value([], 'test-value')
+        fields.List(fields.String())._convert_from_model(None, 'test-value')
+
+    fields.Nullable(fields.List(fields.String()))._convert_from_model(None, 'test-value')
 
     with pytest.raises(fields.ModelViolationError):
-        fields.List(fields.Integer(), minimum=1)._validate_model_value([], 'test-value')
+        fields.Nullable(fields.List(fields.Integer(), minimum=1))._validate_builtin_value([], 'test-value')
+
+    with pytest.raises(fields.ModelViolationError):
+        fields.Nullable(fields.List(fields.Integer(), minimum=1))._validate_model_value([], 'test-value')
 
     fields.List(fields.Integer(), minimum=1)._validate_builtin_value([1], 'test-value')
     fields.List(fields.Integer(), minimum=1)._validate_builtin_value([1, 2], 'test-value')
@@ -204,25 +204,26 @@ def test_datetime_field():
         fields.DateTime()._convert_to_model('something', 'test-value')
 
     with pytest.raises(fields.ModelViolationError):
-        fields.DateTime(required=True, allow_null=False)._convert_to_model(None, 'test-value')
+        fields.DateTime()._convert_to_model(None, 'test-value')
 
-    fields.DateTime(required=True, allow_null=True)._convert_to_model(None, 'test-value')
+    fields.Nullable(fields.DateTime())._convert_to_model(None, 'test-value')
 
     with pytest.raises(fields.ModelViolationError):
-        fields.DateTime(required=True, allow_null=False)._convert_from_model(None, 'test-value')
+        fields.DateTime()._convert_from_model(None, 'test-value')
 
-    fields.DateTime(required=True, allow_null=True)._convert_from_model(None, 'test-value')
+    fields.Nullable(fields.DateTime())._convert_from_model(None, 'test-value')
 
 
 def test_nested_field():
     with pytest.raises(fields.ModelViolationError):
-        fields.Nested(BasicModel, allow_null=False)._convert_to_model('something', 'test-value')
+        fields.Model(BasicModel)._convert_to_model('something', 'test-value')
     with pytest.raises(fields.ModelViolationError):
-        fields.Nested(BasicModel, allow_null=False)._convert_to_model(None, 'test-value')
-    fields.Nested(BasicModel, allow_null=True)._convert_to_model(None, 'test-value')
+        fields.Model(BasicModel)._convert_to_model(None, 'test-value')
+    fields.Nullable(fields.Model(BasicModel))._convert_to_model(None, 'test-value')
 
 
 def test_required_field_types():
+    # all fields which are not nullable are required
     with pytest.raises(fields.ModelViolationError):
         m = RequiredFieldModel(field='str')
         m.field = None
@@ -233,24 +234,24 @@ def test_required_field_types():
 
     RequiredFieldModel(field='str')
 
-    # Don't allow null
     with pytest.raises(fields.ModelViolationError):
-        fields.String(required=True, allow_null=False)._validate_model_value(None, 'test-value')
+        fields.String()._validate_model_value(None, 'test-value')
 
     with pytest.raises(fields.ModelViolationError):
-        fields.String(required=False, allow_null=False)._validate_model_value(None, 'test-value')
+        fields.String()._validate_model_value(None, 'test-value')
 
     with pytest.raises(fields.ModelViolationError):
-        fields.String(required=True, allow_null=False)._validate_builtin_value(None, 'test-value')
+        fields.String()._validate_builtin_value(None, 'test-value')
 
     with pytest.raises(fields.ModelViolationError):
-        fields.String(required=False, allow_null=False)._validate_builtin_value(None, 'test-value')
+        fields.String()._validate_builtin_value(None, 'test-value')
 
-    # Allow null
-    fields.String(required=True, allow_null=True)._validate_model_value(None, 'test-value')
-    fields.String(required=False, allow_null=True)._validate_model_value(None, 'test-value')
-    fields.String(required=True, allow_null=True)._validate_builtin_value(None, 'test-value')
-    fields.String(required=False, allow_null=True)._validate_builtin_value(None, 'test-value')
+
+def test_not_required_field_types():
+    fields.Nullable(fields.String())._validate_model_value(None, 'test-value')
+    fields.Nullable(fields.String())._validate_model_value(None, 'test-value')
+    fields.Nullable(fields.String())._validate_builtin_value(None, 'test-value')
+    fields.Nullable(fields.String())._validate_builtin_value(None, 'test-value')
 
 
 def _make_object(instance, value):
@@ -283,7 +284,7 @@ def _create_field_string_list(**kwargs):
 
 
 def _create_nested_base_model_field(**kwargs):
-    return fields.Nested(BasicModel, **kwargs)
+    return fields.Model(BasicModel, **kwargs)
 
 
 def _create_string_enum_(*choices):
@@ -303,6 +304,13 @@ BASIC_TYPE_FIXTURES = (
     create_fixture(_create_field_string_list, ['a', 'b', 'c'], 'string_list_value'),
     create_fixture(_create_nested_base_model_field, BasicModel(message='Test message'), 'nested_model_value'),
     create_fixture(_create_string_enum_('YES', 'NO', 'MAYBE'), 'YES', 'string_enum_value', fail_values=('Woot',)),
+    create_fixture(fields.JSON, 2, 'json_integral_value'),
+    create_fixture(fields.JSON, 3.14, 'json_float_value'),
+    create_fixture(fields.JSON, 'some string', 'json_string_value'),
+    create_fixture(fields.JSON, ['a', 'b', 1, 2], 'json_list_value'),
+    create_fixture(fields.JSON, ('a', 'b', 1, 2), 'json_tuple_value'),
+    create_fixture(fields.JSON, {'a': [None, {'b': 'c'}], 'b': 2}, 'json_dict_value'),
+    create_fixture(fields.JSON, True, 'json_bool_value'),
 )
 
 
@@ -329,54 +337,36 @@ def test_list_field_default():
 def test_basic_types_sanity(case):
     source = case.make_object(case.value)
     target = {}
-    case.field_type(required=True, allow_null=False).to_builtin(source, case.name, target)
+    case.field_type().to_builtin(source, case.name, target)
     json.dumps(target)
-
-    with pytest.raises(fields.ModelViolationError):
-        source = case.make_object(fields.missing)
-        target = {}
-        # Should raise an exception because the value missing is not valid
-        case.field_type(required=True, default=None, allow_null=True).to_builtin(source, case.name, target)
-
-    with pytest.raises(fields.ModelViolationError):
-        source = case.make_object(fields.missing)
-        target = {}
-        # Should raise an exception because the value missing is not valid and required=True
-        case.field_type(required=True).to_builtin(source, case.name, target)
 
     source = case.make_object(None)
     target = {}
-    case.field_type(required=True, allow_null=True).to_builtin(source, case.name, target)
+    case.field_type().as_nullable().to_builtin(source, case.name, target)
     assert case.name in target and target[case.name] is None
 
     with pytest.raises(fields.ModelViolationError):
         source = case.make_object(None)
         target = {}
         # Should raise an exception because the field is required and null is not allowed
-        case.field_type(required=True, allow_null=False).to_builtin(source, case.name, target)
+        case.field_type().to_builtin(source, case.name, target)
 
     with pytest.raises(fields.ModelViolationError):
         source = case.make_object(None)
         target = {}
         # Should raise an exception because the field null is not allowed
-        case.field_type(required=False, allow_null=False).to_builtin(source, case.name, target)
-
-    source = case.make_object(fields.missing)
-    target = {}
-    case.field_type(required=False, allow_null=False).to_builtin(source, case.name, target)
-    assert case.name not in target
-    json.dumps(target)
+        case.field_type().to_builtin(source, case.name, target)
 
     source = case.make_object(case.value)
     target = {}
-    field = case.field_type(required=False, allow_null=False)
+    field = case.field_type()
     field.to_builtin(source, case.name, target)
     assert target.get(case.name) == field._convert_from_model(case.value, case.name)
     json.dumps(target)
 
     source = case.make_object(None)
     target = {}
-    field = case.field_type(required=False, allow_null=True)
+    field = case.field_type().as_nullable()
     field.to_builtin(source, case.name, target)
     assert target.get(case.name) is None
     json.dumps(target)
@@ -385,7 +375,7 @@ def test_basic_types_sanity(case):
         for fail_value in case.fail_values:
             source = case.make_object(fail_value)
             target = {case.name: fail_value}
-            field = case.field_type(required=False, allow_null=True)
+            field = case.field_type()
             with pytest.raises(fields.ModelViolationError):
                 field.to_builtin(source, case.name, target)
 

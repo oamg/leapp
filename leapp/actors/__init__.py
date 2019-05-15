@@ -5,9 +5,11 @@ import sys
 
 from leapp.compat import string_types
 from leapp.dialogs import Dialog
-from leapp.exceptions import MissingActorAttributeError, WrongAttributeTypeError
+from leapp.exceptions import MissingActorAttributeError, WrongAttributeTypeError, StopActorExecutionError, \
+    StopActorExecution
 from leapp.models import Model
 from leapp.tags import Tag
+from leapp.utils.i18n import install_translation_for_actor
 from leapp.utils.meta import get_flattened_subclasses
 from leapp.models.error_severity import ErrorSeverity
 
@@ -19,6 +21,12 @@ class Actor(object):
     actors in the workflow.
     """
 
+    current_instance = None
+    """
+    Instance of the currently executed actor. Within a process only exist one Actor instance. This will allow
+    convenience functions for library developers to be available.
+    """
+
     ErrorSeverity = ErrorSeverity
     """ Convenience forward for the :py:class:`leapp.models.error_severity.ErrorSeverity` constants. """
 
@@ -26,7 +34,10 @@ class Actor(object):
     """ Name of the actor that is used to identify data or messages created by the actor. """
 
     description = None
-    """ More verbose actor's description."""
+    """
+    .. deprecated:: 0.5.0
+       Write the actor's description as a docstring.
+    """
 
     consumes = ()
     """
@@ -52,13 +63,37 @@ class Actor(object):
     Dialogs that are added to this list allow for persisting answers the user has given in the answer file storage.
     """
 
+    text_domain = None
+    """
+    Using text domain allows to override the default gettext text domain, for custom localization support.
+    The default locale installation location is used which usually is /usr/share/locale
+    """
+
+    def serialize(self):
+        """
+        :return: Serialized information for the actor
+        """
+        return {
+            'name': self.name,
+            'path': os.path.dirname(sys.modules[type(self).__module__].__file__),
+            'class_name': type(self).__name__,
+            'description': self.description or type(self).__doc__,
+            'consumes': [c.__name__ for c in self.consumes],
+            'produces': [p.__name__ for p in self.produces],
+            'tags': [t.__name__ for t in self.tags],
+            'dialogs': [d.serialize() for d in self.dialogs],
+        }
+
     def __init__(self, messaging=None, logger=None):
+        Actor.current_instance = self
+        install_translation_for_actor(type(self))
         self._messaging = messaging
         self.log = (logger or logging.getLogger('leapp.actors')).getChild(self.name)
         """ A configured logger instance for the current actor. """
 
     def request_answers(self, dialog):
         """
+        Requests the answers for a dialog. The dialog needs be predefined in :py:attr:`dialogs`.
 
         :param dialog: Dialog instance to show
         :return: dictionary with the requested answers, None if not a defined dialog
@@ -66,6 +101,15 @@ class Actor(object):
         if dialog in type(self).dialogs:
             return self._messaging.request_answers(dialog)
         return None
+
+    def show_message(self, message):
+        """
+        Used to display messages to the user
+
+        :param message: Message to show
+        :type message: str
+        """
+        self._messaging.show_message(message)
 
     @property
     def actor_files_paths(self):
@@ -84,6 +128,39 @@ class Actor(object):
         """ Returns all common repository file paths. """
         return os.getenv("LEAPP_COMMON_FILES", "").split(":")
 
+    @property
+    def actor_tools_paths(self):
+        """
+        Returns the tool paths that are bundled with the actor. (Path to the content of the actor's tools directory).
+        """
+        return os.getenv("LEAPP_TOOLS", "").split(":")
+
+    @property
+    def common_tools_paths(self):
+        """ Returns all common repository tool paths. """
+        return os.getenv("LEAPP_COMMON_TOOLS", "").split(":")
+
+    @property
+    def tools_paths(self):
+        """ Returns all actor tools paths related to the actor and common actors tools paths. """
+        return self.actor_tools_paths + self.common_tools_paths
+
+    @staticmethod
+    def _get_folder_path(directories, name):
+        """
+        Finds the first matching folder path within directories.
+
+        :param name: Name of the folder
+        :type name: str
+        :return: Found folder path
+        :rtype: str or None
+        """
+        for path in directories:
+            path = os.path.join(path, name)
+            if os.path.isdir(path):
+                return path
+        return None
+
     def get_folder_path(self, name):
         """
         Finds the first matching folder path within :py:attr:`files_paths`.
@@ -93,9 +170,43 @@ class Actor(object):
         :return: Found folder path
         :rtype: str or None
         """
-        for path in self.files_paths:
+        return self._get_folder_path(self.files_paths, name)
+
+    def get_common_folder_path(self, name):
+        """
+        Finds the first matching folder path within :py:attr:`common_files_paths`.
+
+        :param name: Name of the folder
+        :type name: str
+        :return: Found folder path
+        :rtype: str or None
+        """
+        return self._get_folder_path(self.common_files_paths, name)
+
+    def get_actor_folder_path(self, name):
+        """
+        Finds the first matching folder path within :py:attr:`actor_files_paths`.
+
+        :param name: Name of the folder
+        :type name: str
+        :return: Found folder path
+        :rtype: str or None
+        """
+        return self._get_folder_path(self.actor_files_paths, name)
+
+    @staticmethod
+    def _get_file_path(directories, name):
+        """
+        Finds the first matching file path within directories.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        for path in directories:
             path = os.path.join(path, name)
-            if os.path.isdir(path):
+            if os.path.isfile(path):
                 return path
         return None
 
@@ -108,17 +219,88 @@ class Actor(object):
         :return: Found file path
         :rtype: str or None
         """
-        for path in self.files_paths:
+        return self._get_file_path(self.files_paths, name)
+
+    def get_common_file_path(self, name):
+        """
+        Finds the first matching file path within :py:attr:`common_files_paths`.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        return self._get_file_path(self.common_files_paths, name)
+
+    def get_actor_file_path(self, name):
+        """
+        Finds the first matching file path within :py:attr:`actor_files_paths`.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        return self._get_file_path(self.actor_files_paths, name)
+
+    @staticmethod
+    def _get_tool_path(directories, name):
+        """
+        Finds the first matching executable file within directories.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        for path in directories:
             path = os.path.join(path, name)
-            if os.path.isfile(path):
+            if os.path.isfile(path) and os.access(path, os.X_OK):
                 return path
         return None
+
+    def get_tool_path(self, name):
+        """
+        Finds the first matching executable file path within :py:attr:`tools_paths`.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        return self._get_tool_path(self.tools_paths, name)
+
+    def get_common_tool_path(self, name):
+        """
+        Finds the first matching executable file path within :py:attr:`common_tools_paths`.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        return self._get_tool_path(self.common_tools_paths, name)
+
+    def get_actor_tool_path(self, name):
+        """
+        Finds the first matching executable file path within :py:attr:`actor_tools_paths`.
+
+        :param name: Name of the file
+        :type name: str
+        :return: Found file path
+        :rtype: str or None
+        """
+        return self._get_tool_path(self.actor_tools_paths, name)
 
     def run(self, *args):
         """ Runs the actor calling the method :py:func:`process`. """
         os.environ['LEAPP_CURRENT_ACTOR'] = self.name
         try:
             self.process(*args)
+        except StopActorExecution:
+            pass
+        except StopActorExecutionError as err:
+            self.report_error(err.message, err.severity, err.details)
         finally:
             os.environ.pop('LEAPP_CURRENT_ACTOR', None)
 
@@ -137,6 +319,10 @@ class Actor(object):
             for model in models:
                 if isinstance(model, type(self).produces):
                     self._messaging.produce(model, self)
+                else:
+                    self.log.warning('Actor is trying to produce a message of type "{}" without mentioning it '
+                                     'explicitely in the actor\'s "produces" tuple. The message will be ignored'.format(
+                                         type(model)))
 
     def consume(self, *models):
         """
@@ -145,6 +331,8 @@ class Actor(object):
 
         :param models: Models to use as a filter for the messages to return
         :type models: Variable number of the derived classes from :py:class:`leapp.models.Model`
+        :return: All messages of the specified model(s) produced by other actors
+        :rtype: Iterable with messages or an empty tuple
         """
         if self._messaging:
             return self._messaging.consume(self, *models)
@@ -236,11 +424,12 @@ def _is_tag_tuple(actor, name, value):
     return value
 
 
-def _get_attribute(actor, name, validator, required=False, default_value=None):
+def _get_attribute(actor, name, validator, required=False, default_value=None, additional_info=''):
     value = getattr(actor, name, None)
     if not value and required:
-        raise MissingActorAttributeError('Actor {} is missing attribute {}'.format(actor, name))
-    value = validator(actor, name, value)
+        raise MissingActorAttributeError('Actor {} is missing attribute {}.{}'.format(actor, name, additional_info))
+    if value or required:
+        value = validator(actor, name, value)
     if not value and default_value is not None:
         value = default_value
     return name, value
@@ -254,16 +443,20 @@ def get_actor_metadata(actor):
     :type actor: derived class from :py:class:`leapp.actors.Actor`
     :return: Dictionary with the name, tags, consumes, produces, and description of the actor
     """
+    additional_tag_info = ' At least one tag is required for actors. Please fill the tags field'
     return dict([
         ('class_name', actor.__name__),
-        ('path', os.path.dirname(sys.modules[actor.__module__].__file__)),
+        # TODO: missing tests. We need to ensure this doesn't break anything.
+        # # OTOH, actor_definition.inspect_actor ends with empty list on Python3
+        # # if path is not transformed into the realpath.
+        ('path', os.path.dirname(os.path.realpath(sys.modules[actor.__module__].__file__))),
         _get_attribute(actor, 'name', _is_type(string_types), required=True),
-        _get_attribute(actor, 'tags', _is_tag_tuple, required=True),
+        _get_attribute(actor, 'tags', _is_tag_tuple, required=True, additional_info=additional_tag_info),
         _get_attribute(actor, 'consumes', _is_model_tuple, required=False, default_value=()),
         _get_attribute(actor, 'produces', _is_model_tuple, required=False, default_value=()),
         _get_attribute(actor, 'dialogs', _is_dialog_tuple, required=False, default_value=()),
         _get_attribute(actor, 'description', _is_type(string_types), required=False,
-                       default_value='There has been no description provided for this actor.')
+                       default_value=actor.__doc__ or 'There has been no description provided for this actor.')
     ])
 
 

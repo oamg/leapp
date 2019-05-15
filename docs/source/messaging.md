@@ -18,7 +18,6 @@ Assign the SystemInfoTopic to the new model and add two fields:
 * The `name` field represents the hostname.
 * The `ips` field contains a list of strings with IPv4 or IPv6 addresses.
 
-Both fields are required in this scenario.
 
 ```python
 from leapp.models import Model, fields
@@ -27,9 +26,18 @@ from leapp.topics import SystemInfoTopic
 
 class ResolvedHostname(Model):
     topic = SystemInfoTopic
-    name = fields.String(required=True)
-    ips = fields.List(fields.String(), required=True)
+    name = fields.String()
+    ips = fields.List(fields.String())
 ```
+
+By default all fields which are not nullable e.g:
+
+```
+fields.Nullable(fields.String())
+```
+
+are required.
+
 
 ### Creating a message consuming actor
 
@@ -69,8 +77,10 @@ from leapp.models import Hostname, ResolvedHostname
 
 
 class IpResolver(Actor):
+    """
+    No description is provided for the ip_resolver actor.
+    """
     name = 'ip_resolver'
-    description = 'No description is provided for the ip_resolver actor.'
     consumes = (Hostname,)
     produces = (ResolvedHostname,)
     tags = (ScanTag,)
@@ -98,7 +108,7 @@ $ snactor run --save-output HostnameScanner
 ```
 
 The output of the actor is stored in the local repository data file, and it can be used
-by other actors.
+by other actors. To flush all saved messages from the repository database, run `snactor messages clear`.
 
 ### Testing the new actor
 

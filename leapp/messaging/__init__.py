@@ -7,6 +7,7 @@ import socket
 
 from six.moves import configparser
 
+from leapp.dialogs import RawMessageDialog
 from leapp.dialogs.renderer import CommandlineRenderer
 from leapp.messaging.answerstore import AnswerStore
 from leapp.exceptions import CannotConsumeErrorMessages
@@ -109,7 +110,7 @@ class BaseMessaging(object):
         if details:
             details = json.dumps(details)
         model = ErrorModel(message=message, actor=actor.name, severity=severity, details=details,
-                           time=datetime.datetime.utcnow())
+                           time=datetime.datetime.now())
         self._do_produce(model, actor, self._errors)
 
     def produce(self, model, actor):
@@ -164,6 +165,15 @@ class BaseMessaging(object):
 
     def request_answers(self, dialog):
         return dialog.request_answers(self._answers, self._dialog_renderer)
+
+    def show_message(self, message):
+        """
+        Used to display messages to the user
+
+        :param message: Dialog instance to show
+        :type message: str
+        """
+        RawMessageDialog(message=message).request_answers(self._answers, self._dialog_renderer)
 
     def consume(self, actor, *types):
         """

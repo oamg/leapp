@@ -32,8 +32,10 @@ def cli(args):
 
     class_name = class_name or make_class_name(name)
     short_name = short_name or make_name(name)
+    if not class_name.endswith('Workflow'):
+        class_name += 'Workflow'
 
-    check_call(['snactor', 'new-tag', class_name + 'Workflow'])
+    check_call(['snactor', 'new-tag', class_name])
 
     if not os.path.exists(workflows_dir):
         os.mkdir(workflows_dir)
@@ -46,12 +48,12 @@ from leapp.workflows.phases import Phase
 from leapp.workflows.flags import Flags
 from leapp.workflows.tagfilters import TagFilter
 from leapp.workflows.policies import Policies
-from leapp.tags import {workflow_class}WorkflowTag
+from leapp.tags import {workflow_class}Tag
 
 
-class {workflow_class}Workflow(Workflow):
+class {workflow_class}(Workflow):
     name = '{workflow_name}'
-    tag =  {workflow_class}WorkflowTag
+    tag =  {workflow_class}Tag
     short_name = '{workflow_short_name}'
     description = '''No description has been provided for the {workflow_name} workflow.'''
 

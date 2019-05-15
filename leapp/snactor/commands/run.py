@@ -1,12 +1,12 @@
 import json
 import sys
 
-from leapp.exceptions import LeappError
+from leapp.exceptions import LeappError, CommandError
 from leapp.utils.clicmd import command, command_opt, command_arg
 from leapp.utils.repository import requires_repository, find_repository_basedir
 from leapp.logger import configure_logger
 from leapp.messaging.inprocess import InProcessMessaging
-from leapp.utils.output import report_errors
+from leapp.utils.output import report_errors, beautify_actor_exception
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.snactor.context import with_snactor_context
 
@@ -33,15 +33,20 @@ def cli(args):
         repository.load()
     except LeappError as exc:
         sys.stderr.write(exc.message)
+        sys.stderr.write('\n')
         sys.exit(1)
     actor_logger = log.getChild('actors')
     actor = repository.lookup_actor(args.actor_name)
+    if not actor:
+        raise CommandError('Actor "{}" not found!'.format(args.actor_name))
     messaging = InProcessMessaging(stored=args.save_output)
     messaging.load(actor.consumes)
 
-    actor(messaging=messaging, logger=actor_logger).run()
+    with beautify_actor_exception():
+        actor(messaging=messaging, logger=actor_logger).run()
 
     report_errors(messaging.errors())
 
     if args.print_output:
         json.dump(messaging.messages(), sys.stdout, indent=2)
+        sys.stdout.write('\n')

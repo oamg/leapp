@@ -4,7 +4,14 @@ import sys
 
 from argparse import ArgumentParser, _SubParsersAction, RawDescriptionHelpFormatter
 
-from leapp.exceptions import CommandDefinitionError, UsageError
+from leapp.exceptions import CommandDefinitionError, UsageError, CommandError
+
+
+class _LeappArgumentParser(ArgumentParser):
+    def error(self, message):
+        self.print_help()
+        sys.stderr.write('error: %s\n' % message)
+        sys.exit(2)
 
 
 class _LeappHelpFormatter(RawDescriptionHelpFormatter):
@@ -70,12 +77,14 @@ class Command(object):
         :type version: str
         :return: None
         """
-        parser = ArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=_LeappHelpFormatter)
-        parser.add_help
+        parser = _LeappArgumentParser(prog=os.path.basename(sys.argv[0]), formatter_class=_LeappHelpFormatter)
         parser.register('action', 'parsers', _SubParserActionOverride)
         parser.add_argument('--version', action='version', version=version)
         parser.set_defaults(func=None)
-        s = parser.add_subparsers(title='Main commands', metavar='')
+        if self._sub_commands:
+            s = parser.add_subparsers(title='Main commands', metavar='')
+        else:
+            s = parser
         self.apply_parser(s, parser=parser)
         args = parser.parse_args()
         args.func(args)
@@ -104,6 +113,8 @@ class Command(object):
         except UsageError as e:
             self.parser.print_help(file=sys.stderr)
             self.parser.exit(status=2, message='\nUsageError: {message}\n'.format(message=e.message))
+        except CommandError as e:
+            self.parser.exit(status=2, message='\nError: {message}\n'.format(message=e.message))
 
     def apply_parser(self, sparser, parent=None, parser=None):
         """

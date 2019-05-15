@@ -1,0 +1,81 @@
+.TH SNACTOR "1" "17/04/2019" "snactor 0.7.0" "User Commands"
+.SH NAME
+snactor - development and repository management tool for App & OS Modernization Framework Leapp
+.SH SYNOPSIS
+snactor [-h|--help] [--version] [--logger-config <LOGGER_CONFIG>]
+        [--config <CONFIG>] [--debug] <command>
+.SH DESCRIPTION
+Snactor is designed to get quickly started with leapp actor development and allows you to run custom workflows.
+.SH OPTIONS
+-h, --help
+    show this help message and exit
+
+--version
+    show program's version number and exit
+
+--logger-config <LOGGER_CONFIG>
+    Allows to override the logger.conf location
+
+--config <CONFIG>
+    Allows to override the leapp.conf location
+
+--debug
+    Prints all available log messages (debug, info, warning, error, critical) and output of executed commands to stderr.
+    By default only error and critical level messages are printed.
+
+--verbose
+    Prints all but debug log messages (info, warning, error, critical) to stderr.
+    By default only error and critical level messages are printed.
+
+.SH "SNACTOR COMMANDS"
+discover
+    Discovers all available entities in the current repository
+
+new-actor
+    Creates a new actor
+
+new-model
+    Creates a new model
+
+new-tag
+    Create a new tag
+
+new-topic
+    Creates a new topic
+
+run
+    Execute the given actor
+
+messages
+    Messaging related commands
+
+workflow
+    Workflow related commands
+
+repo
+    Repository related commands
+.SH "ENVIRONMENT VARIABLES"
+LEAPP_CONFIG
+.RS 4
+This environment variable allows to override the default location of leapp.conf. If not specified, .leapp/leapp.conf is used when the command is executed inside a leapp repository, otherwise the default /etc/leapp/leapp.conf is used.
+.RE
+
+LEAPP_LOGGER_CONFIG
+.RS 4
+This environment variable allows to override the default location of logger.conf. If not specified, the default /etc/leapp/logger.conf is used.
+.RE
+
+LEAPP_DEBUG
+.RS 4
+This environment variable enables debug logging, see --debug for more information
+.RE
+
+LEAPP_VERBOSE
+.RS 4
+This environment variable enables verbose logging, see --verbose for more information
+.RE
+.SH "REPORTING BUGS"
+Report bugs to the issue tracker <https://github.com/oamg/leapp-repository/issues> or to bugzilla <https://bugzilla.redhat.com> under the `Red Hat Enterprise Linux 7` product and the `leapp-repository` component.
+.SH "SEE ALSO"
+leapp(1)
+More info available at <https://leapp.readthedocs.io/>.

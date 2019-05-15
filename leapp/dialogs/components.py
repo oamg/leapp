@@ -25,12 +25,26 @@ class Component(object):
         self.key = key or type(self).key
         self.label = label or type(self).label
         self.description = description or type(self).description
-        self.default = default or type(self).default
+        self.default = default if default is not None else type(self).default
         self.value = type(self).value
         self.reason = reason or type(self).reason
 
     def dispatch(self, renderer, dialog):
         raise NotImplementedError()
+
+    def serialize(self):
+        """
+        :return: Serialized component information
+        """
+        return {
+            'key': self.key,
+            'label': self.label,
+            'description': self.description,
+            'default': self.default,
+            'value': self.value,
+            'reason': self.reason,
+            'value_type': str(self.value_type) if self.value_type else None
+        }
 
 
 class TextComponent(Component):

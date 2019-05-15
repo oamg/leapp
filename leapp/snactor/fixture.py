@@ -152,11 +152,13 @@ def loaded_leapp_repository(request):
     os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
     context = str(uuid.uuid4())
     with get_connection(None):
-        Execution(context=str(uuid.uuid4()), kind='snactor-test-run', configuration='').store()
+        Execution(context=context, kind='snactor-test-run', configuration='').store()
         os.environ["LEAPP_EXECUTION_ID"] = context
 
-        manager = find_and_scan_repositories(repository_path, include_locals=True)
-        manager.load(resolve=True)
+        manager = getattr(request.session, 'leapp_repository', None)
+        if not manager:
+            manager = find_and_scan_repositories(repository_path, include_locals=True)
+            manager.load(resolve=True)
         yield manager
 
 
@@ -232,6 +234,11 @@ def _get_actor(module, repository):
     return None
 
 
+@pytest.fixture(scope='module')
+def leapp_forked():
+    pass
+
+
 def _execute_test(q, pyfuncitem):
     """
     This function is called in the child process from pytest_pyfunc_call via multiprocessing.Process.
@@ -241,8 +248,9 @@ def _execute_test(q, pyfuncitem):
     :return: None
     """
     try:
-        actor = _get_actor(pyfuncitem.module, pyfuncitem.funcargs['current_actor_context'].repository)
-        pyfuncitem.funcargs['current_actor_context'].set_actor(actor)
+        if 'current_actor_context' in pyfuncitem.funcargs:
+            actor = _get_actor(pyfuncitem.module, pyfuncitem.funcargs['current_actor_context'].repository)
+            pyfuncitem.funcargs['current_actor_context'].set_actor(actor)
         original_pytest_pyfunc_call(pyfuncitem=pyfuncitem)
         q.put((True, None))
     except BaseException:  # noqa
@@ -251,25 +259,26 @@ def _execute_test(q, pyfuncitem):
         q.put((False, (e_type, e_exc, _tb_pack(e_tb))))
 
 
-@pytest.hookimpl(tryfirst=True)
-def pytest_pyfunc_call(pyfuncitem):
-    """
-    This function is a hook for pytest implementing the ability to run the actors in tests safely.
+if hasattr(pytest, 'hookimpl'):
+    @pytest.hookimpl(tryfirst=True)
+    def pytest_pyfunc_call(pyfuncitem):
+        """
+        This function is a hook for pytest implementing the ability to run the actors in tests safely.
 
-    It will call :py:func:`leapp.snactor.fixture._execute_test` in a child process if the current test uses the
-    :py:func:`current_actor_context` fixture. If it doesn't use the :py:func:`current_actor_context` fixture, it will
-    default to the default `pytest_pyfunc_call` implementation.
-    """
-    if 'current_actor_context' not in pyfuncitem.funcargs:
-        return False
-    q = Queue()
-    p = Process(target=_execute_test, args=(q, pyfuncitem))
-    p.start()
-    p.join()
+        It will call :py:func:`leapp.snactor.fixture._execute_test` in a child process if the current test uses the
+        :py:func:`current_actor_context` fixture. If it doesn't use the :py:func:`current_actor_context` fixture, it
+        will default to the default `pytest_pyfunc_call` implementation.
+        """
+        if not any([arg in pyfuncitem.funcargs for arg in ('current_actor_context', 'leapp_forked')]):
+            return None
+        q = Queue()
+        p = Process(target=_execute_test, args=(q, pyfuncitem))
+        p.start()
+        p.join()
 
-    # Ensure we are actually getting a result - Otherwise ensure this is marked as failure
-    assert not q.empty()
-    r, e = q.get()
-    if e:
-        raise_with_traceback(e[1], _tb_unpack(e[2]))
-    return r
+        # Ensure we are actually getting a result - Otherwise ensure this is marked as failure
+        assert not q.empty()
+        r, e = q.get()
+        if e:
+            raise_with_traceback(e[1], _tb_unpack(e[2]))
+        return r

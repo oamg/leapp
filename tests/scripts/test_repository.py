@@ -1,4 +1,5 @@
 from argparse import Namespace
+import mock
 from multiprocessing import Process
 
 import pytest
@@ -8,7 +9,7 @@ from helpers import make_repository_dir
 from leapp.snactor.commands.new_actor import cli as new_actor_cmd
 from leapp.snactor.commands.new_tag import cli as new_tag_cmd
 from leapp.snactor.commands.workflow.new import cli as new_workflow_cmd
-from leapp.exceptions import LeappRuntimeError
+from leapp.exceptions import LeappRuntimeError, RepositoryConfigurationError
 
 
 repository_empty_test_repository_dir = make_repository_dir('empty_repository_dir', scope='module')
@@ -108,3 +109,13 @@ def test_repo(repository_dir):
     p.start()
     p.join()
     assert p.exitcode == 0
+
+
+def test_find_and_scan_repositories_no_user_repos_config(empty_repository_dir):
+    repo_path = empty_repository_dir.dirpath().strpath
+    with mock.patch('leapp.repository.manager.RepositoryManager.get_missing_repo_links', return_value={'42'}):
+        with mock.patch('leapp.utils.repository.get_global_repositories_data', return_value={}):
+            with mock.patch('leapp.utils.repository.get_user_config_repos', return_value='/no/such/file.json'):
+                with pytest.raises(RepositoryConfigurationError) as err:
+                    find_and_scan_repositories(repo_path, include_locals=True)
+                assert 'No repos configured' in err.value.message

@@ -15,7 +15,6 @@ This procedure creates the Example workflow boilerplate:
 from leapp.workflows import Workflow
 from leapp.workflows.phases import Phase
 from leapp.workflows.flags import Flags
-from leapp.workflows.filters import Filter
 from leapp.workflows.tagfilters import TagFilter
 from leapp.workflows.policies import Policies
 from leapp.tags import ExampleWorkflowTag
@@ -91,7 +90,6 @@ The whole example workflow:
 from leapp.workflows import Workflow
 from leapp.workflows.phases import Phase
 from leapp.workflows.flags import Flags
-from leapp.workflows.filters import Filter
 from leapp.workflows.tagfilters import TagFilter
 from leapp.workflows.policies import Policies
 from leapp.tags import ExampleWorkflowTag, ScanTag, ReportsTag

@@ -3,11 +3,12 @@ import logging
 import os
 import pkgutil
 import sys
+from io import UnsupportedOperation
 from multiprocessing import Process, Queue
 
 import leapp.libraries.actor
 from leapp.actors import get_actors, get_actor_metadata
-from leapp.exceptions import ActorInspectionFailedError, MultipleActorsError, UnsupportedDefinitionKindError,\
+from leapp.exceptions import ActorInspectionFailedError, MultipleActorsError, UnsupportedDefinitionKindError, \
     LeappRuntimeError
 from leapp.repository import DefinitionKind
 from leapp.repository.loader import library_loader
@@ -47,7 +48,11 @@ class ActorCallContext(object):
 
     @staticmethod
     def _do_run(stdin, logger, messaging, definition, args, kwargs):
-        sys.stdin = os.fdopen(stdin)
+        if stdin is not None:
+            try:
+                sys.stdin = os.fdopen(stdin)
+            except OSError:
+                pass
         definition.load()
         with definition.injected_context():
             target_actor = [actor for actor in get_actors() if actor.name == definition.name][0]
@@ -57,7 +62,10 @@ class ActorCallContext(object):
         """
         Performs the actor execution in the child process.
         """
-        stdin = sys.stdin.fileno()
+        try:
+            stdin = sys.stdin.fileno()
+        except UnsupportedOperation:
+            stdin = None
         p = Process(target=self._do_run, args=(stdin, self.logger, self.messaging, self.definition, args, kwargs))
         p.start()
         p.join()
@@ -90,7 +98,7 @@ class ActorDefinition(object):
 
     @property
     def full_path(self):
-        return os.path.join(self._repo_dir, self._directory)
+        return os.path.realpath(os.path.join(self._repo_dir, self._directory))
 
     def add(self, kind, path):
         """
@@ -223,12 +231,16 @@ class ActorDefinition(object):
         """
         # Backup of the path variable
         path_backup = os.environ.get('PATH', '')
-        os.environ['PATH'] = ':'.join(path_backup.split(':') +
-                                      list(os.path.join(self._repo_dir, self._directory, path) for path in self.tools))
+        os.environ['PATH'] = ':'.join(path_backup.split(':') + list(
+            os.path.join(self._repo_dir, self._directory, path) for path in self.tools))
 
         files_backup = os.environ.get('LEAPP_FILES', None)
         if self.files:
             os.environ['LEAPP_FILES'] = os.path.join(self._repo_dir, self._directory, self.files[0])
+
+        tools_backup = os.environ.get('LEAPP_TOOLS', None)
+        if self.tools:
+            os.environ['LEAPP_TOOLS'] = os.path.join(self._repo_dir, self._directory, self.tools[0])
 
         # We make a snapshot of the symbols in the module
         before = leapp.libraries.actor.__dict__.keys()
@@ -256,6 +268,13 @@ class ActorDefinition(object):
             # Restoration of the LEAPP_FILES environment variable
             if files_backup is not None:
                 os.environ['LEAPP_FILES'] = files_backup
+            else:
+                os.environ.pop('LEAPP_FILES', None)
+
+            if tools_backup is not None:
+                os.environ['LEAPP_TOOLS'] = tools_backup
+            else:
+                os.environ.pop('LEAPP_TOOLS', None)
 
             # Remove all symbols in the actor lib before the execution
             current = leapp.libraries.actor.__dict__.keys()
@@ -264,7 +283,7 @@ class ActorDefinition(object):
                 leapp.libraries.actor.__dict__.pop(symbol)
 
             # Remove all modules from the sys.modules dict or restore from backup if it was there
-            for name, _ in to_add:
+            for name, unused in to_add:
                 if name in backup:
                     sys.modules[name] = backup[name]
                 else:

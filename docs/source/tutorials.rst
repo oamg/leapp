@@ -1,5 +1,5 @@
-Leapp tutorials
-===============
+Tutorials
+=========
 
 .. toctree::
     :caption: Contents:
@@ -8,4 +8,8 @@ Leapp tutorials
     create-repository
     first-actor
     messaging
+    dialogs
+    repo-linking
     working-with-workflows
+    unit-testing
+    debugging

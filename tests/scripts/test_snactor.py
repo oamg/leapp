@@ -1,10 +1,13 @@
 import json
 import os
-from subprocess import check_call, check_output, CalledProcessError
+from subprocess import check_call, check_output, CalledProcessError, STDOUT
 
 from helpers import repository_dir
+from leapp.exceptions import CommandError
 
 import pytest
+from leapp.snactor import context
+from leapp.utils import audit
 
 
 def setup_module(m):
@@ -30,6 +33,16 @@ def test_discovery(repository_dir):
             check_call(['snactor', 'discover'])
 
 
+def test_raises_create_outside_repository():
+    for cmd in ([['snactor', 'new-tag', 'winteriscoming'],
+                 ['snactor', 'new-topic', 'winteriscoming'],
+                 ['snactor', 'new-model', 'winteriscoming', '--topic', 'WinteriscomingTopic']]):
+        with pytest.raises(CalledProcessError) as err:
+            check_output(cmd, stderr=STDOUT)
+        assert ('This command must be executed from the repository directory' in
+                err.value.output.decode('utf-8'))
+
+
 def test_new_tag(repository_dir):
     with repository_dir.as_cwd():
         check_call(['snactor', 'new-tag', 'Test'])
@@ -45,6 +58,19 @@ def test_new_topic(repository_dir):
             check_call(['snactor', 'new-topic', 'Test'])
         assert repository_dir.join('topics/test.py').check(file=True)
         check_call(['snactor', 'discover'])
+
+
+def test_different_objects_same_name_discover(repository_dir):
+    with repository_dir.as_cwd():
+        check_call(['snactor', 'new-tag', 'winteriscoming'])
+        check_call(['snactor', 'new-topic', 'winteriscoming'])
+        check_call(['snactor', 'new-model', 'winteriscoming', '--topic', 'WinteriscomingTopic'])
+        objs = ['tags/winteriscoming.py', 'topics/winteriscoming.py', 'models/winteriscoming.py']
+        for obj in objs:
+            assert repository_dir.join(obj).check(file=True)
+        out = check_output(['snactor', 'discover'])
+        for obj in objs:
+            assert obj.encode('utf-8') in out
 
 
 def test_new_model(repository_dir):
@@ -92,7 +118,7 @@ from leapp.topics import TestTopic
 
 class A(Model):
     topic = TestTopic
-    referenced = fields.Nested(TestModel)
+    referenced = fields.Model(TestModel)
 ''')
         check_call(['snactor', 'discover'])
 
@@ -119,7 +145,7 @@ class Test(Actor):
     tags = (TestTag.Common,)
 
     def process(self):
-        pass
+        self.produce(TestModel(value='Some testing value'))
 ''')
         check_call(['snactor', 'discover'])
 
@@ -156,6 +182,19 @@ def test_run_workflow(repository_dir):
         check_call(['snactor', '--debug', 'workflow', 'run', 'Test'])
         check_call(['snactor', 'workflow', '--debug', 'run', 'Test'])
         check_call(['snactor', 'workflow', 'run', '--debug', 'Test'])
+        test_clear_messages(repository_dir)
+        connection = audit.create_connection('.leapp/leapp.db')
+        assert len(audit.get_messages(names=('TestModel',),
+                                      context=context.last_snactor_context(connection), connection=connection)) == 0
+        check_call(['snactor', 'workflow', 'run', '--debug', '--save-output', 'Test'])
+        assert len(audit.get_messages(names=('TestModel',),
+                                      context=context.last_snactor_context(connection), connection=connection)) == 1
+        check_call(['snactor', 'workflow', 'run', 'Test'])
+        assert len(audit.get_messages(names=('TestModel',),
+                                      context=context.last_snactor_context(connection), connection=connection)) == 1
+        check_call(['snactor', 'workflow', 'run', '--save-output', 'Test'])
+        assert len(audit.get_messages(names=('TestModel',),
+                                      context=context.last_snactor_context(connection), connection=connection)) == 2
 
 
 def test_run_actor(repository_dir):

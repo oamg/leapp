@@ -76,6 +76,14 @@ class Tag(with_metaclass(TagMeta)):
     """
 
 
+class ExperimentalTag(Tag):
+    name = 'experimental'
+
+
+class DisabledTag(Tag):
+    name = 'disabled'
+
+
 def get_tags():
     """
     :return: All registered :py:class:`leapp.tags.Tag` derived classes

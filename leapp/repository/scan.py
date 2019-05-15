@@ -9,19 +9,22 @@ from leapp.utils.repository import get_global_repositories_data, get_user_config
 
 def _make_repo_lookup(include_locals):
     data = {}
-    for entry in get_global_repositories_data().items():
+    for id, entry in get_global_repositories_data().items():
         if entry['enabled']:
             data.update({entry['id']: entry['path']})
 
     if include_locals:
         # Having it here allows to override global repositories with local ones.
-        data.update(get_user_config_repo_data()['repos'])
+        data.update(get_user_config_repo_data().get('repos', {}))
 
     return data
 
 
 def _resolve_repository_links(manager, include_locals):
     repo_lookup = _make_repo_lookup(include_locals=include_locals)
+    if not repo_lookup and manager.get_missing_repo_links():
+        # No repositories configured at all though missing links present
+        raise RepositoryConfigurationError('No repos configured? Try adding some with "snactor repo find"')
     finished = False
     while not finished:
         missing = manager.get_missing_repo_links()
@@ -107,9 +110,9 @@ def scan_topics(repo, path, repo_path):
     :param repo_path: path to the repository
     :type repo_path: str
     """
-    for root, _, files in os.walk(path):
+    for root, unused, files in os.walk(path):
         for module in files:
-            _, ext = os.path.splitext(module)
+            unused, ext = os.path.splitext(module)
             if ext == '.py':
                 path = os.path.join(root, module)
                 repo.add(DefinitionKind.TOPIC, os.path.relpath(path, repo_path))
@@ -126,7 +129,7 @@ def scan_actors(repo, path, repo_path):
     :param repo_path: path to the repository
     :type repo_path: str
     """
-    for root, _, files in os.walk(path):
+    for root, unused, files in os.walk(path):
         for module in files:
             if module == 'actor.py':
                 rel_path = os.path.relpath(root, repo_path)
@@ -144,9 +147,9 @@ def scan_tags(repo, path, repo_path):
     :param repo_path: path to the repository
     :type repo_path: str
     """
-    for root, _, files in os.walk(path):
+    for root, unused, files in os.walk(path):
         for module in files:
-            _, ext = os.path.splitext(module)
+            unused, ext = os.path.splitext(module)
             if ext == '.py':
                 path = os.path.join(root, module)
                 repo.add(DefinitionKind.TAG, os.path.relpath(path, repo_path))
@@ -163,9 +166,9 @@ def scan_models(repo, path, repo_path):
     :param repo_path: path to the repository
     :type repo_path: str
     """
-    for root, _, files in os.walk(path):
+    for root, unused, files in os.walk(path):
         for module in files:
-            _, ext = os.path.splitext(module)
+            unused, ext = os.path.splitext(module)
             if ext == '.py':
                 path = os.path.join(root, module)
                 repo.add(DefinitionKind.MODEL, os.path.relpath(path, repo_path))
@@ -182,9 +185,9 @@ def scan_workflows(repo, path, repo_path):
     :param repo_path: path to the repository
     :type repo_path: str
     """
-    for root, _, files in os.walk(path):
+    for root, unused, files in os.walk(path):
         for module in files:
-            _, ext = os.path.splitext(module)
+            unused, ext = os.path.splitext(module)
             if ext == '.py':
                 path = os.path.join(root, module)
                 repo.add(DefinitionKind.WORKFLOW, os.path.relpath(path, repo_path))

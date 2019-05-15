@@ -1,0 +1,59 @@
+.TH LEAPP "1" "17/04/2019" "leapp 0.7.0" "User Commands"
+.SH NAME
+leapp - command-line interface to for App & OS Modernization Framework Leapp
+.SH SYNOPSIS
+leapp [-h|--help] [--version] [--debug] <command>
+.SH DESCRIPTION
+The leapp tool is an end-user application designed to run specific workflows.
+.SH OPTIONS
+-h, --help
+    show this help message and exit
+
+--version
+    show program's version number and exit
+
+--debug
+    Prints all available log messages (debug, info, warning, error, critical) and output of executed commands to stderr.
+    By default only error and critical level messages are printed.
+
+--verbose
+    Prints all but debug log messages (info, warning, error, critical) to stderr.
+    By default only error and critical level messages are printed.
+
+.SH "LEAPP COMMANDS"
+upgrade
+    Upgrades the current system to the next available major version.
+.SH "ENVIRONMENT VARIABLES"
+LEAPP_CONFIG
+.RS 4
+This environment variable allows to override the default location of leapp.conf. If not specified, .leapp/leapp.conf is used when the command is executed inside a leapp repository, otherwise the default /etc/leapp/leapp.conf is used.
+.RE
+
+LEAPP_LOGGER_CONFIG
+.RS 4
+This environment variable allows to override the default location of logger.conf. If not specified, the default /etc/leapp/logger.conf is used.
+.RE
+
+LEAPP_DEBUG
+.RS 4
+This environment variable enables debug logging, see --debug for more information
+.RE
+
+LEAPP_VERBOSE
+.RS 4
+This environment variable enables verbose logging, see --verbose for more information
+.RE
+
+.SH "RETURN CODES"
+
+0 - No error occurred.
+
+1 - Any actor in a workflow reported an error (through report_error function or StopActorExecutionError exception).
+
+
+.SH "REPORTING BUGS"
+Report bugs to the issue tracker <https://github.com/oamg/leapp-repository/issues> or to bugzilla <https://bugzilla.redhat.com> under the `Red Hat Enterprise Linux 7` product and the `leapp-repository` component.
+
+.SH "SEE ALSO"
+snactor(1)
+More info available at <https://leapp.readthedocs.io/>.

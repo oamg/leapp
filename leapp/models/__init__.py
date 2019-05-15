@@ -12,7 +12,7 @@ Example::
     class Foobar(Model):
         topic = SomeTopic
         baz = fields.List(fields.String(), default=[])
-        boom = fields.Nested(Boom)
+        boom = fields.Model(Boom)
 
 Now, the models can be used like this::
 
@@ -26,11 +26,12 @@ Now, the models can be used like this::
 import sys
 
 from leapp.models import fields
+from leapp.models.error_severity import ErrorSeverity
 
 from leapp.exceptions import ModelDefinitionError
+from leapp.models.fields import ModelMisuseError
 from leapp.utils.meta import get_flattened_subclasses, with_metaclass
 from leapp.topics import Topic, ErrorTopic
-from leapp.models.error_severity import ErrorSeverity
 
 
 class ModelMeta(type):
@@ -41,7 +42,10 @@ class ModelMeta(type):
     """
     def __new__(mcs, name, bases, attrs):
         klass = super(ModelMeta, mcs).__new__(mcs, name, bases, attrs)
-
+        for base in bases:
+            if getattr(base, '__non_inheritable__', False):
+                raise TypeError('{cls} cannot inherit from {base} because {base} is not inheritable'.format(
+                    cls=name, base=base.__name__))
         model_ref_cls = globals().get('_ModelReference')
         if name == '_ModelReference' or (model_ref_cls and issubclass(klass, model_ref_cls)):
             setattr(sys.modules[mcs.__module__], name, klass)
@@ -56,7 +60,8 @@ class ModelMeta(type):
                 raise ModelDefinitionError('Missing topic in Model {}'.format(name))
             topic.messages = tuple(set(topic.messages + (klass,)))
 
-        kls_attrs = {name: value for name, value in attrs.items() if isinstance(value, fields.Field)}
+        kls_attrs = (getattr(klass, 'fields', None) or {}).copy()
+        kls_attrs.update({name: value for name, value in attrs.items() if isinstance(value, fields.Field)})
         klass.fields = kls_attrs.copy()
 
         setattr(sys.modules[mcs.__module__], name, klass)
@@ -75,8 +80,13 @@ class Model(with_metaclass(ModelMeta)):
     """
     def __init__(self, init_method='from_initialization', **kwargs):
         super(Model, self).__init__()
-        for field in type(self).fields.keys():
-            getattr(type(self).fields[field], init_method)(kwargs, field, self)
+        defined_fields = type(self).fields
+        for key in kwargs.keys():
+            if key not in defined_fields:
+                raise ModelMisuseError(
+                    'Trying to initialize model {} with value for undefined field {}'.format(type(self).__name__, key))
+        for field in defined_fields.keys():
+            getattr(defined_fields[field], init_method)(kwargs, field, self)
 
     topic = None
     """
@@ -120,15 +130,24 @@ class Model(with_metaclass(ModelMeta)):
         return isinstance(other, type(self)) and \
             all(getattr(self, name) == getattr(other, name) for name in sorted(type(self).fields.keys()))
 
+    @classmethod
+    def serialize(cls):
+        """ Returns serialized data of the model """
+        return {
+            'name': cls.__name__,
+            'fields': dict([(name, field.serialize()) for name, field in cls.fields.items()]),
+            'topic': cls.topic.__name__
+        }
+
 
 class ErrorModel(Model):
     topic = ErrorTopic
 
-    message = fields.String(required=True)
-    severity = fields.StringEnum(required=True, choices=ErrorSeverity.ALLOWED_VALUES, default=ErrorSeverity.ERROR)
-    details = fields.String(required=True, allow_null=True, default=None)
-    actor = fields.String(required=True)
-    time = fields.DateTime(required=True)
+    message = fields.String()
+    severity = fields.StringEnum(choices=ErrorSeverity.ALLOWED_VALUES, default=ErrorSeverity.ERROR)
+    details = fields.Nullable(fields.String())
+    actor = fields.String()
+    time = fields.DateTime()
 
 
 def get_models():

@@ -1,7 +1,7 @@
 import os
 from leapp.utils.repository import requires_repository, to_snake_case, make_class_name, make_name,\
     find_repository_basedir, get_repository_name, get_repository_metadata
-from leapp.exceptions import UsageError
+from leapp.exceptions import CommandError
 
 from helpers import TESTING_REPOSITORY_NAME
 from helpers import repository_dir  # noqa: F401; pylint: disable=unused-variable
@@ -19,7 +19,7 @@ def _test_repository_dir_presence():
 
 
 def test_requires_repository(repository_dir):
-    with pytest.raises(UsageError):
+    with pytest.raises(CommandError):
         _test_repository_dir_presence()
     with repository_dir.as_cwd():
         _test_repository_dir_presence()

@@ -5,6 +5,7 @@ import os
 import time
 import sys
 
+from leapp.libraries.stdlib.config import is_debug, is_verbose
 from leapp.utils.audit import Audit
 _logger = None
 
@@ -49,18 +50,19 @@ class LeappAuditHandler(logging.Handler):
             pass
 
 
-def configure_logger():
+def configure_logger(log_file=None):
     global _logger
     if not _logger:
+        log_format = '%(asctime)s.%(msecs)-3d %(levelname)-8s PID: %(process)d %(name)s: %(message)s'
+        log_date_format = '%Y-%m-%d %H:%M:%S'
         path = os.getenv('LEAPP_LOGGER_CONFIG', '/etc/leapp/logger.conf')
+
         if path and os.path.isfile(path):
             logging.config.fileConfig(path)
         else:  # Fall back logging configuration
             logging.Formatter.converter = time.gmtime
-            log_format = '%(asctime)s.%(msecs)-3d %(levelname)-8s PID: %(process)d %(name)s: %(message)s'
-            log_date_format = '%Y-%m-%d %H:%M:%S'
             logging.basicConfig(
-                level=logging.DEBUG if os.getenv('LEAPP_DEBUG', '1') == '1' else logging.INFO,
+                level=logging.DEBUG,
                 format=log_format,
                 datefmt=log_date_format,
                 stream=sys.stderr,
@@ -69,6 +71,18 @@ def configure_logger():
             handler = LeappAuditHandler()
             handler.setFormatter(logging.Formatter(fmt=log_format, datefmt=log_date_format))
             logging.getLogger('leapp').addHandler(handler)
+            logging.StreamHandler().setLevel(logging.ERROR)
+
+        if log_file:
+            file_handler = logging.FileHandler(os.path.join('/var/log/leapp/', log_file))
+            file_handler.setFormatter(logging.Formatter(fmt=log_format, datefmt=log_date_format))
+            file_handler.setLevel(logging.DEBUG)
+            logging.getLogger('leapp').addHandler(file_handler)
+
+        if is_verbose():
+            for handler in logging.getLogger().handlers:
+                if isinstance(handler, logging.StreamHandler):
+                    handler.setLevel(logging.DEBUG if is_debug() else logging.INFO)
 
         _logger = logging.getLogger('leapp')
         _logger.info('Logging has been initialized')

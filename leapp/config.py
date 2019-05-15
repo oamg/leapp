@@ -48,9 +48,9 @@ def get_config():
     global _LEAPP_CONFIG
     if not _LEAPP_CONFIG:
         repository_defaults = {}
-        if find_repository_basedir('.'):
+        if find_repository_basedir(os.environ.get('LEAPP_CONFIG', '.')):
             repository_defaults['repository'] = {
-                'root_dir': find_repository_basedir('.'),
+                'root_dir': find_repository_basedir(os.environ.get('LEAPP_CONFIG', '.')),
                 'state_dir': '${root_dir}/.leapp',
             }
             # Backwards compatibility for older repositories that still used the 'project' terminology.

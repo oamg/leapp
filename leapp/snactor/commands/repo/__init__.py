@@ -7,7 +7,7 @@ from leapp.utils.clicmd import command, command_opt, command_arg
 from leapp.utils.repository import requires_repository, find_repository_basedir, get_repository_name, \
     get_repository_id, add_repository_link, get_user_config_repos, get_user_config_repo_data, \
     get_global_repositories_data
-from leapp.exceptions import UsageError
+from leapp.exceptions import CommandError, UsageError
 
 _MAIN_LONG_DESCRIPTION = '''
 This group of commands are around managing repositories.
@@ -215,16 +215,18 @@ https://red.ht/leapp-docs
 def new_repository(args):
     name = args.name
     basedir = os.path.join('.', name)
-    if not os.path.isdir(basedir):
-        os.mkdir(basedir)
-        repository_dir = os.path.join(basedir, '.leapp')
-        os.mkdir(repository_dir)
-        with open(os.path.join(repository_dir, 'info'), 'w') as f:
-            json.dump({
-                'name': name
-            }, f)
-        with open(os.path.join(repository_dir, 'leapp.conf'), 'w') as f:
-            f.write(_REPOSITORY_CONFIG)
+    if os.path.isdir(basedir):
+        raise CommandError("Directory already exists: {}".format(basedir))
 
-        register_path(basedir)
-        sys.stdout.write("New repository {} has been created in {}\n".format(name, os.path.realpath(name)))
+    os.mkdir(basedir)
+    repository_dir = os.path.join(basedir, '.leapp')
+    os.mkdir(repository_dir)
+    with open(os.path.join(repository_dir, 'info'), 'w') as f:
+        json.dump({
+            'name': name
+        }, f)
+    with open(os.path.join(repository_dir, 'leapp.conf'), 'w') as f:
+        f.write(_REPOSITORY_CONFIG)
+
+    register_path(basedir)
+    sys.stdout.write("New repository {} has been created in {}\n".format(name, os.path.realpath(name)))

@@ -10,6 +10,7 @@ from leapp.tags import get_tags
 from leapp.utils.repository import requires_repository, find_repository_basedir, get_repository_name
 from leapp.utils.clicmd import command, command_opt
 from leapp.workflows import get_workflows
+from leapp.snactor.utils import safe_discover
 
 
 def _is_local(repository, cls, base_dir, all_repos=False):
@@ -43,11 +44,12 @@ def _get_actor_details(actor):
     meta['consumes'] = tuple(model.__name__ for model in meta['consumes'])
     meta['tags'] = tuple(tag.name for tag in meta['tags'])
     meta['path'] = _get_class_file(actor)
+    meta['dialogs'] = [dialog.serialize() for dialog in actor.dialogs]
     return meta
 
 
 def _get_workflow_details(workflow):
-    return {'name': workflow.name, 'description': workflow.description, 'short_name': workflow.short_name}
+    return workflow.serialize()
 
 
 def _get_tag_details(tag):
@@ -84,14 +86,28 @@ https://red.ht/leapp-docs
          description=_LONG_DESCRIPTION)
 @command_opt('json', is_flag=True, help='Output in json format instead of human readable form')
 @command_opt('all', is_flag=True, help='Include items from linked repositories')
+@command_opt('safe', is_flag=True, help='Analyze actor files statically to work around runtime errors')
 @requires_repository
 def cli(args):
     base_dir = find_repository_basedir('.')
+
+    if args.safe and args.json:
+        sys.stderr.write('The options --safe and --json are currently mutually exclusive\n')
+        sys.exit(1)
+
+    if args.safe:
+        sys.stdout.write(
+            'Repository:\n  Name: {repository}\n  Path: {base_dir}\n\n'.format(repository=get_repository_name(base_dir),
+                                                                               base_dir=base_dir))
+        safe_discover(base_dir)
+        sys.exit(0)
+
     repository = find_and_scan_repositories(base_dir, include_locals=True)
     try:
         repository.load()
     except LeappError as exc:
         sys.stderr.write(exc.message)
+        sys.stderr.write('\n')
         sys.exit(1)
 
     actors = [actor for actor in repository.actors]
@@ -120,3 +136,4 @@ def cli(args):
             'workflows': dict((workflow.__name__, _get_workflow_details(workflow)) for workflow in workflows)
         }
         json_mod.dump(output, sys.stdout, indent=2)
+        sys.stdout.write('\n')

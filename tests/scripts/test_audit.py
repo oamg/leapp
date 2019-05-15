@@ -1,10 +1,12 @@
 import json
 import os
 import sqlite3
+import uuid
 
 from leapp.utils.audit import get_connection, Execution, Host, MessageData, \
-    DataSource, Message, Audit, get_messages, checkpoint, get_checkpoints
+    DataSource, Message, Audit, get_messages, checkpoint, get_checkpoints, create_audit_entry, get_audit_entry
 from leapp.config import get_config
+from leapp.libraries.stdlib import run
 
 _HOSTNAME = 'test-host.example.com'
 _CONTEXT_NAME = 'test-context-name'
@@ -231,3 +233,32 @@ def test_checkpoints():
     assert result[0]['actor'] == _ACTOR_NAME
     assert result[0]['phase'] == _PHASE_NAME
     assert result[0]['stamp'].endswith('Z')
+
+
+def test_create_audit_entry(monkeypatch):
+    monkeypatch.setenv('LEAPP_CURRENT_ACTOR', _ACTOR_NAME)
+    monkeypatch.setenv('LEAPP_CURRENT_PHASE', _PHASE_NAME)
+    monkeypatch.setenv('LEAPP_EXECUTION_ID', _CONTEXT_NAME)
+    monkeypatch.setenv('LEAPP_HOSTNAME', _HOSTNAME)
+    _id = str(uuid.uuid4())
+    event = 'process-start'
+    create_audit_entry(event, {'id': _id, 'parameters': 'ls'})
+    assert get_audit_entry(event, _CONTEXT_NAME)
+
+
+def test_audit_command_in_db(monkeypatch):
+    monkeypatch.setenv('LEAPP_CURRENT_ACTOR', _ACTOR_NAME)
+    monkeypatch.setenv('LEAPP_CURRENT_PHASE', _PHASE_NAME)
+    monkeypatch.setenv('LEAPP_EXECUTION_ID', _CONTEXT_NAME)
+    monkeypatch.setenv('LEAPP_HOSTNAME', _HOSTNAME)
+    _id = str(uuid.uuid4())
+    cmd = ['whoami']
+    monkeypatch.setattr(uuid, 'uuid4', lambda: _id)
+    result = run(cmd)
+    assert result['stdout'] in ['travis\n', 'root\n']
+    event = 'process-start'
+    assert get_audit_entry(event, _CONTEXT_NAME)
+    event = 'process-end'
+    assert get_audit_entry(event, _CONTEXT_NAME)
+    event = 'process-result'
+    assert get_audit_entry(event, _CONTEXT_NAME)

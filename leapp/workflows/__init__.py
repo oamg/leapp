@@ -10,6 +10,8 @@ from leapp.workflows.phases import Phase
 from leapp.workflows.policies import Policies
 from leapp.workflows.phaseactors import PhaseActors
 from leapp.messaging.inprocess import InProcessMessaging
+from leapp.dialogs import RawMessageDialog
+from leapp.tags import ExperimentalTag
 from leapp.utils.audit import checkpoint, get_errors
 
 
@@ -61,7 +63,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         """
         return self._errors
 
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, auto_reboot=False):
         """
         :param logger: Optional logger to be used instead of leapp.workflow
         :type logger: Instance of :py:class:`logging.Logger`
@@ -72,6 +74,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self._all_produced = set()
         self._initial = set()
         self._phase_actors = []
+        self._experimental_whitelist = set()
+        self._auto_reboot = auto_reboot
 
         for phase in self.phases:
             phase.filter.tags += (self.tag,)
@@ -87,6 +91,22 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self._all_consumed.update(phase_actors.consumes)
         self._all_produced.update(phase_actors.produces)
         return phase_actors
+
+    @property
+    def experimental_whitelist(self):
+        """ Whitelist of actors that may be executed even that they are marked experimental """
+        return self._experimental_whitelist
+
+    def whitelist_experimental_actor(self, actor):
+        """
+        Adds an actor to the experimental whitelist and allows them to be executed.
+
+        :param actor: Actor to be whitelisted
+        :type actor: class derived from py:class:`leapp.actors.Actor`
+        :return: None
+        """
+        if actor:
+            self._experimental_whitelist.add(actor)
 
     @property
     def phase_actors(self):
@@ -107,6 +127,19 @@ class Workflow(with_metaclass(WorkflowMeta)):
     def produces(self):
         """ All produced messages """
         return self._all_produced
+
+    @classmethod
+    def serialize(cls):
+        """
+        :return: Serialized form of the workflow
+        """
+        return {
+            'name': cls.name,
+            'short_name': cls.short_name,
+            'tag': cls.tag.__name__,
+            'description': cls.description,
+            'phases': [phase.serialize() for phase in cls.phases],
+        }
 
     def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None):
         """
@@ -161,7 +194,14 @@ class Workflow(with_metaclass(WorkflowMeta)):
                 current_logger.info("Starting stage {stage} of phase {phase}".format(
                     phase=phase[0].name, stage=stage.stage))
                 for actor in stage.actors:
-                    current_logger.info("Executing actor {actor}".format(actor=actor.name))
+                    designation = ''
+                    if ExperimentalTag in actor.tags:
+                        designation = '[EXPERIMENTAL]'
+                        if actor not in self.experimental_whitelist:
+                            current_logger.info("Skipping experimental actor {actor}".format(actor=actor.name))
+                            continue
+                    current_logger.info("Executing actor {actor} {designation}".format(designation=designation,
+                                                                                       actor=actor.name))
                     messaging = InProcessMessaging()
                     messaging.load(actor.consumes)
                     actor(logger=current_logger, messaging=messaging).run()
@@ -198,9 +238,19 @@ class Workflow(with_metaclass(WorkflowMeta)):
                 self.log.info('Workflow finished due to the until-phase flag')
                 return
 
-            if phase[0].flags.restart_after_phase:
-                self.log.info('Initiating system reboot due to the restart_after_reboot flag')
-                reboot_system()
+            if phase[0].flags.request_restart_after_phase or phase[0].flags.restart_after_phase:
+                reboot = True
+                if phase[0].flags.request_restart_after_phase and not self._auto_reboot:
+                    reboot = False
+                    messaging.request_answers(
+                        RawMessageDialog(message='A reboot is required to continue. Please reboot your system.')
+                    )
+                if reboot:
+                    self.log.info('Initiating system reboot due to the restart_after_reboot flag')
+                    reboot_system()
+                return
+            if phase[0].flags.is_checkpoint:
+                self.log.info('Stopping the workflow execution due to the is_checkpoint flag')
                 return
 
 

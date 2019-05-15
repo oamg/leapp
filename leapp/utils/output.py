@@ -1,8 +1,10 @@
 import json
 import sys
 from pprint import pformat
+from contextlib import contextmanager
 
 from leapp.models import ErrorModel
+from leapp.exceptions import LeappRuntimeError
 
 
 def _get_colors():
@@ -34,3 +36,19 @@ def print_error(error):
         actor=model.actor))
     if model.details:
         print('Detail: ' + pformat(json.loads(model.details)))
+
+
+@contextmanager
+def beautify_actor_exception():
+    try:
+        try:
+            yield
+        except LeappRuntimeError as e:
+            msg = '{} - Please check the above details'.format(e.message)
+            sys.stderr.write('\n')
+            sys.stderr.write('=' * len(msg) + '\n')
+            sys.stderr.write(msg + '\n')
+            sys.stderr.write('=' * len(msg) + '\n')
+            sys.stderr.write('\n')
+    finally:
+        pass

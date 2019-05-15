@@ -1,11 +1,20 @@
+from contextlib import contextmanager
 import datetime
 import json
+import os
 import sqlite3
 
 import six
 
 from leapp.config import get_config
 from leapp.utils.schemas import CURRENT_SCHEMA, MIGRATIONS
+
+
+@contextmanager
+def _umask(new_mask):
+    cur_mask = os.umask(new_mask)
+    yield
+    os.umask(cur_mask)
 
 
 def _initialize_database(db):
@@ -39,7 +48,8 @@ def create_connection(path):
     :param path: Path to the database
     :return: Connection object
     """
-    return _initialize_database(sqlite3.connect(path))
+    with _umask(0o177):
+        return _initialize_database(sqlite3.connect(path))
 
 
 def get_connection(db):
@@ -247,6 +257,53 @@ class Message(DataSource):
         self._message_id = cursor.lastrowid
 
 
+def create_audit_entry(event, data, message=None):
+    """
+    Create an audit entry
+
+    :param event: Type of this event e.g. process-start or process-end but can be anything
+    :param data: Data related to Type of the event, e.g. a command and its arguments
+    :param message: An optional message.
+    :return:
+    """
+    Audit(**{
+        'actor': os.environ.get('LEAPP_CURRENT_ACTOR', 'NO-ACTOR-SET'),
+        'phase': os.environ.get('LEAPP_CURRENT_PHASE', 'NON-WORKFLOW-EXECUTION'),
+        'context': os.environ.get('LEAPP_EXECUTION_ID', 'TESTING-CONTEXT'),
+        'hostname': os.environ.get('LEAPP_HOSTNAME', 'TESTING-LEAPP-HOSTNAME'),
+        'message': message,
+        'event': event,
+        'data': data
+    }).store()
+
+
+def get_audit_entry(event, context):
+    """
+    Retrieve audit entries stored in the database for the given context
+
+    :param context: The execution context
+    :type context: str
+    :param event: Type of this event e.g. process-start or process-end but can be anything
+    :type event: str
+    :return: list of dicts with id, time stamp, actor and phase fields
+    """
+    with get_connection(None) as conn:
+        cursor = conn.execute('''
+            SELECT
+                audit.id          AS id,
+                audit.stamp       AS stamp,
+                audit.data        AS data,
+                audit.context     AS context
+              FROM
+                audit
+              WHERE
+                audit.context = ? AND audit.event = ?
+              ORDER BY stamp ASC;
+        ''', (context, event))
+        cursor.row_factory = _dict_factory
+        return cursor.fetchall()
+
+
 class Audit(DataSource):
     def __init__(self, event=None, stamp=None, message=None, data=None, actor=None, phase=None, hostname=None,
                  context=None):
@@ -315,19 +372,20 @@ _MESSAGE_QUERY_TEMPLATE = '''
         WHERE context = ? AND type IN (%s)'''
 
 
-def get_messages(names, context):
+def get_messages(names, context, connection=None):
     """
     Queries all messages from the database for the given context and the list of model names
     :param names: List of names that should be messages returned for
     :type names: list or tuple of str
     :param context: Execution id the message should be queried from.
+    :param connection: Database connection to use instead of the default one.
     :return: Iterable with messages
     :rtype: iterable
     """
     if not names:
         return ()
 
-    with get_connection(None) as conn:
+    with get_connection(db=connection) as conn:
         cursor = conn.execute(_MESSAGE_QUERY_TEMPLATE % ', '.join('?' * len(names)), (context,) + tuple(names))
         cursor.row_factory = _dict_factory
         result = cursor.fetchall()
@@ -392,7 +450,7 @@ def get_checkpoints(context):
                 data_source ON data_source.id = audit.data_source_id
               WHERE
                 audit.context = ? AND audit.event = ?
-              ORDER BY stamp ASC;
+              ORDER BY audit.id ASC;
         ''', (context, _AUDIT_CHECKPOINT_EVENT))
         cursor.row_factory = _dict_factory
         return cursor.fetchall()
