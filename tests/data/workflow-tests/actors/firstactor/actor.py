@@ -14,5 +14,7 @@ class FirstActor(Actor):
     def process(self):
         from leapp.libraries.common.test_helper import log_execution
         log_execution(self)
+        if not self.configuration or self.configuration.value != 'unit-test':
+            self.report_error('Unit test failed due missing or invalid workflow provided configuration')
         if os.environ.get('FirstActor-ReportError') == '1':
             self.report_error("Unit test requested error")

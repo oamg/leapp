@@ -63,6 +63,22 @@ class MultipleActorsError(LeappError):
             'Multiple actors found in {path}. Inspection failed'.format(path=path))
 
 
+class MultipleConfigActorsError(LeappError):
+    def __init__(self, config_actors):
+        super(MultipleConfigActorsError, self).__init__(
+            'Multiple config actors detected: {config_actors}. '
+            'Only one config actor per workflow is allowed'.format(config_actors=config_actors))
+
+
+class WorkflowConfigNotAvailable(LeappError):
+    def __init__(self, actor):
+        # TODO(mreznik): Current implementation of the workflow congiguration is problematic when used
+        # with snactor. See https://github.com/oamg/leapp/issues/530
+        super(WorkflowConfigNotAvailable, self).__init__(
+            'Actor {actor} relies on workflow configuration model which '
+            'must be produced by a specific actor'.format(actor=actor))
+
+
 class RepoItemPathDoesNotExistError(LeappError):
     def __init__(self, kind, rel_path, full_path):
         super(RepoItemPathDoesNotExistError, self).__init__(

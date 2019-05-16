@@ -1,3 +1,4 @@
+from leapp.models import UnitTestConfig
 from leapp.workflows import Workflow
 from leapp.workflows.phases import Phase
 from leapp.workflows.flags import Flags
@@ -11,6 +12,7 @@ class UnitTestWorkflow(Workflow):
     tag =  UnitTestWorkflowTag
     short_name = 'unit_test'
     description = '''No description has been provided for the UnitTest workflow.'''
+    configuration = UnitTestConfig
 
     class FirstPhase(Phase):
        name = 'first-phase'

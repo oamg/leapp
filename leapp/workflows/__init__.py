@@ -13,7 +13,7 @@ from leapp.messaging.inprocess import InProcessMessaging
 from leapp.dialogs import RawMessageDialog
 from leapp.tags import ExperimentalTag
 from leapp.utils.audit import checkpoint, get_errors
-from leapp.exceptions import CommandError
+from leapp.exceptions import CommandError, MultipleConfigActorsError, WorkflowConfigNotAvailable
 
 
 def _phase_sorter_key(a):
@@ -48,6 +48,10 @@ class WorkflowMeta(type):
         return klass
 
 
+class _ConfigPhase(Phase):
+    name = 'configuration_phase'
+
+
 class Workflow(with_metaclass(WorkflowMeta)):
     """
     Workflow is the base class for all :ref:`workflow <terminology:workflow>` definitions.
@@ -64,6 +68,9 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
     description = ''
     """ Documentation for the workflow """
+
+    configuration = None
+    """ Model to be used as workflow configuration """
 
     @property
     def errors(self):
@@ -86,12 +93,29 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self._experimental_whitelist = set()
         self._auto_reboot = auto_reboot
 
+        if self.configuration:
+            config_actors = [actor for actor in self.tag.actors if self.configuration in actor.produces]
+            if config_actors:
+                if len(config_actors) == 1:
+                    self._phase_actors.append((
+                        _ConfigPhase,
+                        PhaseActors((), 'Before'),
+                        PhaseActors(tuple(config_actors), 'Main'),
+                        PhaseActors((), 'After')))
+                else:
+                    config_actor_names = [a.name for a in config_actors]
+                    raise MultipleConfigActorsError(config_actor_names)
+
         for phase in self.phases:
             phase.filter.tags += (self.tag,)
             self._phase_actors.append((
                 phase,
+                # filters all actors with the give tags
+                # phasetag .Before
                 self._apply_phase(phase.filter.get_before(), 'Before'),
+                # phasetag
                 self._apply_phase(phase.filter.get(), 'Main'),
+                # phasetag .After
                 self._apply_phase(phase.filter.get_after(), 'After')))
 
     def _apply_phase(self, actors, stage):
@@ -190,6 +214,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         needle_actor = (until_actor or '').lower()
 
         self._errors = get_errors(context)
+        config_model = type(self).configuration
 
         for phase in skip_phases_until, needle_phase:
             if phase and not self.is_valid_phase(phase):
@@ -197,7 +222,6 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
         for phase in self._phase_actors:
             os.environ['LEAPP_CURRENT_PHASE'] = phase[0].name
-
             if skip_phases_until:
                 if skip_phases_until in phase_names(phase):
                     skip_phases_until = ''
@@ -224,9 +248,11 @@ class Workflow(with_metaclass(WorkflowMeta)):
                             continue
                     current_logger.info("Executing actor {actor} {designation}".format(designation=designation,
                                                                                        actor=actor.name))
-                    messaging = InProcessMessaging()
+                    messaging = InProcessMessaging(config_model=config_model)
                     messaging.load(actor.consumes)
-                    actor(logger=current_logger, messaging=messaging).run()
+                    instance = actor(logger=current_logger, messaging=messaging,
+                                     config_model=config_model)
+                    instance.run()
 
                     # Collect errors
                     if messaging.errors():

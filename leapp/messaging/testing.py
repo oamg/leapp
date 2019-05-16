@@ -8,8 +8,8 @@ class TestMessaging(BaseMessaging):
     not stored in a database.
     """
 
-    def __init__(self):
-        super(TestMessaging, self).__init__(stored=False)
+    def __init__(self, config_model=None):
+        super(TestMessaging, self).__init__(stored=False, config_model=config_model)
 
     def feed(self, *messages):
         self._data.extend([message.dump() for message in messages])

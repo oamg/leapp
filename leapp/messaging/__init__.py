@@ -19,7 +19,7 @@ class BaseMessaging(object):
     BaseMessaging is the Base class for all messaging implementations. It provides the basic interface that is
     supported within the framework. These are called the `produce` and `consume` methods.
     """
-    def __init__(self, stored=True):
+    def __init__(self, stored=True, config_model=None):
         self._manager = multiprocessing.Manager()
         self._dialog_renderer = CommandlineRenderer()
         self._data = self._manager.list()
@@ -27,6 +27,7 @@ class BaseMessaging(object):
         self._new_data = self._manager.list()
         self._errors = self._manager.list()
         self._stored = stored
+        self._config_models = (config_model,) if config_model else ()
 
     def load_answers(self, answer_file, workflow):
         """
@@ -91,7 +92,7 @@ class BaseMessaging(object):
         """
         if ErrorModel in consumes:
             raise CannotConsumeErrorMessages()
-        self._perform_load(consumes)
+        self._perform_load(consumes + self._config_models)
 
     def report_error(self, message, severity, actor, details):
         """
@@ -187,7 +188,7 @@ class BaseMessaging(object):
         """
         types = tuple((getattr(t, '_resolved', t) for t in types))
         messages = list(self._data) + list(self._new_data)
-        lookup = {model.__name__: model for model in type(actor).consumes}
+        lookup = {model.__name__: model for model in type(actor).consumes + self._config_models}
         if types:
             filtered = set(requested.__name__ for requested in types)
             messages = [message for message in messages if message['type'] in filtered]

@@ -113,9 +113,14 @@ def test_workflow_reboot(repository):
             os.environ['LEAPP_TEST_EXECUTION_LOG'] = test_log_file.name
             workflow = repository.lookup_workflow('UnitTest')()
             reboot_system_function.return_value = None
-            workflow.phase_actors[0][0].flags.restart_after_phase = True
+            fpidx = 0
+            for idx, (phase, _before, _main, _after) in enumerate(workflow.phase_actors):
+                if phase.name == 'first-phase':
+                    fpidx = idx
+                    break
+            workflow.phase_actors[fpidx][0].flags.restart_after_phase = True
             workflow.run()
-            workflow.phase_actors[0][0].flags.restart_after_phase = False
+            workflow.phase_actors[fpidx][0].flags.restart_after_phase = False
             reboot_system_function.assert_called_once_with()
             test_log_file.seek(0)
             order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]

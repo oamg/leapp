@@ -34,7 +34,7 @@ class ActorCallContext(object):
     Wraps the actor execution into child process.
     """
 
-    def __init__(self, definition, logger, messaging):
+    def __init__(self, definition, logger, messaging, config_model):
         """
         :param definition: Actor definition
         :type definition: :py:class:`leapp.repository.actor_definition.ActorDefinition`
@@ -42,13 +42,16 @@ class ActorCallContext(object):
         :type logger: :py:class:`logging.Logger`
         :param messaging: Leapp Messaging
         :type messaging: :py:class:`leapp.messaging.BaseMessaging`
+        :param config_model: Workflow provided configuration model
+        :type config_model: :py:class:`leapp.models.Model` derived class
         """
         self.definition = definition
         self.logger = logger
         self.messaging = messaging
+        self.config_model = config_model
 
     @staticmethod
-    def _do_run(stdin, logger, messaging, definition, args, kwargs):
+    def _do_run(stdin, logger, messaging, definition, config_model, args, kwargs):
         if stdin is not None:
             try:
                 sys.stdin = os.fdopen(stdin)
@@ -57,7 +60,7 @@ class ActorCallContext(object):
         definition.load()
         with definition.injected_context():
             target_actor = [actor for actor in get_actors() if actor.name == definition.name][0]
-            target_actor(logger=logger, messaging=messaging).run(*args, **kwargs)
+            target_actor(logger=logger, messaging=messaging, config_model=config_model).run(*args, **kwargs)
 
     def run(self, *args, **kwargs):
         """
@@ -67,7 +70,8 @@ class ActorCallContext(object):
             stdin = sys.stdin.fileno()
         except UnsupportedOperation:
             stdin = None
-        p = Process(target=self._do_run, args=(stdin, self.logger, self.messaging, self.definition, args, kwargs))
+        p = Process(target=self._do_run,
+                    args=(stdin, self.logger, self.messaging, self.definition, self.config_model, args, kwargs))
         p.start()
         p.join()
         if p.exitcode != 0:
@@ -170,8 +174,8 @@ class ActorDefinition(object):
                     tag.actors += (self,)
         return self._discovery
 
-    def __call__(self, messaging=None, logger=None):
-        return ActorCallContext(definition=self, messaging=messaging, logger=logger)
+    def __call__(self, messaging=None, logger=None, config_model=None):
+        return ActorCallContext(definition=self, messaging=messaging, logger=logger, config_model=config_model)
 
     @property
     def dialogs(self):
