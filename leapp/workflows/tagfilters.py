@@ -11,6 +11,7 @@ class TagFilter(object):
 
     def get_before(self):
         result = set(actor for actor in self.phase.Before.actors)
+        # tag.actors retrives all actors that have the particular tag
         for tag in self.tags:
             result.intersection_update(tag.actors)
         result.update(self.phase.Before.Common.actors)
@@ -18,6 +19,7 @@ class TagFilter(object):
 
     def get_after(self):
         result = set(actor for actor in self.phase.After.actors)
+        # tag.actors retrives all actors that have the particular tag
         for tag in self.tags:
             result.intersection_update(tag.actors)
         result.update(self.phase.After.Common.actors)
@@ -25,6 +27,7 @@ class TagFilter(object):
 
     def get(self):
         result = set(actor for actor in self.phase.actors)
+        # tag.actors retrives all actors that have the particular tag
         for tag in self.tags:
             result.intersection_update(tag.actors)
         result.update(self.phase.Common.actors)

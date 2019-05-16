@@ -9,8 +9,8 @@ class RemoteMessaging(BaseMessaging):
     This class implements the messaging over a remote API via HTTP over an UNIX domain socket.
     """
 
-    def __init__(self):
-        super(RemoteMessaging, self).__init__()
+    def __init__(self, config_model=None):
+        super(RemoteMessaging, self).__init__(config_model=config_model)
         self._session = get_actor_api()
 
     def _process_message(self, message):
