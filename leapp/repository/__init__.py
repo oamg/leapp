@@ -3,12 +3,12 @@ import os
 import pkgutil
 import sys
 
-
-import leapp.libraries.common
+import leapp.libraries.common # noqa # pylint: disable=unused-import
 import leapp.workflows
-from leapp.exceptions import ModuleNameAlreadyExistsError, RepoItemPathDoesNotExistError, UnsupportedDefinitionKindError
+from leapp.exceptions import RepoItemPathDoesNotExistError, UnsupportedDefinitionKindError
 from leapp.repository.definition import DefinitionKind
 from leapp.repository.actor_definition import ActorDefinition
+from leapp.utils.libraryfinder import LeappLibrariesFinder
 from leapp.utils.repository import get_repository_name, get_repository_id, get_repository_links
 
 
@@ -26,6 +26,7 @@ class Repository(object):
     repository directory layout looks like:
     :ref:`Repository Directory Layout <best-practises:repository directory layout>`
     """
+
     def __init__(self, directory):
         """
         :param directory: Path to the repository folder
@@ -138,14 +139,8 @@ class Repository(object):
             self._extend_environ_paths('LEAPP_COMMON_TOOLS', self.tools)
             self.log.debug("Extending LEAPP_COMMON_FILES for common file paths")
             self._extend_environ_paths('LEAPP_COMMON_FILES', self.files)
-
-            if not leapp.libraries.common.LEAPP_BUILTIN_COMMON_INITIALIZED:
-                self.log.debug("Loading built-in common libraries")
-                self._load_libraries(path=(os.path.dirname(leapp.libraries.common.__file__) + '/',))
-                leapp.libraries.common.LEAPP_BUILTIN_COMMON_INITIALIZED = True
-
-            self.log.debug("Loading repository provided common libraries")
-            self._load_libraries()
+            self.log.debug("Installing repository provided common libraries loader hook")
+            sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.libraries.common', paths=self.libraries))
 
         if not stage or stage is _LoadStage.ACTORS:
             self.log.debug("Running actor discovery")
@@ -155,24 +150,6 @@ class Repository(object):
         if not stage or stage is _LoadStage.WORKFLOWS:
             self.log.debug("Loading workflow modules")
             self._load_modules(self.workflows, 'leapp.workflows')
-
-    def _load_libraries(self, path=None, mod=None, prefix='leapp.libraries.common'):
-        for importer, name, is_pkg in pkgutil.iter_modules(path or self.libraries):
-            mod_full_name = prefix + '.' + name
-            if mod_full_name in sys.modules:
-                self.log.error("Common library module name clash: %s has been already loaded", mod_full_name)
-                raise ModuleNameAlreadyExistsError(
-                    'The {name} module has been already loaded from somewhere else.\n'
-                    'Loaded: {loaded}\nNow: {now}'.format(
-                        name=mod_full_name,
-                        loaded=sys.modules.get(mod_full_name).__file__,
-                        now=importer.find_module(name).file.name))
-            loaded = importer.find_module(name).load_module(name)
-            if not mod:
-                setattr(leapp.libraries.common, name, loaded)
-            sys.modules[mod_full_name] = loaded
-            if is_pkg:
-                self._load_libraries(path=(os.path.dirname(loaded.__file__),), mod=loaded, prefix=mod_full_name)
 
     def _load_modules(self, modules, prefix):
         """
