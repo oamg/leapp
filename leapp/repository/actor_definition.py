@@ -6,12 +6,12 @@ import sys
 from io import UnsupportedOperation
 from multiprocessing import Process, Queue
 
-import leapp.libraries.actor
+import leapp.libraries.actor # noqa # pylint: disable=unused-import
 from leapp.actors import get_actors, get_actor_metadata
 from leapp.exceptions import ActorInspectionFailedError, MultipleActorsError, UnsupportedDefinitionKindError, \
     LeappRuntimeError
 from leapp.repository import DefinitionKind
-from leapp.repository.loader import library_loader
+from leapp.utils.libraryfinder import LeappLibrariesFinder
 
 
 def inspect_actor(definition, result_queue):
@@ -33,6 +33,7 @@ class ActorCallContext(object):
     """
     Wraps the actor execution into child process.
     """
+
     def __init__(self, definition, logger, messaging):
         """
         :param definition: Actor definition
@@ -80,6 +81,7 @@ class ActorDefinition(object):
     Defines actor resources.
 
     """
+
     def __init__(self, directory, repo_dir, log=None):
         """
         :param log: Logger
@@ -242,19 +244,10 @@ class ActorDefinition(object):
         if self.tools:
             os.environ['LEAPP_TOOLS'] = os.path.join(self._repo_dir, self._directory, self.tools[0])
 
-        # We make a snapshot of the symbols in the module
-        before = leapp.libraries.actor.__dict__.keys()
-        # Now we are loading all modules and packages and injecting them at the same time into the modules at hand
-        to_add = library_loader(leapp.libraries.actor, 'leapp.libraries.actor',
-                                map(lambda x: os.path.join(self._repo_dir, self.directory, x), self.libraries))
-        backup = {}
-
-        # Now we are injecting them into the global sys.modules dictionary and keep a backup of existing ones
-        # The backup shouldn't be necessary, but just in case
-        for name, mod in to_add:
-            if name in sys.modules:
-                backup[name] = sys.modules[name]
-            sys.modules[name] = mod
+        sys.meta_path.append(
+            LeappLibrariesFinder(
+                module_prefix='leapp.libraries.actor',
+                paths=list(map(lambda x: os.path.join(self._repo_dir, self.directory, x), self.libraries))))
 
         previous_path = os.getcwd()
         os.chdir(os.path.join(self._repo_dir, self._directory))
@@ -275,19 +268,6 @@ class ActorDefinition(object):
                 os.environ['LEAPP_TOOLS'] = tools_backup
             else:
                 os.environ.pop('LEAPP_TOOLS', None)
-
-            # Remove all symbols in the actor lib before the execution
-            current = leapp.libraries.actor.__dict__.keys()
-            added = set(current).difference(before)
-            for symbol in added:
-                leapp.libraries.actor.__dict__.pop(symbol)
-
-            # Remove all modules from the sys.modules dict or restore from backup if it was there
-            for name, unused in to_add:
-                if name in backup:
-                    sys.modules[name] = backup[name]
-                else:
-                    sys.modules.pop(name)
 
     @property
     def directory(self):
