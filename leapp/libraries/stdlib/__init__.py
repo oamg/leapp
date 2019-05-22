@@ -131,6 +131,8 @@ def run(args, split=False, callback_raw=_logging_handler, env=None, checked=True
     :type split: bool
     :param callback_raw: Optional custom callback executed on raw data to print in console
     :type callback_raw: (fd: int, buffer: bytes) -> None
+    :param env: Environment variables to use for execution of the command
+    :type env: dict
     :param checked: Raise an exception on a non-zero exit code, default True
     :type checked: bool
     :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
