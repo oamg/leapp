@@ -1,0 +1,70 @@
+[MESSAGES CONTROL]
+disable=
+# "F" Fatal errors that prevent further processing
+ import-error,
+# "I" Informational noise
+# "E" Error for important programming issues (likely bugs)
+ cyclic-import,
+ no-member,
+ no-name-in-module,
+ undefined-variable,
+# "W" Warnings for stylistic problems or minor programming issues
+ abstract-method,
+ arguments-differ,
+ bad-mcs-classmethod-argument,
+ broad-except,
+ dangerous-default-value,
+ deprecated-lambda,
+ eval-used,
+ exec-used,
+ expression-not-assigned,
+ fixme,
+ function-redefined,
+ global-statement,
+ not-callable,
+ protected-access,
+ redefined-builtin,
+ redefined-outer-name,
+ super-init-not-called,
+ unsupported-membership-test,
+ unsubscriptable-object,
+ unused-argument,
+ unused-import,
+ unused-variable,
+ useless-super-delegation,
+# "C" Coding convention violations
+ bad-continuation,
+ consider-iterating-dictionary,
+ invalid-name,
+ len-as-condition,
+ missing-docstring,
+ superfluous-parens,
+ unidiomatic-typecheck,
+ ungrouped-imports,
+ unnecessary-lambda,
+ wrong-import-order,
+# "R" Refactor recommendations
+ consider-using-dict-comprehension,
+ duplicate-code,
+ inconsistent-return-statements,
+ redefined-argument-from-local,
+ no-else-return,
+ no-else-raise,
+ too-few-public-methods,
+ too-many-ancestors,
+ too-many-arguments,
+ too-many-branches,
+ too-many-instance-attributes,
+ too-many-locals,
+ too-many-public-methods,
+ too-many-return-statements,
+ too-many-statements,
+ trailing-comma-tuple,
+# new for python3 version of pylint
+ consider-using-set-comprehension,
+ unnecessary-pass,
+ useless-object-inheritance
+
+[FORMAT]
+# Maximum number of characters on a single line.
+max-line-length=120

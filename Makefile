@@ -121,8 +121,11 @@ install-test:
 container-test:
 	docker run --rm -ti -v ${PWD}:/payload leapp-tests
 
-test:
-	py.test --flake8 --cov-report term-missing --cov=leapp tests/scripts
-	py.test --flake8 leapp
+test:   lint
+	pytest --cov-report term-missing --cov=leapp tests/scripts
 
-.PHONY: clean copr_build install install-deps install-test srpm test
+lint:
+	pytest --cache-clear --pylint -m pylint leapp tests/scripts/*.py
+	pytest --cache-clear --flake8 -m flake8 leapp tests/scripts/*.py
+
+.PHONY: clean copr_build install install-deps install-test srpm test lint

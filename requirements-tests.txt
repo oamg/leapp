@@ -1,6 +1,7 @@
 -r requirements.txt
 
+mock
 pytest==3.6.4
 pytest-flake8
 pytest-cov
-mock
+pytest-pylint
