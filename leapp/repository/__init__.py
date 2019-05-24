@@ -1,3 +1,4 @@
+from logging import getLogger
 import os
 import pkgutil
 import sys
@@ -5,7 +6,6 @@ import sys
 
 import leapp.libraries.common
 import leapp.workflows
-from logging import getLogger
 from leapp.exceptions import ModuleNameAlreadyExistsError, RepoItemPathDoesNotExistError, UnsupportedDefinitionKindError
 from leapp.repository.definition import DefinitionKind
 from leapp.repository.actor_definition import ActorDefinition

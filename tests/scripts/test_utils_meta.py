@@ -1,6 +1,6 @@
-from leapp.utils.meta import get_flattened_subclasses, with_metaclass
-
 import pytest
+
+from leapp.utils.meta import get_flattened_subclasses, with_metaclass
 
 
 def test_with_metaclass():

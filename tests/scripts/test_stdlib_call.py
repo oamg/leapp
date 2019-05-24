@@ -1,9 +1,8 @@
-from leapp.libraries.stdlib.call import _call
-
+import functools
 import os
 import pytest
-import sys
-import functools
+
+from leapp.libraries.stdlib.call import _call
 
 
 _CALLBACKS = [{}, [], 'string', lambda v: None, lambda a, b, c: None, None]

@@ -1,6 +1,6 @@
+import gettext  # noqa: F401; pylint: disable=unused-import
 import locale
 import sys
-import gettext
 
 
 __all__ = ('string_types', 'IS_PYTHON2', 'IS_PYTHON3', 'httplib', 'unicode_type', 'raise_with_traceback')

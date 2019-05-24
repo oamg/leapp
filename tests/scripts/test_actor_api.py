@@ -1,6 +1,7 @@
+from contextlib import contextmanager
 import logging
 import os
-from contextlib import contextmanager
+from subprocess import check_output
 
 import py
 import pytest
@@ -9,8 +10,6 @@ from leapp.actors import Actor, get_actors
 from leapp.libraries.stdlib import api
 from leapp.messaging import BaseMessaging
 from leapp.repository.scan import scan_repo
-from leapp.snactor.fixture import leapp_forked
-from subprocess import check_output
 
 
 logging.basicConfig(format='%(asctime)-15s %(clientip)s %(user)-8s %(message)s')
