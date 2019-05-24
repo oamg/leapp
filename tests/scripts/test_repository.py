@@ -1,11 +1,11 @@
 from argparse import Namespace
-import mock
 from multiprocessing import Process
 
+import mock
 import pytest
 
+from helpers import make_repository_dir, repository_dir  # noqa: F401; pylint: disable=unused-import
 from leapp.repository.scan import find_and_scan_repositories, scan_repo
-from helpers import make_repository_dir
 from leapp.snactor.commands.new_actor import cli as new_actor_cmd
 from leapp.snactor.commands.new_tag import cli as new_tag_cmd
 from leapp.snactor.commands.workflow.new import cli as new_workflow_cmd

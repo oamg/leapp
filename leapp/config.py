@@ -1,9 +1,10 @@
 import functools
+import os
 import re
 
 from six.moves import configparser
+
 from leapp.utils.repository import find_repository_basedir
-import os
 
 
 _LEAPP_CONFIG = None

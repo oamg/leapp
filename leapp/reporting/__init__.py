@@ -1,7 +1,8 @@
-from leapp.models import Model, fields
+import json
+
+from leapp.models import fields, Model
 from leapp.topics import ReportTopic
 from leapp.libraries.stdlib.api import produce
-import json
 
 
 class Renderers(Model):

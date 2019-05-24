@@ -1,8 +1,8 @@
-import leapp.compat
-
 import locale
-import os
 import logging
+import os
+
+import leapp.compat
 
 
 def setup_locale():

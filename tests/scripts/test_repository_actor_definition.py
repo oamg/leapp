@@ -1,11 +1,12 @@
+import logging
+
+import mock
 import pytest
 
+from helpers import repository_dir  # noqa: F401; pylint: disable=unused-import
 from leapp.repository.actor_definition import ActorDefinition, ActorInspectionFailedError, MultipleActorsError
 from leapp.exceptions import UnsupportedDefinitionKindError
 from leapp.repository import DefinitionKind
-from helpers import repository_dir
-import logging
-import mock
 
 _FAKE_META_DATA = {
     'description': 'Fake Description',

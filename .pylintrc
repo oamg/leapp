@@ -29,7 +29,6 @@ disable=
  unsupported-membership-test,
  unsubscriptable-object,
  unused-argument,
- unused-import,
  unused-variable,
  useless-super-delegation,
 # "C" Coding convention violations
@@ -40,9 +39,7 @@ disable=
  missing-docstring,
  superfluous-parens,
  unidiomatic-typecheck,
- ungrouped-imports,
  unnecessary-lambda,
- wrong-import-order,
 # "R" Refactor recommendations
  consider-using-dict-comprehension,
  duplicate-code,

@@ -1,16 +1,16 @@
 from __future__ import print_function
-
-import leapp.workflows
 import os
 import sys
-from leapp.exceptions import LeappError, UsageError, CommandError
-from leapp.snactor.commands.workflow import workflow
-from leapp.utils.clicmd import command_arg, command_opt
+
+from leapp.exceptions import LeappError, CommandError
 from leapp.logger import configure_logger
-from leapp.utils.repository import requires_repository, find_repository_basedir
 from leapp.repository.scan import find_and_scan_repositories
+from leapp.snactor.commands.workflow import workflow
 from leapp.snactor.context import with_snactor_context
+from leapp.utils.clicmd import command_arg, command_opt
 from leapp.utils.output import report_errors, beautify_actor_exception
+from leapp.utils.repository import requires_repository, find_repository_basedir
+
 
 _LONG_DESCRIPTION = '''
 Executes the given workflow.

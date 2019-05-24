@@ -2,10 +2,9 @@ import json
 import os
 from subprocess import check_call, check_output, CalledProcessError, STDOUT
 
-from helpers import repository_dir
-from leapp.exceptions import CommandError
-
 import pytest
+
+from helpers import repository_dir  # noqa: F401; pylint: disable=unused-import
 from leapp.snactor import context
 from leapp.utils import audit
 

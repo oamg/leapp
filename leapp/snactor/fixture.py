@@ -5,15 +5,14 @@ import types
 import uuid
 
 from multiprocessing import Queue, Process
-
-from leapp.utils.audit import Execution, get_connection
-from leapp.repository.scan import find_and_scan_repositories
-from leapp.utils.repository import find_repository_basedir
-from leapp.messaging.inprocess import InProcessMessaging
-from leapp.compat import raise_with_traceback
-
 import pytest
 from _pytest.python import pytest_pyfunc_call as original_pytest_pyfunc_call
+
+from leapp.compat import raise_with_traceback
+from leapp.messaging.inprocess import InProcessMessaging
+from leapp.repository.scan import find_and_scan_repositories
+from leapp.utils.audit import Execution, get_connection
+from leapp.utils.repository import find_repository_basedir
 
 
 def _patched_name(code, name):
