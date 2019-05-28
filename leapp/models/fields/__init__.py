@@ -108,8 +108,8 @@ class Field(object):
         :type target: Instance of a Model derived class
         :return: None
         """
-        # if base class has a field like mutable collection -> copy it, otherwise
-        # the base class and the child class may share the same object
+        # copy the default value for it not to be shared with other
+        # instances of the same model
         source_value = copy.copy(source.get(name, self._default))
         self._validate_model_value(value=source_value, name=name)
         setattr(target, name, source_value)
@@ -126,8 +126,8 @@ class Field(object):
         :type target: Instance of a Model derived class
         :return: None
         """
-        # if base class has a field like mutable collection -> copy it, otherwise
-        # the base class and the child class may share the same object
+        # copy the default value for it not to be shared with other
+        # instances of the same model
         source_value = copy.copy(source.get(name, self._default))
         if source_value is not None:
             source_value = self._convert_to_model(source_value, name=name)
