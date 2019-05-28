@@ -5,6 +5,7 @@ import os
 import time
 import sys
 
+from leapp.config import get_config
 from leapp.libraries.stdlib.config import is_debug, is_verbose
 from leapp.utils.audit import Audit
 _logger = None
@@ -74,7 +75,7 @@ def configure_logger(log_file=None):
             logging.StreamHandler().setLevel(logging.ERROR)
 
         if log_file:
-            file_handler = logging.FileHandler(os.path.join('/var/log/leapp/', log_file))
+            file_handler = logging.FileHandler(os.path.join(get_config().get('logs', 'dir'), log_file))
             file_handler.setFormatter(logging.Formatter(fmt=log_format, datefmt=log_date_format))
             file_handler.setLevel(logging.DEBUG)
             logging.getLogger('leapp').addHandler(file_handler)
