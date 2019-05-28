@@ -14,8 +14,8 @@ from leapp.cli.upgrade import fetch_last_upgrade_context
 
 
 @command('report', help='Create report for last upgrade execution (default) or specific execution id')
-@command_opt('--id', help='ID of particular run to print report for. See # leapp list-runs for a list of all runs')
-@command_opt('--format', help='Format report using particular renderers. By default: "plaintext"')
+@command_opt('id', help='ID of particular run to print report for. See # leapp list-runs for a list of all runs')
+@command_opt('format', help='Format report using particular renderers. By default: "plaintext"')
 def report(args):
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')

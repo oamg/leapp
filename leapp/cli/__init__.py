@@ -26,5 +26,6 @@ def main():
     if report:
         cli.command.add_sub(report.report.command)
     cli.command.add_sub(upgrade.list_runs.command)
+    cli.command.add_sub(upgrade.preupgrade.command)
     cli.command.add_sub(upgrade.upgrade.command)
     cli.command.execute('leapp version {}'.format(VERSION))

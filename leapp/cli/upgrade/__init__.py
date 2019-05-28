@@ -14,36 +14,29 @@ from leapp.logger import configure_logger
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
-from leapp.utils.output import report_errors, beautify_actor_exception
+from leapp.utils.output import report_errors, report_info, beautify_actor_exception
 
 
 def archive_logfiles():
     """ Archive log files from a previous run of Leapp """
-    # FIXME: The files in /var/log/leapp/ needs to be defined on one place. They are defined also in actors.
-    archive_dir = '/var/log/leapp/archive/'
-    logs_directory = '/var/log/leapp'
-    debug_dir = '/var/log/leapp/dnf-debugdata/'
-    leapp_db = '/var/lib/leapp/leapp.db'
-    log_files = [
-        '/var/log/leapp/leapp-upgrade.log',
-        '/var/log/leapp/leapp-report.txt',
-        '/var/log/leapp/dnf-plugin-data.txt'
-    ]
+    cfg = get_config()
 
-    if not os.path.isdir(logs_directory):
-        os.makedirs(logs_directory)
+    if not os.path.isdir(cfg.get('logs', 'dir')):
+        os.makedirs(cfg.get('logs', 'dir'))
 
-    files_to_archive = [f for f in log_files if os.path.isfile(f)]
+    files_to_archive = [os.path.join(cfg.get('logs', 'dir'), f)
+                        for f in cfg.get('logs', 'files').split(':')
+                        if os.path.isfile(os.path.join(cfg.get('logs', 'dir'), f))]
 
-    if not os.path.isdir(archive_dir):
-        os.makedirs(archive_dir)
+    if not os.path.isdir(cfg.get('archive', 'dir')):
+        os.makedirs(cfg.get('archive', 'dir'))
 
     if files_to_archive:
-        if os.path.isdir(debug_dir):
-            files_to_archive.append(debug_dir)
+        if os.path.isdir(cfg.get('debug', 'dir')):
+            files_to_archive.append(cfg.get('debug', 'dir'))
 
         now = datetime.now().strftime('%Y%m%d%H%M%S')
-        archive_file = os.path.join(archive_dir, 'leapp-{}-logs.tar.gz'.format(now))
+        archive_file = os.path.join(cfg.get('archive', 'dir'), 'leapp-{}-logs.tar.gz'.format(now))
 
         with tarfile.open(archive_file, "w:gz") as tar:
             for file_to_add in files_to_archive:
@@ -55,8 +48,8 @@ def archive_logfiles():
                 except OSError:
                     pass
             # leapp_db is not in files_to_archive to not have it removed
-            if os.path.isfile(leapp_db):
-                tar.add(leapp_db)
+            if os.path.isfile(cfg.get('database', 'path')):
+                tar.add(cfg.get('database', 'path'))
 
 
 def load_repositories_from(name, repo_path, manager=None):
@@ -113,7 +106,7 @@ def check_env_and_conf(env_var, conf_var, configuration):
 @command('upgrade', help='Upgrades the current system to the next available major version.')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
 @command_opt('reboot', is_flag=True, help='Automatically performs reboot when requested.')
-@command_opt('--whitelist-experimental', action='append', metavar='ActorName',
+@command_opt('whitelist-experimental', action='append', metavar='ActorName',
              help='Enables experimental actors')
 def upgrade(args):
     if os.getuid():
@@ -154,8 +147,6 @@ def upgrade(args):
     try:
         repositories = load_repositories()
     except LeappError as exc:
-        sys.stderr.write(exc.message)
-        sys.stderr.write('\n')
         raise CommandError(exc.message)
     workflow = repositories.lookup_workflow('IPUWorkflow')(auto_reboot=args.reboot)
     for actor_name in configuration.get('whitelist_experimental', ()):
@@ -173,6 +164,53 @@ def upgrade(args):
 
     if workflow.errors:
         sys.exit(1)
+
+
+@command('preupgrade', help='Generate preupgrade report')
+@command_opt('whitelist-experimental', action='append', metavar='ActorName',
+             help='Enables experimental actors')
+def preupgrade(args):
+    if os.getuid():
+        raise CommandError('This command has to be run under the root user.')
+
+    if args.whitelist_experimental:
+        args.whitelist_experimental = list(itertools.chain(*[i.split(',') for i in args.whitelist_experimental]))
+    context = str(uuid.uuid4())
+    configuration = {
+        'debug': os.getenv('LEAPP_DEBUG', '0'),
+        'verbose': os.getenv('LEAPP_VERBOSE', '0'),
+        'whitelist_experimental': args.whitelist_experimental or ()
+    }
+    e = Execution(context=context, kind='preupgrade', configuration=configuration)
+    e.store()
+    archive_logfiles()
+    logger = configure_logger('leapp-preupgrade.log')
+    os.environ['LEAPP_EXECUTION_ID'] = context
+
+    try:
+        repositories = load_repositories()
+    except LeappError as exc:
+        raise CommandError(exc.message)
+    workflow = repositories.lookup_workflow('IPUWorkflow')()
+    for actor_name in configuration.get('whitelist_experimental', ()):
+        actor = repositories.lookup_actor(actor_name)
+        if actor:
+            workflow.whitelist_experimental_actor(actor)
+        else:
+            msg = 'No such Actor: {}'.format(actor_name)
+            logger.error(msg)
+            raise CommandError(msg)
+    with beautify_actor_exception():
+        until_phase = 'ReportsPhase'
+        logger.info('Executing workflow until phase: %s', until_phase)
+        workflow.run(context=context, until_phase=until_phase)
+
+    report_errors(workflow.errors)
+
+    if workflow.errors:
+        report_info(get_config().get('report', 'path'), fail=True)
+        sys.exit(1)
+    report_info(get_config().get('report', 'path'))
 
 
 @command('list-runs', help='List previous Leapp upgrade executions')

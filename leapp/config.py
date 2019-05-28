@@ -9,8 +9,21 @@ from leapp.utils.repository import find_repository_basedir
 
 _LEAPP_CONFIG = None
 _CONFIG_DEFAULTS = {
+    'archive': {
+        'dir': '/var/log/leapp/archive/',
+    },
     'database': {
         'path': '/var/lib/leapp/leapp.db',
+    },
+    'debug': {
+        'dir': '/var/log/leapp/dnf-debugdata/',
+    },
+    'logs': {
+        'dir': '/var/log/leapp/',
+        'files': 'leapp-upgrade.log:leapp-report.txt:dnf-plugin-data.txt',
+    },
+    'report': {
+        'path': '/var/log/leapp/leapp-report.txt',
     },
     'repositories': {
         'repo_path': '.',
