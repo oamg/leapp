@@ -1,6 +1,7 @@
 # Leapp - App & OS Modernization Framework
-Please visit [our homepage](https://oamg.github.io/leapp/)
-for more infomation and documenation.
+
+**Please visit [leapp.readthedocs.io](https://leapp.readthedocs.io)
+for more infomation and documenation.**
 
 ## Contributing
 If you are looking for information about contributing into this project, kindly
