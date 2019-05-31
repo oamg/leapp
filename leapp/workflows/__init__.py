@@ -141,6 +141,12 @@ class Workflow(with_metaclass(WorkflowMeta)):
             'phases': [phase.serialize() for phase in cls.phases],
         }
 
+
+    def is_valid_phase(self, phase=None):
+        if phase:
+            return phase in [name.lower() for name in phase[0].name, phase[0].__name__ for phase in self._phase_actors]
+
+
     def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None):
         """
         Executes the workflow
@@ -177,6 +183,11 @@ class Workflow(with_metaclass(WorkflowMeta)):
         needle_actor = (until_actor or '').lower()
 
         self._errors = get_errors(context)
+
+        for phase in skip_phases_until, needle_phase:
+            if not self.is_valid_phase(phase):
+                self.log.error('Phase {phase} does not exist in the workflow'.format(phase=phase))
+                return
 
         for phase in self._phase_actors:
             os.environ['LEAPP_CURRENT_PHASE'] = phase[0].name
