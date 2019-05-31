@@ -149,11 +149,9 @@ class Workflow(with_metaclass(WorkflowMeta)):
             'phases': [phase.serialize() for phase in cls.phases],
         }
 
-
     def is_valid_phase(self, phase=None):
         if phase:
-            return phase in [phase_names(phase) for phase in self._phase_actors]
-
+            return phase in [phase_names(phs) for phs in self._phase_actors]
 
     def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None):
         """
