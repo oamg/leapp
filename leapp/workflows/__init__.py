@@ -28,11 +28,11 @@ def _get_phases_sorted(attrs):
 
 
 def actor_names(actor=None):
-    return (actor.name.lower(), actor.class_name.lower()) if actor else (None)
+    return (actor.name.lower(), actor.class_name.lower()) if actor else ()
 
 
 def phase_names(phase=None):
-    return (phase[0].__name__.lower(), phase[0].name.lower()) if phase else (None)
+    return (phase[0].__name__.lower(), phase[0].name.lower()) if phase else ()
 
 
 class WorkflowMeta(type):
