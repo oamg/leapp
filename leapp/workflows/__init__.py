@@ -27,6 +27,14 @@ def _get_phases_sorted(attrs):
     return tuple(sorted([attr for attr in attrs.values() if _is_phase(attr)], key=_phase_sorter_key))
 
 
+def actor_names(actor=None):
+    return (actor.name.lower(), actor.class_name.lower()) if actor else (None)
+
+
+def phase_names(phase=None):
+    return (phase[0].__name__.lower(), phase[0].name.lower()) if phase else (None)
+
+
 class WorkflowMeta(type):
     """
     Meta class for the registration of workflows
@@ -144,7 +152,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
     def is_valid_phase(self, phase=None):
         if phase:
-            return phase in [name.lower() for name in phase[0].name, phase[0].__name__ for phase in self._phase_actors]
+            return phase in [phase_names(phase) for phase in self._phase_actors]
 
 
     def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None):
@@ -193,7 +201,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
             os.environ['LEAPP_CURRENT_PHASE'] = phase[0].name
 
             if skip_phases_until:
-                if skip_phases_until in (phase[0].__name__.lower(), phase[0].name.lower()):
+                if skip_phases_until in phase_names(phase):
                     skip_phases_until = ''
                 self.log.info('Skipping phase {name}'.format(name=phase[0].name))
                 continue
@@ -227,15 +235,14 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
                     checkpoint(actor=actor.name, phase=phase[0].name, context=context,
                                hostname=os.environ['LEAPP_HOSTNAME'])
-                    if needle_actor in (actor.name.lower(), actor.class_name.lower()):
+                    if needle_actor in actor_names(actor):
                         self.log.info('Workflow finished due to the until-actor flag')
                         return
                 if not stage.actors:
                     checkpoint(actor='', phase=phase[0].name + '.' + stage.stage, context=context,
                                hostname=os.environ['LEAPP_HOSTNAME'])
 
-                if needle_phase in (phase[0].__name__.lower(), phase[0].name.lower()) and \
-                        needle_stage == stage.stage.lower():
+                if needle_phase in phase_names(phase) and needle_stage == stage.stage.lower():
                     self.log.info('Workflow finished due to the until-phase flag')
                     return
 
@@ -245,7 +252,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
                 self.log.info('Workflow interrupted due to the FailPhase error policy')
                 return
 
-            if needle_phase in (phase[0].__name__.lower(), phase[0].name.lower()):
+            if needle_phase in phase_names(phase):
                 self.log.info('Workflow finished due to the until-phase flag')
                 return
 
