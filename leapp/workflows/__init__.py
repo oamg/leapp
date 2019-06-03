@@ -13,6 +13,7 @@ from leapp.messaging.inprocess import InProcessMessaging
 from leapp.dialogs import RawMessageDialog
 from leapp.tags import ExperimentalTag
 from leapp.utils.audit import checkpoint, get_errors
+from leapp.exceptions import CommandError
 
 
 def _phase_sorter_key(a):
@@ -192,8 +193,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
         for phase in skip_phases_until, needle_phase:
             if phase and not self.is_valid_phase(phase):
-                self.log.error('Phase {phase} does not exist in the workflow'.format(phase=phase))
-                return
+                raise CommandError('Phase {phase} does not exist in the workflow'.format(phase=phase))
 
         for phase in self._phase_actors:
             os.environ['LEAPP_CURRENT_PHASE'] = phase[0].name
