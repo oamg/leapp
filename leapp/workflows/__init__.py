@@ -191,7 +191,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self._errors = get_errors(context)
 
         for phase in skip_phases_until, needle_phase:
-            if not self.is_valid_phase(phase):
+            if phase and not self.is_valid_phase(phase):
                 self.log.error('Phase {phase} does not exist in the workflow'.format(phase=phase))
                 return
 
