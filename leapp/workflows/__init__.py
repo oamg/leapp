@@ -151,7 +151,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
     def is_valid_phase(self, phase=None):
         if phase:
-            return phase in [phase_names(phs) for phs in self._phase_actors]
+            return phase in [name for phs in self._phase_actors for name in phase_names(phs)]
 
     def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None):
         """
