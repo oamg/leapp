@@ -187,7 +187,7 @@ class Repository(object):
         """
         :return: Tuple of repository relative paths
         """
-        return tuple(map(lambda x: os.path.relpath(x, self._repo_dir), paths))
+        return tuple([os.path.relpath(x, self._repo_dir) for x in paths])
 
     @property
     def actors(self):

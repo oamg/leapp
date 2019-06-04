@@ -2,7 +2,7 @@ import six
 
 
 if six.PY2:
-    input = raw_input  # noqa
+    input = raw_input  # noqa ; pylint: disable=undefined-variable
 else:
     from builtins import input  # noqa
 
@@ -241,7 +241,7 @@ class CommandlineRenderer(DialogRendererBase):
         indices = '0123456789abcdefghijklmnopqrstuvwxyz'
         selected = set()
         if component.multi and component.default:
-            selected = set(map(lambda x: component.choices.index(x), component.default))
+            selected = set([component.choices.index(x) for x in component.default])
         while True:
             self._render_label(component.label, min_label_width=dialog.min_label_width, underline='-')
             for idx, choice in enumerate(component.choices):
@@ -252,7 +252,7 @@ class CommandlineRenderer(DialogRendererBase):
             default = ''
             if component.default is not None:
                 if component.multi:
-                    default = ' [{}]'.format(tuple(map(lambda x: component.choices.index(x), component.default)))
+                    default = ' [{}]'.format(tuple([component.choices.index(x) for x in component.default]))
                 else:
                     default = ' [{}]'.format(component.choices.index(component.default))
             if component.multi:
@@ -262,7 +262,7 @@ class CommandlineRenderer(DialogRendererBase):
             result = input(self._format_label(label, len(label)))
             if component.multi:
                 if not result:
-                    dialog.answer(component, tuple(sorted(map(lambda x: component.choices[x], selected))))
+                    dialog.answer(component, tuple(sorted([component.choices[x] for x in selected])))
                     break
                 elif len(result) == 1 and -1 < indices.index(result) < len(component.choices):
                     idx = indices.index(result)

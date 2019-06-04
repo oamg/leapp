@@ -1,4 +1,5 @@
-exec('''
+exec(  # noqa; pylint: disable=exec-used
+     '''
 def raise_with_traceback(exc, tb):
     """
     This is a helper function to raise exceptions with a traceback.
@@ -12,4 +13,4 @@ def raise_with_traceback(exc, tb):
     :return: Nothing
     """
     raise exc, None, tb
-''', globals(), locals())
+    ''', globals(), locals())

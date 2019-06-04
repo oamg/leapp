@@ -28,6 +28,9 @@ class _TestableMessaging(BaseMessaging):
     def _process_message(self, message):
         pass
 
+    def _perform_load(self, consumes):
+        pass
+
     def _do_produce(self, model, actor, target, stored=True):
         if type(model).__name__ == 'ErrorModel':
             self.errors.append(model)

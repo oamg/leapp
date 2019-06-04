@@ -378,7 +378,7 @@ def _is_tuple_of(value_type):
         if not value:
             raise WrongAttributeTypeError(
                 'Actor {} attribute {} should contain at least one item of the type {}'.format(actor, name, value_type))
-        if not all(map(lambda item: isinstance(item, value_type), value)):
+        if not all([isinstance(item, value_type) for item in value]):
             raise WrongAttributeTypeError(
                 'Actor {} attribute {} should contain only values of the type {}'.format(actor, name, value_type))
         return value
@@ -398,7 +398,7 @@ def _is_model_tuple(actor, name, value):
         _lint_warn(actor, name, "Models")
         value = value,
     _is_type(tuple)(actor, name, value)
-    if not all([True] + list(map(lambda item: isinstance(item, type) and issubclass(item, Model), value))):
+    if not all([True] + [isinstance(item, type) and issubclass(item, Model) for item in value]):
         raise WrongAttributeTypeError(
             'Actor {} attribute {} should contain only Models'.format(actor, name))
     return value
@@ -409,7 +409,7 @@ def _is_dialog_tuple(actor, name, value):
         _lint_warn(actor, name, "Dialogs")
         value = value,
     _is_type(tuple)(actor, name, value)
-    if not all([True] + list(map(lambda item: isinstance(item, Dialog), value))):
+    if not all([True] + [isinstance(item, Dialog) for item in value]):
         raise WrongAttributeTypeError(
             'Actor {} attribute {} should contain only Dialogs'.format(actor, name))
     return value
@@ -420,7 +420,7 @@ def _is_tag_tuple(actor, name, value):
         _lint_warn(actor, name, "Tags")
         value = value,
     _is_type(tuple)(actor, name, value)
-    if not all([True] + list(map(lambda item: isinstance(item, type) and issubclass(item, Tag), value))):
+    if not all([True] + [isinstance(item, type) and issubclass(item, Tag) for item in value]):
         raise WrongAttributeTypeError(
             'Actor {} attribute {} should contain only Tags'.format(actor, name))
     return value

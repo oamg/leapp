@@ -33,7 +33,7 @@ def archive_logfiles():
     if not os.path.isdir(logs_directory):
         os.makedirs(logs_directory)
 
-    files_to_archive = [file for file in log_files if os.path.isfile(file)]
+    files_to_archive = [f for f in log_files if os.path.isfile(f)]
 
     if not os.path.isdir(archive_dir):
         os.makedirs(archive_dir)

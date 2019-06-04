@@ -37,7 +37,9 @@ def ast_parse_file(file):
     with open(file, mode='r') as fp:
         try:
             return ast.parse(fp.read(), file), file
-        except Exception:
+        except (SyntaxError, TypeError, ValueError):
+            # Depending on python 3 version either TypeError or ValueError will be thrown if null bytes are
+            # encountered
             return None, file
 
 
@@ -53,9 +55,11 @@ def get_base_classes(bases, via):
     return bases_set, errors
 
 
-def inspect(tree_file, collected_types={}, type_infos={}):
+def inspect(tree_file, collected_types=None, type_infos=None):
     "Inspect and collect data from AST tree"
     tree, file = tree_file
+    collected_types = collected_types or {}
+    type_infos = type_infos or {}
     if not tree:
         return ['Unable to parse: {}'.format(file)]
     errors = []

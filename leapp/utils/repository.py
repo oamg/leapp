@@ -41,7 +41,7 @@ def make_class_name(name):
     :param name: Name to convert
     :return: Converted class name
     """
-    return ''.join(map(lambda x: x.capitalize(), to_snake_case(name).split('_')))
+    return ''.join([x.capitalize() for x in to_snake_case(name).split('_')])
 
 
 def make_name(name):

@@ -8,7 +8,7 @@ from leapp.models import Model, fields
 from leapp.topics import Topic
 
 
-class BadBuiltinField(fields.BuiltinField):
+class BadBuiltinField(fields.BuiltinField):  # noqa; pylint: disable=abstract-method
     pass
 
 
