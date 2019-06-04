@@ -48,7 +48,8 @@ def _tb_unpack(packed):
     globs = {previous: StopIteration}
     for i, (filename, lineno, name) in enumerate(reversed(packed)):
         current = '_%d' % i
-        eval(compile('%sdef %s(): raise %s()' % ('\n' * (lineno - 1), current, previous), filename, 'exec'), globs)
+        eval(compile(  # noqa; pylint: disable=eval-used
+            '%sdef %s(): raise %s()' % ('\n' * (lineno - 1), current, previous), filename, 'exec'), globs)
         previous = current
         func = globs[current]
         func.func_code = _patched_name(func.func_code, name)
@@ -252,7 +253,7 @@ def _execute_test(q, pyfuncitem):
             pyfuncitem.funcargs['current_actor_context'].set_actor(actor)
         original_pytest_pyfunc_call(pyfuncitem=pyfuncitem)
         q.put((True, None))
-    except BaseException:  # noqa
+    except BaseException:  # noqa; pylint: disable=broad-except
         # We need this broad exception to catch all errors and pass them through to the parent process
         e_type, e_exc, e_tb = sys.exc_info()
         q.put((False, (e_type, e_exc, _tb_pack(e_tb))))

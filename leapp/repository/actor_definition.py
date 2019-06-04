@@ -247,7 +247,7 @@ class ActorDefinition(object):
         sys.meta_path.append(
             LeappLibrariesFinder(
                 module_prefix='leapp.libraries.actor',
-                paths=list(map(lambda x: os.path.join(self._repo_dir, self.directory, x), self.libraries))))
+                paths=[os.path.join(self._repo_dir, self.directory, x) for x in self.libraries]))
 
         previous_path = os.getcwd()
         os.chdir(os.path.join(self._repo_dir, self._directory))

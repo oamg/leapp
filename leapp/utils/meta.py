@@ -44,4 +44,4 @@ def get_flattened_subclasses(cls):
     :return: Flattened list of subclasses and their subclasses
     """
     classes = cls.__subclasses__()
-    return list(itertools.chain(classes, *map(lambda x: get_flattened_subclasses(x), classes)))
+    return list(itertools.chain(classes, *[get_flattened_subclasses(x) for x in classes]))

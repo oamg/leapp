@@ -35,6 +35,9 @@ class CycleActor1(Actor):
     produces = (CycleModel2,)
     tags = (CycleTag1,)
 
+    def process(self):
+        pass
+
 
 class CycleActor2(Actor):
     name = 'CycleActor2'
@@ -43,6 +46,9 @@ class CycleActor2(Actor):
     produces = (CycleModel1,)
     tags = (CycleTag1, PhaseActorsModelsTag1)
 
+    def process(self):
+        pass
+
 
 class CycleActor3(Actor):
     name = 'CycleActor3'
@@ -50,6 +56,9 @@ class CycleActor3(Actor):
     consumes = (CycleModel1,)
     produces = ()
     tags = (CycleTag1, PhaseActorsModelsTag1)
+
+    def process(self):
+        pass
 
 
 def setup_module(module):
