@@ -2,7 +2,7 @@ import os
 import pkgutil
 import socket
 
-from leapp.utils.i18n import _
+from leapp.utils.i18n import _  # noqa; pylint: disable=redefined-builtin
 from leapp.snactor import commands
 from leapp.snactor.commands import workflow
 from leapp.snactor.commands import messages

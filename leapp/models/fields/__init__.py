@@ -39,7 +39,7 @@ class Field(object):
         self._nullable = True
         return self
 
-    def __init__(self, default=None, help=None):
+    def __init__(self, default=None, help=None):  # noqa; pylint: disable=redefined-builtin
         """
         :param default: Default value to be used if the field is not set
         :param help: Documentation string for generating model documentation

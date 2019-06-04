@@ -21,7 +21,7 @@ class LeappLibrariesFinder(object):
         if not fullname.startswith(self._prefix + '.'):
             return None
         module = fullname.split('.')[-1]
-        for loader, name, _ in pkgutil.iter_modules(self._paths):
+        for loader, name, ispkg in pkgutil.iter_modules(self._paths):
             if name == module:
                 return getattr(loader, method)(fullname)
 

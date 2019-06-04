@@ -25,6 +25,6 @@ def install_translation_for_actor(actor):
         globals()['__builtins__']['_'], globals()['__builtins__']['P_'] = translation(actor.text_domain)
 
 
-_, P_ = translation(os.environ.get('LEAPP_DEFAULT_TEXTDOMAIN', 'leapp'))
+_, P_ = translation(os.environ.get('LEAPP_DEFAULT_TEXTDOMAIN', 'leapp'))  # noqa; pylint: disable=redefined-builtin
 
 globals()['__builtins__']['_'], globals()['__builtins__']['P_'] = _, P_

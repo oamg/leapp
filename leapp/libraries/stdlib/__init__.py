@@ -77,7 +77,7 @@ class CalledProcessError(LeappError):
 
 
 # FIXME: Issue #488
-def __write_raw(fd_info, buffer):
+def __write_raw(fd_info, a_buffer):
     """
     Raw write to fd compatible in Py2 and Py3 (3.3+)
 
@@ -85,8 +85,8 @@ def __write_raw(fd_info, buffer):
 
     :param fd_info: Contains File descriptor type
     :type fd_info: tuple
-    :param buffer: buffer interface
-    :type buffer: bytes array
+    :param a_buffer: buffer interface
+    :type a_buffer: bytes array
     """
     (unused_fd, fd_type) = fd_info
     if sys.version_info > (3, 0):
@@ -95,16 +95,16 @@ def __write_raw(fd_info, buffer):
         else:
             # FIXME: Issue #488 - what to do in case fd_type != STDERR?
             fd = sys.stderr.fileno()
-        os.writev(fd, [buffer])
+        os.writev(fd, [a_buffer])
     else:
         if fd_type == STDOUT:
-            sys.stdout.write(buffer)
+            sys.stdout.write(a_buffer)
         else:
-            sys.stderr.write(buffer)
+            sys.stderr.write(a_buffer)
 
 
 # FIXME: Issue #488
-def _logging_handler(fd_info, buffer):
+def _logging_handler(fd_info, a_buffer):
     """
     Log into either STDOUT or to STDERR.
 
@@ -112,11 +112,11 @@ def _logging_handler(fd_info, buffer):
 
     :param fd_info: Contains File descriptor type
     :type fd_info: tuple
-    :param buffer: buffer interface
-    :type buffer: bytes array
+    :param a_buffer: buffer interface
+    :type a_buffer: bytes array
     """
     if is_debug():
-        __write_raw(fd_info, buffer)
+        __write_raw(fd_info, a_buffer)
 
 
 def run(args, split=False, callback_raw=_logging_handler, env=None, checked=True):

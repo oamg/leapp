@@ -84,7 +84,7 @@ def test_callability_check(p):
 
 
 @pytest.mark.parametrize('p', _CALLBACKS)
-def test_callability_check(p):
+def test_callability_check_buffered(p):
     with pytest.raises(TypeError):
         _call(('true',), callback_linebuffered=p)
 

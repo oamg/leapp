@@ -2,7 +2,7 @@ import six
 
 
 if six.PY2:
-    input = raw_input  # noqa ; pylint: disable=undefined-variable
+    input = raw_input  # noqa ; pylint: disable=undefined-variable,redefined-builtin
 else:
     from builtins import input  # noqa
 

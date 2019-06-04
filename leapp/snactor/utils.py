@@ -32,15 +32,15 @@ def get_candidate_files(start='.'):
             yield os.path.join(root, f)
 
 
-def ast_parse_file(file):
+def ast_parse_file(filename):
     "Parse a python file and return tuple (ast, filename)"
-    with open(file, mode='r') as fp:
+    with open(filename, mode='r') as fp:
         try:
-            return ast.parse(fp.read(), file), file
+            return ast.parse(fp.read(), filename), filename
         except (SyntaxError, TypeError, ValueError):
             # Depending on python 3 version either TypeError or ValueError will be thrown if null bytes are
             # encountered
-            return None, file
+            return None, filename
 
 
 def get_base_classes(bases, via):
@@ -57,15 +57,15 @@ def get_base_classes(bases, via):
 
 def inspect(tree_file, collected_types=None, type_infos=None):
     "Inspect and collect data from AST tree"
-    tree, file = tree_file
+    tree, filename = tree_file
     collected_types = collected_types or {}
     type_infos = type_infos or {}
     if not tree:
-        return ['Unable to parse: {}'.format(file)]
+        return ['Unable to parse: {}'.format(filename)]
     errors = []
     for node in ast.walk(tree):
         if isinstance(node, ast.ClassDef):
-            base_classes, err = get_base_classes(node.bases, file)
+            base_classes, err = get_base_classes(node.bases, filename)
             errors += err
 
             if base_classes & collected_types['models']:
@@ -73,21 +73,21 @@ def inspect(tree_file, collected_types=None, type_infos=None):
                 type_infos['models'].append({
                     'name': node.name,
                     'bases': list(base_classes),
-                    'file': file
+                    'file': filename
                 })
             if base_classes & collected_types['actors']:
                 collected_types['actors'].add(node.name)
                 type_infos['actors'].append({
                     'name': node.name,
                     'bases': list(base_classes),
-                    'file': file
+                    'file': filename
                 })
             if base_classes & collected_types['tags']:
                 collected_types['tags'].add(node.name)
                 type_infos['tags'].append({
                     'name': node.name,
                     'bases': list(base_classes),
-                    'file': file
+                    'file': filename
                 })
     return errors
 

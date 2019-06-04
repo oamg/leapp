@@ -20,9 +20,9 @@ def report(args):
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
 
-    id = args.id or fetch_last_upgrade_context()[0]
+    upgrade_id = args.id or fetch_last_upgrade_context()[0]
 
-    if not id:
+    if not upgrade_id:
         raise CommandError(
             'No previous Leapp upgrade run found. This command can only be run after "leapp upgrade" has been executed'
         )
@@ -35,8 +35,8 @@ def report(args):
     else:
         renderer = args.format
 
-    messages = fetch_upgrade_report_messages(id, renderer)
+    messages = fetch_upgrade_report_messages(upgrade_id, renderer)
     if not messages:
-        raise CommandError('No upgrade report messages found for context {}'.format(id))
+        raise CommandError('No upgrade report messages found for context {}'.format(upgrade_id))
 
     print(messages, file=sys.stdout)
