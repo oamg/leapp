@@ -160,7 +160,7 @@ class Repository(object):
         """
         directories = [os.path.join(self._repo_dir, os.path.dirname(module)) for module in modules]
         prefix = prefix + '.' if not prefix.endswith('.') else prefix
-        for importer, name, _ in pkgutil.iter_modules(directories, prefix=prefix):
+        for importer, name, ispkg in pkgutil.iter_modules(directories, prefix=prefix):
             importer.find_module(name).load_module(name)
 
     def dump(self):

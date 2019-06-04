@@ -164,11 +164,11 @@ class _ModelReference(Model):
     _resolved = None
 
     def __new__(cls, *args, **kwargs):
-        return cls.resolve()(*args, **kwargs)
+        return cls.resolve()(*args, **kwargs)  # noqa; pylint: disable=not-callable
 
     @classmethod
     def create(cls, data):
-        return cls.resolve()(init_method='to_model', **data)
+        return cls.resolve()(init_method='to_model', **data)  # noqa; pylint: disable=not-callable
 
     @classmethod
     def resolve(cls):

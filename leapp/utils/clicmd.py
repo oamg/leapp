@@ -49,7 +49,7 @@ class Command(object):
     """
     Command implements a convenient command-based argument parsing the framework.
     """
-    def __init__(self, name, target=None, help='', description=None):
+    def __init__(self, name, target=None, help='', description=None):  # noqa; pylint: disable=redefined-builtin
         """
         :param name: Name of the sub command
         :type name: str
@@ -148,7 +148,8 @@ class Command(object):
 
         if self._sub_commands:
             if not parser:
-                subs = self.parser.add_subparsers(prog=self.parser.prog, title='Available subcommands', help=self.help,
+                subs = self.parser.add_subparsers(prog=self.parser.prog, title='Available subcommands',
+                                                  help=self.help,  # noqa; pylint: disable=redefined-builtin
                                                   metavar='')
             else:
                 subs = sparser
@@ -175,8 +176,8 @@ class Command(object):
         internal = kwargs.pop('internal', {})
         self._options.append((args, kwargs, internal))
 
-    def add_option(self, name, short_name='', help='', is_flag=False, inherit=False, value_type=str, wrapped=None,
-                   action=None, metavar=None):
+    def add_option(self, name, short_name='', help='',  # noqa; pylint: disable=redefined-builtin
+                   is_flag=False, inherit=False, value_type=str, wrapped=None, action=None, metavar=None):
         """
         Add an option
 
@@ -216,10 +217,11 @@ class Command(object):
                 kwargs['type'] = value_type
         if metavar:
             kwargs['metavar'] = metavar
-        self._add_opt(*names, help=help, action=action, internal={'wrapped': wrapped, 'inherit': inherit}, **kwargs)
+        self._add_opt(*names, help=help,  # noqa; pylint: disable=redefined-builtin
+                      action=action, internal={'wrapped': wrapped, 'inherit': inherit}, **kwargs)
         return self
 
-    def add_argument(self, name, value_type=None, help='', wrapped=None):
+    def add_argument(self, name, value_type=None, help='', wrapped=None):  # noqa; pylint: disable=redefined-builtin
         """
 
         :param name:
@@ -228,11 +230,12 @@ class Command(object):
         :param wrapped:
         :return:
         """
-        self._add_opt(name.replace('-', '_'), help=help, type=value_type or str, internal={'wrapped': wrapped})
+        self._add_opt(name.replace('-', '_'), help=help,  # noqa; pylint: disable=redefined-builtin
+                      type=value_type or str, internal={'wrapped': wrapped})
         return self
 
 
-def command(name, help='', description=None, parent=None):
+def command(name, help='', description=None, parent=None):  # noqa; pylint: disable=redefined-builtin
     """
     Decorator to mark a function as a sub command
 
@@ -247,7 +250,8 @@ def command(name, help='', description=None, parent=None):
     """
     def wrapper(f):
         if not hasattr(f, 'command'):
-            f.command = Command(name, help=help, target=f, description=description)
+            f.command = Command(name, help=help,  # noqa; pylint: disable=redefined-builtin
+                                target=f, description=description)
         else:
             f.command.name = name
             f.command.help = help
@@ -268,7 +272,7 @@ def _ensure_command(wrapped):
     return wrapper
 
 
-def command_arg(name, value_type=None, help=''):
+def command_arg(name, value_type=None, help=''):  # noqa; pylint: disable=redefined-builtin
     """
     Decorator wrapping functions to add command line arguments to the sub command to be invoked
 
@@ -278,7 +282,8 @@ def command_arg(name, value_type=None, help=''):
     """
     @_ensure_command
     def wrapper(f):
-        f.command.add_argument(name, value_type=value_type, help=help, wrapped=f)
+        f.command.add_argument(name, value_type=value_type, help=help,  # noqa; pylint: disable=redefined-builtin
+                               wrapped=f)
         return f
     return wrapper
 

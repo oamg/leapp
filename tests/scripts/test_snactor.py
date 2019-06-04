@@ -69,7 +69,7 @@ def test_different_objects_same_name_discover(repository_dir):
             assert repository_dir.join(obj).check(file=True)
         out = check_output(['snactor', 'discover'])
         for obj in objs:
-            assert obj.encode('utf-8') in out
+            assert out.find(obj.encode('utf-8')) > -1
 
 
 def test_new_model(repository_dir):
