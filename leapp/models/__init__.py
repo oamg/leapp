@@ -81,11 +81,11 @@ class Model(with_metaclass(ModelMeta)):
     def __init__(self, init_method='from_initialization', **kwargs):
         super(Model, self).__init__()
         defined_fields = type(self).fields or {}
-        for key in kwargs.keys():
+        for key in kwargs:
             if key not in defined_fields:
                 raise ModelMisuseError(
                     'Trying to initialize model {} with value for undefined field {}'.format(type(self).__name__, key))
-        for field in defined_fields.keys():
+        for field in defined_fields:
             getattr(defined_fields[field], init_method)(kwargs, field, self)
 
     topic = None
@@ -135,7 +135,7 @@ class Model(with_metaclass(ModelMeta)):
         """ Returns serialized data of the model """
         return {
             'name': cls.__name__,
-            'fields': dict([(name, field.serialize()) for name, field in cls.fields.items()]),
+            'fields': {name: field.serialize() for name, field in cls.fields.items()},
             'topic': cls.topic.__name__
         }
 

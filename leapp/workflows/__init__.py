@@ -207,10 +207,15 @@ class Workflow(with_metaclass(WorkflowMeta)):
             self.log.info('Starting phase {name}'.format(name=phase[0].name))
             current_logger = self.log.getChild(phase[0].name)
 
+            early_finish = False
             for stage in phase[1:]:
+                if early_finish:
+                    return
                 current_logger.info("Starting stage {stage} of phase {phase}".format(
                     phase=phase[0].name, stage=stage.stage))
                 for actor in stage.actors:
+                    if early_finish:
+                        return
                     designation = ''
                     if ExperimentalTag in actor.tags:
                         designation = '[EXPERIMENTAL]'
@@ -229,32 +234,35 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
                         if phase[0].policies.error is Policies.Errors.FailImmediately:
                             self.log.info('Workflow interrupted due to FailImmediately error policy')
-                            return
+                            early_finish = True
+                            break
 
                     checkpoint(actor=actor.name, phase=phase[0].name, context=context,
                                hostname=os.environ['LEAPP_HOSTNAME'])
                     if needle_actor in actor_names(actor):
                         self.log.info('Workflow finished due to the until-actor flag')
-                        return
+                        early_finish = True
+                        break
                 if not stage.actors:
                     checkpoint(actor='', phase=phase[0].name + '.' + stage.stage, context=context,
                                hostname=os.environ['LEAPP_HOSTNAME'])
 
                 if needle_phase in phase_names(phase) and needle_stage == stage.stage.lower():
                     self.log.info('Workflow finished due to the until-phase flag')
-                    return
+                    early_finish = True
+                    break
 
             checkpoint(actor='', phase=phase[0].name, context=context, hostname=os.environ['LEAPP_HOSTNAME'])
 
             if self._errors and phase[0].policies.error is Policies.Errors.FailPhase:
                 self.log.info('Workflow interrupted due to the FailPhase error policy')
-                return
+                early_finish = True
 
-            if needle_phase in phase_names(phase):
+            elif needle_phase in phase_names(phase):
                 self.log.info('Workflow finished due to the until-phase flag')
-                return
+                early_finish = True
 
-            if phase[0].flags.request_restart_after_phase or phase[0].flags.restart_after_phase:
+            elif phase[0].flags.request_restart_after_phase or phase[0].flags.restart_after_phase:
                 reboot = True
                 if phase[0].flags.request_restart_after_phase and not self._auto_reboot:
                     reboot = False
@@ -264,9 +272,12 @@ class Workflow(with_metaclass(WorkflowMeta)):
                 if reboot:
                     self.log.info('Initiating system reboot due to the restart_after_reboot flag')
                     reboot_system()
-                return
-            if phase[0].flags.is_checkpoint:
+                early_finish = True
+            elif phase[0].flags.is_checkpoint:
                 self.log.info('Stopping the workflow execution due to the is_checkpoint flag')
+                early_finish = True
+
+            if early_finish:
                 return
 
 

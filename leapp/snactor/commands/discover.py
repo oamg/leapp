@@ -21,21 +21,20 @@ def _is_local(repository, cls, base_dir, all_repos=False):
     return cls_path.startswith(base_dir)
 
 
-def _print_group(name, items, name_resolver=lambda item: item.__name__,
-                 path_resolver=lambda x, y: _get_class_file(x, y)):
+def _get_class_file(cls, repository_relative=True):
+    path = os.path.abspath(sys.modules[cls.__module__].__file__.replace('.pyc', '.py'))
+    return os.path.relpath(path, find_repository_basedir('.') if repository_relative else os.getcwd())
+
+
+def _print_group(name, items, name_resolver=lambda i: i.__name__, path_resolver=_get_class_file):
     sys.stdout.write('{group}({count}):\n'.format(group=name, count=len(items)))
-    for item in sorted(items, key=lambda x: name_resolver(x)):
+    for item in sorted(items, key=name_resolver):
         sys.stdout.write('   - {name:<35} {path}\n'.format(name=name_resolver(item), path=path_resolver(item, False)))
     sys.stdout.write('\n')
 
 
 def _get_actor_path(actor, repository_relative=True):
     path = actor.directory
-    return os.path.relpath(path, find_repository_basedir('.') if repository_relative else os.getcwd())
-
-
-def _get_class_file(cls, repository_relative=True):
-    path = os.path.abspath(sys.modules[cls.__module__].__file__.replace('.pyc', '.py'))
     return os.path.relpath(path, find_repository_basedir('.') if repository_relative else os.getcwd())
 
 

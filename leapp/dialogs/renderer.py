@@ -1,3 +1,4 @@
+from __future__ import print_function
 import six
 
 
@@ -184,7 +185,7 @@ class CommandlineRenderer(DialogRendererBase):
         :return: None
         """
         dialog.answer(component, self.getpass(prompt=self._format_label(component.label or 'Password: ',
-                                              min_label_width=dialog.min_label_width)))
+                                                                        min_label_width=dialog.min_label_width)))
 
     def render_text_component(self, component, dialog):
         """
@@ -241,7 +242,7 @@ class CommandlineRenderer(DialogRendererBase):
         indices = '0123456789abcdefghijklmnopqrstuvwxyz'
         selected = set()
         if component.multi and component.default:
-            selected = set([component.choices.index(x) for x in component.default])
+            selected = {component.choices.index(x) for x in component.default}
         while True:
             self._render_label(component.label, min_label_width=dialog.min_label_width, underline='-')
             for idx, choice in enumerate(component.choices):
@@ -352,11 +353,11 @@ class CommandlineRenderer(DialogRendererBase):
         false_value = component.values[1].lower()
 
         valid_values = (true_value, false_value)
-        true_values = true_value,
+        true_values = (true_value,)
 
         if false_value[0] != true_value[0]:
             valid_values += (false_value[0], true_value[0])
-            true_values += true_value[0],
+            true_values += (true_value[0],)
 
         result = result.lower()
         valid = result in valid_values

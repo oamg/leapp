@@ -396,7 +396,7 @@ def _lint_warn(actor, name, type_name):
 def _is_model_tuple(actor, name, value):
     if isinstance(value, type) and issubclass(value, Model):
         _lint_warn(actor, name, "Models")
-        value = value,
+        value = (value,)
     _is_type(tuple)(actor, name, value)
     if not all([True] + [isinstance(item, type) and issubclass(item, Model) for item in value]):
         raise WrongAttributeTypeError(
@@ -407,7 +407,7 @@ def _is_model_tuple(actor, name, value):
 def _is_dialog_tuple(actor, name, value):
     if isinstance(value, Dialog):
         _lint_warn(actor, name, "Dialogs")
-        value = value,
+        value = (value,)
     _is_type(tuple)(actor, name, value)
     if not all([True] + [isinstance(item, Dialog) for item in value]):
         raise WrongAttributeTypeError(
@@ -418,7 +418,7 @@ def _is_dialog_tuple(actor, name, value):
 def _is_tag_tuple(actor, name, value):
     if isinstance(value, type) and issubclass(value, Tag):
         _lint_warn(actor, name, "Tags")
-        value = value,
+        value = (value,)
     _is_type(tuple)(actor, name, value)
     if not all([True] + [isinstance(item, type) and issubclass(item, Tag) for item in value]):
         raise WrongAttributeTypeError(

@@ -17,38 +17,26 @@ disable=
  super-init-not-called,
  unsubscriptable-object,
  unused-variable,
- useless-super-delegation,
 # "C" Coding convention violations
- bad-continuation,
- consider-iterating-dictionary,
  invalid-name,
- len-as-condition,
  missing-docstring,
- superfluous-parens,
  unidiomatic-typecheck,
- unnecessary-lambda,
 # "R" Refactor recommendations
- consider-using-dict-comprehension,
  duplicate-code,
  inconsistent-return-statements,
- redefined-argument-from-local,
- no-else-return,
- no-else-raise,
  too-few-public-methods,
  too-many-ancestors,
- too-many-arguments,
  too-many-branches,
- too-many-instance-attributes,
  too-many-locals,
  too-many-public-methods,
- too-many-return-statements,
  too-many-statements,
- trailing-comma-tuple,
 # new for python3 version of pylint
- consider-using-set-comprehension,
- unnecessary-pass,
  useless-object-inheritance
 
 [FORMAT]
 # Maximum number of characters on a single line.
 max-line-length=120
+
+[DESIGN]
+max-args=11  # 2x + 1 from default
+max-attributes=21  # 4x + 1 from default

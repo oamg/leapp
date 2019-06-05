@@ -9,16 +9,12 @@ class ModelViolationError(Exception):
     """
     ModelViolationError is raised if the data in the instances is not matching its definition.
     """
-    def __init__(self, message):
-        super(ModelViolationError, self).__init__(message)
 
 
 class ModelMisuseError(Exception):
     """
     ModelMisuseError is raised if the Model definition is not valid.
     """
-    def __init__(self, message):
-        super(ModelMisuseError, self).__init__(message)
 
 
 class Field(object):
@@ -329,28 +325,24 @@ class StringEnum(EnumMixin, String):
     """
     Field that represents an enumeration of Strings
     """
-    pass
 
 
 class IntegerEnum(EnumMixin, Integer):
     """
     Field that represents an enumeration of Integers
     """
-    pass
 
 
 class FloatEnum(EnumMixin, Float):
     """
     Field that represents an enumeration of Floats
     """
-    pass
 
 
 class NumberEnum(EnumMixin, Number):
     """
     Field that represents an enumeration of Numbers
     """
-    pass
 
 
 class List(Field):
@@ -384,7 +376,7 @@ class List(Field):
     def _validate_count(self, value, name):
         message = 'Element count error for field {name} expected between {minimum} and {maximum} elements got {count}'
         count = len(value)
-        if not (self._minimum <= count <= (self._maximum or count)):
+        if not self._minimum <= count <= (self._maximum or count):
             raise ModelViolationError(
                 message.format(name=name, minimum=self._minimum, maximum=self._maximum or count, count=count))
 

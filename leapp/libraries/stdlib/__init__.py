@@ -150,11 +150,10 @@ def run(args, split=False, callback_raw=_logging_handler, env=None, checked=True
                 command=args,
                 result=result
             )
-        else:
-            if split:
-                result.update({
-                    'stdout': result['stdout'].splitlines()
-                })
+        if split:
+            result.update({
+                'stdout': result['stdout'].splitlines()
+            })
     finally:
         create_audit_entry('process-end', _id)
         create_audit_entry('process-result', {'id': _id, 'parameters': args, 'result': result, 'env': env})
