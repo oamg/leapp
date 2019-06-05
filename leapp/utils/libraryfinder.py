@@ -17,7 +17,7 @@ class LeappLibrariesFinder(object):
         self._paths = paths
         self._prefix = module_prefix
 
-    def _implementation(self, method, fullname, path):
+    def _implementation(self, method, fullname, path):  # noqa; pylint: disable=unused-argument
         if not fullname.startswith(self._prefix + '.'):
             return None
         module = fullname.split('.')[-1]
@@ -25,7 +25,7 @@ class LeappLibrariesFinder(object):
             if name == module:
                 return getattr(loader, method)(fullname)
 
-    def find_spec(self, fullname, path, target=None):
+    def find_spec(self, fullname, path, target=None):  # noqa; pylint: disable=unused-argument
         """ Implementation for python >=3.4 """
         return self._implementation(method='find_spec', fullname=fullname, path=path)
 

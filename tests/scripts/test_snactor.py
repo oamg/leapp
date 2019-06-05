@@ -9,7 +9,7 @@ from leapp.snactor import context
 from leapp.utils import audit
 
 
-def setup_module(m):
+def setup_module():
     os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
 

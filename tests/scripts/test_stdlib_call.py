@@ -34,7 +34,7 @@ def test_stdin_fd():
 def test_linebuffer_callback():
     buffered = []
 
-    def callback(fd, data):
+    def callback(fd, data):  # noqa; pylint: disable=unused-argument
         buffered.append(data)
     _call(('bash', '-c', 'echo 1; echo 2; echo 3'), callback_linebuffered=callback)
     assert buffered == ['1', '2', '3']
@@ -77,8 +77,7 @@ def test_env_injection():
     assert ret['stdout'] == 'SUCCESS\n'
 
 
-@pytest.mark.parametrize('p', _CALLBACKS)
-def test_callability_check(p):
+def test_callability_check():
     with pytest.raises(TypeError):
         _call(('true',), callback_raw='nope')
 

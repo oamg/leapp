@@ -90,7 +90,7 @@ CREATE VIEW messages_data AS
 '''
 
 
-def setup_module(m):
+def setup_module():
     get_config().set('database', 'path', '/tmp/leapp-test.db')
 
 

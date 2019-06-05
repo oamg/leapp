@@ -38,7 +38,7 @@ class _TestableMessaging(BaseMessaging):
 
 
 @pytest.fixture(scope='module')
-def repository(leapp_forked):
+def repository(leapp_forked):  # noqa; pylint: disable=unused-argument
     repository_path = py.path.local(
         os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'actor-api-tests'))
     with repository_path.as_cwd():
@@ -70,7 +70,7 @@ def test_actor_api(repository, actor_name):
 
 
 @pytest.mark.parametrize("actor_name", ('first', 'second'))
-def test_actor_messaging_paths(leapp_forked, repository, actor_name):
+def test_actor_messaging_paths(leapp_forked, repository, actor_name):  # noqa; pylint: disable=unused-argument
     messaging = _TestableMessaging()
     with _with_loaded_actor(repository, actor_name, messaging) as (_unused, actor):
         from leapp.models import ApiTestConsume, ApiTestProduce
@@ -98,7 +98,7 @@ def test_actor_messaging_paths(leapp_forked, repository, actor_name):
 
 
 @pytest.mark.parametrize("actor_name", ('first', 'second'))
-def test_actor_all_files_paths(leapp_forked, repository, actor_name):
+def test_actor_all_files_paths(leapp_forked, repository, actor_name):  # noqa; pylint: disable=unused-argument
     with _with_loaded_actor(repository, actor_name) as (definition, actor):
         # API consistency verification
         assert api.files_paths() == actor.files_paths

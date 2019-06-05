@@ -16,7 +16,6 @@ disable=
  redefined-outer-name,
  super-init-not-called,
  unsubscriptable-object,
- unused-argument,
  unused-variable,
  useless-super-delegation,
 # "C" Coding convention violations

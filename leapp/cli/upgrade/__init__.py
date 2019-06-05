@@ -176,7 +176,7 @@ def upgrade(args):
 
 
 @command('list-runs', help='List previous Leapp upgrade executions')
-def list_runs(args):
+def list_runs(args):  # noqa; pylint: disable=unused-argument
     contexts = fetch_all_upgrade_contexts()
     if contexts:
         for context in contexts:

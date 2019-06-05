@@ -9,5 +9,5 @@ https://red.ht/leapp-docs
 
 
 @command('workflow', help='Workflow related commands', description=_LONG_DESCRIPTION)
-def workflow(*args):
+def workflow(*args):  # noqa; pylint: disable=unused-argument
     pass

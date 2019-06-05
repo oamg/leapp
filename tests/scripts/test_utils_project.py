@@ -9,7 +9,7 @@ from leapp.utils.repository import requires_repository, to_snake_case, make_clas
     find_repository_basedir, get_repository_name, get_repository_metadata
 
 
-def setup_module(m):
+def setup_module():
     os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
 
 
