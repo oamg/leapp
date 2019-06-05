@@ -8,6 +8,9 @@ from leapp.exceptions import CommandDefinitionError, UsageError, CommandError
 
 
 class _LeappArgumentParser(ArgumentParser):
+    def print_help(self):
+        super(_LeappArgumentParser, self).print_help(file=sys.stderr)
+
     def error(self, message):
         self.print_help()
         sys.stderr.write('error: %s\n' % message)
@@ -111,7 +114,7 @@ class Command(object):
             if self.target:
                 self.target(args)
         except UsageError as e:
-            self.parser.print_help(file=sys.stderr)
+            self.parser.print_help()
             self.parser.exit(status=2, message='\nUsageError: {message}\n'.format(message=e.message))
         except CommandError as e:
             self.parser.exit(status=2, message='\nError: {message}\n'.format(message=e.message))
