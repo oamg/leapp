@@ -183,8 +183,8 @@ def test_run_workflow(repository_dir):
         check_call(['snactor', 'workflow', 'run', '--debug', 'Test'])
         test_clear_messages(repository_dir)
         connection = audit.create_connection('.leapp/leapp.db')
-        assert len(audit.get_messages(names=('TestModel',),
-                                      context=context.last_snactor_context(connection), connection=connection)) == 0
+        assert not audit.get_messages(names=('TestModel',), context=context.last_snactor_context(connection),
+                                      connection=connection)
         check_call(['snactor', 'workflow', 'run', '--debug', '--save-output', 'Test'])
         assert len(audit.get_messages(names=('TestModel',),
                                       context=context.last_snactor_context(connection), connection=connection)) == 1

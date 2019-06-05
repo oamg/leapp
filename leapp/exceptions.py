@@ -5,8 +5,7 @@ class LeappError(Exception):
 
 
 class RepositoryConfigurationError(LeappError):
-    def __init__(self, message):
-        super(RepositoryConfigurationError, self).__init__(message)
+    pass
 
 
 class CannotConsumeErrorMessages(LeappError):
@@ -15,58 +14,47 @@ class CannotConsumeErrorMessages(LeappError):
 
 
 class InvalidTopicItemError(LeappError):
-    def __init__(self, message):
-        super(InvalidTopicItemError, self).__init__(message)
+    pass
 
 
 class InvalidTopicDefinitionError(LeappError):
-    def __init__(self, message):
-        super(InvalidTopicDefinitionError, self).__init__(message)
+    pass
 
 
 class InvalidTagDefinitionError(LeappError):
-    def __init__(self, message):
-        super(InvalidTagDefinitionError, self).__init__(message)
+    pass
 
 
 class MissingActorAttributeError(LeappError):
-    def __init__(self, message):
-        super(MissingActorAttributeError, self).__init__(message)
+    pass
 
 
 class WrongAttributeTypeError(LeappError):
-    def __init__(self, message):
-        super(WrongAttributeTypeError, self).__init__(message)
+    pass
 
 
 class ModelDefinitionError(LeappError):
-    def __init__(self, message):
-        super(ModelDefinitionError, self).__init__(message)
+    pass
 
 
 class TagFilterUsageError(LeappError):
-    def __init__(self, message):
-        super(TagFilterUsageError, self).__init__(message)
+    pass
 
 
 class CyclingDependenciesError(LeappError):
-    def __init__(self, message):
-        super(CyclingDependenciesError, self).__init__(message)
+    pass
 
 
 class UnsupportedDefinitionKindError(LeappError):
-    def __init__(self, message):
-        super(UnsupportedDefinitionKindError, self).__init__(message)
+    pass
 
 
 class ModuleNameAlreadyExistsError(LeappError):
-    def __init__(self, message):
-        super(ModuleNameAlreadyExistsError, self).__init__(message)
+    pass
 
 
 class ActorInspectionFailedError(LeappError):
-    def __init__(self, message):
-        super(ActorInspectionFailedError, self).__init__(message)
+    pass
 
 
 class MultipleActorsError(LeappError):
@@ -83,34 +71,27 @@ class RepoItemPathDoesNotExistError(LeappError):
 
 
 class ActorDiscoveryExecutionError(LeappError):
-    def __init__(self, message):
-        super(ActorDiscoveryExecutionError, self).__init__(message)
+    pass
 
 
 class UsageError(LeappError):
-    def __init__(self, message):
-        super(UsageError, self).__init__(message)
+    pass
 
 
 class CommandError(LeappError):
-    def __init__(self, message):
-        super(CommandError, self).__init__(message)
+    pass
 
 
 class CommandDefinitionError(LeappError):
-    def __init__(self, message):
-        super(CommandDefinitionError, self).__init__(message)
+    pass
 
 
 class LeappRuntimeError(LeappError):
-    def __init__(self, message):
-        super(LeappRuntimeError, self).__init__(message)
+    pass
 
 
 class StopActorExecution(Exception):
     """ This exception is used to gracefully stop execution of actor, but allows the workflow to continue. """
-    def __init__(self):
-        super(StopActorExecution, self).__init__()
 
 
 class StopActorExecutionError(LeappError):

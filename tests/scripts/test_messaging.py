@@ -46,21 +46,21 @@ def test_loading(repository_dir):
         v = UnitTestModel()
         consumed = tuple(msg.consume(FakeActor(), UnitTestModel))
         assert len(consumed) == 1
-        assert len(msg.messages()) == 0
+        assert not msg.messages()
         assert consumed[0] == v
 
         consumed = tuple(msg.consume(FakeActor(), UnitTestModelUnused))
-        assert len(consumed) == 0
-        assert len(msg.messages()) == 0
+        assert not consumed
+        assert not msg.messages()
 
         consumed = tuple(msg.consume(FakeActor()))
         assert len(consumed) == 1
-        assert len(msg.messages()) == 0
+        assert not msg.messages()
         assert consumed[0] == v
 
         consumed = tuple(msg.consume(FakeActor(), UnitTestModelUnused))
-        assert len(consumed) == 0
-        assert len(msg.messages()) == 0
+        assert not consumed
+        assert not msg.messages()
 
 
 def test_report_error(repository_dir):
@@ -84,6 +84,6 @@ def test_not_implemented(repository_dir, stored):
             msg.load(FakeActor.consumes)
         msg.consume(FakeActor())
         msg.consume(FakeActor(), UnitTestModel)
-        assert len(msg.errors()) == 0
-        assert len(msg.messages()) == 0
+        assert not msg.errors()
+        assert not msg.messages()
         assert msg.stored == stored

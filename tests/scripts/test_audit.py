@@ -218,7 +218,7 @@ def test_audit_non_string_data():
 def test_get_messages():
     assert not get_messages((), _CONTEXT_NAME)
     messages = get_messages((_MESSAGE_TYPE,), _CONTEXT_NAME)
-    assert messages is not None and len(messages) == 0
+    assert messages is not None and not messages
 
     test_message()
     messages = get_messages((_MESSAGE_TYPE,), _CONTEXT_NAME)

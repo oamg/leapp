@@ -187,7 +187,7 @@ class BaseMessaging(object):
         """
         types = tuple((getattr(t, '_resolved', t) for t in types))
         messages = list(self._data) + list(self._new_data)
-        lookup = dict([(model.__name__, model) for model in type(actor).consumes])
+        lookup = {model.__name__: model for model in type(actor).consumes}
         if types:
             filtered = set(requested.__name__ for requested in types)
             messages = [message for message in messages if message['type'] in filtered]

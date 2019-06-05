@@ -210,8 +210,8 @@ def get_global_repositories_data():
 
     :return: Repository information
     """
-    enabled = set([os.path.realpath(path) for path in find_repos('/etc/leapp/repos.d') if path.strip()])
-    all_repos = set([os.path.realpath(path) for path in find_repos('/usr/share/leapp-repository') if path.strip()])
+    enabled = {os.path.realpath(path) for path in find_repos('/etc/leapp/repos.d') if path.strip()}
+    all_repos = {os.path.realpath(path) for path in find_repos('/usr/share/leapp-repository') if path.strip()}
     repo_data = {}
     for repo in all_repos:
         repo_id = get_repository_metadata(repo).get('id', None)
