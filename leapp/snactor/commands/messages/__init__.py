@@ -15,7 +15,7 @@ https://red.ht/leapp-docs
 
 
 @command('messages', help='Messaging related commands', description=_MAIN_LONG_DESCRIPTION)
-def messages(args):
+def messages(args):  # noqa; pylint: disable=unused-argument
     pass
 
 
@@ -33,7 +33,7 @@ https://red.ht/leapp-docs
                   description=_CLEAR_LONG_DESCRIPTION)
 @requires_repository
 @with_snactor_context
-def clear(args):
+def clear(args):  # noqa; pylint: disable=unused-argument
     print("Deleting all messages with context = {} in database {}".format(
         os.environ["LEAPP_EXECUTION_ID"],
         get_config().get("database", "path")

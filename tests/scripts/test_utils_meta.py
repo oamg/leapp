@@ -8,7 +8,7 @@ def test_with_metaclass():
         pass
 
     class TestMetaClass(type):
-        def __new__(mcs, name, bases, attrs):
+        def __new__(mcs, name, bases, attrs):  # noqa; pylint: disable=unused-argument
             raise MetaClassCreated()
 
     with pytest.raises(MetaClassCreated):

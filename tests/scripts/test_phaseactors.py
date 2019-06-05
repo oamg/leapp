@@ -61,7 +61,7 @@ class CycleActor3(Actor):
         pass
 
 
-def setup_module(module):
+def setup_module():
     for actor in get_actors():
         for tag in actor.tags:
             tag.actors = tag.actors + (actor,)

@@ -18,7 +18,7 @@ https://red.ht/leapp-docs
 
 
 @command('repo', help='Repository related commands', description=_MAIN_LONG_DESCRIPTION)
-def repo(args):
+def repo(args):  # noqa; pylint: disable=unused-argument
     pass
 
 
@@ -32,7 +32,7 @@ https://red.ht/leapp-docs
 
 @repo.command('health-check', help='Checks registered repositories and removes missing entries',
               description=_HEALTH_CHECK_LONG_DESCRIPTION)
-def health_check(args):
+def health_check(args):  # noqa; pylint: disable=unused-argument
     to_remove = []
     data = get_user_config_repo_data()
     if not data:
@@ -108,7 +108,7 @@ https://red.ht/leapp-docs
 @repo.command('register', help='Registers the current repository in the user repository registry.',
               description=_REGISTER_LONG_DESCRIPTION)
 @requires_repository
-def register_repo(args):
+def register_repo(args):  # noqa; pylint: disable=unused-argument
     base_dir = find_repository_basedir('.')
     if base_dir:
         register_path(base_dir)
