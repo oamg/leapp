@@ -1,0 +1,4 @@
+source: ./github.io
+theme: jekyll-theme-tactile
+plugins:
+  - jekyll-redirect-from
