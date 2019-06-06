@@ -9,10 +9,23 @@ import sys
 import uuid
 
 from leapp.exceptions import LeappError
-from leapp.utils.audit import create_audit_entry
 from leapp.libraries.stdlib import api
 from leapp.libraries.stdlib.call import _call, STDOUT
 from leapp.libraries.stdlib.config import is_debug
+from leapp.utils.audit import create_audit_entry
+
+
+class MissingCommandError(LeappError):
+    """
+    Raised when the called commend does not exist.
+    """
+    def __init__(self, command):
+        """
+        Initialize MissingCommandError Exception.
+        :param command: The command that is missing.
+        """
+        super(MissingCommandError, self).__init__('Missing command: \'{}\''.format(command))
+        self.command = command
 
 
 class CalledProcessError(LeappError):
@@ -171,6 +184,8 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
     try:
         create_audit_entry('process-start', {'id': _id, 'parameters': args, 'env': env})
         result = _call(args, callback_raw=callback_raw, callback_linebuffered=callback_linebuffered, env=env)
+        if checked and result is None:
+            raise MissingCommandError(command=args[0])
         if checked and result['exit_code'] != 0:
             raise CalledProcessError(
                 message="A Leapp Command Error occurred. ",
