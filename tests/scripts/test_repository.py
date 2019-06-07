@@ -4,7 +4,7 @@ from multiprocessing import Process
 import mock
 import pytest
 
-from helpers import make_repository_dir, repository_dir  # noqa: F401; pylint: disable=unused-import
+from helpers import make_repository_dir_fixture
 from leapp.repository.scan import find_and_scan_repositories, scan_repo
 from leapp.snactor.commands.new_actor import cli as new_actor_cmd
 from leapp.snactor.commands.new_tag import cli as new_tag_cmd
@@ -12,8 +12,9 @@ from leapp.snactor.commands.workflow.new import cli as new_workflow_cmd
 from leapp.exceptions import LeappRuntimeError, RepositoryConfigurationError
 
 
-repository_empty_test_repository_dir = make_repository_dir('empty_repository_dir', scope='module')
-repository_test_repository_dir = make_repository_dir('repository_dir', scope='module')
+# override repository_dir fixture generally defined in session scope
+repository_test_repository_dir = make_repository_dir_fixture('repository_dir', scope='module')
+empty_repodir_fixture = make_repository_dir_fixture(name='empty_repository_dir', scope='module')
 
 
 def test_empty_repo(empty_repository_dir):

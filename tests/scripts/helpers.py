@@ -6,7 +6,7 @@ import pytest
 TESTING_REPOSITORY_NAME = 'testing'
 
 
-def make_repository_dir(name, repository_name=TESTING_REPOSITORY_NAME, scope='session'):
+def make_repository_dir_fixture(name, repository_name=TESTING_REPOSITORY_NAME, scope='session'):
     @pytest.fixture(scope=scope, name=name)
     def impl(request, tmpdir_factory):
         old_value = os.environ.get('LEAPP_CONFIG', None)
@@ -23,6 +23,3 @@ def make_repository_dir(name, repository_name=TESTING_REPOSITORY_NAME, scope='se
             os.environ['LEAPP_CONFIG'] = repository.join('.leapp', 'leapp.conf').strpath
             return repository
     return impl
-
-
-repository_dir = make_repository_dir('repository_dir')
