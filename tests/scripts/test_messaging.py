@@ -5,7 +5,6 @@ from leapp.models.error_severity import ErrorSeverity
 from leapp.models import ErrorModel
 from leapp.exceptions import CannotConsumeErrorMessages
 
-from helpers import repository_dir  # noqa: F401; pylint: disable=unused-import
 from test_models import UnitTestModel
 from test_tags import TestTag
 
