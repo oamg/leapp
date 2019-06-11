@@ -1,5 +1,5 @@
 leapp\.reporting package
-=====================
+========================
 
 Module contents
 ---------------
