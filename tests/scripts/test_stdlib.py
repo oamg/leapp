@@ -1,7 +1,7 @@
 import os
 import pytest
 
-from leapp.libraries.stdlib import CalledProcessError, run
+from leapp.libraries.stdlib import CalledProcessError, MissingCommandError, run
 from leapp.libraries.stdlib.config import is_debug, is_verbose
 
 
@@ -31,9 +31,27 @@ def test_check_error():
         run(a_command, checked=True)
 
 
+def test_check_error_with_path(monkeypatch):
+    monkeypatch.setattr(os, 'environ', {'PATH': None})
+    a_command = ['true']
+    with pytest.raises(MissingCommandError):
+        run(a_command, checked=True)
+
+
 def test_check_error_no_checked():
     a_command = ['false']
     assert run(a_command, checked=False)['exit_code'] == 1
+
+
+def test_check_non_existing():
+    a_command = ['non-existing']
+    with pytest.raises(MissingCommandError):
+        run(a_command, checked=True)
+
+
+def test_check_non_existing_no_checked():
+    a_command = ['non-existing']
+    assert run(a_command, checked=False) is None
 
 
 def test_is_verbose(monkeypatch):
