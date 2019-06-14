@@ -3,13 +3,10 @@
 represents a location for functions that otherwise would be defined multiple times across leapp actors
 and at the same time, they are really useful for other actors.
 """
+import logging
 import os
 import sys
-
-import subprocess
 import uuid
-
-import six
 
 from leapp.exceptions import LeappError
 from leapp.utils.audit import create_audit_entry
@@ -104,7 +101,7 @@ def __write_raw(fd_info, a_buffer):
 
 
 # FIXME: Issue #488
-def _logging_handler(fd_info, a_buffer):
+def _console_logging_handler(fd_info, a_buffer):
     """
     Log into either STDOUT or to STDERR.
 
@@ -119,7 +116,37 @@ def _logging_handler(fd_info, a_buffer):
         __write_raw(fd_info, a_buffer)
 
 
-def run(args, split=False, callback_raw=_logging_handler, env=None, checked=True):
+def _logfile_logging_handler(fd_info, line):  # pylint: disable=unused-argument
+    """
+    Log into logfile
+
+    :param fd_info: Contains File descriptor type (not used)
+    :type fd_info: tuple
+    :param line: data to be printed to a logfile
+    :type line: string
+    """
+    def _raise_level(handlers):
+        for handler in handlers:
+            handler.setLevel(handler.level + 1)
+
+    def _restore_level(handlers, levels):
+        for handler, level in zip(handlers, levels):
+            handler.setLevel(level)
+
+    if is_debug():
+        # raise logging level of stream handlers above DEBUG to avoid duplicated output to stdout/stderr
+        logger_handlers = api.current_logger().root.handlers
+        stream_handlers = [handler for handler in logger_handlers if isinstance(handler, logging.StreamHandler)]
+        handler_levels = [handler.level for handler in stream_handlers]
+        _raise_level(stream_handlers)
+        api.current_logger().debug(line)
+        _restore_level(stream_handlers, handler_levels)
+    else:
+        api.current_logger().debug(line)
+
+
+def run(args, split=False, callback_raw=_console_logging_handler, callback_linebuffered=_logfile_logging_handler,
+        env=None, checked=True):
     """
     Run a command and return its result as a dict.
 
@@ -143,7 +170,7 @@ def run(args, split=False, callback_raw=_logging_handler, env=None, checked=True
     result = None
     try:
         create_audit_entry('process-start', {'id': _id, 'parameters': args, 'env': env})
-        result = _call(args, callback_raw=callback_raw, env=env)
+        result = _call(args, callback_raw=callback_raw, callback_linebuffered=callback_linebuffered, env=env)
         if checked and result['exit_code'] != 0:
             raise CalledProcessError(
                 message="A Leapp Command Error occurred. ",
