@@ -6,7 +6,7 @@ import sys
 from leapp.compat import string_types
 from leapp.dialogs import Dialog
 from leapp.exceptions import MissingActorAttributeError, WrongAttributeTypeError, StopActorExecutionError, \
-    StopActorExecution, StandardError
+    StopActorExecution
 from leapp.models import Model
 from leapp.tags import Tag
 from leapp.utils.i18n import install_translation_for_actor
