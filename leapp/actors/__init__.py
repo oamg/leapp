@@ -6,7 +6,7 @@ import sys
 from leapp.compat import string_types
 from leapp.dialogs import Dialog
 from leapp.exceptions import MissingActorAttributeError, WrongAttributeTypeError, StopActorExecutionError, \
-    StopActorExecution, LeappRuntimeError
+    StopActorExecution
 from leapp.models import Model
 from leapp.tags import Tag
 from leapp.utils.i18n import install_translation_for_actor
@@ -303,7 +303,7 @@ class Actor(object):
             pass
         except StopActorExecutionError as err:
             self.report_error(err.message, err.severity, err.details)
-        except LeappRuntimeError as err:
+        except StandardError as err:
             self.report_error(err.message, ErrorSeverity.FATAL)
         finally:
             os.environ.pop('LEAPP_CURRENT_ACTOR', None)
