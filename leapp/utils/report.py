@@ -20,34 +20,53 @@ def _flatten_dict(dict_):
     return new_dict
 
 
+def fetch_upgrade_report_raw(context_id, renderers=True):
+    """
+    :param context_id: ID to identify the needed messages
+    :type context_id: str
+    :param renderers: whether copy or skip renderers field of original message
+    :type boolean
+    :return: A list of upgrade messages of type "Report" withing the given context,
+             each message is a dict of raw data.
+    """
+    report_msgs = get_messages(names=['Report'], context=context_id) or []
+
+    messages = []
+    for message in report_msgs:
+        data = json.loads(message.get('message').get('data'))
+        merged_data = {
+            'topic': message.get('topic'),
+            'phase': message.get('phase'),
+            'audience': data['audience'],
+            'title': data['title'],
+            'flags': data['flags'],
+            'severity': data['severity']
+        }
+        if renderers:
+            merged_data['renderers'] = data['renderers']
+        detail = _flatten_dict(json.loads(data['detail']))
+        merged_data.update(detail)
+        messages.append(merged_data)
+
+    return messages
+
+
 def fetch_upgrade_report_messages(context_id, renderer):
     """
     :param context_id: ID to identify the needed messages
     :type context_id: str
     :param renderer: How messages will be rendered (e.g html or plaintext)
-    :type context_id: str
+    :type renderer: str
     :return: All upgrade messages of type "Report" withing the given context
     """
-    report_msgs = get_messages(names=['Report'], context=context_id)
+    messages_raw = fetch_upgrade_report_raw(context_id)
+    if not messages_raw:
+        # return [] to be consistent?
+        return
 
-    if report_msgs:
-        messages_to_print = []
-        for message in report_msgs:
-            topic = message.get('topic')
-            phase = message.get('phase')
-            data = json.loads(message.get('message').get('data'))
-            merged_data = {'topic': topic, 'phase': phase}
-            merged_data.update({
-                'audience': data['audience'],
-                'title': data['title'],
-                'flags': data['flags'],
-                'severity': data['severity']
-            })
-            detail = _flatten_dict(json.loads(data['detail']))
-            merged_data.update(detail)
-            template = Template(data['renderers'].get(renderer))
-            messages_to_print.append(template.render(merged_data))
+    messages_to_print = []
+    for msg_data in messages_raw:
+        template = Template(msg_data.pop('renderers').get(renderer))
+        messages_to_print.append(template.render(msg_data))
 
-        return messages_to_print
-
-    return None
+    return messages_to_print

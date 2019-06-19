@@ -42,9 +42,11 @@ def report_errors(errors):
 
 
 def report_info(path, fail=False):
-    if path:
+    paths = [path] if not isinstance(path, list) else path
+    if paths:
         sys.stdout.write(pretty_block("REPORT", color=Color.bold if fail else Color.green))
-        sys.stdout.write("A report has been generated at {path}\n\n".format(path=path))
+        for report_path in paths:
+            sys.stdout.write("A report has been generated at {path}\n\n".format(path=report_path))
         sys.stdout.write(pretty_block("END OF REPORT", color=Color.bold if fail else Color.green))
 
 

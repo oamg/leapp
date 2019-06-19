@@ -20,10 +20,11 @@ _CONFIG_DEFAULTS = {
     },
     'logs': {
         'dir': '/var/log/leapp/',
-        'files': 'leapp-upgrade.log:leapp-report.txt:dnf-plugin-data.txt',
+        # files that will go into the leapp-logs.tar.gz archive
+        'files': 'leapp-upgrade.log,leapp-report.txt,leapp-report.json,dnf-plugin-data.txt',
     },
     'report': {
-        'path': '/var/log/leapp/leapp-report.txt',
+        'dir': '/var/log/leapp/',
     },
     'repositories': {
         'repo_path': '.',
