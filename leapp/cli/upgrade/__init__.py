@@ -15,6 +15,7 @@ from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
 from leapp.utils.output import report_errors, report_info, beautify_actor_exception
+from leapp.utils.report import fetch_upgrade_report_raw
 
 
 def archive_logfiles():
@@ -25,7 +26,7 @@ def archive_logfiles():
         os.makedirs(cfg.get('logs', 'dir'))
 
     files_to_archive = [os.path.join(cfg.get('logs', 'dir'), f)
-                        for f in cfg.get('logs', 'files').split(':')
+                        for f in cfg.get('logs', 'files').split(',')
                         if os.path.isfile(os.path.join(cfg.get('logs', 'dir'), f))]
 
     if not os.path.isdir(cfg.get('archive', 'dir')):
@@ -207,10 +208,15 @@ def preupgrade(args):
 
     report_errors(workflow.errors)
 
+    report_txt, report_json = [os.path.join(get_config().get('report', 'dir'),
+                                            'leapp-report.{}'.format(f)) for f in ['txt', 'json']]
+    report_info([report_txt, report_json], fail=workflow.errors)
+    # fetch all report messages as a list of dicts
+    messages = fetch_upgrade_report_raw(context, renderers=False)
+    with open(report_json, 'w+') as f:
+        json.dump({'entries': messages}, f, indent=2)
     if workflow.errors:
-        report_info(get_config().get('report', 'path'), fail=True)
         sys.exit(1)
-    report_info(get_config().get('report', 'path'))
 
 
 @command('list-runs', help='List previous Leapp upgrade executions')
