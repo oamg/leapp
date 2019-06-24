@@ -303,8 +303,9 @@ class Actor(object):
             pass
         except StopActorExecutionError as err:
             self.report_error(err.message, err.severity, err.details)
-        except StandardError as err:
+        except Exception as err:
             self.report_error(err.message, ErrorSeverity.FATAL)
+            raise err
         finally:
             os.environ.pop('LEAPP_CURRENT_ACTOR', None)
 
