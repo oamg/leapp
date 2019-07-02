@@ -2,12 +2,13 @@ import datetime
 import logging
 import logging.config
 import os
-import time
 import sys
+import time
 
 from leapp.config import get_config
 from leapp.libraries.stdlib.config import is_debug, is_verbose
 from leapp.utils.audit import Audit
+
 _logger = None
 
 
@@ -63,7 +64,7 @@ def configure_logger(log_file=None):
         else:  # Fall back logging configuration
             logging.Formatter.converter = time.gmtime
             logging.basicConfig(
-                level=logging.DEBUG,
+                level=logging.ERROR,
                 format=log_format,
                 datefmt=log_date_format,
                 stream=sys.stderr,
@@ -72,7 +73,6 @@ def configure_logger(log_file=None):
             handler = LeappAuditHandler()
             handler.setFormatter(logging.Formatter(fmt=log_format, datefmt=log_date_format))
             logging.getLogger('leapp').addHandler(handler)
-            logging.StreamHandler().setLevel(logging.ERROR)
 
         if log_file:
             file_handler = logging.FileHandler(os.path.join(get_config().get('logs', 'dir'), log_file))
