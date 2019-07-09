@@ -9,6 +9,8 @@
                                     # actor's dependencies for tests execution.
         tests/                      # Unit and component tests for the actors are to be stored here.
             test_actor.py
+            files/                  # If tests need to use some mocked files, they should be placed here
+                                    # and referenced from the tests using path 'tests/files'.
         libraries/                  # Private libraries for the actors only.
             private.py              # These can be modules
             actorpkg/               # or packages.
@@ -23,8 +25,16 @@
 
  libraries/                         # Libraries that are shared with all actors.
     common.py                       # These can be modules
-    sharedpkg/                      # or packages.
+    tests/                          # with tests stored here.
+        files/                      # If tests need to use some mocked files, they should be placed here
+                                    # and refenreced from the tests using path 'tests/files'.
+        test_common.py
+    sharedpkg/                      # Or they can be packages
         __init__.py
+        tests/                      # with tests stored here.
+            test_sharedpkg.py
+            files/                  # If tests need to use some mocked files, they should be placed here
+                                    # and refenreced from the tests using path 'sharedpkg/tests/files'.
 
  models/                            # All models describing the message payload format are stored here.
     model.py
