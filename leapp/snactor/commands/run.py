@@ -42,10 +42,18 @@ def cli(args):
     messaging = InProcessMessaging(stored=args.save_output)
     messaging.load(actor.consumes)
 
+    failure = False
     with beautify_actor_exception():
-        actor(messaging=messaging, logger=actor_logger).run()
+        try:
+            actor(messaging=messaging, logger=actor_logger).run()
+        except BaseException:
+            failure = True
+            raise
 
     report_errors(messaging.errors())
+
+    if failure or messaging.errors():
+        sys.exit(1)
 
     if args.print_output:
         json.dump(messaging.messages(), sys.stdout, indent=2)

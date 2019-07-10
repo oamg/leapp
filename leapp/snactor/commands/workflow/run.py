@@ -61,6 +61,9 @@ def cli(params):
 
         report_errors(instance.errors)
 
+        if instance.failure:
+            sys.exit(1)
+
     @with_snactor_context
     def snactor_context_impl():
         impl(context=os.getenv('LEAPP_EXECUTION_ID'))
