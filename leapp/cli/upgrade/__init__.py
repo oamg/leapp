@@ -163,7 +163,7 @@ def upgrade(args):
 
     report_errors(workflow.errors)
 
-    if workflow.errors:
+    if workflow.failure:
         sys.exit(1)
 
 
@@ -215,7 +215,7 @@ def preupgrade(args):
     messages = fetch_upgrade_report_raw(context, renderers=False)
     with open(report_json, 'w+') as f:
         json.dump({'entries': messages}, f, indent=2)
-    if workflow.errors:
+    if workflow.failure:
         sys.exit(1)
 
 

@@ -79,6 +79,10 @@ class Workflow(with_metaclass(WorkflowMeta)):
         """
         return self._errors
 
+    @property
+    def failure(self):
+        return self._errors or self._unhandled_exception
+
     def __init__(self, logger=None, auto_reboot=False):
         """
         :param logger: Optional logger to be used instead of leapp.workflow
@@ -92,6 +96,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self._phase_actors = []
         self._experimental_whitelist = set()
         self._auto_reboot = auto_reboot
+        self._unhandled_exception = False
 
         if self.configuration:
             config_actors = [actor for actor in self.tag.actors if self.configuration in actor.produces]
@@ -252,7 +257,11 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     messaging.load(actor.consumes)
                     instance = actor(logger=current_logger, messaging=messaging,
                                      config_model=config_model)
-                    instance.run()
+                    try:
+                        instance.run()
+                    except BaseException:
+                        self._unhandled_exception = True
+                        raise
 
                     # Collect errors
                     if messaging.errors():
