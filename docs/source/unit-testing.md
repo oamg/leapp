@@ -157,6 +157,8 @@ shared libraries, models, etc.
 
 ## Running the tests
 
+### Actor's tests
+
 Use _pytest_ to run the tests for your actor. For the test modules to be able to
 import leapp modules, you need to set `LEAPP_TESTED_ACTOR` environment variable
 to the path of the actor under test.
@@ -184,7 +186,7 @@ actor by running  `make install-deps` and then issue `make test` in the root
 directory of the `leapp-repository`.
 Though running all tests this way is useful mostly for CI.
 
-### Test dependencies
+### Actors's test dependencies
 
 If your **actor's tests** require a special package for their execution, create a
 Makefile in the [actor's root directory](repository-dir-layout.html) with an
@@ -200,3 +202,33 @@ Note: Dependencies defined the way mentioned above is for test execution only.
 If your actor requires any package when executed as part of a workflow, it
 needs to be specified in a
 [leapp-repository specfile](https://github.com/oamg/leapp-repository/blob/master/packaging/leapp-repository.spec).
+
+### Shared libraries' tests
+
+To run tests of shared libraries (i.e. libraries stored in
+`repositories/system_upgrade/el7toel8/libraries`) environment variable
+`LEAPP_TESTED_LIBRARY` with path of the shared library needs to be specified for
+_pytest_ to be able to import leapp modules.
+
+
+To run tests for all shared libraries:
+```sh
+LEAPP_TESTED_LIBRARY="$PWD/libraries" pytest -sv libraries/tests
+```
+
+To run tests for one specific module:
+```sh
+LEAPP_TESTED_LIBRARY="$PWD/libraries" pytest -sv libraries/tests/test_my_library.py
+```
+
+To run one specific test of module:
+```sh
+LEAPP_TESTED_LIBRARY="$PWD/libraries" pytest -sv libraries/tests/test_my_library.py::test_something
+```
+
+It's also possible to use Makefile from the `leapp-repository` GitHub repository
+for running tests of shared libraries:
+
+```sh
+TEST_LIBS=y make test
+```
