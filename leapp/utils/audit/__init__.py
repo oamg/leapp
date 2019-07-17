@@ -261,7 +261,7 @@ def create_audit_entry(event, data, message=None):
     """
     Create an audit entry
 
-    :param event: Type of this event e.g. process-start or process-end but can be anything
+    :param event: Event type identifier
     :param data: Data related to Type of the event, e.g. a command and its arguments
     :param message: An optional message.
     :return:
@@ -283,7 +283,7 @@ def get_audit_entry(event, context):
 
     :param context: The execution context
     :type context: str
-    :param event: Type of this event e.g. process-start or process-end but can be anything
+    :param event: Event type identifier
     :type event: str
     :return: list of dicts with id, time stamp, actor and phase fields
     """
