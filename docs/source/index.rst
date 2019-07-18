@@ -18,8 +18,14 @@ Resources not included in this RTD:
     tutorials
     repository-dir-layout
     best-practices
+    test-actors
+    architecture
+    dependencies
+    dependencies-leapp-repository
+    inplace-upgrade-workflow
     contributing
     python-coding-guidelines
+    faq
     pydoc/leapp
 
 
