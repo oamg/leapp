@@ -15,7 +15,7 @@ from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
 from leapp.utils.output import report_errors, report_info, beautify_actor_exception
-from leapp.utils.report import fetch_upgrade_report_raw
+from leapp.utils.report import fetch_upgrade_report_raw, upload_to_insights
 
 
 def archive_logfiles():
@@ -170,6 +170,7 @@ def upgrade(args):
 @command('preupgrade', help='Generate preupgrade report')
 @command_opt('whitelist-experimental', action='append', metavar='ActorName',
              help='Enables experimental actors')
+@command_opt('insights', is_flag=True, help='Enables report upload to insights platform')
 def preupgrade(args):
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
@@ -215,6 +216,11 @@ def preupgrade(args):
     messages = fetch_upgrade_report_raw(context, renderers=False)
     with open(report_json, 'w+') as f:
         json.dump({'entries': messages}, f, indent=2)
+    # send data to insights if launched with --insights
+    if args.insights:
+        res, msg = upload_to_insights(report_json)
+        if not res:
+            logger.warning('Upload to insights failed: %s', msg)
     if workflow.failure:
         sys.exit(1)
 

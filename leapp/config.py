@@ -25,6 +25,9 @@ _CONFIG_DEFAULTS = {
     },
     'report': {
         'dir': '/var/log/leapp/',
+        'insights': {'username': 'someuser',
+                     'password': 'somepassword',
+                     'server': 'https://insights.api.endpoint'}
     },
     'repositories': {
         'repo_path': '.',
