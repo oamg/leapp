@@ -16,6 +16,7 @@ from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
 from leapp.utils.output import report_errors, report_info, beautify_actor_exception
 from leapp.utils.report import fetch_upgrade_report_raw
+import leapp.reporting
 
 
 def archive_logfiles():
