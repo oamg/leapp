@@ -2,7 +2,7 @@
 
 The Leapp framework provides support for easily writing unit and component
 tests for actors and also allows easy execution of the whole actors within
-those tests. See [this document](https://github.com/oamg/leapp-repository/blob/master/docs/tests.md)
+those tests. See [this document](test-actors.html)
 to find out what is the difference between unit and component tests.
 
 ## Getting started with writing tests
