@@ -89,6 +89,7 @@ class Dialog(object):
         :param renderer: Target renderer instance
         :return: Dictionary with answers once retrieved
         """
+        store.translate(self)
         if any([component.value is None for component in self.components]):
             self._store = store
             renderer.render(self)

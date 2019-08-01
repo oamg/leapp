@@ -122,6 +122,7 @@ def generate_report_files(context):
 @command_opt('reboot', is_flag=True, help='Automatically performs reboot when requested.')
 @command_opt('whitelist-experimental', action='append', metavar='ActorName',
              help='Enables experimental actors')
+@command_opt('load-answerfile', help='Path to load custom answerfile')
 def upgrade(args):
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
@@ -172,6 +173,9 @@ def upgrade(args):
             logger.error(msg)
             raise CommandError(msg)
     with beautify_actor_exception():
+        answerfile_path = args.load_answerfile or get_config().get('report', 'answerfile')
+        logger.info("Using answerfile at %s", answerfile_path)
+        workflow.load_answerfile(answerfile_path)
         workflow.run(context=context, skip_phases_until=skip_phases_until)
 
     report_errors(workflow.errors)
@@ -184,6 +188,7 @@ def upgrade(args):
 @command('preupgrade', help='Generate preupgrade report')
 @command_opt('whitelist-experimental', action='append', metavar='ActorName',
              help='Enables experimental actors')
+@command_opt('save-answerfile', help='Path to save custom answerfile')
 def preupgrade(args):
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
@@ -220,10 +225,13 @@ def preupgrade(args):
         logger.info('Executing workflow until phase: %s', until_phase)
         workflow.run(context=context, until_phase=until_phase)
 
-    report_errors(workflow.errors)
-    generate_report_files(context)
-
     cfg = get_config()
+    answerfile = args.save_answerfile or cfg.get('report', 'answerfile')
+    logger.info("Answerfile will be created at %s", answerfile)
+    workflow._answer_store.generate_for_workflow(workflow, answerfile)
+    generate_report_files(context)
+    report_errors(workflow.errors)
+
     report_files = [os.path.join(cfg.get('report', 'dir'), r) for r in cfg.get('report', 'files').split(',')]
     report_info([rf for rf in report_files if os.path.isfile(rf)], fail=workflow.failure)
     if workflow.failure:

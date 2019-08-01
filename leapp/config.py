@@ -39,6 +39,7 @@ _CONFIG_DEFAULTS = {
     'report': {
         'dir': '/var/log/leapp/',
         'files': ','.join(_FILES_TO_REPORT),
+        'answerfile': '/var/log/leapp/answerfile',
     },
     'repositories': {
         'repo_path': '.',

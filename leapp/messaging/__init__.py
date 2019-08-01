@@ -19,11 +19,11 @@ class BaseMessaging(object):
     BaseMessaging is the Base class for all messaging implementations. It provides the basic interface that is
     supported within the framework. These are called the `produce` and `consume` methods.
     """
-    def __init__(self, stored=True, config_model=None):
+    def __init__(self, stored=True, config_model=None, answer_store=None):
         self._manager = multiprocessing.Manager()
         self._dialog_renderer = CommandlineRenderer()
         self._data = self._manager.list()
-        self._answers = AnswerStore(manager=self._manager)
+        self._answers = answer_store or AnswerStore(manager=self._manager)
         self._new_data = self._manager.list()
         self._errors = self._manager.list()
         self._stored = stored
