@@ -4,16 +4,17 @@ import socket
 import sys
 import uuid
 
-from leapp.utils.meta import with_metaclass, get_flattened_subclasses
+from leapp.dialogs import RawMessageDialog
+from leapp.exceptions import CommandError, MultipleConfigActorsError, WorkflowConfigNotAvailable
+from leapp.messaging.answerstore import AnswerStore
+from leapp.messaging.inprocess import InProcessMessaging
+from leapp.tags import ExperimentalTag
 from leapp.utils import reboot_system
+from leapp.utils.audit import checkpoint, get_errors
+from leapp.utils.meta import with_metaclass, get_flattened_subclasses
 from leapp.workflows.phases import Phase
 from leapp.workflows.policies import Policies
 from leapp.workflows.phaseactors import PhaseActors
-from leapp.messaging.inprocess import InProcessMessaging
-from leapp.dialogs import RawMessageDialog
-from leapp.tags import ExperimentalTag
-from leapp.utils.audit import checkpoint, get_errors
-from leapp.exceptions import CommandError, MultipleConfigActorsError, WorkflowConfigNotAvailable
 
 
 def _phase_sorter_key(a):
@@ -83,6 +84,23 @@ class Workflow(with_metaclass(WorkflowMeta)):
     def failure(self):
         return self._errors or self._unhandled_exception
 
+    @property
+    def answer_store(self):
+        """
+        : return: AnswerStore instance used for messaging
+        """
+        return self._answer_store
+
+    def load_answerfile(self, filepath):
+        if os.path.isfile(filepath):
+            # XXX FIXME load_and_translate doesn't help here as somehow dialog.component.value
+            # in Dialog.request_answers is not respectfully updated (set to None so storage
+            # values are not taken into consideration).
+            # Patching in 2 places - load here and direct call to translate in request_answers
+            self._answer_store.load(filepath)
+        else:
+            self.log.warning("Answerfile %s not found, upgrade will be interactive", filepath)
+
     def __init__(self, logger=None, auto_reboot=False):
         """
         :param logger: Optional logger to be used instead of leapp.workflow
@@ -97,6 +115,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self._experimental_whitelist = set()
         self._auto_reboot = auto_reboot
         self._unhandled_exception = False
+        self._answer_store = AnswerStore()
 
         if self.configuration:
             config_actors = [actor for actor in self.tag.actors if self.configuration in actor.produces]
@@ -253,7 +272,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
                             continue
                     current_logger.info("Executing actor {actor} {designation}".format(designation=designation,
                                                                                        actor=actor.name))
-                    messaging = InProcessMessaging(config_model=config_model)
+                    messaging = InProcessMessaging(config_model=config_model, answer_store=self._answer_store)
                     messaging.load(actor.consumes)
                     instance = actor(logger=current_logger, messaging=messaging,
                                      config_model=config_model)
