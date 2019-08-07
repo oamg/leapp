@@ -53,7 +53,6 @@ class BasePrimitive(object):
         """Return report field destination path (nested dict description)"""
         return (self.name, )
 
-    @property
     def to_dict(self):
         return {self.name: self._value}
 
@@ -206,15 +205,24 @@ class RemediationCommand(BaseRemediation):
             raise TypeError('Value of "RemediationCommand" must be a list')
         self._value = {'type': 'command', 'context': value}
 
+    def __repr__(self):
+        return "[{}] {}".format(self._value['type'], ' '.join(self._value['context']))
+
 
 class RemediationHint(BaseRemediation):
     def __init__(self, value=None):
         self._value = {'type': 'hint', 'context': value}
 
+    def __repr__(self):
+        return "[{}] {}".format(self._value['type'], self._value['context'])
+
 
 class RemediationPlaybook(BaseRemediation):
     def __init__(self, value=None):
         self._value = {'type': 'playbook', 'context': value}
+
+    def __repr__(self):
+        return "[{}] {}".format(self._value['type'], self._value['context'])
 
 
 class Remediation(object):
@@ -232,9 +240,20 @@ class Remediation(object):
         for remediation in self._remediations:
             remediation.apply(report)
 
-    @property
+    def __repr__(self):
+        return "\n".join([repr(r) for r in self._remediations])
+
     def to_dict(self):
-        return {'remediations': [r.to_dict for r in self._remediations]}
+        return {'remediations': [r.to_dict() for r in self._remediations]}
+
+    @classmethod
+    def from_dict(cls, data):
+        values = data.get('remediations', [])
+        playbook = next((v['context'] for v in values if v['type'] == 'playbook'), None)
+        hint = next((v['context'] for v in values if v['type'] == 'hint'), None)
+        commands = [v['context'] for v in values if v['type'] == 'command']
+        if values:
+            return Remediation(playbook, commands, hint)
 
 
 def _sanitize_entries(entries):

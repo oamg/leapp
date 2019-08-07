@@ -15,8 +15,7 @@ from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
 from leapp.utils.output import report_errors, report_info, beautify_actor_exception
-from leapp.utils.report import fetch_upgrade_report_messages
-import leapp.reporting
+from leapp.utils.report import fetch_upgrade_report_messages, generate_report_file
 
 
 def archive_logfiles():
@@ -105,6 +104,19 @@ def check_env_and_conf(env_var, conf_var, configuration):
     return os.getenv(env_var, '0') == '1' or configuration.get(conf_var, '0') == '1'
 
 
+def generate_report_files(context):
+    """
+    Generates all report files for specific leapp run (txt and json format)
+    """
+    cfg = get_config()
+    report_txt, report_json = [os.path.join(cfg.get('report', 'dir'),
+                                            'leapp-report.{}'.format(f)) for f in ['txt', 'json']]
+    # fetch all report messages as a list of dicts
+    messages = fetch_upgrade_report_messages(context)
+    generate_report_file(messages, context, report_json)
+    generate_report_file(messages, context, report_txt)
+
+
 @command('upgrade', help='Upgrades the current system to the next available major version.')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
 @command_opt('reboot', is_flag=True, help='Automatically performs reboot when requested.')
@@ -163,6 +175,7 @@ def upgrade(args):
         workflow.run(context=context, skip_phases_until=skip_phases_until)
 
     report_errors(workflow.errors)
+    generate_report_files(context)
 
     if workflow.failure:
         sys.exit(1)
@@ -208,16 +221,11 @@ def preupgrade(args):
         workflow.run(context=context, until_phase=until_phase)
 
     report_errors(workflow.errors)
+    generate_report_files(context)
 
     cfg = get_config()
-    report_json = os.path.join(cfg.get('report', 'dir'), 'leapp-report.json')
-    # fetch all report messages as a list of dicts
-    messages = fetch_upgrade_report_messages(context)
-    with open(report_json, 'w+') as f:
-        json.dump({'entries': messages}, f, indent=2)
     report_files = [os.path.join(cfg.get('report', 'dir'), r) for r in cfg.get('report', 'files').split(',')]
     report_info([rf for rf in report_files if os.path.isfile(rf)], fail=workflow.failure)
-
     if workflow.failure:
         sys.exit(1)
 
