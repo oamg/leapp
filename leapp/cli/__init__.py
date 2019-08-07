@@ -3,10 +3,6 @@ import socket
 
 from leapp.utils.clicmd import command, command_opt
 from leapp.cli import upgrade
-try:
-    from leapp.cli import report
-except ImportError:
-    report = None
 from leapp import VERSION
 
 
@@ -23,8 +19,6 @@ def cli(args):
 
 def main():
     os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
-    if report:
-        cli.command.add_sub(report.report.command)
     cli.command.add_sub(upgrade.list_runs.command)
     cli.command.add_sub(upgrade.preupgrade.command)
     cli.command.add_sub(upgrade.upgrade.command)
