@@ -16,7 +16,7 @@ class Color(object):
 
 
 def pretty_block(string, color=Color.bold, width=60):
-    return "{color}{separator}\n{text}\n{separator}{reset}\n\n".format(
+    return "\n{color}{separator}\n{text}\n{separator}{reset}\n".format(
         color=color,
         separator="=" * width,
         reset=Color.reset,
@@ -35,9 +35,9 @@ def print_error(error):
 def report_errors(errors):
     if errors:
         sys.stdout.write(pretty_block("ERRORS", color=Color.red))
+        sys.stderr.write("\n")
         for error in errors:
             print_error(error)
-        sys.stderr.write("\n")
         sys.stdout.write(pretty_block("END OF ERRORS", color=Color.red))
 
 
@@ -45,8 +45,9 @@ def report_info(path, fail=False):
     paths = [path] if not isinstance(path, list) else path
     if paths:
         sys.stdout.write(pretty_block("REPORT", color=Color.bold if fail else Color.green))
+        sys.stdout.write("\n")
         for report_path in paths:
-            sys.stdout.write("A report has been generated at {path}\n\n".format(path=report_path))
+            sys.stdout.write("A report has been generated at {path}\n".format(path=report_path))
         sys.stdout.write(pretty_block("END OF REPORT", color=Color.bold if fail else Color.green))
 
 

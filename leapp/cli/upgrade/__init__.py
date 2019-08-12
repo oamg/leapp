@@ -209,13 +209,15 @@ def preupgrade(args):
 
     report_errors(workflow.errors)
 
-    report_txt, report_json = [os.path.join(get_config().get('report', 'dir'),
-                                            'leapp-report.{}'.format(f)) for f in ['txt', 'json']]
-    report_info([report_txt, report_json], fail=workflow.errors)
+    cfg = get_config()
+    report_json = os.path.join(cfg.get('report', 'dir'), 'leapp-report.json')
     # fetch all report messages as a list of dicts
     messages = fetch_upgrade_report_raw(context, renderers=False)
     with open(report_json, 'w+') as f:
         json.dump({'entries': messages}, f, indent=2)
+    report_files = [os.path.join(cfg.get('report', 'dir'), r) for r in cfg.get('report', 'files').split(',')]
+    report_info([rf for rf in report_files if os.path.isfile(rf)], fail=workflow.failure)
+
     if workflow.failure:
         sys.exit(1)
 
