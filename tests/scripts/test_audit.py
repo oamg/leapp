@@ -258,7 +258,5 @@ def test_audit_command_in_db(monkeypatch):
     assert result['stdout'] in ['travis\n', 'root\n']
     event = 'process-start'
     assert get_audit_entry(event, _CONTEXT_NAME)
-    event = 'process-end'
-    assert get_audit_entry(event, _CONTEXT_NAME)
     event = 'process-result'
     assert get_audit_entry(event, _CONTEXT_NAME)

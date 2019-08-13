@@ -182,7 +182,6 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
                 'stdout': result['stdout'].splitlines()
             })
     finally:
-        create_audit_entry('process-end', _id)
         create_audit_entry('process-result', {'id': _id, 'parameters': args, 'result': result, 'env': env})
         api.current_logger().debug('External command is finished: [%s]', ' '.join(args))
     return result
