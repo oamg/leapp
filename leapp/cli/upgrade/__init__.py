@@ -15,7 +15,7 @@ from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
 from leapp.utils.output import report_errors, report_info, beautify_actor_exception
-from leapp.utils.report import fetch_upgrade_report_raw
+from leapp.utils.report import fetch_upgrade_report_messages
 import leapp.reporting
 
 
@@ -212,7 +212,7 @@ def preupgrade(args):
     cfg = get_config()
     report_json = os.path.join(cfg.get('report', 'dir'), 'leapp-report.json')
     # fetch all report messages as a list of dicts
-    messages = fetch_upgrade_report_raw(context, renderers=False)
+    messages = fetch_upgrade_report_messages(context)
     with open(report_json, 'w+') as f:
         json.dump({'entries': messages}, f, indent=2)
     report_files = [os.path.join(cfg.get('report', 'dir'), r) for r in cfg.get('report', 'files').split(',')]

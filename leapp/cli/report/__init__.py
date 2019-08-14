@@ -15,7 +15,6 @@ from leapp.cli.upgrade import fetch_last_upgrade_context
 
 @command('report', help='Create report for last upgrade execution (default) or specific execution id')
 @command_opt('id', help='ID of particular run to print report for. See # leapp list-runs for a list of all runs')
-@command_opt('format', help='Format report using particular renderers. By default: "plaintext"')
 def report(args):
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
@@ -27,15 +26,7 @@ def report(args):
             'No previous Leapp upgrade run found. This command can only be run after "leapp upgrade" has been executed'
         )
 
-    # FIXME: add proper default and choices parameters for the format option
-    if args.format not in ('html', 'plaintext'):
-        print('No / not supported renderer provided as --format (available renderers: "html", "plaintext"). '
-              'Defaulting to "plaintext"', file=sys.stdout, end='\n\n')
-        renderer = 'plaintext'
-    else:
-        renderer = args.format
-
-    messages = fetch_upgrade_report_messages(upgrade_id, renderer)
+    messages = fetch_upgrade_report_messages(upgrade_id)
     if not messages:
         raise CommandError('No upgrade report messages found for context {}'.format(upgrade_id))
 
