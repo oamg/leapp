@@ -229,7 +229,7 @@ def _get_actor(module, repository):
     """
     path = os.path.realpath(module.__file__)
     for actor in repository.actors:
-        if path.startswith(os.path.realpath(actor.full_path)):
+        if path.startswith(os.path.realpath(actor.full_path) + os.sep):
             return actor
     return None
 
