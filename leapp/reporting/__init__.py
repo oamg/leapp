@@ -3,6 +3,7 @@ import json
 from leapp.models import fields, Model
 from leapp.topics import ReportTopic
 from leapp.libraries.stdlib.api import produce
+from leapp.compat import string_types
 
 
 class Report(Model):
@@ -39,7 +40,7 @@ class BasePrimitive(object):
     name = ''
 
     def __init__(self, value=None):
-        if not isinstance(value, str):
+        if not isinstance(value, string_types):
             raise TypeError('Value of "{}" must be a string'.format(self.__class__.__name__))
         self._value = value
 
@@ -101,7 +102,7 @@ class Audience(BasePrimitive):
     name = 'audience'
 
     def __init__(self, value=None):
-        if not isinstance(value, str):
+        if not isinstance(value, string_types):
             raise TypeError('Value of "Audience" must be a string')
         audiences = ('sysadmin', 'developer')
         if value not in audiences:
@@ -167,7 +168,7 @@ class ExternalLink(BaseListPrimitive):
     name = 'external'
 
     def __init__(self, url=None, title=None):
-        if not all(isinstance(v, str) for v in (url, title)):
+        if not all(isinstance(v, string_types) for v in (url, title)):
             raise TypeError('Values "url" and "title" of "ExternalLink" must be a string')
         self._value = {'url': url, 'title': title}
 
@@ -181,7 +182,7 @@ class RelatedResource(BaseListPrimitive):
     name = 'related_resources'
 
     def __init__(self, scheme=None, identifier=None):
-        if not all(isinstance(v, str) for v in (scheme, identifier)):
+        if not all(isinstance(v, string_types) for v in (scheme, identifier)):
             raise TypeError('Values "scheme" and "identifier" of "RelatedResource" must be a string')
         self._value = {'scheme': scheme, 'title': identifier}
 
