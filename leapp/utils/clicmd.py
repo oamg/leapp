@@ -89,7 +89,17 @@ class Command(object):
         else:
             s = parser
         self.apply_parser(s, parser=parser)
-        args = parser.parse_args()
+        # NOTE(ivasilev) a clumsy hack to make leapp output help information for the
+        # exact subcommand that has been called.
+        # The original problem was with parser.parse_args() referring to parser for
+        # topmost leapp command and not the subcommand during error processing.
+        # Any ideas and proposals on a more elegant solution are welcome.
+        args, leftover = parser.parse_known_args()
+        if leftover:
+            cmdname = args.prog.split()[-1]
+            # NOTE(ivasilev) No vetting of cmdname is necessary here as unless a proper leapp subcommand was
+            # invocated parser.parse_known_args() would have thrown an exception
+            self._sub_commands[cmdname].parser.error(leftover)
         args.func(args)
 
     def get_inheritable_options(self):
