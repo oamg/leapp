@@ -165,7 +165,9 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
     :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
     :rtype: dict
     """
-    api.current_logger().debug('External command is started: [%s]', ' '.join(args))
+    if not args:
+        raise ValueError('Command to call is missing.')
+    api.current_logger().debug('External command has started: {0}'.format(str(args)))
     _id = str(uuid.uuid4())
     result = None
     try:
@@ -173,7 +175,7 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
         result = _call(args, callback_raw=callback_raw, callback_linebuffered=callback_linebuffered, env=env)
         if checked and result['exit_code'] != 0:
             raise CalledProcessError(
-                message="A Leapp Command Error occurred. ",
+                message='Command {0} failed with exit code {1}.'.format(str(args), result.get('exit_code')),
                 command=args,
                 result=result
             )
@@ -183,5 +185,5 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
             })
     finally:
         create_audit_entry('process-result', {'id': _id, 'parameters': args, 'result': result, 'env': env})
-        api.current_logger().debug('External command is finished: [%s]', ' '.join(args))
+        api.current_logger().debug('External command has finished: {0}'.format(str(args)))
     return result
