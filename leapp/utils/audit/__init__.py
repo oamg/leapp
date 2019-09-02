@@ -4,9 +4,8 @@ import json
 import os
 import sqlite3
 
-import six
-
 from leapp.config import get_config
+from leapp.compat import string_types
 from leapp.utils.schemas import CURRENT_SCHEMA, MIGRATIONS
 
 
@@ -114,7 +113,7 @@ class Execution(Storable):
         """
         super(Execution, self).__init__()
         self.stamp = stamp or datetime.datetime.utcnow().isoformat() + 'Z'
-        if not isinstance(configuration, str):
+        if not isinstance(configuration, string_types):
             configuration = json.dumps(configuration, sort_keys=True)
         self.configuration = configuration
         self.context = context
@@ -345,7 +344,7 @@ class Audit(DataSource):
         if self.message and not self.message.message_id:
             self.message.do_store(connection)
 
-        if self.data and not isinstance(self.data, six.string_types):
+        if self.data and not isinstance(self.data, string_types):
             self.data = json.dumps(self.data)
 
         cursor = connection.execute(

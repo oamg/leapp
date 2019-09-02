@@ -1,9 +1,9 @@
 import json
 
+from leapp.compat import string_types
 from leapp.models import fields, Model
 from leapp.topics import ReportTopic
 from leapp.libraries.stdlib.api import produce
-from leapp.compat import string_types
 
 
 class Report(Model):
