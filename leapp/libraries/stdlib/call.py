@@ -4,6 +4,8 @@ import select
 import os
 import codecs
 
+from leapp.compat import string_types
+
 
 STDIN = 0
 STDOUT = 1
@@ -144,7 +146,7 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
     stdin_fd, stdin_str = False, False
     if isinstance(stdin, int):
         stdin_fd = True
-    elif isinstance(stdin, str):
+    elif isinstance(stdin, string_types):
         stdin_str = True
         fstdin, wstdin = os.pipe()
     elif stdin is not None:
