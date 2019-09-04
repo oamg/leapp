@@ -1,3 +1,4 @@
+import hashlib
 import json
 
 from leapp.reporting import Remediation
@@ -15,7 +16,24 @@ def fetch_upgrade_report_messages(context_id):
     messages = []
     for message in report_msgs:
         data = message['message']['data']
+
+        # We need to be able to uniquely identify each message so we compute
+        # a hash of: context UUID, message ID in the database and hash of the
+        # data section of the message itself
+        sha256 = hashlib.sha256()
+        sha256.update(message['message']['hash'])
+        sha256.update(message['context'])
+        sha256.update(str(message['id']))
+
+        envelope = {
+            'timeStamp': message['stamp'],
+            'hostname': message['hostname'],
+            'actor': message['actor'],
+            'id': sha256.hexdigest()
+        }
+
         report = json.loads(json.loads(data).get('report'))
+        report.update(envelope)
         messages.append(report)
 
     return messages
