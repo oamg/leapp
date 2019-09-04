@@ -145,6 +145,7 @@ class Tags(BasePrimitive):
     MONITORING = _Value('monitoring')
     NETWORK = _Value('network')
     OS_FACTS = _Value('OS facts')
+    PYTHON = _Value('python')
     REPOSITORY = _Value('repository')
     SANITY = _Value('sanity')
     SECURITY = _Value('security')
