@@ -16,7 +16,7 @@ user to review.
 ### Sample Actor
 
 Let’s start with a very simple actor that will verify if system architecture is
-supported:
+supported (this actor may be removed in the future as more archs will be supported):
 
 ```python
 import platform
@@ -63,9 +63,9 @@ shared library with `'inhibitor'` flag.
 import platform
 
 from leapp.actors import Actor
-from leapp.reporting import Report
-from leapp.libraries.common.reporting import report_generic
-from leapp.tags import ChecksPhaseTag
+from leapp.reporting import Report, create_report
+from leapp import reporting
+from leapp.tags import ChecksPhaseTag, IPUWorkflowTag
 
 
 class CheckSystemArch(Actor):
@@ -79,15 +79,17 @@ class CheckSystemArch(Actor):
     name = 'check_system_arch'
     consumes = ()
     produces = (Report,)
-    tags = (ChecksPhaseTag,)
+    tags = (ChecksPhaseTag, IPUWorkflowTag)
 
     def process(self):
         if platform.machine() != 'x86_64':
-            report_generic(
-                title='Unsupported arch',
-                summary='Upgrade process is only supported on x86_64 systems.',
-                severity='high',
-                flags=['inhibitor'])
+            create_report([
+                reporting.Title('Unsupported architecture'),
+                reporting.Summary('Upgrade process is only supported on x86_64 systems.'),
+                reporting.Severity(reporting.Severity.HIGH),
+                reporting.Tags([reporting.Tags.SANITY]),
+                reporting.Flags([reporting.Flags.INHIBITOR])
+            ])
 ```
 
 Running the actor again, it is possible to verify that a new message was
@@ -100,19 +102,20 @@ $ snactor run CheckSystemArch --verbose --print-output
 2019-04-16 15:20:32.94  INFO     PID: 2621 leapp.repository.sandbox: A new repository 'sandbox' is initialized at /home/leapp/sandbox
 [
   {
-    "stamp": "2019-04-16T15:20:32.143709Z",
-    "hostname": "leapp",
+    "stamp": "2019-09-05T12:58:56.342095Z",
+    "hostname": "leapp-20190904152934",
     "actor": "check_system_arch",
-    "topic": "system_info",
-    "context": "904b0170-cfe7-4217-81d3-a259550e73c1",
+    "topic": "report_topic",
+    "context": "9a064a30-5d16-44ba-a807-b7f08b3c4215",
     "phase": "NON-WORKFLOW-EXECUTION",
     "message": {
-      "hash": "dcdf1679b6fd4c2e21bc4e4ed6585df75cd46aeea90a53ca76f469a2a1aa50d2",
-      "data": "{\"audience\": [\"sysadmin\"], \"detail\": \"{\\\"summary\\\": \\\"Upgrade process is only supported on x86_64 systems.\\\"}\", \"flags\": [\"inhibitor\"], \"renderers\": {\"html\": \"<h2 class=\\\"report-title\\\">{{ title }}</h2><p class=\\\"report-summary\\\">{{ summary }}</p>\", \"plaintext\": \"{{ title }}\\n{{ summary }}\"}, \"severity\": \"high\", \"title\": \"Unsupported arch\"}"
+      "hash": "dc95adcfca56eae62b7fcceeb0477a6d8257c3dddd1b05b879ebdcf05f59d504",
+      "data": "{\"report\": \"{\\\"audience\\\": \\\"sysadmin\\\", \\\"flags\\\": [\\\"inhibitor\\\"], \\\"severity\\\": \\\"high\\\", \\\"summary\\\": \\\"Upgrade process is only supported on x86_64 systems.\\\", \\\"tags\\\": [\\\"sanity\\\"], \\\"title\\\": \\\"Unsupported architecture\\\"}\"}"
     },
-    "type": "Inhibitor"
+    "type": "Report"
   }
 ]
+
 ```
 
 Or to inspect closely the message.data filed, we could use `jq` tool:
@@ -120,20 +123,9 @@ Or to inspect closely the message.data filed, we could use `jq` tool:
 ```sh
 snactor run CheckSystemArch --verbose --print-output | jq '.[] | .message.data | fromjson'
 {
-  "audience": [
-    "sysadmin"
-  ],
-  "detail": "{\"summary\": \"Upgrade process is only supported on x86_64 systems.\"}",
-  "flags": [
-    "inhibitor"
-  ],
-  "renderers": {
-    "html": "<h2 class=\"report-title\">{{ title }}</h2><p class=\"report-summary\">{{ summary }}</p>",
-    "plaintext": "{{ title }}\n{{ summary }}"
-  },
-  "severity": "high",
-  "title": "Unsupported arch"
+  "report": "{\"audience\": \"sysadmin\", \"flags\": [\"inhibitor\"], \"severity\": \"high\", \"summary\": \"Upgrade process is only supported on x86_64 systems.\", \"tags\": [\"sanity\"], \"title\": \"Unsupported architecture\"}"
 }
+
 ```
 
 This is all that an actor needs to do in order to verify if some condition is
@@ -153,7 +145,6 @@ $ leapp upgrade
 2019-04-16 15:36:54.715 INFO     PID: 7455 leapp.workflow.Reports: Starting stage Before of phase Reports
 2019-04-16 15:36:54.764 INFO     PID: 7455 leapp.workflow.Reports: Starting stage Main of phase Reports
 2019-04-16 15:36:54.788 INFO     PID: 7455 leapp.workflow.Reports: Executing actor verify_check_results
-2019-04-16 15:36:54.854 INFO     PID: 8510 leapp.workflow.Reports.verify_check_results: Generated report at /var/log/leapp-report.txt
 2019-04-16 15:36:54.923 INFO     PID: 7455 leapp.workflow.Reports: Starting stage After of phase Reports
 2019-04-16 15:36:54.970 INFO     PID: 7455 leapp.workflow: Workflow interrupted due to the FailPhase error policy
 

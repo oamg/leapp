@@ -113,20 +113,18 @@ class MyNewActor(Actor):
 
 By executing the above actor, all active kernel modules would be logged on output using log utilities inherited from the Actor class.
 
-### Producing data for other actors
+### Producing data for other actors and reporting
 
 An actor can produce some data interesting enough for other actors to consume. It could be some parsed data, or content that will be displayed to the user in a report or even shared info between a subset of actors.
 
 The process is very similar to the one used to consume messages, but now the new actor will produce them. Similar to ActiveKernelModulesFacts, Leapp has a Report model. Messages from this model contain data that will be displayed to the user during ReportsPhase. For example, an actor can warn the user in case a btrfs kernel module is active on the system. Then, the actor could looks like this:
 
 ```python
+from leapp import reporting
 from leapp.actors import Actor
 from leapp.models import ActiveKernelModulesFacts
+from leapp.reporting import Report, create_report
 from leapp.tags import ChecksPhaseTag, IPUWorkflowTag
-from leapp.reporting import Report
-from leapp.libraries.common.reporting import report_with_remediation
-
-
 
 class MyNewActor(Actor):
     """ No description has been provided for the my_new_actor actor. """
@@ -140,18 +138,66 @@ class MyNewActor(Actor):
         for fact in self.consume(ActiveKernelModulesFacts):
             for active_module in fact.kernel_modules:
                 if active_module.filename == 'btrfs':
-                    report_with_remediation(
-                        title='Btrfs removed in the next major version',
-                        summary='The Btrfs file system was introduced as Technology Preview with the initial release '
-                                'of Red Hat Enterprise Linux 6 and Red Hat Enterprise Linux 7. As of versions 6.6 and '
-                                '7.4 this technology has been deprecated and will be removed in next major version.',
-                        remediation='Please consider migrating your Btrfs mount point(s) to a different filesystem '
-                                    'before next upgrade attempt. If no Btrfs filesystem is in use, please unload '
-                                    'btrfs kernel module running "# rmmod btrfs".',
-                        severity='high',
-                        flags=['inhibitor'])
+                    create_report([
+                        reporting.Title('Btrfs has been removed from RHEL8'),
+                        reporting.Summary(
+                            'The Btrfs file system was introduced as Technology Preview with the initial release'
+                            ' of Red Hat Enterprise Linux 6 and Red Hat Enterprise Linux 7. As of versions 6.6'
+                            ' and 7.4 this technology has been deprecated and removed in RHEL8.'),
+                        reporting.ExternalLink(
+                            title='Considerations in adopting RHEL 8 - btrfs has been removed.',
+                            url='https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/'
+                                'considerations_in_adopting_rhel_8file-systems-and-storage_considerations-in-'
+                                'adopting-rhel-8#btrfs-has-been-removed_file-systems-and-storage'
+                        ),
+                        reporting.Severity(reporting.Severity.HIGH),
+                        reporting.Flags([reporting.Flags.INHIBITOR]),
+                        reporting.Tags([reporting.Tags.FILESYSTEM]),
+                        reporting.RelatedResource('driver', 'btrfs')
+                    ])
                     break
+
 ```
+
+Final report is generated in **"txt"** and **"json"** format in `/var/log/leapp` directory at the end of either leapp preupgrade or leapp upgrade execution.
+
+### Reporting tips
+
+Apart from the above example you can also suggest a remediation.
+
+**Remediations**
+
+```
+reporting.Remediation(commands=[['alternatives', '--set', 'python', '/usr/bin/python3']])
+reporting.Remediation(hint='Please remove the dropped options from your scripts.')
+reporting.Remediation(playbook=<link_to_playbook>)
+```
+
+In case of more report message tags then currently provided is needed, please open a GH issue or a PR.
+
+**Available tags**
+
+`'accessibility', 'authentication', 'boot', 'communication', 'drivers', 'email', 'encryption', 'filesystem', 'firewall', 'high availability', 'kernel', 'monitoring', 'network', 'OS facts', 'python', 'repository', 'sanity', 'security', 'selinux', 'services', 'time management', 'tools', 'upgrade process'`
+
+**Flags**
+
+Besides the above mentioned **"inhibitor"** flag, there is also a **"failure"** flag which is recommended to use when we report a command or other action failure.
+
+**Related resources**
+
+We recognize the following 6 types of resources:
+
+```
+reporting.RelatedResource('package', 'memcached')
+reporting.RelatedResource('file', '/etc/passwd')
+reporting.RelatedResource('service', 'postfix')
+reporting.RelatedResource('directory', '/boot')
+reporting.RelatedResource('repository', 'RHEL 7 Base')
+reporting.RelatedResource('kernel-driver', 'vmxnet3')
+reporting.RelatedResource('pam', 'pam_securetty')
+```
+
+The related resources are especially useful when you have a lot of accompanied objects like files or directories by your report and you would like to present it to the user in a specific way.
 
 For further information about messaging read this [document](messaging.html)
 
@@ -231,12 +277,13 @@ Now, you can execute _CheckOSRelease_ actor and verify that it consumes the prev
     "context": "0ac49430-1b29-4940-92bb-3e81da85f8af",
     "phase": "NON-WORKFLOW-EXECUTION",
     "message": {
-      "hash": "686355c648832f5399cffc5bd0e7e8312d2b77577cdeec94f674a2565090cf7f",
-      "data": "{\"audience\": [\"sysadmin\"], \"detail\": \"{\\\"summary\\\": \\\"Minimal supported OS version for upgrade process: 7.6\\\"}\", \"flags\": [\"inhibitor\"], \"renderers\": {\"html\": \"<h2 class=\\\"report-title\\\">{{ title }}</h2><p class=\\\"report-summary\\\">{{ summary }}</p>\", \"plaintext\": \"{{ title }}\\n{{ summary }}\"}, \"severity\": \"medium\", \"title\": \"Unsupported OS version\"}"
+      "hash": "ceaf419907ec78a894334b2a331a9ebb0c5a7847c18afc6d7546ba6656959e0d",
+      "data": "{\"report\": \"{\\\"audience\\\": \\\"sysadmin\\\", \\\"detail\\\": {\\\"related_resources\\\": [{\\\"scheme\\\": \\\"file\\\", \\\"title\\\": \\\"/etc/os-release\\\"}]}, \\\"flags\\\": [\\\"inhibitor\\\"], \\\"severity\\\": \\\"high\\\", \\\"summary\\\": \\\"The supported OS versions for the upgrade process: 7.6\\\", \\\"tags\\\": [\\\"sanity\\\"], \\\"title\\\": \\\"Unsupported OS version\\\"}\"}"
     },
     "type": "Report"
   }
 ]
+
 ```
 
 To flush all saved messages from the repository database, run `snactor messages clear`.
