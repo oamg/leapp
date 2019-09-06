@@ -77,6 +77,12 @@ def test_actor_execution(current_actor_context):
     assert current_actor_context.consume(ProducedExampleModel)[0].value == 3
 ```
 
+In case your actor uses `ConfigModel` for consuming workflow specific configuration, run the actor in the test as:
+
+```python
+current_actor_context.run(config_model=ConfigModel(os_release=OSRelease()))
+```
+
 #### Fixtures
 
 The unit testing support was first implemented with the help of
