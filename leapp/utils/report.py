@@ -21,9 +21,9 @@ def fetch_upgrade_report_messages(context_id):
         # a hash of: context UUID, message ID in the database and hash of the
         # data section of the message itself
         sha256 = hashlib.sha256()
-        sha256.update(message['message']['hash'])
-        sha256.update(message['context'])
-        sha256.update(str(message['id']))
+        sha256.update(message['message']['hash'].encode('utf-8'))
+        sha256.update(message['context'].encode('utf-8'))
+        sha256.update(str(message['id']).encode('utf-8'))
 
         envelope = {
             'timeStamp': message['stamp'],
