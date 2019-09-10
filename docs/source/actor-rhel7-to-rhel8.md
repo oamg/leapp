@@ -177,7 +177,12 @@ In case of more report message tags then currently provided is needed, please op
 
 **Available tags**
 
-`'accessibility', 'authentication', 'boot', 'communication', 'drivers', 'email', 'encryption', 'filesystem', 'firewall', 'high availability', 'kernel', 'monitoring', 'network', 'OS facts', 'python', 'repository', 'sanity', 'security', 'selinux', 'services', 'time management', 'tools', 'upgrade process'`
+```
+'accessibility', 'authentication', 'boot', 'communication', 'drivers', 'email', 'encryption',
+'filesystem', 'firewall', 'high availability', 'kernel', 'monitoring', 'network', 'OS facts',
+'python', 'repository', 'sanity', 'security', 'selinux', 'services', 'time management',
+'tools', 'upgrade process'
+```
 
 **Flags**
 
