@@ -166,7 +166,9 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
     :rtype: dict
     """
     if not args:
-        raise ValueError('Command to call is missing.')
+        message = 'Command to call is missing.'
+        api.current_logger().error(message)
+        raise ValueError(message)
     api.current_logger().debug('External command has started: {0}'.format(str(args)))
     _id = str(uuid.uuid4())
     result = None
@@ -174,8 +176,10 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
         create_audit_entry('process-start', {'id': _id, 'parameters': args, 'env': env})
         result = _call(args, callback_raw=callback_raw, callback_linebuffered=callback_linebuffered, env=env)
         if checked and result['exit_code'] != 0:
+            message = 'Command {0} failed with exit code {1}.'.format(str(args), result.get('exit_code'))
+            api.current_logger().debug(message)
             raise CalledProcessError(
-                message='Command {0} failed with exit code {1}.'.format(str(args), result.get('exit_code')),
+                message=message,
                 command=args,
                 result=result
             )
