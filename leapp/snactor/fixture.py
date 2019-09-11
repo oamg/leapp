@@ -95,13 +95,21 @@ class ActorContext(object):
         for model in models:
             self._messaging.feed(model, self)
 
-    def run(self):
+    def run(self, config_model=None):
         """
         Execute the current actor.
 
+        :param config_model: Config model for the actor to consume.
+        :type config_model: Config model instance derived from :py:class:`leapp.models.Model`
         :return: None
         """
-        self._actor(messaging=self._messaging).run()
+        config_model_cls = config_model.__class__ if config_model else None
+        if config_model:
+            self._messaging.feed(config_model, self)
+            # we have to make messaging system aware of config model being used as this is normally done by workflow
+            self._messaging._config_models = (config_model_cls,)
+        # the same as above applies here for actor
+        self._actor(messaging=self._messaging, config_model=config_model_cls).run()
 
     def messages(self):
         """
