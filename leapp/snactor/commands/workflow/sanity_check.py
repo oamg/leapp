@@ -6,6 +6,7 @@ from leapp.logger import configure_logger
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.snactor.commands.workflow import workflow
 from leapp.utils.clicmd import command_arg
+from leapp.utils.output import Color
 from leapp.utils.repository import requires_repository, find_repository_basedir
 
 _DESCRIPTION = 'The following messages are attempted to be consumed before they are produced: {}'
@@ -17,6 +18,10 @@ Perform workflow sanity checks
 For more information please consider reading the documentation at:
 https://red.ht/leapp-docs
 '''
+
+
+def print_fail(error):
+    print('{red}FAIL: {error}{reset}'.format(red=Color.red, error=error, reset=Color.reset), file=sys.stderr, end='\n')
 
 
 @workflow.command('sanity-check', help='Perform workflow sanity checks', description=_LONG_DESCRIPTION)
@@ -39,5 +44,5 @@ def cli(params):
     instance = wf()
     produced_late = set(instance.initial).intersection(set(instance.produces))
     if produced_late:
-        print(_DESCRIPTION.format(' '.join([m.__name__ for m in produced_late])), file=sys.stderr, end='\n')
+        print_fail(_DESCRIPTION.format(' '.join([m.__name__ for m in produced_late])))
         sys.exit(1)
