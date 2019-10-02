@@ -142,7 +142,7 @@ For more details about dependencies and how to modify them, see the [How to deal
 If you encounter unexpected input or any other error during execution of an actor and want to stop it, use these exceptions:
 
 - [StopActorExecution](/pydoc/leapp.html#leapp.exceptions.StopActorExecution) - raising this exception is a convenient to stop actor's execution with no side effect - it has the same effect as returning `None` from the main `process()` method in the `actor.py`
-- [StopActorExecutionError]/pydoc/leapp.html#leapp.exceptions.StopActorExecutionError) - raising this exception will stop actor's execution and notify the framework that an error has occurred and can influence the result of the workflow execution.
+- [StopActorExecutionError](/pydoc/leapp.html#leapp.exceptions.StopActorExecutionError) - raising this exception will stop actor's execution and notify the framework that an error has occurred and can influence the result of the workflow execution.
 
 In case of [StopActorExecutionError](/pydoc/leapp.html#leapp.exceptions.StopActorExecutionError) the execution of the workflow will stop or not according to the [policy](/pydoc/leapp.workflows.html?highlight=FailPhase#module-leapp.workflows.policies) defined in the workflow, there are three possibilities:
 
