@@ -12,6 +12,7 @@ from leapp.dialogs.renderer import CommandlineRenderer
 from leapp.messaging.answerstore import AnswerStore
 from leapp.exceptions import CannotConsumeErrorMessages
 from leapp.models import ErrorModel
+from leapp.messaging.commands import WorkflowCommand
 
 
 class BaseMessaging(object):
@@ -19,12 +20,14 @@ class BaseMessaging(object):
     BaseMessaging is the Base class for all messaging implementations. It provides the basic interface that is
     supported within the framework. These are called the `produce` and `consume` methods.
     """
+
     def __init__(self, stored=True, config_model=None, answer_store=None):
         self._manager = multiprocessing.Manager()
         self._dialog_renderer = CommandlineRenderer()
         self._data = self._manager.list()
         self._answers = answer_store or AnswerStore(manager=self._manager)
         self._new_data = self._manager.list()
+        self._commands = self._manager.list()
         self._errors = self._manager.list()
         self._stored = stored
         self._config_models = (config_model,) if config_model else ()
@@ -40,6 +43,13 @@ class BaseMessaging(object):
         :return: None
         """
         self._answers.load_and_translate_for_workflow(answer_file, workflow)
+
+    @property
+    def commands(self):
+        """
+        :return: List of commands that have been sent to the workflow execution.
+        """
+        return list(self._commands)
 
     @property
     def stored(self):
@@ -113,6 +123,19 @@ class BaseMessaging(object):
         model = ErrorModel(message=message, actor=actor.name, severity=severity, details=details,
                            time=datetime.datetime.now())
         self._do_produce(model, actor, self._errors)
+
+    def command(self, command):
+        """
+        Called to send a command to the workflow execution
+
+        :param command: A command to send to the workflow execution.
+        :type command: Instance of :py:class:`leapp.messaging.commands.WorkflowCommand`
+        :return: None
+        """
+        if isinstance(command, WorkflowCommand):
+            self._commands.append(command.encode())
+        else:
+            raise TypeError('Expected an instance of WorkflowCommand')
 
     def produce(self, model, actor):
         """

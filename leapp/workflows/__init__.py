@@ -8,6 +8,7 @@ from leapp.dialogs import RawMessageDialog
 from leapp.exceptions import CommandError, MultipleConfigActorsError, WorkflowConfigNotAvailable
 from leapp.messaging.answerstore import AnswerStore
 from leapp.messaging.inprocess import InProcessMessaging
+from leapp.messaging.commands import SkipPhasesUntilCommand
 from leapp.tags import ExperimentalTag
 from leapp.utils import reboot_system
 from leapp.utils.audit import checkpoint, get_errors
@@ -290,6 +291,12 @@ class Workflow(with_metaclass(WorkflowMeta)):
                             self.log.info('Workflow interrupted due to FailImmediately error policy')
                             early_finish = True
                             break
+
+                    for command in messaging.commands:
+                        if command['command'] == SkipPhasesUntilCommand.COMMAND:
+                            skip_phases_until = command['arguments']['until_phase']
+                            self.log.info('SkipPhasesUntilCommand received. Skipping phases until {}'.format(
+                                skip_phases_until))
 
                     checkpoint(actor=actor.name, phase=phase[0].name, context=context,
                                hostname=os.environ['LEAPP_HOSTNAME'])
