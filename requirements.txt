@@ -1,2 +1,2 @@
-six
+six==1.12
 requests
