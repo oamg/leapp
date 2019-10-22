@@ -189,6 +189,8 @@ install -m 0600 -d %{buildroot}%{_sysconfdir}/leapp/answers
 # standard directory should have permission set to 0755, however this directory
 # could contain sensitive data, hence permission for root only
 install -m 0700 -d %{buildroot}%{_sysconfdir}/leapp/answers
+# same for this dir; we need it for the frontend in cockpit
+install -m 0700 -d %{buildroot}%{_localstatedir}/log/leapp
 install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 install -m 0644 -p man/leapp.1 %{buildroot}%{_mandir}/man1/
 %endif # !fedora
@@ -222,6 +224,7 @@ rm -f %{buildroot}/%{_bindir}/leapp
 %dir %{_sysconfdir}/leapp/repos.d
 %{_bindir}/leapp
 %dir %{_sharedstatedir}/leapp
+%dir %{_localstatedir}/log/leapp
 %endif
 
 
