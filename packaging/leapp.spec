@@ -18,7 +18,7 @@
 %endif
 
 Name:       leapp
-Version:    0.8.1
+Version:    0.9.0
 Release:    1%{?dist}
 Summary:    OS & Application modernization framework
 
