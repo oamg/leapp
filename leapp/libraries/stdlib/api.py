@@ -67,6 +67,35 @@ def produce(*model_instances):
     return current_actor().produce(*model_instances)
 
 
+def consume_first_default(model):
+    """
+    Retrieves the first message found as specified in the actors :py:attr:`consumes` attribute, and filter message
+    types by model. This additionally returns as fallback value an instance of model with the default
+    initialization
+
+    :param model: Model to use as a filter for the messages to return
+    :type model: A derived class from :py:class:`leapp.models.Model`
+    :return: The first message of the specified model produced by other a fallback instance of model
+    :rtype: The message or a default initialized instance of the model type.
+    """
+    return current_actor().consume_first_default(model)
+
+
+def consume_first(model, default=None):
+    """
+    Retrieves the first message found as specified in the actors :py:attr:`consumes` attribute, and filter message
+    types by model.
+
+    :param model: Model to use as a filter for the messages to return
+    :type model: A derived class from :py:class:`leapp.models.Model`
+    :param default: Fallback value in case there are no messages
+    :type default: Any
+    :return: The first message of the specified model produced by other actors or the value passed as `default`
+    :rtype: The message or the value passed as ``default``
+    """
+    return current_actor().consume_first(model=model, default=default)
+
+
 def consume(*models):
     """
     Retrieve messages specified in the actors :py:attr:`consumes` attribute, and filter message types by
