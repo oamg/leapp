@@ -117,16 +117,28 @@ def generate_report_files(context):
     generate_report_file(messages, context, report_txt)
 
 
+def parse_verbose(args):
+    """
+    Set environment variables following command line arguments.
+    """
+    os.environ['LEAPP_DEBUG'] = '1' if args.debug else os.environ.get('LEAPP_DEBUG', '0')
+    if os.environ['LEAPP_DEBUG'] == '1' or args.verbose:
+        os.environ['LEAPP_VERBOSE'] = '1'
+    else:
+        os.environ['LEAPP_VERBOSE'] = os.environ.get('LEAPP_VERBOSE', '0')
+
+
 @command('upgrade', help='Upgrades the current system to the next available major version.')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
 @command_opt('reboot', is_flag=True, help='Automatically performs reboot when requested.')
-@command_opt('whitelist-experimental', action='append', metavar='ActorName',
-             help='Enables experimental actors')
+@command_opt('whitelist-experimental', action='append', metavar='ActorName', help='Enables experimental actors')
 @command_opt('load-answerfile', help='Path to load custom answerfile')
+@command_opt('debug', is_flag=True, help='Enable debug mode', inherit=False)
+@command_opt('verbose', is_flag=True, help='Enable verbose logging', inherit=False)
 def upgrade(args):
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
-
+    parse_verbose(args)
     if args.whitelist_experimental:
         args.whitelist_experimental = list(itertools.chain(*[i.split(',') for i in args.whitelist_experimental]))
     skip_phases_until = None
@@ -186,13 +198,14 @@ def upgrade(args):
 
 
 @command('preupgrade', help='Generate preupgrade report')
-@command_opt('whitelist-experimental', action='append', metavar='ActorName',
-             help='Enables experimental actors')
+@command_opt('whitelist-experimental', action='append', metavar='ActorName', help='Enables experimental actors')
 @command_opt('save-answerfile', help='Path to save custom answerfile')
+@command_opt('debug', is_flag=True, help='Enable debug mode', inherit=False)
+@command_opt('verbose', is_flag=True, help='Enable verbose logging', inherit=False)
 def preupgrade(args):
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
-
+    parse_verbose(args)
     if args.whitelist_experimental:
         args.whitelist_experimental = list(itertools.chain(*[i.split(',') for i in args.whitelist_experimental]))
     context = str(uuid.uuid4())
