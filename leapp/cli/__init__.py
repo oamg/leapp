@@ -7,7 +7,7 @@ from leapp import VERSION
 
 
 @command('')
-def cli(_):
+def cli(args): # noqa; pylint: disable=unused-argument
     pass
 
 
