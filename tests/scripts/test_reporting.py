@@ -2,7 +2,7 @@ from collections import namedtuple
 
 import pytest
 
-from leapp.reporting import _add_to_dict
+from leapp.reporting import _add_to_dict, create_report_from_error
 
 
 ReportPrimitive = namedtuple('ReportPrimitive', ['data', 'path', 'value', 'is_leaf_list'])
@@ -72,3 +72,28 @@ def test_add_to_dict_func_append():
     assert is_path_valid(data, path)
     assert_leaf_list(data, path, is_leaf_list)
     assert len(value_from_path(data, path)) == 2
+
+
+def test_convert_from_error_to_report():
+    error_dict_no_details = {
+        'message': 'The system is not registered or subscribed.',
+        'time': '2019-11-19T05:13:04.447562Z',
+        'details': None,
+        'actor': 'verify_check_results',
+        'severity': 'error'}
+    report = create_report_from_error(error_dict_no_details)
+    assert report["severity"] == "high"
+    assert report["title"] == "The system is not registered or subscribed."
+    assert report["audience"] == "sysadmin"
+    assert report["summary"] == ""
+    error_dict_with_details = {
+        'message': 'The system is not registered or subscribed.',
+        'time': '2019-11-19T05:13:04.447562Z',
+        'details': 'Some other info that should go to report summary',
+        'actor': 'verify_check_results',
+        'severity': 'error'}
+    report = create_report_from_error(error_dict_with_details)
+    assert report["severity"] == "high"
+    assert report["title"] == "The system is not registered or subscribed."
+    assert report["audience"] == "sysadmin"
+    assert report["summary"] == "Some other info that should go to report summary"

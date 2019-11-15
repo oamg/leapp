@@ -1,7 +1,7 @@
 import hashlib
 import json
 
-from leapp.reporting import Remediation
+from leapp.reporting import Remediation, create_report_from_error
 from leapp.utils.audit import get_messages
 
 
@@ -11,7 +11,7 @@ def fetch_upgrade_report_messages(context_id):
     :type context_id: str
     :return: All upgrade messages of type "Report" withing the given context
     """
-    report_msgs = get_messages(names=['Report'], context=context_id) or []
+    report_msgs = get_messages(names=['Report', 'ErrorModel'], context=context_id) or []
 
     messages = []
     for message in report_msgs:
@@ -31,8 +31,11 @@ def fetch_upgrade_report_messages(context_id):
             'actor': message['actor'],
             'id': sha256.hexdigest()
         }
-
-        report = json.loads(json.loads(data).get('report'))
+        data_json = json.loads(data)
+        report = json.loads(data_json.get('report', "{}"))
+        if not report:
+            # transform Error message to Report message
+            report = create_report_from_error(data_json)
         report.update(envelope)
         messages.append(report)
 
