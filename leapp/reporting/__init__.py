@@ -1,7 +1,7 @@
 import json
 
 from leapp.compat import string_types
-from leapp.models import fields, Model
+from leapp.models import fields, Model, ErrorModel
 from leapp.topics import ReportTopic
 from leapp.libraries.stdlib.api import produce
 
@@ -269,15 +269,28 @@ def _sanitize_entries(entries):
         entries.append(Audience('sysadmin'))
 
 
-def create_report(entries):
-    """
-    Create final report message
-    """
-
+def _create_report_object(entries):
     report = {}
 
     _sanitize_entries(entries)
     for entry in entries:
         entry.apply(report)
 
-    produce(Report(report=report))
+    return Report(report=report)
+
+
+def create_report(entries):
+    """
+    Produce final report message
+    """
+    produce(_create_report_object(entries))
+
+
+def create_report_from_error(error_dict):
+    """
+    Convert error json to report json
+    """
+    error = ErrorModel.create(error_dict)
+    entries = [Title(error.message), Summary(error.details or ""), Severity('high'), Audience('sysadmin')]
+    report = _create_report_object(entries)
+    return json.loads(report.dump()['report'])
