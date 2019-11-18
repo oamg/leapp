@@ -14,7 +14,7 @@ from leapp.logger import configure_logger
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
-from leapp.utils.output import report_errors, report_info, beautify_actor_exception
+from leapp.utils.output import report_errors, report_info, beautify_actor_exception, report_unsupported
 from leapp.utils.report import fetch_upgrade_report_messages, generate_report_file
 
 
@@ -117,6 +117,22 @@ def generate_report_files(context):
     generate_report_file(messages, context, report_txt)
 
 
+def warn_if_unsupported():
+    env = os.environ
+    if 'LEAPP_UNSUPPORTED' in env:
+        devel_vars = {k: env[k] for k in env if k.startswith('LEAPP_DEVEL_')}
+        experimental = []
+
+        with get_connection(None) as db:
+            conf = db.execute("SELECT configuration FROM execution "
+                              "WHERE kind = 'upgrade' OR kind = 'preupgrade' "
+                              "ORDER BY id DESC LIMIT 1").fetchone()
+            if conf:
+                experimental = json.loads(conf[0])["whitelist_experimental"]
+
+        report_unsupported(devel_vars, experimental)
+
+
 @command('upgrade', help='Upgrades the current system to the next available major version.')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
 @command_opt('reboot', is_flag=True, help='Automatically performs reboot when requested.')
@@ -172,6 +188,7 @@ def upgrade(args):
             msg = 'No such Actor: {}'.format(actor_name)
             logger.error(msg)
             raise CommandError(msg)
+    warn_if_unsupported()
     with beautify_actor_exception():
         answerfile_path = args.load_answerfile or get_config().get('report', 'answerfile')
         logger.info("Using answerfile at %s", answerfile_path)
@@ -220,6 +237,7 @@ def preupgrade(args):
             msg = 'No such Actor: {}'.format(actor_name)
             logger.error(msg)
             raise CommandError(msg)
+    warn_if_unsupported()
     with beautify_actor_exception():
         until_phase = 'ReportsPhase'
         logger.info('Executing workflow until phase: %s', until_phase)

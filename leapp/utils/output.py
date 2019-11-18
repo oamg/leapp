@@ -13,6 +13,7 @@ class Color(object):
     bold = "\033[1m" if sys.stdout.isatty() else ""
     red = "\033[1;31m" if sys.stdout.isatty() else ""
     green = "\033[1;32m" if sys.stdout.isatty() else ""
+    yellow = "\033[1;33m" if sys.stdout.isatty() else ""
 
 
 def pretty_block(string, color=Color.bold, width=60):
@@ -35,7 +36,7 @@ def print_error(error):
 def report_errors(errors):
     if errors:
         sys.stdout.write(pretty_block("ERRORS", color=Color.red))
-        sys.stderr.write("\n")
+        sys.stdout.write("\n")
         for error in errors:
             print_error(error)
         sys.stdout.write(pretty_block("END OF ERRORS", color=Color.red))
@@ -49,6 +50,24 @@ def report_info(path, fail=False):
         for report_path in paths:
             sys.stdout.write("A report has been generated at {path}\n".format(path=report_path))
         sys.stdout.write(pretty_block("END OF REPORT", color=Color.bold if fail else Color.green))
+
+
+def report_unsupported(devel_vars, experimental):
+    sys.stdout.write(pretty_block("UNSUPPORTED UPGRADE", color=Color.yellow))
+    sys.stdout.write("\nVariable LEAPP_UNSUPPORTED has been detected. Proceeding at your own risk.\n")
+
+    if devel_vars:
+        sys.stdout.write("{yellow}Development variables{reset} have been detected:\n".format(
+            yellow=Color.yellow, reset=Color.reset))
+        for key in devel_vars:
+            sys.stdout.write("- {key}={value}\n".format(key=key, value=devel_vars[key]))
+    if experimental:
+        sys.stdout.write("{yellow}Experimental actors{reset} have been detected:\n".format(
+            yellow=Color.yellow, reset=Color.reset))
+        for actor in experimental:
+            sys.stdout.write("- {actor}\n".format(actor=actor))
+    sys.stdout.write(pretty_block("UNSUPPORTED UPGRADE", color=Color.yellow))
+    sys.stdout.write("\n")
 
 
 @contextmanager
