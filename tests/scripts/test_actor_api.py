@@ -9,6 +9,7 @@ import pytest
 from leapp.actors import Actor, get_actors
 from leapp.libraries.stdlib import api
 from leapp.messaging import BaseMessaging
+from leapp.models import ApiTestConsume, ApiTestProduce
 from leapp.repository.scan import scan_repo
 
 
@@ -73,7 +74,6 @@ def test_actor_api(repository, actor_name):
 def test_actor_messaging_paths(leapp_forked, repository, actor_name):  # noqa; pylint: disable=unused-argument
     messaging = _TestableMessaging()
     with _with_loaded_actor(repository, actor_name, messaging) as (_unused, actor):
-        from leapp.models import ApiTestConsume, ApiTestProduce
         messaging.feed(ApiTestConsume(data='prefilled'), actor)
 
         assert len(list(actor.consume(ApiTestConsume))) == 1

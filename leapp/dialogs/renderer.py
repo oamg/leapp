@@ -1,4 +1,5 @@
 from __future__ import print_function
+from getpass import getpass
 import six
 
 
@@ -102,7 +103,6 @@ class CommandlineRenderer(DialogRendererBase):
     CommandlineRenderer implements the handling for commandline user interactions.
     """
     def __init__(self):
-        from getpass import getpass
         self.getpass = getpass
 
     def render(self, dialog):
@@ -265,7 +265,7 @@ class CommandlineRenderer(DialogRendererBase):
                 if not result:
                     dialog.answer(component, tuple(sorted([component.choices[x] for x in selected])))
                     break
-                elif len(result) == 1 and -1 < indices.index(result) < len(component.choices):
+                if len(result) == 1 and -1 < indices.index(result) < len(component.choices):
                     idx = indices.index(result)
                     if idx in selected:
                         selected.remove(idx)
@@ -275,7 +275,7 @@ class CommandlineRenderer(DialogRendererBase):
                 if not result and component.default is not None:
                     dialog.answer(component, component.default)
                     break
-                elif len(result) == 1 and -1 < indices.index(result) < len(component.choices):
+                if len(result) == 1 and -1 < indices.index(result) < len(component.choices):
                     dialog.answer(component, component.choices[indices.index(result)])
                     break
 

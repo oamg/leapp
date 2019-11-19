@@ -111,7 +111,7 @@ def cli(args):
         sys.stderr.write('\n')
         sys.exit(1)
 
-    actors = [actor for actor in repository.actors]
+    actors = repository.actors
     topics = [topic for topic in get_topics() if _is_local(repository, topic, base_dir, all_repos=args.all)]
     models = [model for model in get_models() if _is_local(repository, model, base_dir, all_repos=args.all)]
     tags = [tag for tag in get_tags() if _is_local(repository, tag, base_dir, all_repos=args.all)]
