@@ -40,3 +40,6 @@ max-line-length=120
 [DESIGN]
 max-args=11  # 2x + 1 from default
 max-attributes=21  # 4x + 1 from default
+
+[TYPECHECK]
+disable=bad-option-value  # unavoidable as the project requires both py2 and py3

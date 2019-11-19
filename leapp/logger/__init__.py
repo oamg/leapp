@@ -7,6 +7,7 @@ import time
 
 from leapp.config import get_config
 from leapp.libraries.stdlib.config import is_debug, is_verbose
+from leapp.utils.actorapi import get_actor_api, RequestException
 from leapp.utils.audit import Audit
 
 _logger = None
@@ -17,7 +18,6 @@ class LeappAuditHandler(logging.Handler):
         super(LeappAuditHandler, self).__init__(*args, **kwargs)
         self.use_remote = kwargs.pop('use_remote', False)
         if self.use_remote:
-            from leapp.utils.actorapi import get_actor_api
             self.url = 'leapp://localhost/actors/v1/log'
             self.session = get_actor_api()
 
@@ -45,7 +45,6 @@ class LeappAuditHandler(logging.Handler):
         Audit(**log_data).store()
 
     def _remote_emit(self, log_data):
-        from leapp.utils.actorapi import RequestException
         try:
             self.session.post(self.url, json=log_data, timeout=0.1)
         except RequestException:

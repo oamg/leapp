@@ -1,5 +1,6 @@
 import itertools
 
+from leapp.models import resolve_model_references
 from leapp.repository import _LoadStage
 
 
@@ -99,7 +100,6 @@ class RepositoryManager(object):
             repo.load(resolve=False, stage=_LoadStage.WORKFLOWS)
 
         if resolve:
-            from leapp.models import resolve_model_references
             resolve_model_references()
 
     def dump(self):

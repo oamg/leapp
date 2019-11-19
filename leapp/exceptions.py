@@ -116,7 +116,7 @@ class StopActorExecutionError(LeappError):
     :py:func:`leapp.actors.Actor.report_error`.
     """
     # import here to break import cycle
-    from leapp.models.error_severity import ErrorSeverity
+    from leapp.models.error_severity import ErrorSeverity  # pylint: disable=import-outside-toplevel
 
     def __init__(self, message, severity=ErrorSeverity.ERROR, details=None):
         """

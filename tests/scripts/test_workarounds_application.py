@@ -1,4 +1,5 @@
 from __future__ import print_function
+from multiprocessing import util, Process, Manager
 
 import os
 
@@ -6,7 +7,6 @@ import leapp  # noqa: F401; pylint: disable=unused-import
 
 
 def test_mp_is_patched():
-    from multiprocessing import Process, Manager
 
     def child_fun(_lst):
         pid = os.fork()
@@ -27,6 +27,5 @@ def test_mp_is_patched():
 
 
 def test_mp_workaround_applied():
-    from multiprocessing import util
     if getattr(util, 'os', None) is None:
         assert util.Finalize.__name__ == 'FixedFinalize'

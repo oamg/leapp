@@ -3,9 +3,10 @@ import os
 import pkgutil
 import sys
 
-import leapp.libraries.common # noqa # pylint: disable=unused-import
-import leapp.workflows
 from leapp.exceptions import RepoItemPathDoesNotExistError, UnsupportedDefinitionKindError
+import leapp.libraries.common # noqa # pylint: disable=unused-import
+from leapp.models import resolve_model_references
+import leapp.workflows
 from leapp.repository.definition import DefinitionKind
 from leapp.repository.actor_definition import ActorDefinition
 from leapp.utils.libraryfinder import LeappLibrariesFinder
@@ -129,7 +130,6 @@ class Repository(object):
             self.log.debug("Loading model modules")
             self._load_modules(self.models, 'leapp.models')
             if resolve:
-                from leapp.models import resolve_model_references
                 resolve_model_references()
 
         if not stage or stage is _LoadStage.LIBRARIES:

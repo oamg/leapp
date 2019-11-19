@@ -425,7 +425,7 @@ class Model(Field):
         :type help: str
         """
         super(Model, self).__init__(**kwargs)
-        from leapp.models import Model as ModelType
+        from leapp.models import Model as ModelType  # pylint: disable=import-outside-toplevel
         if not isinstance(model_type, type) or not issubclass(model_type, ModelType):
             raise ModelMisuseError("{} must be a type derived from Model".format(model_type))
         self._model_type = model_type

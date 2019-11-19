@@ -5,11 +5,12 @@ import mock
 import pytest
 
 from helpers import make_repository_dir_fixture
+from leapp.exceptions import LeappRuntimeError, RepositoryConfigurationError
 from leapp.repository.scan import find_and_scan_repositories, scan_repo
 from leapp.snactor.commands.new_actor import cli as new_actor_cmd
 from leapp.snactor.commands.new_tag import cli as new_tag_cmd
 from leapp.snactor.commands.workflow.new import cli as new_workflow_cmd
-from leapp.exceptions import LeappRuntimeError, RepositoryConfigurationError
+import leapp.tags
 
 
 # override repository_dir fixture generally defined in session scope
@@ -87,7 +88,6 @@ def test_repo(repository_dir):
             repository = find_and_scan_repositories(repo_path.dirpath().strpath)
             assert repository
             repository.load(resolve=True)
-            import leapp.tags
             assert getattr(leapp.tags, 'TestTag')
             assert repository.lookup_actor('TestActor')
             assert repository.lookup_workflow('TestWorkflow')
