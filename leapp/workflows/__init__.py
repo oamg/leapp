@@ -203,7 +203,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         if phase:
             return phase in [name for phs in self._phase_actors for name in phase_names(phs)]
 
-    def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None):
+    def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None, skip_dialogs=False):
         """
         Executes the workflow
 
@@ -276,7 +276,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     messaging = InProcessMessaging(config_model=config_model, answer_store=self._answer_store)
                     messaging.load(actor.consumes)
                     instance = actor(logger=current_logger, messaging=messaging,
-                                     config_model=config_model)
+                                     config_model=config_model, skip_dialogs=skip_dialogs)
                     try:
                         instance.run()
                     except BaseException:

@@ -84,7 +84,7 @@ class Actor(object):
             'dialogs': [d.serialize() for d in self.dialogs],
         }
 
-    def __init__(self, messaging=None, logger=None, config_model=None):
+    def __init__(self, messaging=None, logger=None, config_model=None, skip_dialogs=False):
         self._configuration = None
         """
         Instance a workflow defined configuration model if available.
@@ -96,6 +96,7 @@ class Actor(object):
         install_translation_for_actor(type(self))
         self._messaging = messaging
         self.log = (logger or logging.getLogger('leapp.actors')).getChild(self.name)
+        self.skip_dialogs = skip_dialogs
         """ A configured logger instance for the current actor. """
 
         if config_model:
@@ -108,6 +109,8 @@ class Actor(object):
         :param dialog: Dialog instance to show
         :return: dictionary with the requested answers, None if not a defined dialog
         """
+        if self.skip_dialogs:
+            return {}
         if dialog in type(self).dialogs:
             return self._messaging.request_answers(dialog)
         return None

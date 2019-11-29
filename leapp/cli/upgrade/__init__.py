@@ -223,7 +223,7 @@ def preupgrade(args):
     with beautify_actor_exception():
         until_phase = 'ReportsPhase'
         logger.info('Executing workflow until phase: %s', until_phase)
-        workflow.run(context=context, until_phase=until_phase)
+        workflow.run(context=context, until_phase=until_phase, skip_dialogs=True)
 
     cfg = get_config()
     answerfile = args.save_answerfile or cfg.get('report', 'answerfile')
