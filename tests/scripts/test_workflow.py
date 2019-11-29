@@ -26,7 +26,7 @@ def test_workflow(repository):
         assert workflow.phase_actors
         assert not workflow.consumes
         assert not workflow.produces
-        workflow.run()
+        workflow.run(skip_dialogs=True)
         test_log_file.seek(0)
         order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
@@ -43,7 +43,7 @@ def test_workflow_until_actor(repository):
     with tempfile.NamedTemporaryFile() as test_log_file:
         os.environ['LEAPP_TEST_EXECUTION_LOG'] = test_log_file.name
         workflow = repository.lookup_workflow('UnitTest')()
-        workflow.run(context='unit-test-context', until_actor='ThirdActor')
+        workflow.run(context='unit-test-context', until_actor='ThirdActor', skip_dialogs=True)
         test_log_file.seek(0)
         order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
@@ -57,7 +57,7 @@ def test_workflow_until_phase_main(repository):
     with tempfile.NamedTemporaryFile() as test_log_file:
         os.environ['LEAPP_TEST_EXECUTION_LOG'] = test_log_file.name
         workflow = repository.lookup_workflow('UnitTest')()
-        workflow.run(context='unit-test-context', until_phase='ThirdPhase.main')
+        workflow.run(context='unit-test-context', until_phase='ThirdPhase.main', skip_dialogs=True)
         test_log_file.seek(0)
         order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
@@ -71,7 +71,7 @@ def test_workflow_until_phase_before(repository):
     with tempfile.NamedTemporaryFile() as test_log_file:
         os.environ['LEAPP_TEST_EXECUTION_LOG'] = test_log_file.name
         workflow = repository.lookup_workflow('UnitTest')()
-        workflow.run(context='unit-test-context', until_phase='ThirdPhase.before')
+        workflow.run(context='unit-test-context', until_phase='ThirdPhase.before', skip_dialogs=True)
         test_log_file.seek(0)
         order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
@@ -84,7 +84,7 @@ def test_workflow_until_phase_full(repository):
     with tempfile.NamedTemporaryFile() as test_log_file:
         os.environ['LEAPP_TEST_EXECUTION_LOG'] = test_log_file.name
         workflow = repository.lookup_workflow('UnitTest')()
-        workflow.run(context='unit-test-context', until_phase='ThirdPhase')
+        workflow.run(context='unit-test-context', until_phase='ThirdPhase', skip_dialogs=True)
         test_log_file.seek(0)
         order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
@@ -99,7 +99,7 @@ def test_workflow_skip_phases_until(repository):
     with tempfile.NamedTemporaryFile() as test_log_file:
         os.environ['LEAPP_TEST_EXECUTION_LOG'] = test_log_file.name
         workflow = repository.lookup_workflow('UnitTest')()
-        workflow.run(context='unit-test-context', skip_phases_until='ThirdPhase')
+        workflow.run(context='unit-test-context', skip_phases_until='ThirdPhase', skip_dialogs=True)
         test_log_file.seek(0)
         order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FourthActor'
@@ -119,7 +119,7 @@ def test_workflow_reboot(repository):
                     fpidx = idx
                     break
             workflow.phase_actors[fpidx][0].flags.restart_after_phase = True
-            workflow.run()
+            workflow.run(skip_dialogs=True)
             workflow.phase_actors[fpidx][0].flags.restart_after_phase = False
             reboot_system_function.assert_called_once_with()
             test_log_file.seek(0)
@@ -134,7 +134,7 @@ def test_workflow_error_policy_fail_immediately(repository):
         workflow = repository.lookup_workflow('UnitTest')()
         repository.lookup_actor('FirstActor').should_report_error = True
         os.environ['FirstActor-ReportError'] = '1'
-        workflow.run()
+        workflow.run(skip_dialogs=True)
         del os.environ['FirstActor-ReportError']
 
         test_log_file.seek(0)
@@ -151,7 +151,7 @@ def test_workflow_error_policy_fail_phase(repository):
         os.environ['AfterThirdActor-ReportError'] = '1'
         workflow = repository.lookup_workflow('UnitTest')()
         repository.lookup_actor('FirstActor').should_report_error = True
-        workflow.run()
+        workflow.run(skip_dialogs=True)
         test_log_file.seek(0)
         order = [json.loads(line.decode('utf-8'))['class_name'] for line in test_log_file]
         assert order.pop(0) == 'FirstActor'
@@ -161,3 +161,12 @@ def test_workflow_error_policy_fail_phase(repository):
         assert tuple(sorted([order.pop(0), order.pop(0)])) == ('AfterCommonThirdActor', 'AfterThirdActor')
         assert not order
         assert workflow.errors and len(workflow.errors) == 2
+
+
+def test_workflow_render_dialogs(repository):
+    workflow = repository.lookup_workflow('UnitTest')()
+    with tempfile.NamedTemporaryFile(mode='w') as stdin_dialog:
+        stdin_dialog.write('Yes\n')
+        stdin_dialog.seek(0)
+        with mock.patch('sys.stdin.fileno', return_value=stdin_dialog.fileno()):
+            workflow.run(skip_dialogs=False)
