@@ -15,7 +15,7 @@ The main tools you will use for the actor development are listed below.
 
 ### leapp
 
-The leapp framework uses provides the libraries required to be imported by any actor and also a binary tool used to control the execution of actors within a workflow.  
+The leapp framework provides the libraries required to be imported by any actor and also a binary tool used to control the execution of actors within a workflow.
 
 ### snactor
 
@@ -87,6 +87,8 @@ class MyNewActor(Actor):
 ### Receiving data from other actors
 
 All communication between actors in Leapp is carried out using **“messages”**. An actor can consume or produce messages. A message may contain any data, but the data needs to be in a specific format defined by a **“model”**. If an actor wants to consume a message produced by another actor, it needs to specify the specific model of the consumed messages. Leapp will make sure to execute such an actor only after some message of the specified model was produced by another actor. If no message of the specified model was produced in previous phases or in the current phase, the consuming actor will get no messages of that kind.
+
+For further information about messaging refer to [document](messaging.html)
 
 One of the existing models in Leapp is [ActiveKernelModulesFacts](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/models/activekernelmodulesfacts.py). Messages from this model contain data about the system on which Leapp has been started. For example, it contains installed kernel modules. If an actor wants to perform some action based on existing kernel modules on the system, the actor can get list of these modules by consuming the _ActiveKernelModulesFacts_ messages. By extending the boilerplate, the code could look like this:
 
@@ -161,19 +163,61 @@ class MyNewActor(Actor):
 
 Final report is generated in **"txt"** and **"json"** format in `/var/log/leapp` directory at the end of either leapp preupgrade or leapp upgrade execution.
 
-### Reporting tips
+### Reporting tips and good practices
 
-Apart from the above example you can also suggest a remediation.
+**Same type reports share the same title**
+
+To make your reports easier to read and aggregate please use same report title for checks that have the same semantics.
+For example, if your actor is checking for deprecated modules and creating a report entry each time one is found,
+the way to represent it in the report will be
+
+```diff
+create_report([
+    reporting.Title(
+-        'Upgrade process was interrupted because a deprecated module {0} is enabled'.format(module),
++        'Upgrade process was interrupted because a deprecated module is enabled',
+    reporting.Summary(
+        'Module {0} was surpassed by shiny-new-{0} and therefore it was '
+        'removed from RHEL-8. Keeping it in the configuration may '
+        'lock out the system thus it is necessary to disable it '
+        'before the upgrade process can continue.'.format(module)
+    ),
+    ...
+   ])
+```
+
+A better way, if applicable, would be to first collect all deprecated modules with their descendants and produce one
+report entry with a list of mappings, like
+
+```
+
+modules_map = {'moduleA': 'shiny-new-moduleA', 'moduleB': 'shiny-new-moduleB'}
+...
+
+create_report([
+    reporting.Title(
+         'Upgrade process was interrupted because deprecated modules are enabled',
+    reporting.Summary(
+        'Modules below were surpassed by new modules and '
+        'removed from RHEL-8. Keeping them in the configuration may '
+        'lock out the system thus it is necessary to disable them '
+        'before the upgrade process can continue.\n{}'.format(
+            '\n'.join("     - {0} -> {1}".format(old, new) for old, new in modules_map.iteritems()))
+    ),
+    ...
+   ])
+```
 
 **Remediations**
+
+Apart from the above example you can also suggest a remediation, which is a procedure intended to fix the discovered
+issue. Currently remediation can come in 3 flavors: a bash command to execute, a hint for manual action and a playbook.
 
 ```
 reporting.Remediation(commands=[['alternatives', '--set', 'python', '/usr/bin/python3']])
 reporting.Remediation(hint='Please remove the dropped options from your scripts.')
 reporting.Remediation(playbook=<link_to_playbook>)
 ```
-
-In case of more report message tags then currently provided is needed, please open a GH issue or a PR.
 
 **Available tags**
 
@@ -183,6 +227,8 @@ In case of more report message tags then currently provided is needed, please op
 'python', 'repository', 'sanity', 'security', 'selinux', 'services', 'time management',
 'tools', 'upgrade process'
 ```
+
+In case of more report message tags then currently provided is needed, please open a GH issue or a PR.
 
 **Flags**
 
@@ -204,7 +250,6 @@ reporting.RelatedResource('pam', 'pam_securetty')
 
 The related resources are especially useful when you have a lot of accompanied objects like files or directories by your report and you would like to present it to the user in a specific way.
 
-For further information about messaging read this [document](messaging.html)
 
 ## Testing your new actor
 
