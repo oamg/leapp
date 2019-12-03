@@ -146,7 +146,7 @@ def _logfile_logging_handler(fd_info, line):  # pylint: disable=unused-argument
 
 
 def run(args, split=False, callback_raw=_console_logging_handler, callback_linebuffered=_logfile_logging_handler,
-        env=None, checked=True):
+        env=None, checked=True, stdin=None):
     """
     Run a command and return its result as a dict.
 
@@ -162,6 +162,8 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
     :type env: dict
     :param checked: Raise an exception on a non-zero exit code, default True
     :type checked: bool
+    :param stdin: String or a file descriptor that will be written to stdin of the child process
+    :type stdin: int, str
     :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
     :rtype: dict
     """
@@ -174,7 +176,8 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
     result = None
     try:
         create_audit_entry('process-start', {'id': _id, 'parameters': args, 'env': env})
-        result = _call(args, callback_raw=callback_raw, callback_linebuffered=callback_linebuffered, env=env)
+        result = _call(args, callback_raw=callback_raw, callback_linebuffered=callback_linebuffered,
+                       stdin=stdin, env=env)
         if checked and result['exit_code'] != 0:
             message = 'Command {0} failed with exit code {1}.'.format(str(args), result.get('exit_code'))
             api.current_logger().debug(message)
