@@ -115,11 +115,30 @@ class MyNewActor(Actor):
 
 By executing the above actor, all active kernel modules would be logged on output using log utilities inherited from the Actor class.
 
+### Asking user questions
+
+In rare cases the actor can't choose a proper scenario of execution and leaves the final decision of how to proceed
+to the user. That's where dialogs come into play.
+
+Please mind that using dialogs should be considered as last resort, when the situation absolutely can't resolve itself
+automatically. The rule of a thumb is to make upgrade procedure require as little user input as possible. But if you
+feel that there is no way to write a proper safe rhel7->rhel8 conversion logic and you need human to make a decision -
+you can go with dialogs.
+
+The following restrictions apply:
+
+- At the time only Yes/No questions can be asked. Effectively only leapp.dialogs.components.BooleanComponent can be used.
+- Dialogs can't be codependent. Any question asked should be independent of previous question's answer and should not
+  change the behavior of any other dialog that any actor might create.
+- Dialogs can be used only at certain stages of the workflow - ChecksPhase and TargetTransactionChecksPhase.
+
+For more information and real examples please check [dialogs](dialogs.html).
+
 ### Producing data for other actors and reporting
 
 An actor can produce some data interesting enough for other actors to consume. It could be some parsed data, or content that will be displayed to the user in a report or even shared info between a subset of actors.
 
-The process is very similar to the one used to consume messages, but now the new actor will produce them. Similar to ActiveKernelModulesFacts, Leapp has a Report model. Messages from this model contain data that will be displayed to the user during ReportsPhase. For example, an actor can warn the user in case a btrfs kernel module is active on the system. Then, the actor could looks like this:
+The process is very similar to the one used to consume messages, but now the new actor will produce them. Similar to ActiveKernelModulesFacts, Leapp has a Report model. Messages from this model contain data that will be displayed to the user during ReportsPhase. For example, an actor can warn the user in case a btrfs kernel module is active on the system. Then, the actor could look like this:
 
 ```python
 from leapp import reporting

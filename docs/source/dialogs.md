@@ -1,19 +1,23 @@
 # Asking user questions
 
-Leapp framework uses dialogs to ask user for any additional information an actor may need.
+Leapp framework uses dialogs to ask user for any additional information an actor needs that can not be deduced
+automatically.
 Dialogs contain Components which represent individual questions.
-Complete list of component types can be found in [documentation](pydoc/leapp.dialogs.html#module-leapp.dialogs.components).
+Complete list of component types can be found in
+[documentation](pydoc/leapp.dialogs.html#module-leapp.dialogs.components).
 
-As an example we will change [IpResolver](messaging.html#creating-a-message-consuming-actor) actor in a way that user will decide which hostnames will be resolved.
+As an example we will change [IpResolver](messaging.html#creating-a-message-consuming-actor) actor in a way that user
+will decide which hostnames will be resolved.
 
 
 ### Creating the dialog
 
 Import Dialog and MultipleChoiceComponent from leapp.dialog and leapp.dialog.components respectively.
-Create an instance of Dialog, specifying scope which is used to identify data in answer files,
-reason to explain user what the data will be used for and components. For each component specify key which will be used to get answer to specific question,
-label and description. You can also specify default or choices if the component support them,
-but as choices in our example depend on consumed data, we will specify them later.
+Create an instance of Dialog, specifying scope which is used to identify data in the answer file,
+reason to explain user what the data will be used for and components. For each component specify key which will be
+used to get answer to specific question, label and description.
+You can also specify default or choices if the component support them, but as choices in our example depend on
+consumed data, we will specify them later.
 
 See the example of the code:
 
@@ -65,3 +69,23 @@ def process(self):
         ips = [entry[4][0] for entry in resolved if not '%' in entry[4][0]]
         self.produce(ResolvedHostname(name=hostname, ips=ips))
 ```
+
+### Explaining the dialogs processing mechanism during the upgrade
+
+The upgrade itself from the operator's point of view consists of 3 distinct stages: leapp preupgrade, leapp answer
+and leapp upgrade.
+
+Leapp preupgrade stage should be treated as "non-invasive system upgradeability analysis", when the upgrade workflow
+stops right after preliminary system facts collection phases and a preupgrade report containing all the information
+about potential issues is generated. If during this stage a dialog containing actor is discovered, a specific
+message is added to the preupgrade report file saying that for the successful upgrade the operator should record
+their decision in the answerfile.
+
+Leapp answer stage is intended specifically for answerfile management. The operator has the option to manually edit
+the answerfile with editor of choice or use leapp answer command to fill the answerfile (usually located at 
+/var/log/leapp/answerfile) with choices for the discovered dialogs. After modifying the answerfile you can check
+system upgradeability by rerunning leapp preupgrade.
+
+Leapp upgrade stage should be run only when leapp preupgrade successfully passes. In case any unanswered/bad choice
+dialogs are encountered the upgrade process will stop and the report file will be generated telling the operator what
+has gone wrong.
