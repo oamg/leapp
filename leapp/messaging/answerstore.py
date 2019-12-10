@@ -69,7 +69,7 @@ class AnswerStore(object):
         :type workflow: :py:class:`leapp.workflows.Workflow`
         :return: None
         """
-        for dialog in self._get_dialogs(workflow):
+        for dialog in workflow.dialogs:
             self.translate(dialog)
 
     def translate(self, dialog):
@@ -98,22 +98,6 @@ class AnswerStore(object):
                     component.value = entry.get(component.key)
             self._storage.update({dialog.scope: entry})
 
-    @staticmethod
-    def _get_dialogs(workflow):
-        """
-        Retrieve all dialogs from the actors of the given workflow.
-
-        :param workflow: Workflow to retrieve all questions from.
-
-        :return: List of dialogs from the actors.
-        """
-        dialogs = []
-        for phase in workflow.phase_actors:
-            for stage in phase[1:]:
-                for actor in stage.actors:
-                    dialogs.extend(actor.dialogs)
-        return dialogs
-
     def generate_for_workflow(self, workflow, answer_file_path):
         """
         Generates an answer file for the dialogs of the given workflow and stores it to `answer_file_path`.
@@ -121,7 +105,7 @@ class AnswerStore(object):
         :param answer_file_path: The path of where to store the answer file to.
         :return: None
         """
-        self.generate(self._get_dialogs(workflow), answer_file_path)
+        self.generate(workflow.dialogs, answer_file_path)
 
     def generate(self, dialogs, answer_file_path):
         """
