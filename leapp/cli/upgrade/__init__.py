@@ -117,20 +117,11 @@ def generate_report_files(context):
     generate_report_file(messages, context, report_txt)
 
 
-def warn_if_unsupported():
+def warn_if_unsupported(configuration):
     env = os.environ
-    if 'LEAPP_UNSUPPORTED' in env:
+    if env.get('LEAPP_UNSUPPORTED', '0') == '1':
         devel_vars = {k: env[k] for k in env if k.startswith('LEAPP_DEVEL_')}
-        experimental = []
-
-        with get_connection(None) as db:
-            conf = db.execute("SELECT configuration FROM execution "
-                              "WHERE kind = 'upgrade' OR kind = 'preupgrade' "
-                              "ORDER BY id DESC LIMIT 1").fetchone()
-            if conf:
-                experimental = json.loads(conf[0])["whitelist_experimental"]
-
-        report_unsupported(devel_vars, experimental)
+        report_unsupported(devel_vars, configuration["whitelist_experimental"])
 
 
 @command('upgrade', help='Upgrades the current system to the next available major version.')
@@ -145,6 +136,10 @@ def upgrade(args):
 
     if args.whitelist_experimental:
         args.whitelist_experimental = list(itertools.chain(*[i.split(',') for i in args.whitelist_experimental]))
+        os.environ['LEAPP_EXPERIMENTAL'] = '1'
+    else:
+        os.environ['LEAPP_EXPERIMENTAL'] = '0'
+    os.environ['LEAPP_UNSUPPORTED'] = '0' if os.getenv('LEAPP_UNSUPPORTED', '0') == '0' else '1'
     skip_phases_until = None
     context = str(uuid.uuid4())
     configuration = {
@@ -188,7 +183,7 @@ def upgrade(args):
             msg = 'No such Actor: {}'.format(actor_name)
             logger.error(msg)
             raise CommandError(msg)
-    warn_if_unsupported()
+    warn_if_unsupported(configuration)
     with beautify_actor_exception():
         answerfile_path = args.load_answerfile or get_config().get('report', 'answerfile')
         logger.info("Using answerfile at %s", answerfile_path)
@@ -212,6 +207,10 @@ def preupgrade(args):
 
     if args.whitelist_experimental:
         args.whitelist_experimental = list(itertools.chain(*[i.split(',') for i in args.whitelist_experimental]))
+        os.environ['LEAPP_EXPERIMENTAL'] = '1'
+    else:
+        os.environ['LEAPP_EXPERIMENTAL'] = '0'
+    os.environ['LEAPP_UNSUPPORTED'] = '0' if os.getenv('LEAPP_UNSUPPORTED', '0') == '0' else '1'
     context = str(uuid.uuid4())
     configuration = {
         'debug': os.getenv('LEAPP_DEBUG', '0'),
@@ -237,7 +236,7 @@ def preupgrade(args):
             msg = 'No such Actor: {}'.format(actor_name)
             logger.error(msg)
             raise CommandError(msg)
-    warn_if_unsupported()
+    warn_if_unsupported(configuration)
     with beautify_actor_exception():
         until_phase = 'ReportsPhase'
         logger.info('Executing workflow until phase: %s', until_phase)
