@@ -31,6 +31,7 @@ class BaseMessaging(object):
         self._errors = self._manager.list()
         self._stored = stored
         self._config_models = (config_model,) if config_model else ()
+        self._dialogs = self._manager.list()
 
     def load_answers(self, answer_file, workflow):
         """
@@ -58,9 +59,18 @@ class BaseMessaging(object):
         """
         return self._stored
 
+    def dialogs(self):
+        """
+        Gets all dialogs actually encountered during workflow run
+
+        :return: List of encountered dialogs
+        """
+        return list(self._dialogs)
+
     def errors(self):
         """
         Gets all produced errors.
+
         :return: List of newly produced errors
         """
         return list(self._errors)
@@ -68,6 +78,7 @@ class BaseMessaging(object):
     def messages(self):
         """
         Gets all newly produced messages.
+
         :return: List of newly processed messages
         """
         return list(self._new_data)
@@ -123,6 +134,9 @@ class BaseMessaging(object):
         model = ErrorModel(message=message, actor=actor.name, severity=severity, details=details,
                            time=datetime.datetime.now())
         self._do_produce(model, actor, self._errors)
+
+    def register_dialog(self, dialog):
+        self._dialogs.append(dialog)
 
     def command(self, command):
         """

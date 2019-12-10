@@ -117,6 +117,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self._auto_reboot = auto_reboot
         self._unhandled_exception = False
         self._answer_store = AnswerStore()
+        self._dialogs = []
 
         if self.configuration:
             config_actors = [actor for actor in self.tag.actors if self.configuration in actor.produces]
@@ -185,6 +186,11 @@ class Workflow(with_metaclass(WorkflowMeta)):
     def produces(self):
         """ All produced messages """
         return self._all_produced
+
+    @property
+    def dialogs(self):
+        """ All encountered dialogs """
+        return self._dialogs
 
     @classmethod
     def serialize(cls):
@@ -283,6 +289,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
                         self._unhandled_exception = True
                         raise
 
+                    # Collect dialogs
+                    self._dialogs.extend(messaging.dialogs())
                     # Collect errors
                     if messaging.errors():
                         self._errors.extend(messaging.errors())

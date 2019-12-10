@@ -109,6 +109,7 @@ class Actor(object):
         :param dialog: Dialog instance to show
         :return: dictionary with the requested answers, None if not a defined dialog
         """
+        self._messaging.register_dialog(dialog)
         if self.skip_dialogs:
             return {}
         if dialog in type(self).dialogs:
