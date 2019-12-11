@@ -23,7 +23,7 @@ setup(
     name='leapp',
     version=main_ns['VERSION'],
     packages=find_packages(exclude=EXCLUSION),
-    install_requires=['six'],
+    install_requires=['six', 'requests'],
     entry_points='''
         [console_scripts]
         snactor=leapp.snactor:main
