@@ -226,9 +226,9 @@ def preupgrade(args):
         workflow.run(context=context, until_phase=until_phase, skip_dialogs=True)
 
     cfg = get_config()
-    answerfile = args.save_answerfile or cfg.get('report', 'answerfile')
-    logger.info("Answerfile will be created at %s", answerfile)
-    workflow._answer_store.generate_for_workflow(workflow, answerfile)
+    answerfile_path = args.save_answerfile or cfg.get('report', 'answerfile')
+    logger.info("Answerfile will be created at %s", answerfile_path)
+    workflow.save_answerfile(answerfile_path)
     generate_report_files(context)
     report_errors(workflow.errors)
 

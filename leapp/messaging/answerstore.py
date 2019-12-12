@@ -98,15 +98,6 @@ class AnswerStore(object):
                     component.value = entry.get(component.key)
             self._storage.update({dialog.scope: entry})
 
-    def generate_for_workflow(self, workflow, answer_file_path):
-        """
-        Generates an answer file for the dialogs of the given workflow and stores it to `answer_file_path`.
-        :param workflow: Instance of :py:class:`leapp.workflows.Workflow` to retrieve all dialogs from.
-        :param answer_file_path: The path of where to store the answer file to.
-        :return: None
-        """
-        self.generate(workflow.dialogs, answer_file_path)
-
     def generate(self, dialogs, answer_file_path):
         """
         Generates an answer file for the given dialogs and stores it to `answer_file_path`.
