@@ -92,6 +92,15 @@ class Workflow(with_metaclass(WorkflowMeta)):
         """
         return self._answer_store
 
+    def save_answerfile(self, filepath):
+        """
+        Generates an answer file for the dialogs of the workflow and saves it to `filepath`.
+
+        :param filepath: The path of where to store the answer file.
+        :return: None
+        """
+        self._answer_store.generate(self._dialogs, filepath)
+
     def load_answerfile(self, filepath):
         if os.path.isfile(filepath):
             # XXX FIXME load_and_translate doesn't help here as somehow dialog.component.value
