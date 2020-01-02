@@ -31,7 +31,7 @@ from leapp.models.error_severity import ErrorSeverity
 from leapp.exceptions import ModelDefinitionError
 from leapp.models.fields import ModelMisuseError
 from leapp.utils.meta import get_flattened_subclasses, with_metaclass
-from leapp.topics import Topic, ErrorTopic
+from leapp.topics import ErrorTopic, DialogTopic, Topic
 
 
 class ModelMeta(type):
@@ -148,6 +148,14 @@ class ErrorModel(Model):
     details = fields.Nullable(fields.String())
     actor = fields.String()
     time = fields.DateTime()
+
+
+class DialogModel(Model):
+    topic = DialogTopic
+
+    answerfile_sections = fields.String()
+    actor = fields.String()
+    details = fields.Nullable(fields.String())
 
 
 def get_models():

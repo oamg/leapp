@@ -7,7 +7,7 @@ from leapp.compat import string_types
 from leapp.dialogs import Dialog
 from leapp.exceptions import MissingActorAttributeError, WrongAttributeTypeError, StopActorExecutionError, \
     StopActorExecution, WorkflowConfigNotAvailable
-from leapp.models import Model
+from leapp.models import DialogModel, Model
 from leapp.tags import Tag
 from leapp.utils.i18n import install_translation_for_actor
 from leapp.utils.meta import get_flattened_subclasses
@@ -109,7 +109,7 @@ class Actor(object):
         :param dialog: Dialog instance to show
         :return: dictionary with the requested answers, None if not a defined dialog
         """
-        self._messaging.register_dialog(dialog)
+        self._messaging.register_dialog(dialog, self)
         if self.skip_dialogs:
             return {}
         if dialog in type(self).dialogs:

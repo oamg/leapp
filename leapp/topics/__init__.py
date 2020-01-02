@@ -29,6 +29,13 @@ class Topic(with_metaclass(TopicMeta)):
     """
 
 
+class DialogTopic(Topic):
+    """
+    A special topic for called dialogs during the execution.
+    """
+    name = 'dialog_topic'
+
+
 class ErrorTopic(Topic):
     """
     A special topic for errors during the execution.

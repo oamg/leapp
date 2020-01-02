@@ -11,7 +11,7 @@ from leapp.dialogs import RawMessageDialog
 from leapp.dialogs.renderer import CommandlineRenderer
 from leapp.messaging.answerstore import AnswerStore
 from leapp.exceptions import CannotConsumeErrorMessages
-from leapp.models import ErrorModel
+from leapp.models import DialogModel, ErrorModel
 from leapp.messaging.commands import WorkflowCommand
 
 
@@ -135,8 +135,9 @@ class BaseMessaging(object):
                            time=datetime.datetime.now())
         self._do_produce(model, actor, self._errors)
 
-    def register_dialog(self, dialog):
+    def register_dialog(self, dialog, actor):
         self._dialogs.append(dialog)
+        self.produce(DialogModel(actor=actor.name, answerfile_sections=','.join(dialog.answerfile_sections)), actor)
 
     def command(self, command):
         """
