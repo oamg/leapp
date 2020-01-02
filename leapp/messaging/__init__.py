@@ -137,7 +137,10 @@ class BaseMessaging(object):
 
     def register_dialog(self, dialog, actor):
         self._dialogs.append(dialog)
-        self.produce(DialogModel(actor=actor.name, answerfile_sections=','.join(dialog.answerfile_sections)), actor)
+        if not dialog.get_answers(self._answers):
+            # produce DialogModel messages for all the dialogs that don't have answers in answerfile
+            self.produce(DialogModel(actor=actor.name, answerfile_sections=','.join(dialog.answerfile_sections)),
+                         actor)
 
     def command(self, command):
         """
@@ -203,7 +206,8 @@ class BaseMessaging(object):
         return message
 
     def request_answers(self, dialog):
-        return dialog.request_answers(self._answers, self._dialog_renderer)
+        # NOTE(ivasilev): Made non-interactive to respect leapp preupgrade/leapp upgrade non-interactivity convention
+        return dialog.get_answers(self._answers)
 
     def show_message(self, message):
         """
