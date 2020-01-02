@@ -87,8 +87,21 @@ class Dialog(object):
                 return component
         return None
 
+    def get_answers(self, store):
+        """
+        Checks answerstore if an answer is recorded for the dialog.
+
+        :param store: AnswerStore instance
+        :return: Dictionary with answers once retrieved
+        """
+        store.translate(self)
+        return dict(store.get(self.scope, {}))
+
     def request_answers(self, store, renderer):
         """
+        Same as get_answers but with interactive retrieval of the answer
+        in case no recorded answer found in answerstore.
+
         :param store: AnswerStore instance
         :param renderer: Target renderer instance
         :return: Dictionary with answers once retrieved
