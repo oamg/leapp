@@ -50,6 +50,10 @@ class Dialog(object):
         }
 
     @property
+    def answerfile_sections(self):
+        return ["{}.{}".format(self.scope, c.key) for c in self.components]
+
+    @property
     def min_label_width(self):
         """
         :return: Returns the highest number of characters all labels in the dialog have, to help calculating the minimum
