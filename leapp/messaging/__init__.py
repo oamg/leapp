@@ -205,9 +205,14 @@ class BaseMessaging(object):
         target.append(message)
         return message
 
-    def request_answers(self, dialog):
-        # NOTE(ivasilev): Made non-interactive to respect leapp preupgrade/leapp upgrade non-interactivity convention
+    def get_answers(self, dialog):
+        # NOTE(ivasilev): Non-Interactive. Returns answer from answerfile or empty dict straightaway.
         return dialog.get_answers(self._answers)
+
+    def request_answers(self, dialog):
+        # NOTE(ivasilev): Interactive. Should not be used in actors run at preupgrade\upgrade stage.
+        #                 Will render the dialog and block further execution till user makes his choice.
+        return dialog.request_answers(self._answers, self._dialog_renderer)
 
     def show_message(self, message):
         """

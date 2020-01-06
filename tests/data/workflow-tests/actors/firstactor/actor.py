@@ -36,4 +36,4 @@ class FirstActor(Actor):
             self.report_error('Unit test failed due missing or invalid workflow provided configuration')
         if os.environ.get('FirstActor-ReportError') == '1':
             self.report_error("Unit test requested error")
-        self.request_answers(self.dialogs[0]).get('confirm', False)
+        self.get_answers(self.dialogs[0]).get('confirm', False)
