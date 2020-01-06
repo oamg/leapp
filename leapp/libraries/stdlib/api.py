@@ -78,14 +78,14 @@ def consume(*models):
     return current_actor().consume(*models)
 
 
-def request_answers(dialog):
+def get_answers(dialog):
     """
-    Requests the answers for a dialog. The dialog needs be predefined in :py:attr:`dialogs` of the actor.
+    Get the answers for a dialog from answerfile. The dialog needs be predefined in :py:attr:`dialogs` of the actor.
 
     :param dialog: Dialog instance to show
     :return: dictionary with the requested answers, None if not a defined dialog
     """
-    return current_actor().request_answers(dialog)
+    return current_actor().get_answers(dialog)
 
 
 def actor_files_paths():

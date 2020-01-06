@@ -102,17 +102,18 @@ class Actor(object):
         if config_model:
             self._configuration = next(self.consume(config_model), None)
 
-    def request_answers(self, dialog):
+    def get_answers(self, dialog):
         """
-        Requests the answers for a dialog. The dialog needs be predefined in :py:attr:`dialogs`.
+        Gets the answers for a dialog. The dialog needs be predefined in :py:attr:`dialogs`.
 
         :param dialog: Dialog instance to show
         :return: dictionary with the requested answers, None if not a defined dialog
         """
         self._messaging.register_dialog(dialog, self)
-        if self.skip_dialogs:
-            return {}
         if dialog in type(self).dialogs:
+            if self.skip_dialogs:
+                # non-interactive mode of operation
+                return self._messaging.get_answers(dialog)
             return self._messaging.request_answers(dialog)
         return None
 

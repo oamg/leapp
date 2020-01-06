@@ -10,7 +10,7 @@ As an example we will change [IpResolver](messaging.html#creating-a-message-cons
 ### Creating the dialog
 
 Import Dialog and MultipleChoiceComponent from leapp.dialog and leapp.dialog.components respectively.
-Create an instance of Dialog, specifying scope which is used to identify data in answer files, 
+Create an instance of Dialog, specifying scope which is used to identify data in answer files,
 reason to explain user what the data will be used for and components. For each component specify key which will be used to get answer to specific question,
 label and description. You can also specify default or choices if the component support them,
 but as choices in our example depend on consumed data, we will specify them later.
@@ -36,12 +36,19 @@ class IpResolver(Actor):
 
 ### Using the dialog and the answers
 
-In the function process we will first get the component of the dialog its key,
-then set the choices from consumed data and default.
-To ask the question, use request_answers method and pass the dialog which needs to be answered.
-Then, we can get the hostnames selected by user from answers by component key and resolve them.
+To pose a question that needs to be answered use get_answers method and pass the dialog containing the question.
 
-See the example of the code:
+Be aware that from actor writers' perspective get_answers function is not blocking workflow execution - no
+interactivity will be introduced by adding a get_answers call in actor's process() method; the value returned will
+correspond to the option saved in answerfile if one is found or an empty dict is returned otherwise.
+
+You don't need to specifically inhibit execution in case user doesn't provide an option - the leapp framework will
+take care of that. A report entry with inhibitor type will be automatically created if the actor with a dialog is
+executed during leapp preupgrade or leapp upgrade run and no prerecorded user choice has been registered in answerfile.
+All interactivity that is necessary to record user options is part of leapp answer cli command; as an alternative
+you can modify the generated answerfile manually with an editor of choice to contain the desired choices.
+
+For example, to get the hostnames selected by user from answers by component key and resolve them:
 
 ```python
 def process(self):
@@ -49,7 +56,7 @@ def process(self):
     component = self.dialogs[0].component_by_key('hostname')
     component.choices = [hostname.name for hostname in self.consume(Hostname)]
     component.default = component.choices
-    answer = self.request_answers(self.dialogs[0])
+    answer = self.get_answers(self.dialogs[0])
     for hostname in answer.get('hostname'):
         resolved = socket.getaddrinfo(
                 hostname, None, 0, socket.SOCK_STREAM,

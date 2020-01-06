@@ -31,7 +31,7 @@ class Topic(with_metaclass(TopicMeta)):
 
 class DialogTopic(Topic):
     """
-    A special topic for called dialogs during the execution.
+    A special topic for dialogs shown to user during workflow execution.
     """
     name = 'dialog_topic'
 
