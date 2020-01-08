@@ -158,7 +158,14 @@ BuildRequires:  python3-pytest-cov
 %endif
 
 Requires: leapp-framework-dependencies = %{framework_dependencies}
-Provides: leapp-framework = %{framework_version}
+
+# FIXME: avoiding problems with dependencies on virtual capabilities, see:
+#    https://serverfault.com/questions/411444/rpm-set-required-somepackage-0-5-0-and-somepackage-0-6-0
+# Currently, we do not use this rpm, so commenting the provides for now, until
+# we come up with reliable solution. E.g. avoid possibility to install both
+# version of frameworks - for Py2 and Py3 in the same time. Or rename the 
+# capability; e.g.: leapp-framework-py3
+# Provides: leapp-framework = %{framework_version}
 
 %description -n python3-%{name}
 Python 3 leapp framework libraries.
