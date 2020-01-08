@@ -5,6 +5,20 @@
 %global debug_package %{nil}
 %global gittag master
 
+# IMPORTANT: this is for the leapp-framework capability (it's not the real
+# version of the leapp). The capability reflects changes in api and whatever
+# functionality important from the point of repository. In case of
+# incompatible changes, bump the major number and zero minor one. Otherwise
+# bump the minor one.
+# This is kind of help for more flexible development of leapp repository,
+# so people do not have to wait for new official release of leapp to ensure
+# it is installed/used the compatible one.
+%global framework_version 1.0
+
+# IMPORTANT: everytime the requirements are changed, increment number by one
+# - same for Provides in deps subpackage
+%global framework_dependencies 3
+
 # Do not build bindings for python3 for RHEL == 7
 %if 0%{?rhel} && 0%{?rhel} == 7
 %define with_python2 1
@@ -33,7 +47,10 @@ Requires: python3-%{name} = %{version}-%{release}
 %else
 Requires: python2-%{name} = %{version}-%{release}
 %endif
-Requires: leapp-repository >= %{version}
+
+# Just ensure the leapp repository will be installed as well. Compatibility
+# should be specified by the leapp-repository itself
+Requires: leapp-repository
 %endif # !fedora
 
 %description
@@ -69,29 +86,23 @@ Summary: %{summary}
 # RHEL 7
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
-%else
-# else
+%else # rhel <> 7 or fedora
 BuildRequires:  python2-devel
-
-%if 0%{?fedora}
-# Fedora
-BuildRequires:  python2-pytest-cov
-# BuildRequires:  python2-pytest-flake8
-
-%endif
-
 BuildRequires:  python2-setuptools
 
-%endif
+%if 0%{?fedora}
+BuildRequires:  python2-pytest-cov
+# BuildRequires:  python2-pytest-flake8
+%endif # fedora
+%endif # rhel <> 7
 
-# IMPORTANT: everytime the requirements are changed, increment number by one
-# - same for Provides in deps subpackage
-Requires: leapp-framework-dependencies = 3
+Provides: leapp-framework = %{framework_version}
+Requires: leapp-framework-dependencies = %{framework_dependencies}
 
 %description -n python2-%{name}
 Python 2 leapp framework libraries.
 
-%endif
+%endif # with python2
 
 # FIXME:
 # this subpackages should be used by python2-%%{name} - so it makes sense to
@@ -101,7 +112,7 @@ Summary:    Meta-package with system dependencies of %{name} package
 
 # IMPORTANT: everytime the requirements are changed, increment number by one
 # same for requiremenrs in main package above
-Provides: leapp-framework-dependencies = 3
+Provides: leapp-framework-dependencies = %{framework_dependencies}
 ##################################################
 # Real requirements for the leapp HERE
 ##################################################
@@ -146,12 +157,13 @@ BuildRequires:  python3-setuptools
 BuildRequires:  python3-pytest-cov
 %endif
 
-Requires: leapp-framework-dependencies = 3
+Requires: leapp-framework-dependencies = %{framework_dependencies}
+Provides: leapp-framework = %{framework_version}
 
 %description -n python3-%{name}
 Python 3 leapp framework libraries.
 
-%endif
+%endif # with python3
 
 ##################################################
 # Prep
