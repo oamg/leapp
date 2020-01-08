@@ -237,6 +237,7 @@ rm -f %{buildroot}/%{_bindir}/leapp
 %{_bindir}/leapp
 %dir %{_sharedstatedir}/leapp
 %dir %{_localstatedir}/log/leapp
+%{python2_sitelib}/leapp/cli
 %endif
 
 
@@ -246,6 +247,7 @@ rm -f %{buildroot}/%{_bindir}/leapp
 ##################################################
 %files -n snactor
 %license COPYING
+%{python2_sitelib}/leapp/snactor
 %{_mandir}/man1/snactor.1*
 %{_bindir}/snactor
 
@@ -258,6 +260,9 @@ rm -f %{buildroot}/%{_bindir}/leapp
 %files -n python2-%{name}
 %license COPYING
 %{python2_sitelib}/*
+# this one is related only to leapp tool
+%exclude %{python2_sitelib}/leapp/cli
+%exclude %{python2_sitelib}/leapp/snactor
 
 %endif
 
@@ -269,10 +274,11 @@ rm -f %{buildroot}/%{_bindir}/leapp
 %files -n python3-%{name}
 %license COPYING
 %{python3_sitelib}/*
+#TODO: ignoring leapp and snactor in separate rpms now as we do not provide
+# entrypoints for Py3 in those subpackages anyway
 
 %endif
 
-#FIXME: in case of rename, put those subpkgs under relevant if statement
 %files deps
 # no files here
 
