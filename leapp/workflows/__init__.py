@@ -234,6 +234,15 @@ class Workflow(with_metaclass(WorkflowMeta)):
         :param skip_phases_until: Skips all phases until including the phase specified, and then continues the
                execution.
         :type skip_phases_until: str or None
+        :param skip_dialogs: Inform actors about the mode of dialogs processing. If skip_dialogs is set to True it
+                             means that dialogs can't be processed in the current workflow run interactively and
+                             every attempted call of get_answers api method will be non-blocking, returning an empty
+                             dict if no user choice was found in answerfile or a selected option otherwise.
+                             If skip_dialogs is set to False then in case of absent recorded answer the dialog will
+                             be rendered in a blocking user input requiring way.
+                             The value of skip_dialogs will be passed to the actors that can theoretically use it for
+                             their purposes.
+        :type skip_dialogs: bool
 
         """
         context = context or str(uuid.uuid4())
