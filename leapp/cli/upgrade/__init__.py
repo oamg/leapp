@@ -176,7 +176,7 @@ def upgrade(args):
         answerfile_path = args.load_answerfile or get_config().get('report', 'answerfile')
         logger.info("Using answerfile at %s", answerfile_path)
         workflow.load_answerfile(answerfile_path)
-        workflow.run(context=context, skip_phases_until=skip_phases_until)
+        workflow.run(context=context, skip_phases_until=skip_phases_until, skip_dialogs=True)
 
     report_errors(workflow.errors)
     generate_report_files(context)
