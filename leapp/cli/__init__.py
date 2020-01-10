@@ -13,7 +13,6 @@ def cli(args): # noqa; pylint: disable=unused-argument
 
 def main():
     os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
-    cli.command.add_sub(upgrade.list_runs.command)
-    cli.command.add_sub(upgrade.preupgrade.command)
-    cli.command.add_sub(upgrade.upgrade.command)
+    for cmd in [upgrade.list_runs, upgrade.preupgrade, upgrade.upgrade, upgrade.answer]:
+        cli.command.add_sub(cmd.command)
     cli.command.execute('leapp version {}'.format(VERSION))

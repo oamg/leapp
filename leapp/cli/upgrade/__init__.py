@@ -11,6 +11,7 @@ from datetime import datetime
 from leapp.config import get_config
 from leapp.exceptions import CommandError, LeappError
 from leapp.logger import configure_logger
+from leapp.messaging.answerstore import AnswerStore
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
@@ -135,6 +136,34 @@ def handle_output_level(args):
         os.environ['LEAPP_VERBOSE'] = os.environ.get('LEAPP_VERBOSE', '0')
 
 
+def prepare_configuration(args):
+    """Returns a configuration dict object while setting a few env vars as a side-effect"""
+    if args.whitelist_experimental:
+        args.whitelist_experimental = list(itertools.chain(*[i.split(',') for i in args.whitelist_experimental]))
+        os.environ['LEAPP_EXPERIMENTAL'] = '1'
+    else:
+        os.environ['LEAPP_EXPERIMENTAL'] = '0'
+    os.environ['LEAPP_UNSUPPORTED'] = '0' if os.getenv('LEAPP_UNSUPPORTED', '0') == '0' else '1'
+    configuration = {
+        'debug': os.getenv('LEAPP_DEBUG', '0'),
+        'verbose': os.getenv('LEAPP_VERBOSE', '0'),
+        'whitelist_experimental': args.whitelist_experimental or ()
+    }
+    return configuration
+
+
+def process_whitelist_experimental(repositories, workflow, configuration, logger=None):
+    for actor_name in configuration.get('whitelist_experimental', ()):
+        actor = repositories.lookup_actor(actor_name)
+        if actor:
+            workflow.whitelist_experimental_actor(actor)
+        else:
+            msg = 'No such Actor: {}'.format(actor_name)
+            if logger:
+                logger.error(msg)
+            raise CommandError(msg)
+
+
 @command('upgrade', help='Upgrades the current system to the next available major version.')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
 @command_opt('reboot', is_flag=True, help='Automatically performs reboot when requested.')
@@ -143,23 +172,15 @@ def handle_output_level(args):
 @command_opt('debug', is_flag=True, help='Enable debug mode', inherit=False)
 @command_opt('verbose', is_flag=True, help='Enable verbose logging', inherit=False)
 def upgrade(args):
-    if os.getuid():
-        raise CommandError('This command has to be run under the root user.')
-    handle_output_level(args)
-    if args.whitelist_experimental:
-        args.whitelist_experimental = list(itertools.chain(*[i.split(',') for i in args.whitelist_experimental]))
-        os.environ['LEAPP_EXPERIMENTAL'] = '1'
-    else:
-        os.environ['LEAPP_EXPERIMENTAL'] = '0'
-    os.environ['LEAPP_UNSUPPORTED'] = '0' if os.getenv('LEAPP_UNSUPPORTED', '0') == '0' else '1'
     skip_phases_until = None
     context = str(uuid.uuid4())
     cfg = get_config()
-    configuration = {
-        'debug': os.getenv('LEAPP_DEBUG', '0'),
-        'verbose': os.getenv('LEAPP_VERBOSE', '0'),
-        'whitelist_experimental': args.whitelist_experimental or ()
-    }
+    configuration = prepare_configuration(args)
+
+    if os.getuid():
+        raise CommandError('This command has to be run under the root user.')
+    handle_output_level(args)
+
     if args.resume:
         context, configuration = fetch_last_upgrade_context()
         if not context:
@@ -188,14 +209,7 @@ def upgrade(args):
     except LeappError as exc:
         raise CommandError(exc.message)
     workflow = repositories.lookup_workflow('IPUWorkflow')(auto_reboot=args.reboot)
-    for actor_name in configuration.get('whitelist_experimental', ()):
-        actor = repositories.lookup_actor(actor_name)
-        if actor:
-            workflow.whitelist_experimental_actor(actor)
-        else:
-            msg = 'No such Actor: {}'.format(actor_name)
-            logger.error(msg)
-            raise CommandError(msg)
+    process_whitelist_experimental(repositories, workflow, configuration, logger)
     warn_if_unsupported(configuration)
     with beautify_actor_exception():
         answerfile_path = cfg.get('report', 'answerfile')
@@ -216,43 +230,27 @@ def upgrade(args):
 @command_opt('debug', is_flag=True, help='Enable debug mode', inherit=False)
 @command_opt('verbose', is_flag=True, help='Enable verbose logging', inherit=False)
 def preupgrade(args):
+    context = str(uuid.uuid4())
+    cfg = get_config()
+    configuration = prepare_configuration(args)
+    answerfile_path = cfg.get('report', 'answerfile')
+
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
     handle_output_level(args)
-    if args.whitelist_experimental:
-        args.whitelist_experimental = list(itertools.chain(*[i.split(',') for i in args.whitelist_experimental]))
-        os.environ['LEAPP_EXPERIMENTAL'] = '1'
-    else:
-        os.environ['LEAPP_EXPERIMENTAL'] = '0'
-    os.environ['LEAPP_UNSUPPORTED'] = '0' if os.getenv('LEAPP_UNSUPPORTED', '0') == '0' else '1'
-    context = str(uuid.uuid4())
-    configuration = {
-        'debug': os.getenv('LEAPP_DEBUG', '0'),
-        'verbose': os.getenv('LEAPP_VERBOSE', '0'),
-        'whitelist_experimental': args.whitelist_experimental or ()
-    }
     e = Execution(context=context, kind='preupgrade', configuration=configuration)
     e.store()
     archive_logfiles()
     logger = configure_logger('leapp-preupgrade.log')
     os.environ['LEAPP_EXECUTION_ID'] = context
-    cfg = get_config()
-    answerfile_path = cfg.get('report', 'answerfile')
 
     try:
         repositories = load_repositories()
     except LeappError as exc:
         raise CommandError(exc.message)
     workflow = repositories.lookup_workflow('IPUWorkflow')()
-    for actor_name in configuration.get('whitelist_experimental', ()):
-        actor = repositories.lookup_actor(actor_name)
-        if actor:
-            workflow.whitelist_experimental_actor(actor)
-        else:
-            msg = 'No such Actor: {}'.format(actor_name)
-            logger.error(msg)
-            raise CommandError(msg)
     warn_if_unsupported(configuration)
+    process_whitelist_experimental(repositories, workflow, configuration, logger)
     with beautify_actor_exception():
         workflow.load_answerfile(answerfile_path)
         until_phase = 'ReportsPhase'
@@ -268,6 +266,33 @@ def preupgrade(args):
     report_info([rf for rf in report_files if os.path.isfile(rf)], fail=workflow.failure)
     if workflow.failure:
         sys.exit(1)
+
+
+@command('answer', help='Manage answerfile')
+@command_opt('answerfile', help='Path to an answerfile to update')
+@command_opt('section', action='append', metavar='dialog_sections',
+             help='Record answer for specific section in answerfile')
+def answer(args):
+    """A command to manage answerfile. Updates answerfile with userchoices"""
+    cfg = get_config()
+    if args.section:
+        args.section = list(itertools.chain(*[i.split(',') for i in args.section]))
+    else:
+        raise CommandError('At least one dialog section must be specified, ex. --section dialog.option=mychoice')
+    try:
+        sections = [tuple((dialog_option.split('.', 2) + [value]))
+                    for dialog_option, value in [s.split('=', 2) for s in args.section]]
+    except ValueError:
+        raise CommandError("A bad formatted section has been passed. Expected format is dialog.option=mychoice")
+    answerfile_path = args.answerfile or cfg.get('report', 'answerfile')
+    answerstore = AnswerStore()
+    answerstore.load(answerfile_path)
+    for dialog, option, value in sections:
+        answerstore.answer(dialog, option, value)
+    not_updated = answerstore.update(answerfile_path)
+    if not_updated:
+        sys.stderr.write("WARNING: Only sections found in original userfile can be updated, ignoring {}\n".format(
+            ",".join(not_updated)))
 
 
 @command('list-runs', help='List previous Leapp upgrade executions')

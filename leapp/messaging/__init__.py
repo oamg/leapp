@@ -145,7 +145,9 @@ class BaseMessaging(object):
         else:
             # update dialogs with answers from answerfile. That is necessary for proper answerfile generation
             for component, value in userchoices.items():
-                dialog.component_by_key(component).value = value
+                dialog_component = dialog.component_by_key(component)
+                if dialog_component:
+                    dialog_component.value = value
 
     def command(self, command):
         """
