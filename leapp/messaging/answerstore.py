@@ -24,6 +24,26 @@ class AnswerStore(object):
         # So don't even bother updating this to some more 'pythonic' coding style
         self._storage[scope] = dialog_scope
 
+    def update(self, answer_file):
+        """
+        Update answerfile with all answers from answerstore that have correspondent sections in the file.
+
+        Returns a list of sections that were not found in original answerfile and thus were not updated.
+        """
+        # NOTE(ivasilev): py2 configparser doesn't have any means to save comments in ini file. Switch to cfgparse?
+        conf = configparser.SafeConfigParser(allow_no_value=True)
+        conf.read(answer_file)
+        not_updated = []
+        for section, answerdict in self._storage.items():
+            for opt, val in answerdict.items():
+                if section in conf.sections():
+                    conf.set(section, opt, val)
+                else:
+                    not_updated.append("{sec}.{opt}={val}".format(sec=section, opt=opt, val=val))
+        with open(answer_file, 'w') as afile:
+            conf.write(afile)
+        return not_updated
+
     def load(self, answer_file):
         """
         Loads an answer file from the given location and updates the loaded data with it.
