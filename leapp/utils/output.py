@@ -1,7 +1,6 @@
 from __future__ import print_function
 import json
 import sys
-from pprint import pformat
 from contextlib import contextmanager
 
 from leapp.models import ErrorModel
@@ -26,11 +25,16 @@ def pretty_block(string, color=Color.bold, width=60):
 
 def print_error(error):
     model = ErrorModel.create(json.loads(error['message']['data']))
-    sys.stdout.write("{red}{time} [{severity}]{reset} Actor: {actor} Message: {message}\n".format(
+    sys.stdout.write("{red}{time} [{severity}]{reset} Actor: {actor}\nMessage: {message}\n".format(
         red=Color.red, reset=Color.reset, severity=model.severity.upper(),
         message=model.message, time=model.time, actor=model.actor))
     if model.details:
-        print('Detail: ' + pformat(json.loads(model.details)))
+        print('Summary: ')
+        details = json.loads(model.details)
+        for detail in details:
+            print('    {k}: {v}'.format(
+                k=detail.capitalize(),
+                v=details[detail].rstrip().replace('\n', '\n' + ' ' * (6 + len(detail)))))
 
 
 def report_errors(errors):
