@@ -122,7 +122,6 @@ def generate_report_files(context):
 @command_opt('reboot', is_flag=True, help='Automatically performs reboot when requested.')
 @command_opt('whitelist-experimental', action='append', metavar='ActorName',
              help='Enables experimental actors')
-@command_opt('load-answerfile', help='Path to load custom answerfile')
 def upgrade(args):
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
@@ -131,6 +130,7 @@ def upgrade(args):
         args.whitelist_experimental = list(itertools.chain(*[i.split(',') for i in args.whitelist_experimental]))
     skip_phases_until = None
     context = str(uuid.uuid4())
+    cfg = get_config()
     configuration = {
         'debug': os.getenv('LEAPP_DEBUG', '0'),
         'verbose': os.getenv('LEAPP_VERBOSE', '0'),
@@ -173,7 +173,7 @@ def upgrade(args):
             logger.error(msg)
             raise CommandError(msg)
     with beautify_actor_exception():
-        answerfile_path = args.load_answerfile or get_config().get('report', 'answerfile')
+        answerfile_path = cfg.get('report', 'answerfile')
         logger.info("Using answerfile at %s", answerfile_path)
         workflow.load_answerfile(answerfile_path)
         workflow.run(context=context, skip_phases_until=skip_phases_until, skip_dialogs=True)
@@ -188,7 +188,6 @@ def upgrade(args):
 @command('preupgrade', help='Generate preupgrade report')
 @command_opt('whitelist-experimental', action='append', metavar='ActorName',
              help='Enables experimental actors')
-@command_opt('save-answerfile', help='Path to save custom answerfile')
 def preupgrade(args):
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
@@ -206,6 +205,8 @@ def preupgrade(args):
     archive_logfiles()
     logger = configure_logger('leapp-preupgrade.log')
     os.environ['LEAPP_EXECUTION_ID'] = context
+    cfg = get_config()
+    answerfile_path = cfg.get('report', 'answerfile')
 
     try:
         repositories = load_repositories()
@@ -221,12 +222,11 @@ def preupgrade(args):
             logger.error(msg)
             raise CommandError(msg)
     with beautify_actor_exception():
+        workflow.load_answerfile(answerfile_path)
         until_phase = 'ReportsPhase'
         logger.info('Executing workflow until phase: %s', until_phase)
         workflow.run(context=context, until_phase=until_phase, skip_dialogs=True)
 
-    cfg = get_config()
-    answerfile_path = args.save_answerfile or cfg.get('report', 'answerfile')
     logger.info("Answerfile will be created at %s", answerfile_path)
     workflow.save_answerfile(answerfile_path)
     generate_report_files(context)

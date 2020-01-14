@@ -130,7 +130,7 @@ class AnswerStore(object):
                             default = ';'.join(component.default)
                             answer = ';'.join(answer) if answer else answer
                             answer_entry = '#\n# Values are separated by semi-colon ";"\n'
-                    if answer:
+                    if answer is not None:
                         answer_entry += '{key} = {value}\n'.format(key=component.key, value=answer)
                     else:
                         answer_entry += '# Unanswered question. Uncomment the following line with your answer\n'
