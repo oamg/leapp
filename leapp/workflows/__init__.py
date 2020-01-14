@@ -109,7 +109,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
             # Patching in 2 places - load here and direct call to translate in request_answers
             self._answer_store.load(filepath)
         else:
-            self.log.warning("Answerfile %s not found, upgrade will be interactive", filepath)
+            self.log.warning("Previous answerfile %s not found", filepath)
 
     def __init__(self, logger=None, auto_reboot=False):
         """
