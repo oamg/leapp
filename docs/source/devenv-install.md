@@ -3,19 +3,19 @@
 ## RPM packages installation
 
 If you do not want to modify the framework itself, install it from
-the RPM packages provided by the [Copr](https://copr.fedorainfracloud.org/coprs/g/leapp/leapp-devel/)
+the RPM packages provided by the [Copr](https://copr.fedorainfracloud.org/coprs/g/oamg/leapp/)
 build system, which automatically builds packages with every commit merged into master.
 Packages are built for EPEL and Fedora.
 
 * On CentOS/RHEL:
   ```shell
   # yum install -y yum-utils
-  # yum-config-manager --add-repo https://copr.fedorainfracloud.org/coprs/g/leapp/leapp-devel/repo/epel-7/group_leapp-leapp-devel-epel-7.repo
+  # yum-config-manager --add-repo https://copr.fedorainfracloud.org/coprs/g/oamg/leapp/repo/epel-7/group_oamg-leapp-epel-7.repo
   ```
 * On Fedora:
   ```shell
   # dnf install -y dnf-plugins-core
-  # dnf copr enable @leapp/leapp-devel
+  # dnf copr enable @oamg/leapp
   ```
 
 For the actor development, install the `leapp` and `snactor` tools. This pulls in also
