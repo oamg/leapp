@@ -1,5 +1,6 @@
 import pytest
 
+from leapp.compat import unicode_type
 from leapp.libraries.stdlib import run
 
 
@@ -23,3 +24,15 @@ def test_split():
     result = run(cmd, split=True)
     assert isinstance(result['stdout'], list)
     assert len(result['stdout']) > 1
+
+
+def test_no_encoding():
+    """
+    Test the output is base64 encoded after getting binary data
+
+    :return: Pass/Fail
+    """
+    cmd = ['echo', '-n', '-e', '\\xeb']
+    result = run(cmd, encoding=None)
+    assert isinstance(result['stdout'], unicode_type)
+    assert result['stdout'].startswith('Base64:')
