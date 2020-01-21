@@ -2,16 +2,18 @@ language: python
 python:
   - "2.7"
   - "3.6"
-arch:
-  - amd64
-  - ppc64le
-  - arm64
+  - "3.8"
 env:
 services:
 matrix:
   include:
     - python: "2.7"
       env: CONTAINER=centos:7
+      services:
+        - docker
+      sudo: required
+    - python: "3.8"
+      env: CONTAINER=centos:8
       services:
         - docker
       sudo: required
