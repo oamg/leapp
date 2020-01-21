@@ -7,6 +7,7 @@ import logging
 import os
 import sys
 import uuid
+import base64
 
 from leapp.exceptions import LeappError
 from leapp.utils.audit import create_audit_entry
@@ -146,7 +147,7 @@ def _logfile_logging_handler(fd_info, line):  # pylint: disable=unused-argument
 
 
 def run(args, split=False, callback_raw=_console_logging_handler, callback_linebuffered=_logfile_logging_handler,
-        env=None, checked=True, stdin=None):
+        env=None, checked=True, stdin=None, encoding='utf-8'):
     """
     Run a command and return its result as a dict.
 
@@ -177,7 +178,7 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
     try:
         create_audit_entry('process-start', {'id': _id, 'parameters': args, 'env': env})
         result = _call(args, callback_raw=callback_raw, callback_linebuffered=callback_linebuffered,
-                       stdin=stdin, env=env)
+                       stdin=stdin, env=env, encoding=encoding)
         if checked and result['exit_code'] != 0:
             message = 'Command {0} failed with exit code {1}.'.format(str(args), result.get('exit_code'))
             api.current_logger().debug(message)
@@ -186,11 +187,17 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
                 command=args,
                 result=result
             )
-        if split:
+        if split and encoding:
             result.update({
                 'stdout': result['stdout'].splitlines()
             })
     finally:
+        if not encoding:
+            audit_result = result.copy()
+            audit_result.update({
+                'stdout': 'Base64: ' + base64.b64encode(result['stdout']).decode('utf-8'),
+                'stderr': 'Base64: ' + base64.b64encode(result['stderr']).decode('utf-8')
+            })
         create_audit_entry('process-result', {'id': _id, 'parameters': args, 'result': result, 'env': env})
         api.current_logger().debug('External command has finished: {0}'.format(str(args)))
     return result
