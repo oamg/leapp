@@ -192,12 +192,15 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
                 'stdout': result['stdout'].splitlines()
             })
     finally:
+        audit_result = result
         if not encoding:
             audit_result = result.copy()
             audit_result.update({
                 'stdout': 'Base64: ' + base64.b64encode(result['stdout']).decode('utf-8'),
                 'stderr': 'Base64: ' + base64.b64encode(result['stderr']).decode('utf-8')
             })
-        create_audit_entry('process-result', {'id': _id, 'parameters': args, 'result': result, 'env': env})
+        create_audit_entry(
+            'process-result', {'id': _id, 'parameters': args, 'result': audit_result, 'env': env}
+        )
         api.current_logger().debug('External command has finished: {0}'.format(str(args)))
     return result

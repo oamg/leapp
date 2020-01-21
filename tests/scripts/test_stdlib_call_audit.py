@@ -1,6 +1,6 @@
 import pytest
+import six
 
-from leapp.compat import unicode_type
 from leapp.libraries.stdlib import run
 
 
@@ -34,5 +34,4 @@ def test_no_encoding():
     """
     cmd = ['echo', '-n', '-e', '\\xeb']
     result = run(cmd, encoding=None)
-    assert isinstance(result['stdout'], unicode_type)
-    assert result['stdout'].startswith('Base64:')
+    assert isinstance(result['stdout'], six.binary_type)
