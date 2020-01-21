@@ -113,7 +113,7 @@ install:
 
 install-container-test:
 	docker pull ${CONTAINER}
-	docker build -t leapp-tests -f res/docker-tests/Dockerfile res/docker-tests
+	docker build -t leapp-tests -f res/docker-tests/Dockerfile.$(subst :,,${CONTAINER}) res/docker-tests
 
 install-test:
 	pip install -r requirements-tests.txt
