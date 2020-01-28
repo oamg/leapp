@@ -23,12 +23,12 @@ def archive_logfiles():
     """ Archive log files from a previous run of Leapp """
     cfg = get_config()
 
-    if not os.path.isdir(cfg.get('logs', 'dir')):
-        os.makedirs(cfg.get('logs', 'dir'))
+    if not os.path.isdir(cfg.get('files_to_archive', 'dir')):
+        os.makedirs(cfg.get('files_to_archive', 'dir'))
 
-    files_to_archive = [os.path.join(cfg.get('logs', 'dir'), f)
-                        for f in cfg.get('logs', 'files').split(',')
-                        if os.path.isfile(os.path.join(cfg.get('logs', 'dir'), f))]
+    files_to_archive = [os.path.join(cfg.get('files_to_archive', 'dir'), f)
+                        for f in cfg.get('files_to_archive', 'files').split(',')
+                        if os.path.isfile(os.path.join(cfg.get('files_to_archive', 'dir'), f))]
 
     if not os.path.isdir(cfg.get('archive', 'dir')):
         os.makedirs(cfg.get('archive', 'dir'))
@@ -116,6 +116,18 @@ def generate_report_files(context):
     messages = fetch_upgrade_report_messages(context)
     generate_report_file(messages, context, report_json)
     generate_report_file(messages, context, report_txt)
+
+
+def get_cfg_files(section, cfg, must_exist=True):
+    """
+    Provide files from particular config section
+    """
+    files = []
+    for file_ in cfg.get(section, 'files').split(','):
+        file_path = os.path.join(cfg.get(section, 'dir'), file_)
+        if not must_exist or must_exist and os.path.isfile(file_path):
+            files.append(file_path)
+    return files
 
 
 def warn_if_unsupported(configuration):
@@ -220,6 +232,12 @@ def upgrade(args):
     report_errors(workflow.errors)
     generate_report_files(context)
 
+    cfg = get_config()
+
+    report_files = get_cfg_files('report', cfg)
+    log_files = get_cfg_files('logs', cfg)
+    report_info(report_files, log_files, fail=workflow.failure)
+
     if workflow.failure:
         sys.exit(1)
 
@@ -261,9 +279,9 @@ def preupgrade(args):
     workflow.save_answerfile(answerfile_path)
     generate_report_files(context)
     report_errors(workflow.errors)
-
-    report_files = [os.path.join(cfg.get('report', 'dir'), r) for r in cfg.get('report', 'files').split(',')]
-    report_info([rf for rf in report_files if os.path.isfile(rf)], fail=workflow.failure)
+    report_files = get_cfg_files('report', cfg)
+    log_files = get_cfg_files('logs', cfg)
+    report_info(report_files, log_files, fail=workflow.failure)
     if workflow.failure:
         sys.exit(1)
 

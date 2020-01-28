@@ -8,20 +8,24 @@ from leapp.utils.repository import find_repository_basedir
 
 
 _LEAPP_CONFIG = None
+
+# files that will get reported at the end of a preupgrade/upgrade run if they were created/modified during it
+_REPORTS = [
+    'leapp-report.json',
+    'leapp-report.txt',
+]
+
+# debug logs that will get reported at the end of a preupgrade/upgrade run if they were created/modified during it
+_LOGS = [
+    'leapp-upgrade.log',
+    'leapp-preupgrade.log'
+]
+
 # files that will go into the leapp-logs.tar.gz archive and get deleted each time a run is started
 _FILES_TO_ARCHIVE = [
     'dnf-plugin-data.txt',
-    'leapp-report.json',
-    'leapp-report.txt',
-    'leapp-preupgrade.log',
-    'leapp-upgrade.log',
-]
-# files that will get reported at the end of a preupgrade run if they were created/modified during it
-_FILES_TO_REPORT = [
-    'leapp-report.json',
-    'leapp-report.txt',
-    'leapp-preupgrade.log',
-]
+] + _REPORTS + _LOGS
+
 _CONFIG_DEFAULTS = {
     'archive': {
         'dir': '/var/log/leapp/archive/',
@@ -32,13 +36,17 @@ _CONFIG_DEFAULTS = {
     'debug': {
         'dir': '/var/log/leapp/dnf-debugdata/',
     },
-    'logs': {
+    'files_to_archive': {
         'dir': '/var/log/leapp/',
         'files': ','.join(_FILES_TO_ARCHIVE),
     },
+    'logs': {
+        'dir': '/var/log/leapp/',
+        'files': ','.join(_LOGS),
+    },
     'report': {
         'dir': '/var/log/leapp/',
-        'files': ','.join(_FILES_TO_REPORT),
+        'files': ','.join(_REPORTS),
         'answerfile': '/var/log/leapp/answerfile',
     },
     'repositories': {
