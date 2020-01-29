@@ -72,7 +72,7 @@ def process(self):
 
 ### Explaining the dialogs processing mechanism during the upgrade
 
-The upgrade itself from the operator's point of view consists of 3 distinct stages: leapp preupgrade, leapp answer
+The upgrade itself, from the operator's point of view, consists of 3 distinct stages: leapp preupgrade, leapp answer
 and leapp upgrade.
 
 Leapp preupgrade stage should be treated as "non-invasive system upgradeability analysis", when the upgrade workflow
