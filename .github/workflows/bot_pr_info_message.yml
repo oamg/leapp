@@ -1,0 +1,28 @@
+name: leapp bot - PR info message
+on:
+  pull_request:
+
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: mshick/add-pr-comment@v1
+        with:
+          # the message to print
+          message: "Thank you for contributing to Leapp project!\
+          \n\n
+          Please note that every PR needs to comply with the [Leapp Guidelines](https://github.com/oamg/leapp-guidelines), pass tests and linter check before it can be merged.\
+          \n\n
+          If you want to re-run tests or request review, you can use following commands as a comment:\
+          \n
+          - `leapp-ci build`  runs unit tests\
+          \n
+          - `please review`  notifies leapp developers of review request\
+          \n
+          - `e2e tests`  runs unit tests and end-to-end tests (oamg members only)"
+
+          # a github token for API access
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          # allow messages to be repeated
+          allow-repeats: false
