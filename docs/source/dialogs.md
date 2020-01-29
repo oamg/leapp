@@ -72,8 +72,7 @@ def process(self):
 
 ### Explaining the dialogs processing mechanism during the upgrade
 
-The upgrade itself, from the operator's point of view, consists of 3 distinct stages: leapp preupgrade, leapp answer
-and leapp upgrade.
+The upgrade itself, from the operator's point of view, consists of 3 distinct stages: preupgrade, remediate and upgrade.
 
 Leapp preupgrade stage should be treated as "non-invasive system upgradeability analysis", when the upgrade workflow
 stops right after preliminary system facts collection phases and a preupgrade report containing all the information
@@ -81,7 +80,7 @@ about potential issues is generated. If an actor containing dialog is discover d
 message is added to the preupgrade report file saying that for the successful upgrade the operator should record
 their decision in the answerfile.
 
-Leapp answer stage is intended specifically for answerfile management. The operator has the option to manually edit
+As far as the dialogs are concerned, leapp remediate stage is intended specifically for answerfile management. The operator has the option to manually edit
 the answerfile with editor of choice or use `leapp answer` command to fill the answerfile (usually located at 
 /var/log/leapp/answerfile) with choices for the discovered dialogs. After modifying the answerfile you can check
 system upgradeability by rerunning leapp preupgrade.
