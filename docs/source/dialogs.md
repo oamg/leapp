@@ -82,7 +82,7 @@ message is added to the preupgrade report file saying that for the successful up
 their decision in the answerfile.
 
 Leapp answer stage is intended specifically for answerfile management. The operator has the option to manually edit
-the answerfile with editor of choice or use leapp answer command to fill the answerfile (usually located at 
+the answerfile with editor of choice or use `leapp answer` command to fill the answerfile (usually located at 
 /var/log/leapp/answerfile) with choices for the discovered dialogs. After modifying the answerfile you can check
 system upgradeability by rerunning leapp preupgrade.
 
