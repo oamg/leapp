@@ -145,9 +145,7 @@ class AnswerStore(object):
                     choices = ''
                     answer_entry = ''
                     if hasattr(component, 'choices'):
-                        choices += '# Available choices:\n'
-                        for choice in component.choices:
-                            choices += '# - {}\n'.format(choice)
+                        choices += '# Available choices: {}\n'.format('/'.join(component.choices))
                         if component.value_type is tuple:
                             default = ';'.join(component.default)
                             answer = ';'.join(answer) if answer else answer

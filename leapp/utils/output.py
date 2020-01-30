@@ -46,7 +46,7 @@ def report_errors(errors):
         sys.stdout.write(pretty_block("END OF ERRORS", color=Color.red))
 
 
-def report_info(report_paths, log_paths, fail=False):
+def report_info(report_paths, log_paths, answerfile=None, fail=False):
     report_paths = [report_paths] if not isinstance(report_paths, list) else report_paths
     log_paths = [log_paths] if not isinstance(report_paths, list) else log_paths
 
@@ -62,6 +62,9 @@ def report_info(report_paths, log_paths, fail=False):
             sys.stdout.write("A report has been generated at {path}\n".format(path=report_path))
         sys.stdout.write(pretty_block("END OF REPORT", color=Color.bold if fail else Color.green))
         sys.stdout.write("\n")
+
+    if answerfile:
+        sys.stdout.write("Answerfile has been generated at {}\n".format(answerfile))
 
 
 def report_unsupported(devel_vars, experimental):
