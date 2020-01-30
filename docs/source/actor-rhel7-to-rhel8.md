@@ -359,7 +359,7 @@ To flush all saved messages from the repository database, run `snactor messages 
 
 ## Writing tests for an actor
 
-[Read the tutorial](unit-testing) for writing an running unit and component tests
+[Read the tutorial](unit-testing) for writing and running unit and component tests
 
 ## Best practices
 

@@ -151,3 +151,11 @@ In case of [StopActorExecutionError](pydoc/leapp.html#leapp.exceptions.StopActor
 - [ReportOnly](pydoc/leapp.workflows.html?highlight=FailPhase#leapp.workflows.policies.Policies.Errors.ReportOnly) - do not end the workflow execution at all and continue with logging the issue only
 
 You can also use the [StopActorExecution](pydoc/leapp.html#leapp.exceptions.StopActorExecution) and [StopActorExecutionError](pydoc/leapp.html#leapp.exceptions.StopActorExecutionError) exceptions inside a private or shared library.
+
+## Use the LEAPP and LEAPP\_DEVEL prefixes for new envars
+
+In case you need to change a behaviour of actor(s) for testing or development purposes - e.g. be able to skip a functionality in your actor - use environment variables. Such environment variables should start with prefix *LEAPP\_DEVEL*. Such variables are not possible to use on production systems without special *LEAPP\_UNSUPPORTED* variable. This prevents users to break their systems by a mistake.
+
+If you want to enable user to modify behaviour on production systems as well (e.g. enable user increase size of something the actor is producing), use just *LEAPP* prefix and ensure you inform user about the variable if needed.
+
+In both cases, such environment variables should be mentioned in related commit messages.
