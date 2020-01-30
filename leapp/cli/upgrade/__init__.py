@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 
 from leapp.config import get_config
-from leapp.exceptions import CommandError, LeappError
+from leapp.exceptions import CommandError, LeappError, UsageError
 from leapp.logger import configure_logger
 from leapp.messaging.answerstore import AnswerStore
 from leapp.repository.scan import find_and_scan_repositories
@@ -188,6 +188,7 @@ def upgrade(args):
     context = str(uuid.uuid4())
     cfg = get_config()
     configuration = prepare_configuration(args)
+    answerfile_path = cfg.get('report', 'answerfile')
 
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
@@ -224,16 +225,12 @@ def upgrade(args):
     process_whitelist_experimental(repositories, workflow, configuration, logger)
     warn_if_unsupported(configuration)
     with beautify_actor_exception():
-        answerfile_path = cfg.get('report', 'answerfile')
         logger.info("Using answerfile at %s", answerfile_path)
         workflow.load_answerfile(answerfile_path)
         workflow.run(context=context, skip_phases_until=skip_phases_until, skip_dialogs=True)
 
     report_errors(workflow.errors)
     generate_report_files(context)
-
-    cfg = get_config()
-
     report_files = get_cfg_files('report', cfg)
     log_files = get_cfg_files('logs', cfg)
     report_info(report_files, log_files, fail=workflow.failure)
@@ -281,15 +278,15 @@ def preupgrade(args):
     report_errors(workflow.errors)
     report_files = get_cfg_files('report', cfg)
     log_files = get_cfg_files('logs', cfg)
-    report_info(report_files, log_files, fail=workflow.failure)
+    report_info(report_files, log_files, answerfile_path, fail=workflow.failure)
     if workflow.failure:
         sys.exit(1)
 
 
-@command('answer', help='Manage answerfile')
-@command_opt('answerfile', help='Path to an answerfile to update')
+@command('answer', help='Manage answerfile: register user choices for specific dialog sections')
+@command_opt('answerfile', help='Path to the answerfile to update')
 @command_opt('section', action='append', metavar='dialog_sections',
-             help='Record answer for specific section in answerfile')
+             help='Register answer for a specific section in the answerfile')
 @command_opt('add', is_flag=True,
              help='If set sections will be created even if missing in original answerfile')
 def answer(args):
@@ -298,12 +295,12 @@ def answer(args):
     if args.section:
         args.section = list(itertools.chain(*[i.split(',') for i in args.section]))
     else:
-        raise CommandError('At least one dialog section must be specified, ex. --section dialog.option=mychoice')
+        raise UsageError('At least one dialog section must be specified, ex. --section dialog.option=mychoice')
     try:
         sections = [tuple((dialog_option.split('.', 2) + [value]))
                     for dialog_option, value in [s.split('=', 2) for s in args.section]]
     except ValueError:
-        raise CommandError("A bad formatted section has been passed. Expected format is dialog.option=mychoice")
+        raise UsageError("A bad formatted section has been passed. Expected format is dialog.option=mychoice")
     answerfile_path = args.answerfile or cfg.get('report', 'answerfile')
     answerstore = AnswerStore()
     answerstore.load(answerfile_path)

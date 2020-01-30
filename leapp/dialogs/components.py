@@ -84,6 +84,7 @@ class BooleanComponent(Component):
     """
     BooleanComponent is used for boolean inputs such as Yes/No questions.
     """
+    choices = ('True', 'False')
     values = ('Yes', 'No')
     value_type = bool
 
