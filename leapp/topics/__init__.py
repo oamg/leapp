@@ -20,13 +20,21 @@ class Topic(with_metaclass(TopicMeta)):
     """ Base class for all :ref:`topics <terminology:topic>`"""
 
     name = None
-    """ Name of the topic """
+    """ Name of the topic in snake case """
 
     messages = ()
     """
     Tuple of :py:class:`leapp.models.Model` derived classes that are using this topic are automatically added to this
     variable.
     """
+
+    @classmethod
+    def serialize(cls):
+        return {
+            'class_name': cls.__name__,
+            'name': cls.name,
+            'messages': [m.__name__ for m in cls.messages]
+        }
 
 
 class DialogTopic(Topic):

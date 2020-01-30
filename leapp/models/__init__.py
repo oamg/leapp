@@ -134,7 +134,7 @@ class Model(with_metaclass(ModelMeta)):
     def serialize(cls):
         """ Returns serialized data of the model """
         return {
-            'name': cls.__name__,
+            'class_name': cls.__name__,
             'fields': {name: field.serialize() for name, field in cls.fields.items()},
             'topic': cls.topic.__name__
         }

@@ -4,13 +4,16 @@ import pkgutil
 import sys
 
 from leapp.exceptions import RepoItemPathDoesNotExistError, UnsupportedDefinitionKindError
-import leapp.libraries.common # noqa # pylint: disable=unused-import
-from leapp.models import resolve_model_references
-import leapp.workflows
-from leapp.repository.definition import DefinitionKind
+from leapp.models import get_models, resolve_model_references
+import leapp.libraries.common  # noqa # pylint: disable=unused-import
 from leapp.repository.actor_definition import ActorDefinition
+from leapp.repository.definition import DefinitionKind
+from leapp.tags import get_tags
+from leapp.topics import get_topics
 from leapp.utils.libraryfinder import LeappLibrariesFinder
-from leapp.utils.repository import get_repository_name, get_repository_id, get_repository_links
+from leapp.utils.repository import get_repository_id, get_repository_links, get_repository_name
+import leapp.workflows
+from leapp.workflows import get_workflows
 
 
 class _LoadStage(object):
@@ -163,20 +166,36 @@ class Repository(object):
         for importer, name, ispkg in pkgutil.iter_modules(directories, prefix=prefix):
             importer.find_module(name).load_module(name)
 
-    def dump(self):
+    def serialize(self):
         """
         :return: Dictionary of all repository resources
         """
+        def filtered_serialization(func, modules):
+            result = []
+            data = func()
+            for entry in data:
+                if os.path.abspath(sys.modules[entry.__module__].__file__.replace('.pyc', '.py')) in modules:
+                    result.append(entry.serialize())
+            return result
+
+        def mapped_actor_data(data):
+            data.update({
+                'consumes': [model.__name__ for model in data.get('consumes', ())],
+                'produces': [model.__name__ for model in data.get('produces', ())],
+                'tags': [tag.__name__ for tag in data.get('tags', ())]
+            })
+            return data
+
         return {
             'repo_dir': self._repo_dir,
-            'actors': [a.dump() for a in self.actors],
-            'topics': self.relative_paths(self.topics),
-            'models': self.relative_paths(self.models),
-            'tags': self.relative_paths(self.tags),
-            'workflows': self.relative_paths(self.workflows),
-            'tools': self.relative_paths(self.tools),
-            'files': self.relative_paths(self.files),
-            'libraries': self.relative_paths(self.libraries)
+            'actors': [mapped_actor_data(a.serialize()) for a in self.actors],
+            'topics': filtered_serialization(get_topics, self.topics),
+            'models': filtered_serialization(get_models, self.models),
+            'tags': filtered_serialization(get_tags, self.tags),
+            'workflows': filtered_serialization(get_workflows, self.workflows),
+            'tools': [dict([('path', path)]) for path in self.relative_paths(self.tools)],
+            'files': [dict([('path', path)]) for path in self.relative_paths(self.files)],
+            'libraries': [dict([('path', path)]) for path in self.relative_paths(self.libraries)]
         }
 
     def _extend_environ_paths(self, name, paths):

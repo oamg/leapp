@@ -43,7 +43,13 @@ def test_actor_definition(repository_dir):
                     assert definition.dialogs == _FAKE_META_DATA['dialogs']
                     assert definition.name == _FAKE_META_DATA['name']
                     assert definition.description == _FAKE_META_DATA['description']
-                    dumped = definition.dump()
+                    dumped = definition.serialize()
+                    assert dumped.pop('class_name') == definition.class_name
+                    assert dumped.pop('description') == definition.description
+                    assert dumped.pop('consumes') == definition.consumes
+                    assert dumped.pop('produces') == definition.produces
+                    assert dumped.pop('tags') == definition.tags
+                    assert dumped.pop('dialogs') == [dialog.serialize() for dialog in definition.dialogs]
                     assert dumped.pop('path') == _FAKE_META_DATA['path']
                     assert dumped.pop('name') == definition.name
                     assert dumped.pop('files') == ('.',)

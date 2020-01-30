@@ -150,7 +150,7 @@ class Field(object):
         """
         return {
             'nullable': self._nullable,
-            'type': type(self).__name__,
+            'class_name': type(self).__name__,
             'default': self._default,
             'help': self._help
         }
@@ -313,6 +313,13 @@ class EnumMixin(Field):
             raise ModelViolationError(
                 'The value of "{name}" field must be one of "{values}"'.format(name=name, values=values))
 
+    def serialize(self):
+        result = super(EnumMixin, self).serialize()
+        result.update({
+            'choices': self._choices
+        })
+        return result
+
 
 def Nullable(elem_field):
     """
@@ -412,6 +419,15 @@ class List(Field):
         converter = self._elem_type._convert_from_model
         return list(converter(entry, name='{}[{}]'.format(name, idx)) for idx, entry in enumerate(value))
 
+    def serialize(self):
+        result = super(List, self).serialize()
+        result.update({
+            'element': self._elem_type.serialize(),
+            'maximum': self._maximum,
+            'minimum': self._minimum
+        })
+        return result
+
 
 class Model(Field):
     """
@@ -453,6 +469,13 @@ class Model(Field):
         if value is None:
             return value
         return value.dump()
+
+    def serialize(self):
+        result = super(Model, self).serialize()
+        result.update({
+            'model': self._model_type.__name__
+        })
+        return result
 
 
 class JSON(String):

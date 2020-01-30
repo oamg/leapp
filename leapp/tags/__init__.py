@@ -75,6 +75,17 @@ class Tag(with_metaclass(TagMeta)):
     Tuple of all registered actors using this tag
     """
 
+    name = None
+    """ Name of the Tag in snake case """
+
+    @classmethod
+    def serialize(cls):
+        return {
+            'class_name': cls.__name__,
+            'name': cls.name,
+            'actors': [actor.class_name for actor in cls.actors]
+        }
+
 
 class ExperimentalTag(Tag):
     name = 'experimental'

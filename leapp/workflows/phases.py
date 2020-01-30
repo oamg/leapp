@@ -30,6 +30,7 @@ class Phase(with_metaclass(PhaseMeta)):
         """
         return {
             'name': cls.name,
+            'class_name': cls.__name__,
             'index': cls.get_index(),
             'filter': cls.filter.serialize() if cls.filter else None,
             'policies': cls.policies.serialize(),

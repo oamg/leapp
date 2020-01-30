@@ -94,7 +94,7 @@ def test_repo(repository_dir):
             assert not repository.lookup_workflow('MissingWorkflow')
             assert not repository.lookup_actor('MissingActor')
             assert repository.repos
-            assert len(repository.dump()) >= 1
+            assert len(repository.serialize()) >= 1
             assert repository.actors
             assert not repository.topics
             assert not repository.models
