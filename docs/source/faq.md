@@ -23,7 +23,7 @@ Leapp project aims to enable users to modernize their existing workloads without
 
 ## How can I get on board with contributing to Leapp?
 
-For the Leapp framework we are currently developing the functionality for the in-place upgrade of RHEL 7 to RHEL 8. You can improve the user experience of the upgrade by creating so called actors for the Leapp framework. We've written a quick guide on how to create such actors for the RHEL 7 to RHEL 8 upgrades: [How to create a Leapp actor for RHEL 7 to 8 upgrade.](actor-rhel7-to-rhel8.html)
+For the Leapp framework we are currently developing the functionality for the in-place upgrade of RHEL 7 to RHEL 8. You can improve the user experience of the upgrade by creating so called actors for the Leapp framework. We've written a quick guide on how to create such actors for the RHEL 7 to RHEL 8 upgrades: [How to create a Leapp actor for RHEL 7 to 8 upgrade.](actor-rhel7-to-rhel8)
 
 ## What is an actor and what does it do?
 
@@ -38,18 +38,18 @@ In regards to the upgrades of RHEL 7 to RHEL 8, Leapp should be able to upgrade 
 ## How can I exchange any data between actors?
 
 All communication between actors in Leapp is carried out using " messages". An actor can consume or produce messages. A message may contain any data, but the data needs to be in a specific format defined by a "model". If an actor wants to consume a message produced by another actor, it needs to specify the specific model of the consumed messages. Leapp will make sure to execute such an actor only after some message of the specified model was produced by another actor. If no message of the specified model was produced in previous phases or in the current phase, the consuming actor will get no messages of that kind.
-Source: [How to create a Leapp actor for RHEL 7 to 8 upgrade](actor-rhel7-to-rhel8.html)
+Source: [How to create a Leapp actor for RHEL 7 to 8 upgrade](actor-rhel7-to-rhel8)
 
 ## What do I have to do in order to execute actor I just wrote?
 
-If you want to execute just a single actor when developing it, then use the snactor tool. [Here's a tutorial](first-actor.html) on how to use it.
+If you want to execute just a single actor when developing it, then use the snactor tool. [Here's a tutorial](first-actor) on how to use it.
 If you want to add your actor to an existing workflow, for example the RHEL 7 to 8 upgrade workflow, then tag your actor with appropriate workflow and phase tags.
-Source: [How to create a Leapp actor for RHEL 7 to 8 upgrade](actor-rhel7-to-rhel8.html)
+Source: [How to create a Leapp actor for RHEL 7 to 8 upgrade](actor-rhel7-to-rhel8)
 
 ## What should I do if I need to execute multiple actors? Can I somehow ensure the dependencies between them?
 
 To be sure that your ActorA runs before your ActorB, produce a specific message in ActorA and let ActorB consume it. By doing this you create a dependency of ActorB on ActorA.
-To run just your actors during development, use snactor run --save-output ActorA to save the message of ActorA to the Leapp repository database and then snactor run ActorB. This way, the ActorB will be able to consume the ActorA's saved message. Read more about that in the [tutorial about messaging](messaging.html).
+To run just your actors during development, use snactor run --save-output ActorA to save the message of ActorA to the Leapp repository database and then snactor run ActorB. This way, the ActorB will be able to consume the ActorA's saved message. Read more about that in the [tutorial about messaging](messaging).
 
 ## How can I specify what run time dependencies will my actor have?
 
@@ -69,16 +69,16 @@ The format of a message is specified in a message model. You cannot, however, be
 
 ## What are the best practices for writing actors?
 
-Read the [Best practices for writing actors](best-practices.html).
+Read the [Best practices for writing actors](best-practices).
 
 ## What are the requirements for actors to be accepted by upstream?
 
-It should follow the [Contribution guidelines](contributing.html) and the [Best practices for writing actors](best-practices.html) as much as feasible.
+It should follow the [Contribution guidelines](contributing) and the [Best practices for writing actors](best-practices) as much as feasible.
 
 ## How can I debug my actor? Is there a standard/supported way how to log and get logs from actors/channels?
 
-You can run your actor using the snactor tool and printing the output. [See the tutorial](first-actor.html) on how to use snactor.
-Source: [How to create a Leapp actor for RHEL 7 to 8 upgrade](actor-rhel7-to-rhel8.html)
+You can run your actor using the snactor tool and printing the output. [See the tutorial](first-actor) on how to use snactor.
+Source: [How to create a Leapp actor for RHEL 7 to 8 upgrade](actor-rhel7-to-rhel8)
 
 ## Are there some technical limitations for an actor? E.g. maximum time execution, size of the input/output, libraries I can use... In case there are, is it possible to specify that the actor needs e.g. longer time for execution?
 

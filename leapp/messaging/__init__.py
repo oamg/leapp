@@ -122,7 +122,7 @@ class BaseMessaging(object):
         :param message: Message to print the error
         :type message: str
         :param severity: Severity of the error
-        :type severity: ErrorSeverity
+        :type severity: leapp.models.error_severity.ErrorSeverity
         :param actor: Actor name that produced the message
         :type actor: leapp.actors.Actor
         :param details: A dictionary where additional context information can be passed along with the error

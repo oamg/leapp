@@ -5,7 +5,7 @@
 With latest changes on Leapp and with new actors added to the el7toel8 Leapp
 repository, any actor can inhibit the upgrade process by producing a specific
 message when a problem is found. The message model to use in this case is
-[Report](/pydoc/leapp.reporting.html#leapp.reporting.Report).
+[Report](pydoc/leapp.reporting.html#leapp.reporting.Report).
 If there is at least one Report message with `'inhibitor'` flag produced before
 the Report phase, the upgrade will be stopped in the Reports phase, in which the
 messages are being collected. It means that any Report message produced

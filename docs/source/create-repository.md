@@ -1,6 +1,6 @@
 # Creating a new repository for actor development
 
-Leapp uses repositories with a defined [filesystem layout](repository-dir-layout.html).
+Leapp uses repositories with a defined [filesystem layout](repository-dir-layout).
 The snactor tool helps you to create a repository repository, in which you can develop and test your
 actors, tags, models, and topics.
 

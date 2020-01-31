@@ -8,7 +8,7 @@ A *workflow* describes what work is going to be done and when. Each workflow is 
 
 Each actor is executed in a forked child process to prevent the modification of the application state. All messages and logs produced by the actors are stored in the *audit database*.
 
-For more information about each part of the architecture, check the [terminology](terminology.html).
+For more information about each part of the architecture, check the [terminology](terminology).
 
 ### How is this different from Ansible?
 

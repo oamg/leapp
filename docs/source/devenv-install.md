@@ -37,7 +37,7 @@ For the actor development, install the `snactor` tool, and if you want to use ac
 To keep your environment clean, use a virtualenv.
 
 First, create a new virtual environment called "tut" and activate it:
-```shell
+```
 $ cd ~/devel
 $ virtualenv -p /usr/bin/python2.7 tut
 $ . tut/bin/activate

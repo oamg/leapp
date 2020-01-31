@@ -56,13 +56,13 @@ New actor MyNewActor has been created at /usr/share/leapp-repository/repositorie
 
 The main file of the actor is the actor.py in which you’ll write code for logic of the actor.
 
-For further information about how create an actor read this [document](first-actor.html)
+For further information about how create an actor read this [document](first-actor).
 
 ## Including an actor in the RHEL 7 to 8 upgrade process
 
 Until now, you have created boilerplate of a new actor and made it visible to Leapp. But, Leapp needs some more information about what to do with the actor. Specifically, in which **“workflow”** and in which **“phase”** the actor should be executed. A workflow is a sequence of phases. The only workflow available now is the one solving the upgrade of RHEL 7 to RHEL 8. Each phase is a set of actors that will be executed one after another before the next phase starts. To find out in which workflow and phase should the actor be executed, Leapp looks for **“tags”**. To be part of RHEL 7 to RHEL 8 upgrade workflow, an actor needs to be tagged with **IPUWorkflowTag**.
 
-The phases of the IPUWorkflow (in order) are: **Facts Collection, Checks, Report, Download, Upgrade RamDisk Preparation, Upgrade RamDisk Start, Late Tests, Preparation, RPM Upgrade, Application Upgrade, Third Party Applications, Finalization** and **First Boot**. Each phase has a specific tag that marks an actor as being part of that phase. You can find descriptions of all the phases and their tags [here](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/workflows/inplace_upgrade.py) and workflow diagram [here](inplace-upgrade-workflow.html).
+The phases of the IPUWorkflow (in order) are: **Facts Collection, Checks, Report, Download, Upgrade RamDisk Preparation, Upgrade RamDisk Start, Late Tests, Preparation, RPM Upgrade, Application Upgrade, Third Party Applications, Finalization** and **First Boot**. Each phase has a specific tag that marks an actor as being part of that phase. You can find descriptions of all the phases and their tags [here](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/workflows/inplace_upgrade.py) and workflow diagram [here](inplace-upgrade-workflow).
 
 For example, if an actor is to be executed within the Checks phase, it needs to be tagged both with IPUWorkflowTag and ChecksPhaseTag. The result after updating the boilerplate would be:
 
@@ -88,7 +88,7 @@ class MyNewActor(Actor):
 
 All communication between actors in Leapp is carried out using **“messages”**. An actor can consume or produce messages. A message may contain any data, but the data needs to be in a specific format defined by a **“model”**. If an actor wants to consume a message produced by another actor, it needs to specify the specific model of the consumed messages. Leapp will make sure to execute such an actor only after some message of the specified model was produced by another actor. If no message of the specified model was produced in previous phases or in the current phase, the consuming actor will get no messages of that kind.
 
-For further information about messaging refer to [document](messaging.html)
+For further information about messaging refer to this [document](messaging).
 
 One of the existing models in Leapp is [ActiveKernelModulesFacts](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/models/activekernelmodulesfacts.py). Messages from this model contain data about the system on which Leapp has been started. For example, it contains installed kernel modules. If an actor wants to perform some action based on existing kernel modules on the system, the actor can get list of these modules by consuming the _ActiveKernelModulesFacts_ messages. By extending the boilerplate, the code could look like this:
 
@@ -132,7 +132,7 @@ The following restrictions apply:
   change the behavior of any other dialog that any actor might create.
 - Dialogs can be used only at certain stages of the workflow - ChecksPhase and TargetTransactionChecksPhase.
 
-For more information and real examples please check [dialogs](dialogs.html).
+For more information and real examples please check [dialogs](dialogs).
 
 ### Producing data for other actors and reporting
 
@@ -359,21 +359,21 @@ To flush all saved messages from the repository database, run `snactor messages 
 
 ## Writing tests for an actor
 
-[Read the tutorial](unit-testing.html) for writing an running unit and component tests
+[Read the tutorial](unit-testing) for writing an running unit and component tests
 
 ## Best practices
 
-Read the best practices [document](best-practices.html) and [Python guidelines](https://github.com/oamg/leapp-guidelines/blob/master/python-coding-guidelines.md)
+Read the best practices [document](best-practices) and [Python guidelines](https://github.com/oamg/leapp-guidelines/blob/master/python-coding-guidelines.md).
 
 ## Contributing actors to the Leapp project
 
-Currently all Leapp elements (i.e. actors, models, tags) are stored under a public [GitHub repository](https://github.com/oamg/leapp-repository)
+Currently all Leapp elements (i.e. actors, models, tags) are stored under a public [GitHub repository](https://github.com/oamg/leapp-repository).
 
 All new content that needs to be part of Leapp release distributed to all users should be proposed as a Pull Request in this repository.
 
 **Before submitting your work for review, make sure you have read and followed the contribution guidelines:**
 
-[Contribution guidelines for writing actors](contributing.html)
+[Contribution guidelines for writing actors](contributing)
 
 This [pull request](https://github.com/oamg/leapp-repository/pull/186) gives a good example of both guidelines-driven actor implementation and thorough test coverage.
 
@@ -381,11 +381,11 @@ This [pull request](https://github.com/oamg/leapp-repository/pull/186) gives a g
 
 ### In which existing workflow phase should I place my new actor?
 
-You can decide that based on the description of the phases this information is available in the [code](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/workflows/inplace_upgrade.py) and diagram [here](inplace-upgrade-workflow.html). Please note that if your actor depends on some message generated by another actor, it cannot be executed in a phase before the phase of such actor. In a similar way, if your actor produces data, it needs to be executed before the actor consuming the data.
+You can decide that based on the description of the phases this information is available in the [code](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/workflows/inplace_upgrade.py) and diagram [here](inplace-upgrade-workflow). Please note that if your actor depends on some message generated by another actor, it cannot be executed in a phase before the phase of such actor. In a similar way, if your actor produces data, it needs to be executed before the actor consuming the data.
 
 ### How to stop the upgrade in case my actor finds a problem with the system setup?
 
-The process of inhibiting the upgrade is done by the VerifyCheckResult actor, executed during the ReportPhase. This actor consumes messages from the _Report_ model and if any message with the flag “inhibitor” was generated it will inhibit the upgrade process. So, your actor needs to produce a _Report_ message with the flag “inhibitor” before the upgrade process gets to the ReportPhase. Read more about inhibiting the upgrade process [here](inhibit-rhel7-to-rhel8.html).
+The process of inhibiting the upgrade is done by the VerifyCheckResult actor, executed during the ReportPhase. This actor consumes messages from the _Report_ model and if any message with the flag “inhibitor” was generated it will inhibit the upgrade process. So, your actor needs to produce a _Report_ message with the flag “inhibitor” before the upgrade process gets to the ReportPhase. Read more about inhibiting the upgrade process [here](inhibit-rhel7-to-rhel8).
 
 ### How to stop execution of my actor in case of an unexpected error?
 
@@ -414,7 +414,7 @@ Python 2.7+/3.6+, but keep in mind that the resulting code has to be both py2 an
 
 Under “tests” folder, an actor can have Python files containing tests that will be executed using PyTest. Leapp provide tests utilities to simulate actor consuming and checking actor production. Please, refer to detailed Leapp documentation about how to write tests.
 
-For further information read: [Writing tests for actors](unit-testing.html)
+For further information read: [Writing tests for actors](unit-testing).
 
 ### How to use libraries or data files in my new actor?
 

@@ -20,14 +20,6 @@ leapp\.repository\.definition module
     :undoc-members:
     :show-inheritance:
 
-leapp\.repository\.loader module
---------------------------------
-
-.. automodule:: leapp.repository.loader
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 leapp\.repository\.manager module
 ---------------------------------
 

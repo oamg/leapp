@@ -1,7 +1,7 @@
 # How to deal with dependencies in leapp-repository
 
 First, read this
-[document](dependencies.html)
+[document](dependencies)
 to better understand the difficulties related to package dependencies in the
 Leapp project.
 
@@ -53,4 +53,4 @@ rules. Just take care of the **leapp-repository-dependencies** capability
 instead of the *leapp-framework-dependencies* capability. Everything else is
 the same. Interesting parts of the SPEC files are highlighted in the same way
 as described in the
-[leapp dependencies document](dependencies.html).
+[leapp dependencies document](dependencies).

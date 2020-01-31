@@ -72,5 +72,5 @@ and it is already affected by such change. If you modify the
 *outer dependencies*, inform the repository developers about the change (e.g.
 [issue](https://github.com/oamg/leapp-repository/issues/new))
 or even better, continue by following instructions in the
-[doc](dependencies-leapp-repository.html)
+[doc](dependencies-leapp-repository)
 to reflect the change.

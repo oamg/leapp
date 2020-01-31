@@ -26,9 +26,8 @@ class _LoadStage(object):
 
 class Repository(object):
     """
-    The Repository class represents a place where all resources (actors, models, tags, etc.) are defined. The
-    repository directory layout looks like:
-    :ref:`Repository Directory Layout <best-practises:repository directory layout>`
+    The Repository class represents a place where all resources (actors, models, tags, etc.) are defined. See the
+    :doc:`Repository Directory Layout <../repository-dir-layout>`.
     """
 
     def __init__(self, directory):

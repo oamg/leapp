@@ -16,7 +16,7 @@ class Component(object):
     def __init__(self, key=None, label=None, description=None, default=None, reason=None):
         """
 
-        :param key: Unique key within a dialog scope. Needs to be in the format: [a-zA-Z_][a-zA-Z0-9_]*
+        :param key: Unique key within a dialog scope. Needs to be in the format: `[a-zA-Z_][a-zA-Z0-9_]*`
         :param label: Label for the input to print
         :param description: Description what this value is used for.
         :param default: Default value to
@@ -89,7 +89,7 @@ class BooleanComponent(Component):
 
     def __init__(self, key=None, label=None, description=None, default=None, reason=None, values=None):
         """
-        :param key: Unique key within a dialog scope. Needs to be in the format: [a-zA-Z_][a-zA-Z0-9_]*
+        :param key: Unique key within a dialog scope. Needs to be in the format: `[a-zA-Z_][a-zA-Z0-9_]*`
         :param label: Label for the input to print
         :param description: Description what this value is used for.
         :param default: Default value to
@@ -115,7 +115,7 @@ class ChoiceComponent(Component):
 
     def __init__(self, choices=None, key=None, label=None, description=None, default=None, reason=None):
         """
-        :param key: Unique key within a dialog scope. Needs to be in the format: [a-zA-Z_][a-zA-Z0-9_]*
+        :param key: Unique key within a dialog scope. Needs to be in the format: `[a-zA-Z_][a-zA-Z0-9_]*`
         :param label: Label for the input to print
         :param description: Description what this value is used for.
         :param default: Default value to
