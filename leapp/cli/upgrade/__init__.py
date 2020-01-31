@@ -290,6 +290,8 @@ def preupgrade(args):
 @command_opt('answerfile', help='Path to an answerfile to update')
 @command_opt('section', action='append', metavar='dialog_sections',
              help='Record answer for specific section in answerfile')
+@command_opt('add', is_flag=True,
+             help='If set sections will be created even if missing in original answerfile')
 def answer(args):
     """A command to manage answerfile. Updates answerfile with userchoices"""
     cfg = get_config()
@@ -307,7 +309,7 @@ def answer(args):
     answerstore.load(answerfile_path)
     for dialog, option, value in sections:
         answerstore.answer(dialog, option, value)
-    not_updated = answerstore.update(answerfile_path)
+    not_updated = answerstore.update(answerfile_path, allow_missing=args.add)
     if not_updated:
         sys.stderr.write("WARNING: Only sections found in original userfile can be updated, ignoring {}\n".format(
             ",".join(not_updated)))
