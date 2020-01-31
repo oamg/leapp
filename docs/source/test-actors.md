@@ -5,7 +5,7 @@ The Leapp actors are covered by three types of tests - unit, component and e2e.
 ## Unit and component tests
 
 - Both unit and component tests are to be placed in the actor's _tests_ folder.
-- Tutorial on [How to write unit and component tests](unit-testing.html)
+- Tutorial on [How to write unit and component tests](unit-testing)
 
 ### Unit tests
 

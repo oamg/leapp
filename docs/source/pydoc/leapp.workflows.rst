@@ -4,14 +4,6 @@ leapp\.workflows package
 Submodules
 ----------
 
-leapp\.workflows\.filters module
---------------------------------
-
-.. automodule:: leapp.workflows.filters
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 leapp\.workflows\.flags module
 ------------------------------
 

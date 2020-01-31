@@ -111,7 +111,7 @@ class RepositoryManager(object):
     @property
     def actors(self):
         """
-        :return: Tuple of :py:class:`leapp.repository.actor_definition.ActorDefinition` instances representing actors
+        :return: Tuple of :py:class:`leapp.repository.actor_definition.ActorDefinition` instances representing actors \
         from all repositories
         """
         return tuple(itertools.chain(*[repo.actors for repo in self._repos.values()]))

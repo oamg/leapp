@@ -173,6 +173,8 @@ source_parsers = {
 autoclass_content = 'both'
 autodoc_default_flags = ['members', 'undoc-members', 'inherited-members', 'show-inheritance']
 
+autodoc_mock_imports = ["leapp.utils.schemas"]
+
 
 def filter_unwanted_leapp_types(app, what, name, obj, skip, options):
     if name.startswith('with_meta_base_') or name == 'mro':
@@ -183,9 +185,7 @@ def filter_unwanted_leapp_types(app, what, name, obj, skip, options):
 
 
 def setup(app):
-    app.add_config_value('recommonmark_config', {
-        'enable_auto_doc_ref': False,
-    }, True)
+    app.add_config_value('recommonmark_config', {}, True)
     app.add_transform(AutoStructify)
     app.connect('autodoc-skip-member', filter_unwanted_leapp_types)
     app.add_stylesheet('css/asciinema-player.css')

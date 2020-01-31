@@ -3,7 +3,7 @@
 Snactor allows you to link repositories, which is needed if you want to use actors, tags, 
 models, etc. from another repository.
 
-Firstly, leave the current repository and [create a new one](create-repository.html) called *tutorial-linked*
+Firstly, leave the current repository and [create a new one](create-repository) called *tutorial-linked*
 and enter its folder.
 
 To link the *tutorial* repository, run the snactor tool:

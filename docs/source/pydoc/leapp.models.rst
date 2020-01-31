@@ -8,6 +8,18 @@ Subpackages
 
     leapp.models.fields
 
+Submodules
+----------
+
+leapp\.models\.error_severity module
+------------------------------------
+
+.. automodule:: leapp.models.error_severity
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
 Module contents
 ---------------
 

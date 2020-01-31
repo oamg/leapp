@@ -12,14 +12,6 @@ leapp\.messaging\.inprocess module
     :undoc-members:
     :show-inheritance:
 
-leapp\.messaging\.remote module
--------------------------------
-
-.. automodule:: leapp.messaging.remote
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
 Module contents
 ---------------
