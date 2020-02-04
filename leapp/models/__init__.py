@@ -153,7 +153,7 @@ class ErrorModel(Model):
 class DialogModel(Model):
     topic = DialogTopic
 
-    answerfile_sections = fields.String()
+    answerfile_sections = fields.JSON()
     actor = fields.String()
     details = fields.Nullable(fields.String())
 
