@@ -10,7 +10,7 @@ jobs:
       - uses: mshick/add-pr-comment@v1
         with:
           # the message to print
-          message: "Thank you for contributing to Leapp project!\
+          message: "Thank you for contributing to the Leapp project!\
           \n\n
           Please note that every PR needs to comply with the [Leapp Guidelines](https://github.com/oamg/leapp-guidelines), pass tests and linter check before it can be merged.\
           \n\n
