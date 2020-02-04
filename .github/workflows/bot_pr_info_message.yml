@@ -20,7 +20,7 @@ jobs:
           \n
           - `please review`  notifies leapp developers of review request\
           \n
-          - `e2e tests`  runs unit tests and end-to-end tests (oamg members only)"
+          - `e2e tests`  runs unit tests and end-to-end tests (OAMG members only)"
 
           # a github token for API access
           repo-token: ${{ secrets.GITHUB_TOKEN }}
