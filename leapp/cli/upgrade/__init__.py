@@ -189,6 +189,7 @@ def upgrade(args):
     cfg = get_config()
     configuration = prepare_configuration(args)
     answerfile_path = cfg.get('report', 'answerfile')
+    userchoices_path = cfg.get('report', 'userchoices')
 
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
@@ -227,6 +228,7 @@ def upgrade(args):
     with beautify_actor_exception():
         logger.info("Using answerfile at %s", answerfile_path)
         workflow.load_answerfile(answerfile_path)
+        workflow.load_answerfile(userchoices_path)
         workflow.run(context=context, skip_phases_until=skip_phases_until, skip_dialogs=True)
 
     report_errors(workflow.errors)
@@ -249,6 +251,7 @@ def preupgrade(args):
     cfg = get_config()
     configuration = prepare_configuration(args)
     answerfile_path = cfg.get('report', 'answerfile')
+    userchoices_path = cfg.get('report', 'userchoices')
 
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
@@ -268,6 +271,7 @@ def preupgrade(args):
     process_whitelist_experimental(repositories, workflow, configuration, logger)
     with beautify_actor_exception():
         workflow.load_answerfile(answerfile_path)
+        workflow.load_answerfile(userchoices_path)
         until_phase = 'ReportsPhase'
         logger.info('Executing workflow until phase: %s', until_phase)
         workflow.run(context=context, until_phase=until_phase, skip_dialogs=True)
@@ -283,14 +287,13 @@ def preupgrade(args):
         sys.exit(1)
 
 
-@command('answer', help='Manage answerfile: register user choices for specific dialog sections')
-@command_opt('answerfile', help='Path to the answerfile to update')
+@command('answer', help='Manage answerfile generation: register persistent user choices for specific dialog sections')
 @command_opt('section', action='append', metavar='dialog_sections',
              help='Register answer for a specific section in the answerfile')
-@command_opt('add', is_flag=True,
-             help='If set sections will be created even if missing in original answerfile')
 def answer(args):
-    """A command to manage answerfile. Updates answerfile with userchoices"""
+    """A command to record user choices to the questions in the answerfile.
+       Saves user answer between leapp preupgrade runs.
+    """
     cfg = get_config()
     if args.section:
         args.section = list(itertools.chain(*[i.split(',') for i in args.section]))
@@ -301,15 +304,14 @@ def answer(args):
                     for dialog_option, value in [s.split('=', 2) for s in args.section]]
     except ValueError:
         raise UsageError("A bad formatted section has been passed. Expected format is dialog.option=mychoice")
-    answerfile_path = args.answerfile or cfg.get('report', 'answerfile')
+    answerfile_path = cfg.get('report', 'answerfile')
+    userchoices_path = cfg.get('report', 'userchoices')
     answerstore = AnswerStore()
     answerstore.load(answerfile_path)
+    answerstore.load(userchoices_path)
     for dialog, option, value in sections:
         answerstore.answer(dialog, option, value)
-    not_updated = answerstore.update(answerfile_path, allow_missing=args.add)
-    if not_updated:
-        sys.stderr.write("WARNING: Only sections found in original userfile can be updated, ignoring {}\n".format(
-            ",".join(not_updated)))
+    answerstore.update(userchoices_path, allow_missing=True)
 
 
 @command('list-runs', help='List previous Leapp upgrade executions')
