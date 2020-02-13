@@ -92,16 +92,21 @@ class Workflow(with_metaclass(WorkflowMeta)):
         """
         return self._answer_store
 
-    def save_answerfile(self, filepath):
+    def save_answers(self, answerfile_path, userchoices_path):
         """
-        Generates an answer file for the dialogs of the workflow and saves it to `filepath`.
+        Generates an answer file for the dialogs of the workflow and saves it to `answerfile_path`.
+        Updates a .userchoices file at `userchoices_path` with new answers encountered in answerfile.
 
-        :param filepath: The path of where to store the answer file.
+        :param answerfile_path: The path where to store the answer file.
+        :param userchoices_path: The path where to store the .userchoices file.
         :return: None
         """
-        self._answer_store.generate(self._dialogs, filepath)
+        # answerfile is generated only for the dialogs actually encountered in the worflow
+        self._answer_store.generate(self._dialogs, answerfile_path)
+        # userchoices is updated with any new data retrieved from answerfile
+        self._answer_store.update(userchoices_path, allow_missing=True)
 
-    def load_answerfile(self, filepath):
+    def _load_from_file(self, filepath):
         if os.path.isfile(filepath):
             # XXX FIXME load_and_translate doesn't help here as somehow dialog.component.value
             # in Dialog.request_answers is not respectfully updated (set to None so storage
@@ -109,7 +114,11 @@ class Workflow(with_metaclass(WorkflowMeta)):
             # Patching in 2 places - load here and direct call to translate in request_answers
             self._answer_store.load(filepath)
         else:
-            self.log.warning("Previous answerfile %s not found", filepath)
+            self.log.warning("Previous file %s not found", filepath)
+
+    def load_answers(self, answerfile_path, userchoices_path):
+        self._load_from_file(userchoices_path)
+        self._load_from_file(answerfile_path)
 
     def __init__(self, logger=None, auto_reboot=False):
         """
