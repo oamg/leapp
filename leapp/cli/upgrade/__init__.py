@@ -180,7 +180,6 @@ def process_whitelist_experimental(repositories, workflow, configuration, logger
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
 @command_opt('reboot', is_flag=True, help='Automatically performs reboot when requested.')
 @command_opt('whitelist-experimental', action='append', metavar='ActorName', help='Enables experimental actors')
-@command_opt('load-answerfile', help='Path to load custom answerfile')
 @command_opt('debug', is_flag=True, help='Enable debug mode', inherit=False)
 @command_opt('verbose', is_flag=True, help='Enable verbose logging', inherit=False)
 def upgrade(args):
@@ -227,8 +226,7 @@ def upgrade(args):
     warn_if_unsupported(configuration)
     with beautify_actor_exception():
         logger.info("Using answerfile at %s", answerfile_path)
-        workflow.load_answerfile(answerfile_path)
-        workflow.load_answerfile(userchoices_path)
+        workflow.load_answers(answerfile_path, userchoices_path)
         workflow.run(context=context, skip_phases_until=skip_phases_until, skip_dialogs=True)
 
     report_errors(workflow.errors)
@@ -243,7 +241,6 @@ def upgrade(args):
 
 @command('preupgrade', help='Generate preupgrade report')
 @command_opt('whitelist-experimental', action='append', metavar='ActorName', help='Enables experimental actors')
-@command_opt('save-answerfile', help='Path to save custom answerfile')
 @command_opt('debug', is_flag=True, help='Enable debug mode', inherit=False)
 @command_opt('verbose', is_flag=True, help='Enable verbose logging', inherit=False)
 def preupgrade(args):
@@ -270,14 +267,13 @@ def preupgrade(args):
     warn_if_unsupported(configuration)
     process_whitelist_experimental(repositories, workflow, configuration, logger)
     with beautify_actor_exception():
-        workflow.load_answerfile(answerfile_path)
-        workflow.load_answerfile(userchoices_path)
+        workflow.load_answers(answerfile_path, userchoices_path)
         until_phase = 'ReportsPhase'
         logger.info('Executing workflow until phase: %s', until_phase)
         workflow.run(context=context, until_phase=until_phase, skip_dialogs=True)
 
     logger.info("Answerfile will be created at %s", answerfile_path)
-    workflow.save_answerfile(answerfile_path)
+    workflow.save_answers(answerfile_path, userchoices_path)
     generate_report_files(context)
     report_errors(workflow.errors)
     report_files = get_cfg_files('report', cfg)
@@ -290,6 +286,8 @@ def preupgrade(args):
 @command('answer', help='Manage answerfile generation: register persistent user choices for specific dialog sections')
 @command_opt('section', action='append', metavar='dialog_sections',
              help='Register answer for a specific section in the answerfile')
+@command_opt('add', is_flag=True,
+             help='If set sections will be created even if missing in original answerfile')
 def answer(args):
     """A command to record user choices to the questions in the answerfile.
        Saves user answer between leapp preupgrade runs.
@@ -305,13 +303,14 @@ def answer(args):
     except ValueError:
         raise UsageError("A bad formatted section has been passed. Expected format is dialog.option=mychoice")
     answerfile_path = cfg.get('report', 'answerfile')
-    userchoices_path = cfg.get('report', 'userchoices')
     answerstore = AnswerStore()
     answerstore.load(answerfile_path)
-    answerstore.load(userchoices_path)
     for dialog, option, value in sections:
         answerstore.answer(dialog, option, value)
-    answerstore.update(userchoices_path, allow_missing=True)
+    not_updated = answerstore.update(answerfile_path, allow_missing=args.add)
+    if not_updated:
+        sys.stderr.write("WARNING: Only sections found in original userfile can be updated, ignoring {}\n".format(
+            ",".join(not_updated)))
 
 
 @command('list-runs', help='List previous Leapp upgrade executions')

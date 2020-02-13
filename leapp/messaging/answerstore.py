@@ -39,7 +39,7 @@ class AnswerStore(object):
                 if section not in conf.sections() and allow_missing:
                     conf.add_section(section)
                 try:
-                    conf.set(section, opt, val)
+                    conf.set(section, opt, str(val))
                 except configparser.NoSectionError:
                     not_updated.append("{sec}.{opt}={val}".format(sec=section, opt=opt, val=val))
         with open(answer_file, 'w') as afile:
