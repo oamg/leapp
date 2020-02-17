@@ -2,7 +2,7 @@ import hashlib
 import json
 import os
 
-from leapp.reporting import Remediation, create_report_from_error, create_report_from_deprecation
+from leapp.reporting import Remediation, Severity, create_report_from_error, create_report_from_deprecation
 from leapp.utils.audit import get_messages, get_audit_entry
 
 
@@ -74,10 +74,24 @@ def fetch_upgrade_report_messages(context_id):
     return messages
 
 
+SEVERITY_LEVELS = {
+    Severity.HIGH: 1,
+    Severity.MEDIUM: 2,
+    Severity.LOW: 3,
+    Severity.INFO: 4
+}
+
+
+def importance(message):
+    if 'inhibitor' in message.get('flags', []):
+        return 0
+    return SEVERITY_LEVELS.get(message['severity'], 99)
+
+
 def generate_report_file(messages_to_report, context, path):
     if path.endswith(".txt"):
         with open(path, 'w') as f:
-            for message in messages_to_report:
+            for message in sorted(messages_to_report, key=importance):
                 is_inhibitor = 'inhibitor' in message.get('flags', [])
                 f.write('Risk Factor: {}{}\n'.format(message['severity'], ' (inhibitor)' if is_inhibitor else ''))
                 f.write('Title: {}\n'.format(message['title']))
