@@ -8,3 +8,4 @@ Here you can find documentation related to our CI/CD, packaging, etc.
 
     dependencies
     dependencies-leapp-repository
+    compatibility-with-leapp-repository
