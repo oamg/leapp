@@ -12,12 +12,11 @@ Resources not included in this RTD:
 
     terminology
     tutorials
-    repository-dir-layout
+    leapp-repositories
+    infrastructure
     best-practices
     test-actors
     architecture
-    dependencies
-    dependencies-leapp-repository
     inplace-upgrade-workflow
     contributing
     python-coding-guidelines
