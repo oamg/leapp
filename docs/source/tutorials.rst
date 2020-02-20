@@ -7,8 +7,8 @@ Tutorials
     devenv-install
     create-repository
     first-actor
-    actor-rhel7-to-rhel8
-    inhibit-rhel7-to-rhel8
+    el7toel8/actor-rhel7-to-rhel8
+    el7toel8/inhibit-rhel7-to-rhel8
     messaging
     dialogs
     repo-linking
