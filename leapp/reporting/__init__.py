@@ -135,6 +135,7 @@ class Tags(BasePrimitive):
     AUTHENTICATION = _Value('authentication')
     BOOT = _Value('boot')
     COMMUNICATION = _Value('communication')
+    DESKTOP = _Value('desktop environment')
     DRIVERS = _Value('drivers')
     EMAIL = _Value('email')
     ENCRYPTION = _Value('encryption')
