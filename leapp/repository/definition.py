@@ -15,6 +15,7 @@ class DefinitionKind(object):
     TOOLS = _Kind('tools')
     FILES = _Kind('files')
     TESTS = _Kind('tests')
+    API = _Kind('api')
 
-    REPO_WHITELIST = (ACTOR, MODEL, TOPIC, TAG, WORKFLOW, TOOLS, LIBRARIES, FILES)
+    REPO_WHITELIST = (ACTOR, API, MODEL, TOPIC, TAG, WORKFLOW, TOOLS, LIBRARIES, FILES)
     ACTOR_WHITELIST = (TOOLS, LIBRARIES, FILES, TESTS)

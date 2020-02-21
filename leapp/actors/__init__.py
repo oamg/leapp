@@ -9,9 +9,11 @@ from leapp.exceptions import MissingActorAttributeError, WrongAttributeTypeError
     StopActorExecution, WorkflowConfigNotAvailable
 from leapp.models import DialogModel, Model
 from leapp.tags import Tag
+from leapp.utils import get_api_models
 from leapp.utils.i18n import install_translation_for_actor
 from leapp.utils.meta import get_flattened_subclasses
 from leapp.models.error_severity import ErrorSeverity
+from leapp.workflows.api import WorkflowAPI
 
 
 class Actor(object):
@@ -63,6 +65,12 @@ class Actor(object):
     Dialogs that are added to this list allow for persisting answers the user has given in the answer file storage.
     """
 
+    apis = ()
+    """
+    Tuple of :py:class:`leapp.workflow.api.WorkflowAPI` derived classes that implement Workflow APIs that are used by
+    an actor. Any models the apis produce or consume will be considered by the framework as if the actor defined them.
+    """
+
     text_domain = None
     """
     Using text domain allows to override the default gettext text domain, for custom localization support.
@@ -101,6 +109,9 @@ class Actor(object):
 
         if config_model:
             self._configuration = next(self.consume(config_model), None)
+
+        # Needed so produce allows to send messages for models specified also by workflow APIs
+        type(self).produces = get_api_models(type(self), 'produces')
 
     def get_answers(self, dialog):
         """
@@ -450,8 +461,22 @@ def _is_tag_tuple(actor, name, value):
     return value
 
 
-def _get_attribute(actor, name, validator, required=False, default_value=None, additional_info=''):
-    value = getattr(actor, name, None)
+def _is_api_tuple(actor, name, value):
+    if isinstance(value, type) and issubclass(value, WorkflowAPI):
+        _lint_warn(actor, name, "Apis")
+        value = (value,)
+    _is_type(tuple)(actor, name, value)
+    if not all([True] + [isinstance(item, type) and issubclass(item, WorkflowAPI) for item in value]):
+        raise WrongAttributeTypeError(
+            'Actor {} attribute {} should contain only WorkflowAPIs'.format(actor, name))
+    return value
+
+
+def _get_attribute(actor, name, validator, required=False, default_value=None, additional_info='', resolve=None):
+    if resolve:
+        value = resolve(actor, name)
+    else:
+        value = getattr(actor, name, None)
     if not value and required:
         raise MissingActorAttributeError('Actor {} is missing attribute {}.{}'.format(actor, name, additional_info))
     if value or required:
@@ -478,11 +503,12 @@ def get_actor_metadata(actor):
         ('path', os.path.dirname(os.path.realpath(sys.modules[actor.__module__].__file__))),
         _get_attribute(actor, 'name', _is_type(string_types), required=True),
         _get_attribute(actor, 'tags', _is_tag_tuple, required=True, additional_info=additional_tag_info),
-        _get_attribute(actor, 'consumes', _is_model_tuple, required=False, default_value=()),
-        _get_attribute(actor, 'produces', _is_model_tuple, required=False, default_value=()),
+        _get_attribute(actor, 'consumes', _is_model_tuple, required=False, default_value=(), resolve=get_api_models),
+        _get_attribute(actor, 'produces', _is_model_tuple, required=False, default_value=(), resolve=get_api_models),
         _get_attribute(actor, 'dialogs', _is_dialog_tuple, required=False, default_value=()),
         _get_attribute(actor, 'description', _is_type(string_types), required=False,
-                       default_value=actor.__doc__ or 'There has been no description provided for this actor.')
+                       default_value=actor.__doc__ or 'There has been no description provided for this actor.'),
+        _get_attribute(actor, 'apis', _is_api_tuple, required=False, default_value=())
     ])
 
 

@@ -44,6 +44,11 @@ def _load_commands_from(path):
 def cli(args):
     if args.logger_config and os.path.isfile(args.logger_config):
         os.environ['LEAPP_LOGGER_CONFIG'] = args.logger_config
+    # Consider using the in repository $REPOPATH/.leapp/logger.conf to actually obey --debug / --verbose
+    # If /etc/leapp/logger.conf or $REPOPATH/.leapp/logger.conf don't exist logging won't work in snactor.
+    elif find_repository_basedir('.') and os.path.isfile(os.path.join(find_repository_basedir('.'),
+                                                                      '.leapp/logger.conf')):
+        os.environ['LEAPP_LOGGER_CONFIG'] = os.path.join(find_repository_basedir('.'), '.leapp/logger.conf')
 
     config_file_path = None
     if args.config and os.path.isfile(args.config):

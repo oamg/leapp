@@ -40,8 +40,9 @@ def _get_actor_path(actor, repository_relative=True):
 
 def _get_actor_details(actor):
     meta = actor.discover()
-    meta['produces'] = tuple(model.__name__ for model in meta['produces'])
-    meta['consumes'] = tuple(model.__name__ for model in meta['consumes'])
+    meta['produces'] = tuple(model.__name__ for model in actor.produces)
+    meta['consumes'] = tuple(model.__name__ for model in actor.consumes)
+    meta['apis'] = tuple(api.serialize() for api in actor.apis)
     meta['tags'] = tuple(tag.name for tag in meta['tags'])
     meta['path'] = _get_class_file(actor)
     meta['dialogs'] = [dialog.serialize() for dialog in actor.dialogs]
