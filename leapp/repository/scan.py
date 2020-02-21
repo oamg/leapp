@@ -90,7 +90,8 @@ def scan(repository, path):
         ('files', scan_files),
         ('libraries', scan_libraries),
         ('tests', scan_tests),
-        ('tools', scan_tools))
+        ('tools', scan_tools),
+        ('apis', scan_apis))
 
     dirs = [e for e in os.listdir(path) if os.path.isdir(os.path.join(path, e))]
     for name, task in scan_tasks:
@@ -251,3 +252,18 @@ def scan_tests(repo, path, repo_path):
     """
     if os.listdir(path):
         repo.add(DefinitionKind.TESTS, os.path.relpath(path, repo_path))
+
+
+def scan_apis(repo, path, repo_path):
+    """
+    Scans apis and adds them to the repository.
+
+    :param repo: Instance of the repository
+    :type repo: :py:class:`leapp.repository.Repository`
+    :param path: path to the apis
+    :type path: str
+    :param repo_path: path to the repository
+    :type repo_path: str
+    """
+    if os.listdir(path):
+        repo.add(DefinitionKind.API, os.path.relpath(path, repo_path))

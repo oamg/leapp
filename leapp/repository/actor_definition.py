@@ -135,6 +135,7 @@ class ActorDefinition(object):
             'tags': self.tags,
             'consumes': self.consumes,
             'produces': self.produces,
+            'apis': self.apis,
             'dialogs': [dialog.serialize() for dialog in self.dialogs],
             'tools': self.tools,
             'files': self.files,
@@ -282,6 +283,13 @@ class ActorDefinition(object):
                 os.environ['LEAPP_TOOLS'] = tools_backup
             else:
                 os.environ.pop('LEAPP_TOOLS', None)
+
+    @property
+    def apis(self):
+        """
+        :return: names of APIs used by this actor
+        """
+        return tuple(self.discover()['apis'])
 
     @property
     def directory(self):

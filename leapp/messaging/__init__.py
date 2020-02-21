@@ -13,6 +13,7 @@ from leapp.messaging.answerstore import AnswerStore
 from leapp.exceptions import CannotConsumeErrorMessages
 from leapp.models import DialogModel, ErrorModel
 from leapp.messaging.commands import WorkflowCommand
+from leapp.utils import get_api_models
 
 
 class BaseMessaging(object):
@@ -241,7 +242,8 @@ class BaseMessaging(object):
         """
         types = tuple((getattr(t, '_resolved', t) for t in types))
         messages = list(self._data) + list(self._new_data)
-        lookup = {model.__name__: model for model in type(actor).consumes + self._config_models}
+        # Needs to use get_api_models to consider all consumes including the one specified by Workflow APIs
+        lookup = {model.__name__: model for model in get_api_models(type(actor), 'consumes') + self._config_models}
         if types:
             filtered = set(requested.__name__ for requested in types)
             messages = [message for message in messages if message['type'] in filtered]

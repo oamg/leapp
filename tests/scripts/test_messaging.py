@@ -19,6 +19,7 @@ class FakeActor(object):
     produces = ()
     description = '''No description for a fake actor.'''
     tags = (TestTag.Common,)
+    apis = ()
 
     def process(self):
         pass

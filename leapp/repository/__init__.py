@@ -143,6 +143,7 @@ class Repository(object):
             self._extend_environ_paths('LEAPP_COMMON_FILES', self.files)
             self.log.debug("Installing repository provided common libraries loader hook")
             sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.libraries.common', paths=self.libraries))
+            sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.workflows.api', paths=self.apis))
 
         if not stage or stage is _LoadStage.ACTORS:
             self.log.debug("Running actor discovery")
@@ -188,6 +189,7 @@ class Repository(object):
         return {
             'repo_dir': self._repo_dir,
             'actors': [mapped_actor_data(a.serialize()) for a in self.actors],
+            'apis': [dict([('path', path)]) for path in self.relative_paths(self.apis)],
             'topics': filtered_serialization(get_topics, self.topics),
             'models': filtered_serialization(get_models, self.models),
             'tags': filtered_serialization(get_tags, self.tags),
@@ -213,6 +215,13 @@ class Repository(object):
         :return: Tuple of actors in the repository
         """
         return tuple(self._definitions.get(DefinitionKind.ACTOR, ()))
+
+    @property
+    def apis(self):
+        """
+        :return: Tuple of apis in the repository
+        """
+        return tuple(self._definitions.get(DefinitionKind.API, ()))
 
     @property
     def topics(self):
