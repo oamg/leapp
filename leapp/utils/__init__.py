@@ -15,9 +15,15 @@ def get_api_models(actor, what):
     :type actor: Actor or ActorDefinition
     :return: Tuple of all produced or consumed models as specified by actor and APIs used by the actor.
     """
+
+    def _enforce_tuple(x):
+        if not isinstance(x, tuple):
+            return (x,)
+        return x
+
     def _do_get(api):
-        result = getattr(api, what, ())
-        for a in api.apis or ():
+        result = _enforce_tuple(getattr(api, what, ()))
+        for a in _enforce_tuple(api.apis or ()):
             result = result + _do_get(a)
         return result
     return tuple(set(_do_get(actor)))
