@@ -11,6 +11,7 @@ from _pytest.python import pytest_pyfunc_call as original_pytest_pyfunc_call
 from leapp.compat import raise_with_traceback
 from leapp.messaging.inprocess import InProcessMessaging
 from leapp.repository.scan import find_and_scan_repositories
+from leapp.utils import get_api_models
 from leapp.utils.audit import Execution, get_connection
 from leapp.utils.repository import find_repository_basedir
 
@@ -66,6 +67,8 @@ class ActorContext(object):
     actors. It provides a set of methods that allow specifying input messages for the actor, executing the
     actor and to retrieve messages sent by the actor.
     """
+    apis = ()
+
     def __init__(self, actor=None):
         self._actor = actor
         self._messaging = InProcessMessaging()
@@ -80,7 +83,7 @@ class ActorContext(object):
         """
         type(self).name = actor.name + '_feeder'
         # Consumes is here what it actually produces because we want to consume produced messages in 'consume'
-        type(self).consumes = actor.produces
+        type(self).consumes = get_api_models(actor, 'produces')
         self._actor = actor
 
     def feed(self, *models):
