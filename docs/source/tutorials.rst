@@ -13,5 +13,6 @@ Tutorials
     dialogs
     repo-linking
     working-with-workflows
+    workflow-apis
     unit-testing
     debugging

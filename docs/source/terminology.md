@@ -59,3 +59,8 @@ Workflows describe what work is going to be done and when. A workflow is describ
 where one phase has assigned filters with which the framework selects actors that should be executed from
 the repositories on the system.
 
+### Workflow APIs
+
+Workflow APIs are custom API classes that actors can use and automatically inherit their consumed and produced
+messages. This way one can write a stable API for third party actor writers, without being affected by changes of
+message model layout, name changes etc.
