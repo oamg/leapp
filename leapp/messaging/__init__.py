@@ -33,6 +33,7 @@ class BaseMessaging(object):
         self._stored = stored
         self._config_models = (config_model,) if config_model else ()
         self._dialogs = self._manager.list()
+        self._stop_after_phase = self._manager.Value(bool, False)
 
     def load_answers(self, answer_file, workflow):
         """
@@ -75,6 +76,15 @@ class BaseMessaging(object):
         :return: List of newly produced errors
         """
         return list(self._errors)
+
+    @property
+    def stop_after_phase(self):
+        """
+        Returns True if execution stop was requested after the current
+
+        :return: True if the executed was requested to be stopped.
+        """
+        return self._stop_after_phase.get()
 
     def messages(self):
         """
@@ -135,6 +145,12 @@ class BaseMessaging(object):
         model = ErrorModel(message=message, actor=actor.name, severity=severity, details=details,
                            time=datetime.datetime.now())
         self._do_produce(model, actor, self._errors)
+
+    def request_stop_after_phase(self):
+        """
+        If called, it will cause the workflow to stop the execution after the current phase ends.
+        """
+        self._stop_after_phase.set(True)
 
     def register_dialog(self, dialog, actor):
         self._dialogs.append(dialog)
