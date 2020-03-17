@@ -22,4 +22,5 @@ The Leapp actors are covered by three types of tests - unit, component and e2e.
 
 ## End to end (e2e) tests
 
-- The QA team for the OAMG projects maintains an internal testing framework facilitating e2e tests.
+- The Leapp QA team maintains an internal testing framework facilitating e2e tests.
+- [Members of the *oamg* GitHub organization] can trigger execution of the e2e tests by adding the comment 'e2e tests' under an opened *leapp* or *leapp-repository* PR
