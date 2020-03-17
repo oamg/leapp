@@ -83,7 +83,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
 
     @property
     def failure(self):
-        return self._errors or self._unhandled_exception
+        return self._errors or self._unhandled_exception or self._stop_after_phase_requested
 
     @property
     def answer_store(self):
@@ -136,6 +136,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self._unhandled_exception = False
         self._answer_store = AnswerStore()
         self._dialogs = []
+        self._stop_after_phase_requested = False
 
         if self.configuration:
             config_actors = [actor for actor in self.tag.actors if self.configuration in actor.produces]
@@ -279,6 +280,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
             if phase and not self.is_valid_phase(phase):
                 raise CommandError('Phase {phase} does not exist in the workflow'.format(phase=phase))
 
+        self._stop_after_phase_requested = False
         for phase in self._phase_actors:
             os.environ['LEAPP_CURRENT_PHASE'] = phase[0].name
             if skip_phases_until:
@@ -316,6 +318,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     except BaseException:
                         self._unhandled_exception = True
                         raise
+
+                    self._stop_after_phase_requested = messaging.stop_after_phase or self._stop_after_phase_requested
 
                     # Collect dialogs
                     self._dialogs.extend(messaging.dialogs())
@@ -359,6 +363,10 @@ class Workflow(with_metaclass(WorkflowMeta)):
                 self.log.info('Workflow finished due to the until-phase flag')
                 early_finish = True
 
+            elif self._stop_after_phase_requested:
+                self.log.info('Workflow received request to stop after phase.')
+                early_finish = True
+
             elif phase[0].flags.request_restart_after_phase or phase[0].flags.restart_after_phase:
                 reboot = True
                 if phase[0].flags.request_restart_after_phase and not self._auto_reboot:
@@ -370,6 +378,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     self.log.info('Initiating system reboot due to the restart_after_reboot flag')
                     reboot_system()
                 early_finish = True
+
             elif phase[0].flags.is_checkpoint:
                 self.log.info('Stopping the workflow execution due to the is_checkpoint flag')
                 early_finish = True

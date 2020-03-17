@@ -130,3 +130,13 @@ class StopActorExecutionError(LeappError):
         super(StopActorExecutionError, self).__init__(message)
         self.severity = severity
         self.details = details
+
+
+class RequestStopAfterPhase(LeappError):
+    """
+    This exception is used to gracefully stop the current actor and request the stop of the workflow execution after
+    the current phase.
+    """
+
+    def __init__(self):
+        super(RequestStopAfterPhase, self).__init__('Stop after phase has been requested.')

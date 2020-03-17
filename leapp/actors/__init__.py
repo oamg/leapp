@@ -2,17 +2,16 @@ import logging
 import os
 import sys
 
-
 from leapp.compat import string_types
 from leapp.dialogs import Dialog
-from leapp.exceptions import MissingActorAttributeError, WrongAttributeTypeError, StopActorExecutionError, \
-    StopActorExecution, WorkflowConfigNotAvailable
+from leapp.exceptions import (MissingActorAttributeError, RequestStopAfterPhase, StopActorExecution,
+                              StopActorExecutionError, WorkflowConfigNotAvailable, WrongAttributeTypeError)
 from leapp.models import DialogModel, Model
+from leapp.models.error_severity import ErrorSeverity
 from leapp.tags import Tag
 from leapp.utils import get_api_models
 from leapp.utils.i18n import install_translation_for_actor
 from leapp.utils.meta import get_flattened_subclasses
-from leapp.models.error_severity import ErrorSeverity
 from leapp.workflows.api import WorkflowAPI
 
 
@@ -338,6 +337,8 @@ class Actor(object):
             pass
         except StopActorExecutionError as err:
             self.report_error(err.message, err.severity, err.details)
+        except RequestStopAfterPhase:
+            self._messaging.request_stop_after_phase()
         finally:
             os.environ.pop('LEAPP_CURRENT_ACTOR', None)
 

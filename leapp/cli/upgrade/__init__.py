@@ -15,7 +15,8 @@ from leapp.messaging.answerstore import AnswerStore
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
-from leapp.utils.output import report_errors, report_info, beautify_actor_exception, report_unsupported
+from leapp.utils.output import (report_errors, report_info, beautify_actor_exception, report_unsupported,
+                                report_inhibitors)
 from leapp.utils.report import fetch_upgrade_report_messages, generate_report_file
 
 
@@ -230,6 +231,7 @@ def upgrade(args):
         workflow.run(context=context, skip_phases_until=skip_phases_until, skip_dialogs=True)
 
     report_errors(workflow.errors)
+    report_inhibitors(context)
     generate_report_files(context)
     report_files = get_cfg_files('report', cfg)
     log_files = get_cfg_files('logs', cfg)
@@ -276,6 +278,7 @@ def preupgrade(args):
     workflow.save_answers(answerfile_path, userchoices_path)
     generate_report_files(context)
     report_errors(workflow.errors)
+    report_inhibitors(context)
     report_files = get_cfg_files('report', cfg)
     log_files = get_cfg_files('logs', cfg)
     report_info(report_files, log_files, answerfile_path, fail=workflow.failure)
