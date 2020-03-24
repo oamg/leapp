@@ -13,6 +13,7 @@ from leapp.tags import ExperimentalTag
 from leapp.utils import reboot_system
 from leapp.utils.audit import checkpoint, get_errors
 from leapp.utils.meta import with_metaclass, get_flattened_subclasses
+from leapp.utils.output import display_status_current_phase, display_status_current_actor
 from leapp.workflows.phases import Phase
 from leapp.workflows.policies import Policies
 from leapp.workflows.phaseactors import PhaseActors
@@ -289,6 +290,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
                 self.log.info('Skipping phase {name}'.format(name=phase[0].name))
                 continue
 
+            display_status_current_phase(phase)
             self.log.info('Starting phase {name}'.format(name=phase[0].name))
             current_logger = self.log.getChild(phase[0].name)
 
@@ -307,6 +309,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
                         if actor not in self.experimental_whitelist:
                             current_logger.info("Skipping experimental actor {actor}".format(actor=actor.name))
                             continue
+
+                    display_status_current_actor(actor, designation=designation)
                     current_logger.info("Executing actor {actor} {designation}".format(designation=designation,
                                                                                        actor=actor.name))
                     messaging = InProcessMessaging(config_model=config_model, answer_store=self._answer_store)

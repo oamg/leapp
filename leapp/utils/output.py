@@ -1,13 +1,17 @@
 from __future__ import print_function
 
 import json
+import os
 import sys
 from contextlib import contextmanager
 
 from leapp.exceptions import LeappRuntimeError
 from leapp.models import ErrorModel
-from leapp.reporting import Flags
-from leapp.utils.report import fetch_upgrade_report_messages
+
+
+def _is_verbose():
+    """Redefinition of is_verbose from leapp.libraries.stdlib.config because it leads to import errors"""
+    return os.getenv('LEAPP_VERBOSE', '0') == '1'
 
 
 class Color(object):
@@ -50,6 +54,9 @@ def print_error(error):
 
 
 def report_inhibitors(context_id):
+    # The following imports are required to be here to avoid import loop problems
+    from leapp.reporting import Flags  # pylint: disable=import-outside-toplevel
+    from leapp.utils.report import fetch_upgrade_report_messages  # pylint: disable=import-outside-toplevel
     reports = fetch_upgrade_report_messages(context_id)
     inhibitors = [report for report in reports if Flags.INHIBITOR in report.get('flags', [])]
     if inhibitors:
@@ -114,3 +121,20 @@ def beautify_actor_exception():
             sys.stderr.write(pretty_block_text(msg, color="", width=len(msg)))
     finally:
         pass
+
+
+def display_status_current_phase(phase):
+    if not _is_verbose():
+        print('==> Processing phase `{name}`'.format(name=phase[0].name))
+
+
+def _get_description_title(actor):
+    lines = actor.description.strip().split('\n')
+    return lines[0].strip() if lines else actor.name
+
+
+def display_status_current_actor(actor, designation=''):
+    if not _is_verbose():
+        print('====> * {actor}{designation}\n        {title}'.format(actor=actor.name,
+                                                                     title=_get_description_title(actor),
+                                                                     designation=designation))
