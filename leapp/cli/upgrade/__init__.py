@@ -142,11 +142,11 @@ def handle_output_level(args):
     """
     Set environment variables following command line arguments.
     """
-    os.environ['LEAPP_DEBUG'] = '1' if args.debug else os.environ.get('LEAPP_DEBUG', '0')
+    os.environ['LEAPP_DEBUG'] = '1' if args.debug else os.getenv('LEAPP_DEBUG', '0')
     if os.environ['LEAPP_DEBUG'] == '1' or args.verbose:
         os.environ['LEAPP_VERBOSE'] = '1'
     else:
-        os.environ['LEAPP_VERBOSE'] = os.environ.get('LEAPP_VERBOSE', '0')
+        os.environ['LEAPP_VERBOSE'] = os.getenv('LEAPP_VERBOSE', '0')
 
 
 def prepare_configuration(args):
@@ -157,10 +157,14 @@ def prepare_configuration(args):
     else:
         os.environ['LEAPP_EXPERIMENTAL'] = '0'
     os.environ['LEAPP_UNSUPPORTED'] = '0' if os.getenv('LEAPP_UNSUPPORTED', '0') == '0' else '1'
+    if args.no_rhsm:
+        os.environ['LEAPP_NO_RHSM'] = '1'
+    elif os.getenv('LEAPP_NO_RHSM') != '1':
+        os.environ['LEAPP_NO_RHSM'] = os.getenv('LEAPP_DEVEL_SKIP_RHSM', '0')
     configuration = {
         'debug': os.getenv('LEAPP_DEBUG', '0'),
         'verbose': os.getenv('LEAPP_VERBOSE', '0'),
-        'whitelist_experimental': args.whitelist_experimental or ()
+        'whitelist_experimental': args.whitelist_experimental or (),
     }
     return configuration
 
@@ -183,6 +187,8 @@ def process_whitelist_experimental(repositories, workflow, configuration, logger
 @command_opt('whitelist-experimental', action='append', metavar='ActorName', help='Enables experimental actors')
 @command_opt('debug', is_flag=True, help='Enable debug mode', inherit=False)
 @command_opt('verbose', is_flag=True, help='Enable verbose logging', inherit=False)
+@command_opt('no-rhsm', is_flag=True, help='Use only custom repositories and skip actions'
+                                           ' with Red Hat Subscription Manager')
 def upgrade(args):
     skip_phases_until = None
     context = str(uuid.uuid4())
@@ -245,6 +251,8 @@ def upgrade(args):
 @command_opt('whitelist-experimental', action='append', metavar='ActorName', help='Enables experimental actors')
 @command_opt('debug', is_flag=True, help='Enable debug mode', inherit=False)
 @command_opt('verbose', is_flag=True, help='Enable verbose logging', inherit=False)
+@command_opt('no-rhsm', is_flag=True, help='Use only custom repositories and skip actions'
+                                           ' with Red Hat Subscription Manager')
 def preupgrade(args):
     context = str(uuid.uuid4())
     cfg = get_config()
