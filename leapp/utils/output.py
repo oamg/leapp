@@ -70,7 +70,7 @@ def report_inhibitors(context_id):
 
 def report_errors(errors):
     if errors:
-        with pretty_block("ERRORS", target=sys.stderr, color=Color.red):
+        with pretty_block("ERRORS", target=sys.stdout, color=Color.red):
             for error in errors:
                 print_error(error)
 
