@@ -161,6 +161,8 @@ def prepare_configuration(args):
         os.environ['LEAPP_NO_RHSM'] = '1'
     elif os.getenv('LEAPP_NO_RHSM') != '1':
         os.environ['LEAPP_NO_RHSM'] = os.getenv('LEAPP_DEVEL_SKIP_RHSM', '0')
+    if args.enablerepo:
+        os.environ['LEAPP_ENABLE_REPOS'] = ','.join(args.enablerepo)
     configuration = {
         'debug': os.getenv('LEAPP_DEBUG', '0'),
         'verbose': os.getenv('LEAPP_VERBOSE', '0'),
@@ -181,14 +183,16 @@ def process_whitelist_experimental(repositories, workflow, configuration, logger
             raise CommandError(msg)
 
 
-@command('upgrade', help='Upgrades the current system to the next available major version.')
+@command('upgrade', help='Upgrade the current system to the next available major version.')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
 @command_opt('reboot', is_flag=True, help='Automatically performs reboot when requested.')
-@command_opt('whitelist-experimental', action='append', metavar='ActorName', help='Enables experimental actors')
+@command_opt('whitelist-experimental', action='append', metavar='ActorName', help='Enable experimental actors')
 @command_opt('debug', is_flag=True, help='Enable debug mode', inherit=False)
 @command_opt('verbose', is_flag=True, help='Enable verbose logging', inherit=False)
 @command_opt('no-rhsm', is_flag=True, help='Use only custom repositories and skip actions'
                                            ' with Red Hat Subscription Manager')
+@command_opt('enablerepo', action='append', metavar='<repoid>',
+             help='Enable specified repository. Can be used multiple times.')
 def upgrade(args):
     skip_phases_until = None
     context = str(uuid.uuid4())
@@ -253,6 +257,8 @@ def upgrade(args):
 @command_opt('verbose', is_flag=True, help='Enable verbose logging', inherit=False)
 @command_opt('no-rhsm', is_flag=True, help='Use only custom repositories and skip actions'
                                            ' with Red Hat Subscription Manager')
+@command_opt('enablerepo', action='append', metavar='<repoid>',
+             help='Enable specified repository. Can be used multiple times.')
 def preupgrade(args):
     context = str(uuid.uuid4())
     cfg = get_config()
