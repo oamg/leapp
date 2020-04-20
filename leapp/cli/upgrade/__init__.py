@@ -197,13 +197,13 @@ def upgrade(args):
     skip_phases_until = None
     context = str(uuid.uuid4())
     cfg = get_config()
+    handle_output_level(args)
     configuration = prepare_configuration(args)
     answerfile_path = cfg.get('report', 'answerfile')
     userchoices_path = cfg.get('report', 'userchoices')
 
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
-    handle_output_level(args)
 
     if args.resume:
         context, configuration = fetch_last_upgrade_context()
@@ -264,13 +264,13 @@ def upgrade(args):
 def preupgrade(args):
     context = str(uuid.uuid4())
     cfg = get_config()
+    handle_output_level(args)
     configuration = prepare_configuration(args)
     answerfile_path = cfg.get('report', 'answerfile')
     userchoices_path = cfg.get('report', 'userchoices')
 
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
-    handle_output_level(args)
     e = Execution(context=context, kind='preupgrade', configuration=configuration)
     e.store()
     archive_logfiles()
