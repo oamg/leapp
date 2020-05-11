@@ -270,6 +270,8 @@ class ActorDefinition(object):
             yield
         finally:
             os.chdir(previous_path)
+            sys.meta_path.pop()
+            # TODO also clean sys.modules. Since they are accumulated as well
 
             # Restoration of the PATH environment variable
             os.environ['PATH'] = path_backup
