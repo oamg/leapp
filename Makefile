@@ -122,7 +122,7 @@ container-test:
 	docker run --rm -ti -v ${PWD}:/payload leapp-tests
 
 test:   lint
-	pytest --cov-report term-missing --cov=leapp tests/scripts
+	pytest -vv --cov-report term-missing --cov=leapp tests/scripts
 
 lint:
 	pytest --cache-clear --pylint -m pylint leapp tests/scripts/*.py
