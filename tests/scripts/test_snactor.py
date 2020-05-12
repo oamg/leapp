@@ -131,6 +131,7 @@ def test_new_actor(repository_dir):
         with pytest.raises(CalledProcessError):
             check_call(['snactor', 'discover'])
         repository_dir.join('actors/test/actor.py').write('''
+from __future__ import print_function
 from leapp.actors import Actor
 from leapp.models import TestModel
 from leapp.tags import TestTag
@@ -144,6 +145,8 @@ class Test(Actor):
 
     def process(self):
         self.produce(TestModel(value='Some testing value'))
+        if self._configuration:
+            print(self.configuration.value)
 ''')
         check_call(['snactor', 'discover'])
 
@@ -209,6 +212,43 @@ def test_run_actor(repository_dir):
         check_call(['snactor', '--debug', 'run', '--print-output', 'Test'])
         check_call(['snactor', '--debug', 'run', '--save-output', 'Test'])
         check_call(['snactor', '--debug', 'run', '--print-output', '--save-output', 'Test'])
+
+
+def test_actor_config(repository_dir):
+    with repository_dir.as_cwd():
+        repository_dir.join('models/testconfig.py').write('''
+from leapp.models import Model, fields
+from leapp.topics import TestTopic
+
+
+class TestConfig(Model):
+    topic = TestTopic
+    value = fields.String(default='Test config value')
+''')
+        check_call(['snactor', 'new-actor', 'ConfigTest'])
+        repository_dir.join('actors/configtest/actor.py').write('''
+from __future__ import print_function
+from leapp.actors import Actor
+from leapp.models import TestConfig
+from leapp.tags import TestTag
+
+class ConfigTest(Actor):
+    name = 'test'
+    description = 'No description has been provided for the test actor.'
+    consumes = (TestConfig,)
+    produces = ()
+    tags = (TestTag,)
+
+    def process(self):
+        print(self.configuration.value)
+''')
+        with pytest.raises(CalledProcessError):
+            # Raises if actor-config is not specified
+            check_call(['snactor', 'run', 'ConfigTest'])
+        # Inject message
+        check_call(['snactor', 'messages', 'add', '-m', 'TestConfig', '{"value": "ConfigTest calls"}'])
+        # Ensure the injected data is now available to the actor
+        check_call(['snactor', 'run', '--actor-config', 'TestConfig', 'Test'])
 
 
 def test_clear_messages(repository_dir):

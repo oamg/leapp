@@ -9,10 +9,10 @@ from six.moves import configparser
 
 from leapp.dialogs import RawMessageDialog
 from leapp.dialogs.renderer import CommandlineRenderer
-from leapp.messaging.answerstore import AnswerStore
 from leapp.exceptions import CannotConsumeErrorMessages
-from leapp.models import DialogModel, ErrorModel
+from leapp.messaging.answerstore import AnswerStore
 from leapp.messaging.commands import WorkflowCommand
+from leapp.models import DialogModel, ErrorModel
 from leapp.utils import get_api_models
 
 

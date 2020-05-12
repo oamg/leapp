@@ -269,7 +269,6 @@ reporting.RelatedResource('pam', 'pam_securetty')
 
 The related resources are especially useful when you have a lot of accompanied objects like files or directories by your report and you would like to present it to the user in a specific way.
 
-
 ## Testing your new actor
 
 During development of your new actor, it is expected that you will test your work to verify that results match your expectations. You can do that by manually executing your actor, or writing tests on various levels (i.e unit tests, component tests, E2E tests).
@@ -312,6 +311,22 @@ As you can see the actor is executed without errors. But, by default, snactor do
 ```
 
 Now we can see that the _OSReleaseCollector_ actor produced a message of the _OSReleaseFacts_ model, containing data like OS Release name and version.
+
+### Executing a single actor that uses the workflow config
+
+If you need to execute an actor on its own that requires the `IPUConfig` model you can execute the actor with the
+following command:
+
+```shell
+snactor run --actor-config IPUConfig ActorName
+```
+
+In order for this to work you have to run the `IPUWorkflowConfig` actor before and save its output, so that the config
+data is stored in the database for the current session:
+
+```shell
+snactor run --save-output IPUWorkflowConfig
+```
 
 ### Executing the whole upgrade workflow with the new actor
 
@@ -435,4 +450,4 @@ When filing an issue, include:
 
 ## Where can I seek help?
 
-We’ll gladly answer your questions and lead you to through any troubles with the actor development. You can reach us, the OS and Application Modernization Group, at freenode IRC server in channel __#leapp__.
+We’ll gladly answer your questions and lead you to through any troubles with the actor development. You can reach us, the OS and Application Modernization Group, at freenode IRC server in channel **#leapp**.
