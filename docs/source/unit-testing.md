@@ -215,7 +215,7 @@ More examples could be found in the
 ### Shared libraries' tests
 
 To run tests of all shared libraries (i.e. libraries stored in
-`repositories/system_upgrade/el7toel8/libraries`) environment variable
+`repo/system_upgrade/el7toel8/libraries`) environment variable
 `TEST_LIBS` need to be set (only in case you use make command):
 
 ```sh
