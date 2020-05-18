@@ -240,12 +240,14 @@ def upgrade(args):
         workflow.load_answers(answerfile_path, userchoices_path)
         workflow.run(context=context, skip_phases_until=skip_phases_until, skip_dialogs=True)
 
+    logger.info("Answerfile will be created at %s", answerfile_path)
+    workflow.save_answers(answerfile_path, userchoices_path)
     report_errors(workflow.errors)
     report_inhibitors(context)
     generate_report_files(context)
     report_files = get_cfg_files('report', cfg)
     log_files = get_cfg_files('logs', cfg)
-    report_info(report_files, log_files, fail=workflow.failure)
+    report_info(report_files, log_files, answerfile_path, fail=workflow.failure)
 
     if workflow.failure:
         sys.exit(1)
