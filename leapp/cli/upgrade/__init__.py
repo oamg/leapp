@@ -247,7 +247,7 @@ def upgrade(args):
     generate_report_files(context)
     report_files = get_cfg_files('report', cfg)
     log_files = get_cfg_files('logs', cfg)
-    report_info(report_files, log_files, fail=workflow.failure)
+    report_info(report_files, log_files, answerfile_path, fail=workflow.failure)
 
     if workflow.failure:
         sys.exit(1)
