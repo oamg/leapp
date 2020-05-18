@@ -240,6 +240,8 @@ def upgrade(args):
         workflow.load_answers(answerfile_path, userchoices_path)
         workflow.run(context=context, skip_phases_until=skip_phases_until, skip_dialogs=True)
 
+    logger.info("Answerfile will be created at %s", answerfile_path)
+    workflow.save_answers(answerfile_path, userchoices_path)
     report_errors(workflow.errors)
     report_inhibitors(context)
     generate_report_files(context)
