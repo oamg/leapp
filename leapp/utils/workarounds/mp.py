@@ -16,7 +16,7 @@ def apply_workaround():
             super(FixedFinalize, self).__init__(*args, **kwargs)
             self._pid = os.getpid()
 
-        def __call__(self, *args, **kwargs):
+        def __call__(self, *args, **kwargs):    # pylint: disable=signature-differs
             if self._pid != os.getpid():
                 return None
             return super(FixedFinalize, self).__call__(*args, **kwargs)
