@@ -1,81 +1,99 @@
 .TH SNACTOR "1" "2020-04-16" "snactor 0.10.0" "User Commands"
+
 .SH NAME
-snactor - development and repository management tool for App & OS Modernization Framework Leapp
+snactor \- development and repository management tool for leapp
+
 .SH SYNOPSIS
-snactor [-h|--help] [--version] [--logger-config <LOGGER_CONFIG>]
-        [--config <CONFIG>] [--debug] <command>
+.B snactor
+[\fB-h\fR|\fB--help\fR]
+[\fB--version\fR]
+[\fB--logger-config\fR <\fILOGGER_CONFIG>\fR]
+[\fB--config\fR <\fICONFIG>\fR]
+[\fB--verbose\fR]
+[\fB--debug\fR]
+<\fIcommand\fR> [\fIcommand options\fR]
+
 .SH DESCRIPTION
-Snactor is designed to get quickly started with leapp actor development and allows you to run custom workflows.
+\fBsnactor\fR is designed to get you quickly started with \fBleapp\fR actor development and allows you to create and run custom workflows.
+
+
 .SH OPTIONS
--h, --help
-    show this help message and exit
+\fB-h\fR, \fB--help\fR
+    Show usage info and exit.
 
---version
-    show program's version number and exit
+\fB--version\fR
+    Show version number of the utility and exit.
 
---logger-config <LOGGER_CONFIG>
-    Allows to override the logger.conf location
+\fB--logger-config\fR <\fILOGGER_CONFIG\fR>
+    Allow overriding the default location of \fIlogger.conf\fR. See \fBLEAPP_LOGGER_CONFIG\fR for more information.
 
---config <CONFIG>
-    Allows to override the leapp.conf location
+\fB--config\fR <\fICONFIG\fR>
+    Allow overriding the default location of \fIleapp.conf\fR. See \fBLEAPP_CONFIG\fR for more information.
 
---debug
-    Prints all available log messages (debug, info, warning, error, critical) and output of executed commands to stderr.
+\fB--debug\fR
+    Print all available log messages (debug, info, warning, error, critical) and output of executed commands to stderr.
     By default only error and critical level messages are printed.
 
---verbose
-    Prints all but debug log messages (info, warning, error, critical) to stderr.
+\fB--verbose\fR
+    Print all but debug log messages (info, warning, error, critical) to stderr.
     By default only error and critical level messages are printed.
 
-.SH "SNACTOR COMMANDS"
-discover
-    Discovers all available entities in the current repository
 
-new-actor
-    Creates a new actor
+.SH COMMANDS
+.B discover
+    Discovers all available entities in the current repository.
 
-new-model
-    Creates a new model
+.B new-actor
+    Creates a new actor.
 
-new-tag
-    Create a new tag
+.B new-model
+    Creates a new model.
 
-new-topic
-    Creates a new topic
+.B new-tag
+    Creates a new tag.
 
-run
-    Execute the given actor
+.B new-topic
+    Creates a new topic.
 
-messages
-    Messaging related commands
+.B run
+    Executes the given actor.
 
-workflow
-    Workflow related commands
+.B messages
+    Messaging related commands.
 
-repo
-    Repository related commands
-.SH "ENVIRONMENT VARIABLES"
-LEAPP_CONFIG
+.B workflow
+    Workflow related commands.
+
+.B repo
+    Repository related commands.
+
+
+.SH ENVIRONMENT
+.B LEAPP_CONFIG
 .RS 4
-This environment variable allows to override the default location of leapp.conf. If not specified, .leapp/leapp.conf is used when the command is executed inside a leapp repository, otherwise the default /etc/leapp/leapp.conf is used.
+Overrides the default location of \fIleapp.conf\fR. If not specified, \fI.leapp/leapp.conf\fR is used when the command is executed inside a leapp repository, otherwise the default \fI/etc/leapp/leapp.conf\fR is used.
 .RE
 
-LEAPP_LOGGER_CONFIG
+.B LEAPP_LOGGER_CONFIG
 .RS 4
-This environment variable allows to override the default location of logger.conf. If not specified, the default /etc/leapp/logger.conf is used.
+Overrides the default location of \fIlogger.conf\fR. If not specified, the default \fI/etc/leapp/logger.conf\fR is used.
 .RE
 
-LEAPP_DEBUG
+.B LEAPP_DEBUG
 .RS 4
-This environment variable enables debug logging, see --debug for more information
+Enables debug logging. See \fB--debug\fR for more information.
 .RE
 
-LEAPP_VERBOSE
+.B LEAPP_VERBOSE
 .RS 4
-This environment variable enables verbose logging, see --verbose for more information
+Enables verbose logging. See \fB--verbose\fR for more information.
 .RE
+
+
 .SH "REPORTING BUGS"
-Report bugs to the issue tracker <https://github.com/oamg/leapp-repository/issues> or to bugzilla <https://bugzilla.redhat.com> under the `Red Hat Enterprise Linux 7` product and the `leapp-repository` component.
+Report bugs to bugzilla (\fIhttps://bugzilla.redhat.com\fR) under the `Red Hat Enterprise Linux 7` product and the `leapp-repository` component.
+
 .SH "SEE ALSO"
-leapp(1)
-More info available at <https://leapp.readthedocs.io/>.
+.BR leapp (1)
+
+More info available at \fIhttps://leapp.readthedocs.io/\fR.
