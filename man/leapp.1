@@ -1,59 +1,165 @@
 .TH LEAPP "1" "2020-04-16" "leapp 0.10.0" "User Commands"
+
 .SH NAME
-leapp - command-line interface to for App & OS Modernization Framework Leapp
+leapp \- command line interface for upgrades between major OS versions
+
 .SH SYNOPSIS
-leapp [-h|--help] [--version] [--debug] <command>
+.B leapp
+[\fB-h\fR|\fB--help\fR]
+[\fB--version\fR]
+<\fIcommand\fR> [\fIcommand options\fR]
+
 .SH DESCRIPTION
-The leapp tool is an end-user application designed to run specific workflows.
+\fBleapp\fR is a command line utility for running specific workflows related to upgrading between major OS releases. Currently, it's able to perform upgrades from RHEL 7 to RHEL 8.
+
+
 .SH OPTIONS
--h, --help
-    show this help message and exit
+\fB-h\fR, \fB--help\fR
+    Show usage info and exit.
 
---version
-    show program's version number and exit
+\fB--version\fR
+    Show version number of the utility and exit.
 
---debug
-    Prints all available log messages (debug, info, warning, error, critical) and output of executed commands to stderr.
-    By default only error and critical level messages are printed.
 
---verbose
-    Prints all but debug log messages (info, warning, error, critical) to stderr.
-    By default only error and critical level messages are printed.
+.SH COMMANDS
+.B preupgrade
+    Generates a pre-upgrade report.
 
-.SH "LEAPP COMMANDS"
-upgrade
+.B upgrade
     Upgrades the current system to the next available major version.
-.SH "ENVIRONMENT VARIABLES"
-LEAPP_CONFIG
+
+.B answer
+    Manages answerfile generation: registers persistent user choices for specific dialog sections.
+
+.B list-runs
+    Lists previous leapp upgrade executions.
+
+
+.SH "COMMAND SPECIFIC OPTIONS"
+.SS preupgrade/upgrade
+\fB--debug\fR
+    Print all available log messages (debug, info, warning, error, critical) and the output of executed commands to stderr.
+    By default only error and critical level messages are printed.
+
+\fB--verbose\fR
+    Print all but debug log messages (info, warning, error, critical) to stderr.
+    By default only error and critical level messages are printed.
+
+\fB--enable-repo\fR <\fIrepoid\fR>
+    Enable specified repository. Can be used multiple times.
+
+\fB--no-rhsm\fR
+    Skip actions that use Red Hat Subscription Manager. You'll also have to supply custom repositories through \fB--enable-repo\fR (see above).
+
+\fB--whitelist-experimental\fR <\fIActorName\fR>
+    Enable an experimental actor. Can be used multiple times.
+    To use this variable, \fBLEAPP_UNSUPPORTED\fR has to be set. See \fBDeveloper variables\fR for more information.
+
+\fB--reboot\fR
+    (upgrade only) Automatically perform reboot when requested.
+
+\fB--resume\fR
+    (upgrade only) Continue the last execution after it was stopped (e.g. after reboot).
+
+.SS answer
+\fB--add\fR
+    If set, sections will be created even if missing in original answerfile.
+
+\fB--section\fR <\fIdialog_sections\fR>
+    Register answer for a specific section in the answerfile. Can be used multiple times.
+
+
+.SH ENVIRONMENT
+If the argument for the environment variables below is not specified, it is possible to set them to either 1 (true) or 0 (false). They default to 0.
+
+.B LEAPP_CONFIG
 .RS 4
-This environment variable allows to override the default location of leapp.conf. If not specified, .leapp/leapp.conf is used when the command is executed inside a leapp repository, otherwise the default /etc/leapp/leapp.conf is used.
+Overrides the default location of \fIleapp.conf\fR. If not specified, \fI.leapp/leapp.conf\fR is used when the command is executed inside a leapp repository, otherwise the default \fI/etc/leapp/leapp.conf\fR is used.
 .RE
 
-LEAPP_LOGGER_CONFIG
+.B LEAPP_LOGGER_CONFIG
 .RS 4
-This environment variable allows to override the default location of logger.conf. If not specified, the default /etc/leapp/logger.conf is used.
+Overrides the default location of \fIlogger.conf\fR. If not specified, the default \fI/etc/leapp/logger.conf\fR is used.
 .RE
 
-LEAPP_DEBUG
+.B LEAPP_DEBUG
 .RS 4
-This environment variable enables debug logging, see --debug for more information
+Enables debug logging. Equivalent to \fB--debug\fR, which takes precedence.
 .RE
 
-LEAPP_VERBOSE
+.B LEAPP_VERBOSE
 .RS 4
-This environment variable enables verbose logging, see --verbose for more information
+Enables debug logging. Equivalent to \fB--verbose\fR, which takes precedence.
 .RE
 
-.SH "RETURN CODES"
+.B LEAPP_GRUB_DEVICE
+.RS 4
+Overrides the automatically detected storage device with GRUB core (e.g. /dev/sda).
+.RE
 
-0 - No error occurred.
+.B LEAPP_NO_RHSM
+.RS 4
+Skip actions that use Red Hat Subscription Manager. Equivalent to \fB--no-rhsm\fR, which takes precedence.
+.RE
 
-1 - Any actor in a workflow reported an error (through report_error function or StopActorExecutionError exception).
+.B LEAPP_OVL_SIZE
+.RS 4
+For each XFS partition created with \fIftype=0\fR, leapp creates an overlay file in order to proceed. This option sets the size (in MB) of every such file. Defaults to \fB2048\fR.
+.RE
+
+
+.SS Developer variables
+These variables shouldn't be needed under typical circumstances.
+
+.B LEAPP_UNSUPPORTED
+.RS 4
+Necessary in case you use any variable starting with \fBLEAPP_DEVEL\fR (see below) or use \fB--whitelist-experimental\fR.
+
+By setting this variable to 1, you acknowledge that the upgrade is not going to be supported by Red Hat.
+.RE 
+
+.B LEAPP_DEVEL_RPMS_ALL_SIGNED
+.RS 4
+If set, leapp will consider all installed RPMs to be signed by Red Hat and upgrade them. By default, leapp only handles RPMs signed by Red Hat. What happens with RPMs not signed by Red Hat is undefined.
+.RE
+
+.B LEAPP_DEVEL_TARGET_RELEASE \fR<\fIversion\fR>
+.RS 4
+Changes the default target RHEL 8 minor version.
+.RE
+
+.B LEAPP_DEVEL_SKIP_CHECK_OS_RELEASE
+.RS 4
+If set, leapp will not check whether the source RHEL 7 version is the supported one.
+.RE
+
+.B LEAPP_DEVEL_DM_DISABLE_UDEV
+.RS 4
+Disables udev support in libdevmapper, dmsetup and LVM2 tools globally without a need to modify any existing configuration settings. Useful if the system environment does not use udev.
+.RE
+
+.B LEAPP_DEVEL_SOURCE_PRODUCT_TYPE \fR<\fIproduct_type\fR>
+.RS 4
+Specifies source product type. Expected values: \fBga\fR, \fBbeta\fR, \fBhtb\fR. Defaults to \fBga\fR.
+.RE
+
+.B LEAPP_DEVEL_TARGET_PRODUCT_TYPE \fR<\fIproduct_type\fR>
+.RS 4
+Specifies target product type. Expected values: \fBga\fR, \fBbeta\fR, \fBhtb\fR. Defaults to \fBga\fR.
+.RE
+
+.SH "EXIT CODES"
+.B 0
+\- No error occurred.
+
+.B 1
+\- Any actor in a workflow reported an error (through calling \fBreport_error\fR or raising \fBStopActorExecutionError\fR).
 
 
 .SH "REPORTING BUGS"
-Report bugs to the issue tracker <https://github.com/oamg/leapp-repository/issues> or to bugzilla <https://bugzilla.redhat.com> under the `Red Hat Enterprise Linux 7` product and the `leapp-repository` component.
+Report bugs to bugzilla (\fIhttps://bugzilla.redhat.com\fR) under the `Red Hat Enterprise Linux 7` product and the `leapp-repository` component.
 
 .SH "SEE ALSO"
-snactor(1)
-More info available at <https://leapp.readthedocs.io/>.
+.BR snactor (1)
+
+More info available at \fIhttps://leapp.readthedocs.io/\fR.
