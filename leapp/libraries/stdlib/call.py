@@ -1,11 +1,10 @@
 from __future__ import print_function
 
-import select
-import os
 import codecs
+import os
 
 from leapp.compat import string_types
-
+from leapp.libraries.stdlib.eventloop import POLL_HUP, POLL_IN, POLL_OUT, POLL_PRI, EventLoop
 
 STDIN = 0
 STDOUT = 1
@@ -17,11 +16,11 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
     # Register the file descriptors (stdout + stderr) with the epoll object
     # so that we'll get notifications when data are ready to read
     for fd in read_fds:
-        ep.register(fd, select.EPOLLIN | select.EPOLLPRI)
+        ep.register(fd, POLL_IN | POLL_PRI)
 
     # Register a write file descriptor
     if write:
-        ep.register(write[0], select.EPOLLOUT)
+        ep.register(write[0], POLL_OUT)
 
     # Offset into the `write[1]` buffer where we should continue writing to stdin
     offset = 0
@@ -49,10 +48,10 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
     while not ep.closed and len(hupped) != num_expected:
         events = ep.poll(timeout)
         for fd, event in events:
-            if event == select.EPOLLHUP:
+            if event == POLL_HUP:
                 hupped.add(fd)
                 ep.unregister(fd)
-            if event & (select.EPOLLIN | select.EPOLLPRI) != 0:
+            if event & (POLL_IN | POLL_PRI) != 0:
                 fd_type = _get_fd_type(fd)
                 read = os.read(fd, buffer_size)
                 callback_raw((fd, fd_type), read)
@@ -63,7 +62,7 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
                         linebufs[fd] = post
                         callback_linebuffered((fd, fd_type), pre)
                 buf[fd] += read
-            elif event == select.EPOLLOUT:
+            elif event == POLL_OUT:
                 # Write data to pipe, `os.write` returns the number of bytes written,
                 # thus we need to offset
                 wfd, data = write
@@ -152,7 +151,7 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
     elif stdin is not None:
         raise TypeError('stdin has to be either a file descriptor or string, not "{!s}"'.format(type(stdin)))
 
-    ep = select.epoll()
+    ep = EventLoop()
     pid = os.fork()
     if pid > 0:
         # Since pid > 0, we are in the parent process, so we have to close the write-end
