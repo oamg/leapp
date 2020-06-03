@@ -29,12 +29,6 @@ RPMs is undefined.
 Change the default target RHEL 8 minor version.
 
 
-## LEAPP_DEVEL_SKIP_RHSM
-
-Do not use `subscription-manager`. Using this option (now) requires creating
-a custom actor providing RHEL 8 repos through CustomTargetRepository message.
-
-
 ## LEAPP_DEVEL_SKIP_CHECK_OS_RELEASE
 
 Do not check whether the source RHEL 7 version is the supported one.
