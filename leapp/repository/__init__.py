@@ -112,7 +112,7 @@ class Repository(object):
 
         self._definitions.setdefault(kind, []).append(item)
 
-    def load(self, resolve=True, stage=None):
+    def load(self, resolve=True, stage=None, skip_actors_discovery=False):
         """
         Loads the repository resources
 
@@ -145,7 +145,7 @@ class Repository(object):
             sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.libraries.common', paths=self.libraries))
             sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.workflows.api', paths=self.apis))
 
-        if not stage or stage is _LoadStage.ACTORS:
+        if not stage or stage is _LoadStage.ACTORS and not skip_actors_discovery:
             self.log.debug("Running actor discovery")
             for actor in self.actors:
                 actor.discover()
