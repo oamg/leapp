@@ -77,12 +77,16 @@ class RepositoryManager(object):
         """
         return self._repos.get(repo_id, None)
 
-    def load(self, resolve=True):
+    def load(self, resolve=True, skip_actors_discovery=False):
         """
         Load all known repositories.
 
         :param resolve: Whether or not to perform the resolving of model references
         :type resolve: bool
+        :param skip_actors_discovery: specifies whether to skip discovery process of the actors
+            When we testing actors, we're directly injecting the actor context, so we don't
+            need to inject it during the repo loading. This option helps to solve this problem.
+        :type skip_actors_discovery: bool
         """
         for repo in self._repos.values():
             repo.load(resolve=False, stage=_LoadStage.INITIAL)
@@ -94,7 +98,7 @@ class RepositoryManager(object):
             repo.load(resolve=False, stage=_LoadStage.LIBRARIES)
 
         for repo in self._repos.values():
-            repo.load(resolve=False, stage=_LoadStage.ACTORS)
+            repo.load(resolve=False, stage=_LoadStage.ACTORS, skip_actors_discovery=skip_actors_discovery)
 
         for repo in self._repos.values():
             repo.load(resolve=False, stage=_LoadStage.WORKFLOWS)
