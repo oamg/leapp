@@ -146,10 +146,10 @@ class Repository(object):
             sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.workflows.api', paths=self.apis))
 
         if not skip_actors_discovery:
-             if not stage or stage is _LoadStage.ACTORS:
-            self.log.debug("Running actor discovery")
-            for actor in self.actors:
-                actor.discover()
+            if not stage or stage is _LoadStage.ACTORS:
+                self.log.debug("Running actor discovery")
+                for actor in self.actors:
+                    actor.discover()
 
         if not stage or stage is _LoadStage.WORKFLOWS:
             self.log.debug("Loading workflow modules")
