@@ -8,6 +8,14 @@ The Leapp actors are covered by three types of tests - unit, component and e2e.
 - Unit and component tests modules should have unique names
 - Tutorial on [How to write unit and component tests](unit-testing)
 
+## Naming conventions
+
+Test modules names should match the following regex:
+- test_*.py
+- unit_test_*.py
+- component_test_*.py
+
+
 ### Unit tests
 
 - These tests deal with individual actor's functions/methods.
@@ -25,3 +33,7 @@ The Leapp actors are covered by three types of tests - unit, component and e2e.
 
 - The Leapp QA team maintains an internal testing framework facilitating e2e tests.
 - [Members of the *oamg* GitHub organization] can trigger execution of the e2e tests by adding the comment 'e2e tests' under an opened *leapp* or *leapp-repository* PR
+
+## Bug fixing of actor
+
+Each bug found and fixed in the actor, should be covered by tests
