@@ -1,8 +1,10 @@
 import contextlib
+import linecache
 import logging
 import os
 import pkgutil
 import sys
+import warnings
 from io import UnsupportedOperation
 from multiprocessing import Process, Queue
 
@@ -11,6 +13,8 @@ from leapp.actors import get_actor_metadata, get_actors
 from leapp.exceptions import (ActorInspectionFailedError, LeappRuntimeError, MultipleActorsError,
                               UnsupportedDefinitionKindError)
 from leapp.repository.definition import DefinitionKind
+from leapp.utils.audit import create_audit_entry
+from leapp.utils.deprecation import _LeappDeprecationWarning
 from leapp.utils.libraryfinder import LeappLibrariesFinder
 
 
@@ -58,11 +62,31 @@ class ActorCallContext(object):
                 sys.stdin = os.fdopen(stdin)
             except OSError:
                 pass
-        definition.load()
-        with definition.injected_context():
-            target_actor = [actor for actor in get_actors() if actor.name == definition.name][0]
-            target_actor(logger=logger, messaging=messaging, config_model=config_model,
-                         skip_dialogs=skip_dialogs).run(*args, **kwargs)
+        with warnings.catch_warnings(record=True) as recording:
+            warnings.simplefilter(action="always", category=_LeappDeprecationWarning)
+            definition.load()
+            with definition.injected_context():
+                target_actor = [actor for actor in get_actors() if actor.name == definition.name][0]
+                actor_instance = target_actor(logger=logger, messaging=messaging, config_model=config_model,
+                                              skip_dialogs=skip_dialogs)
+                actor_instance.run(*args, **kwargs)
+            try:
+                # By this time this is no longer set, so we have to get it back
+                os.environ['LEAPP_CURRENT_ACTOR'] = actor_instance.name
+                for rec in recording:
+                    if issubclass(rec.category, _LeappDeprecationWarning):
+                        entry = {
+                            'message': str(rec.message),
+                            'filename': rec.filename,
+                            'line': linecache.getline(rec.filename, rec.lineno) if rec.line is None else rec.line,
+                            'lineno': rec.lineno,
+                            'since': rec.category.since,
+                            'reason': rec.category.msg
+                        }
+                        create_audit_entry('deprecation', entry)
+            finally:
+                # Remove it again
+                os.environ.pop('LEAPP_CURRENT_ACTOR')
 
     def run(self, *args, **kwargs):
         """

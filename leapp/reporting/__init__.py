@@ -1,3 +1,4 @@
+import datetime
 import json
 
 from leapp.compat import string_types
@@ -66,6 +67,7 @@ class BaseListPrimitive(BasePrimitive):
     """
     Report primitive (field) base class for list targets (we append value to a list)
     """
+
     def apply(self, report):
         """Add report entry to the report dict based on provided path"""
         _add_to_dict(report, self.path, self.value, leaf_list=True)
@@ -285,6 +287,37 @@ def create_report(entries):
     Produce final report message
     """
     produce(_create_report_object(entries))
+
+
+_DEPRECATION_SEVERITY_THRESHOLD = datetime.timedelta(days=180)
+
+
+def create_report_from_deprecation(deprecation):
+    """
+    Convert deprecation json to report json
+    """
+    since = datetime.datetime.strptime(deprecation['since'], '%Y-%m-%d').date()
+
+    severity = Severity.MEDIUM
+    if since < (datetime.date.today() - _DEPRECATION_SEVERITY_THRESHOLD):
+        severity = Severity.HIGH
+
+    report = _create_report_object([
+        Title('{message} at {filename}:{lineno}'.format(
+            message=deprecation['message'].split('\n')[0],
+            filename=deprecation['filename'],
+            lineno=deprecation['lineno'])),
+        Severity(severity),
+        Audience('developer'),
+        Summary('{reason}\nSince: {since}\nLocation: {filename}:{lineno}\nNear: {line}'.format(
+            reason=deprecation['reason'],
+            since=deprecation['since'],
+            filename=deprecation['filename'],
+            lineno=deprecation['lineno'],
+            line=deprecation['line']
+        )),
+    ])
+    return json.loads(report.dump()['report'])
 
 
 def create_report_from_error(error_dict):

@@ -133,6 +133,7 @@ class Host(Storable):
     """
     Host information
     """
+
     def __init__(self, context=None, hostname=None):
         self.context = context
         self.hostname = hostname
@@ -159,6 +160,7 @@ class MessageData(Storable):
     """
     Message data
     """
+
     def __init__(self, data=None, hash_id=None):
         """
         :param data: Message payload
@@ -292,9 +294,15 @@ def get_audit_entry(event, context):
                 audit.id          AS id,
                 audit.stamp       AS stamp,
                 audit.data        AS data,
-                audit.context     AS context
+                audit.context     AS context,
+                data_source.actor AS actor,
+                host.hostname     AS hostname
               FROM
                 audit
+              JOIN
+                data_source ON data_source.id = audit.data_source_id
+              JOIN
+                host ON data_source.host_id = host.id
               WHERE
                 audit.context = ? AND audit.event = ?
               ORDER BY stamp ASC;
