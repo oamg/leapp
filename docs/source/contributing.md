@@ -1,5 +1,4 @@
-Contributing to the Leapp project
-=================================
+# Contributing to the Leapp project
 
 First, thank you for taking your time to contribute to the project.
 
@@ -7,8 +6,7 @@ The following is a set of guidelines for contributing effectively to the Leapp-r
 hosted under the `OS and Application Modernization Group organization <https://github.com/oamg/>`_
 on GitHub.
 
-Submitting a Pull Request
-^^^^^^^^^^^^^^^^^^^^^^^^^
+## Submitting a Pull Request
 
 Before you submit your pull request, consider the following guidelines:
 
@@ -31,8 +29,7 @@ Before you submit your pull request, consider the following guidelines:
 * If you are fixing a GitHub issue, include the issue number you are fixing, e.g. 'Closes issue #xyz'.
 * Description of the PR should clearly state what is being changed and the rationale for the change.
 
-If we suggest changes, follow these rules:
-------------------------------------------
+### If we suggest changes, follow these rules:
 
 * Make the required updates.
 * Push changes to git (this will update your pull request). For that you can add a new commit or rebase your branch
@@ -41,14 +38,12 @@ If we suggest changes, follow these rules:
     git rebase -i master
     git push -f origin bug/my-fix-branch
 
-Merge Rules
------------
+### Merge Rules
 
 * Every PR should have at least one code review before merging
 * All CI tests should pass
 
-Git Commit Messages
-^^^^^^^^^^^^^^^^^^^
+## Git Commit Messages
 
 * Write a descriptive commit message
 * Use the present tense ("Add feature" not "Added feature")
@@ -56,7 +51,7 @@ Git Commit Messages
 * If you are fixing a GitHub issue, include something like 'Closes issue #xyz'
 * For more best practices, read `How to Write a Git Commit Message <https://chris.beams.io/posts/git-commit/>`_
 
-Contact
-^^^^^^^
+## Contact
+
 In case of any question, contact us on the freenode.net IRC channel #leapp, or write the question as an issue on
 GitHub.
