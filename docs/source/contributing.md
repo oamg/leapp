@@ -6,6 +6,19 @@ The following is a set of guidelines for contributing effectively to the Leapp-r
 hosted under the `OS and Application Modernization Group organization <https://github.com/oamg/>`_
 on GitHub.
 
+## Code style guidelines
+
+Your code should follow our
+[Python Coding Guidelines](python-coding-guidelines.html)
+
+## Best practices in actor development
+
+- actor development: [Best practices for actor development](best-practices.html)
+- actor directory layout might be found in 
+[Repository directory layout](repository-dir-layout.html)
+(under `actorname/`)
+- actor testing: [Testing actors](test-actors.html)
+
 ## RPM packages naming schema
 
 Naming schema might be found in the following document:
