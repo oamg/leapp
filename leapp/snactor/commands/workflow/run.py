@@ -1,16 +1,17 @@
 from __future__ import print_function
+
+import datetime
 import os
 import sys
 
-from leapp.exceptions import LeappError, CommandError
+from leapp.exceptions import CommandError, LeappError
 from leapp.logger import configure_logger
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.snactor.commands.workflow import workflow
 from leapp.snactor.context import with_snactor_context
 from leapp.utils.clicmd import command_arg, command_opt
-from leapp.utils.output import report_errors, beautify_actor_exception
-from leapp.utils.repository import requires_repository, find_repository_basedir
-
+from leapp.utils.output import beautify_actor_exception, report_deprecations, report_errors
+from leapp.utils.repository import find_repository_basedir, requires_repository
 
 _LONG_DESCRIPTION = '''
 Executes the given workflow.
@@ -37,6 +38,7 @@ https://red.ht/leapp-docs
 @requires_repository
 def cli(params):
     def impl(context=None):
+        start = datetime.datetime.utcnow()
         configure_logger()
         repository = find_and_scan_repositories(find_repository_basedir('.'), include_locals=True)
         try:
@@ -60,6 +62,7 @@ def cli(params):
             instance.run(context=context, until_phase=params.until_phase, until_actor=params.until_actor)
 
         report_errors(instance.errors)
+        report_deprecations(os.getenv('LEAPP_EXECUTION_ID'), start=start)
 
         if instance.failure:
             sys.exit(1)

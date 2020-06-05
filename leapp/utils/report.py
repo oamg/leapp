@@ -1,8 +1,39 @@
 import hashlib
 import json
+import os
 
-from leapp.reporting import Remediation, create_report_from_error
-from leapp.utils.audit import get_messages
+from leapp.reporting import Remediation, create_report_from_error, create_report_from_deprecation
+from leapp.utils.audit import get_messages, get_audit_entry
+
+
+def _create_reports_from_deprecations(context_id):
+    reports = []
+    cache = set()
+    for entry in get_audit_entry(event='deprecation', context=context_id):
+        data = json.loads(entry['data'])
+
+        # Drop duplicates
+        data_hash = hashlib.sha256(json.dumps(data, sort_keys=True)).hexdigest()
+        if data_hash in cache:
+            continue
+        cache.add(data_hash)
+
+        # Create the report
+        report = create_report_from_deprecation(data)
+
+        sha256 = hashlib.sha256()
+        sha256.update(data_hash.encode('utf-8'))
+        sha256.update(entry['context'].encode('utf-8'))
+
+        envelope = {
+            'timeStamp': entry['stamp'],
+            'hostname': os.environ['LEAPP_HOSTNAME'],
+            'actor': entry['actor'],
+            'id': sha256.hexdigest()
+        }
+        report.update(envelope)
+        reports.append(report)
+    return reports
 
 
 def fetch_upgrade_report_messages(context_id):
@@ -39,6 +70,7 @@ def fetch_upgrade_report_messages(context_id):
         report.update(envelope)
         messages.append(report)
 
+    messages.extend(_create_reports_from_deprecations(context_id))
     return messages
 
 

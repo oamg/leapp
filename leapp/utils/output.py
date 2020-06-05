@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import hashlib
 import json
 import os
 import sys
@@ -7,6 +8,7 @@ from contextlib import contextmanager
 
 from leapp.exceptions import LeappRuntimeError
 from leapp.models import ErrorModel
+from leapp.utils.audit import get_audit_entry
 
 
 def _is_verbose():
@@ -66,6 +68,29 @@ def report_inhibitors(context_id):
             for position, report in enumerate(inhibitors, start=1):
                 print('{idx:5}. Inhibitor: {title}'.format(idx=position, title=report['title']))
             print('Consult the pre-upgrade report for details and possible remediation.')
+
+
+def report_deprecations(context_id, start=None):
+    deprecations = get_audit_entry(event='deprecation', context=context_id)
+    if start:
+        start_stamp = start.isoformat() + 'Z'
+        deprecations = [d for d in deprecations if d['stamp'] > start_stamp]
+    if deprecations:
+        cache = set()
+        with pretty_block("USE OF DEPRECATED ENTITIES", target=sys.stderr, color=Color.red):
+            for deprecation in deprecations:
+                entry_data = json.loads(deprecation['data'])
+                # Deduplicate messages
+                key = hashlib.sha256(json.dumps(entry_data, sort_keys=True)).hexdigest()
+                if key in cache:
+                    continue
+                # Add current message to the cache
+                cache.add(key)
+                # Print the message
+                sys.stderr.write(
+                    '{message} @ {filename}:{lineno}\nNear: {line}\nReason: {reason}\n{separator}\n'.format(
+                        separator='-' * 60, **entry_data)
+                )
 
 
 def report_errors(errors):

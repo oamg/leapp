@@ -16,3 +16,4 @@ Tutorials
     workflow-apis
     unit-testing
     debugging
+    deprecation
