@@ -5,7 +5,9 @@ for more infomation and documenation.**
 
 ## Contributing
 If you are looking for information about contributing into this project, kindly
-visit: [Contributing to Leapp](CONTRIBUTING.rst).
+visit:
+[Contribution guidelines](https://leapp.readthedocs.io/en/latest/contributing.html)
+
 
 ## Troubleshooting
 
