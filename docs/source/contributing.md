@@ -6,6 +6,11 @@ The following is a set of guidelines for contributing effectively to the Leapp-r
 hosted under the `OS and Application Modernization Group organization <https://github.com/oamg/>`_
 on GitHub.
 
+## RPM packages naming schema
+
+Naming schema might be found in the following document:
+[Naming schema of Leapp-related packages](build-schema.html)
+
 ## Submitting a Pull Request
 
 Before you submit your pull request, consider the following guidelines:
@@ -50,6 +55,11 @@ Before you submit your pull request, consider the following guidelines:
 * Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
 * If you are fixing a GitHub issue, include something like 'Closes issue #xyz'
 * For more best practices, read `How to Write a Git Commit Message <https://chris.beams.io/posts/git-commit/>`_
+
+## Definition of done
+
+The document can be found here:
+[Definiton of done](definition-of-done.html)
 
 ## Contact
 
