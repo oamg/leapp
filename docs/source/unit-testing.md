@@ -22,8 +22,8 @@ actors\
     myactor\
         actor.py
         tests\
-            component_test.py
-            unit_test.py
+            component_test_my_actor.py
+            unit_test_my_actor.py
 ```
 
 ### Naming conventions
@@ -33,13 +33,16 @@ all test functions have to:
 
 - reside in `test_*.py` or `*_test.py` files,
 - be prefixed by `test_`.
+- test modules should have unique names, and we use the following convention
+`test_*_{actor_name}.py`. For example: `test_unit_sctpconfigread.py` or
+`component_test_sctpconfigread.py`
 
 See the [pytest documentation](https://docs.pytest.org/en/latest/goodpractices.html#tests-outside-application-code).
 
 ### Writing tests that execute the whole actor - component tests
 
 Now let's assume you want to write a test that executes the actor. This is how
-your `component_test.py` from above could look like:
+your `component_test_{actor_name}.py` from above could look like:
 
 ```python
 def test_actor_execution(current_actor_context):
@@ -108,19 +111,20 @@ supposed to be unit tested is necessary to move into the actor's private
 library. Modules from the private library can then be imported not only from
 the `actor.py` but also from the test modules.
 
-Let's assume your actor has a private library module called `private.py`.
+Let's assume your actor has a private library module called 
+`private_{actor_name}.py`.
 
 ```
 actors\
     myactor\
         actor.py
         libraries\
-            private.py
+            private_myactor.py
         tests\
-            unit_test.py
+            unit_test_my_actor.py
 ```
 
-And the `private.py` looks like this:
+And the `private_my_actor.py` looks like this:
 
 ```python
 def my_function(value):
@@ -130,7 +134,7 @@ def my_function(value):
 You can easily write a test for this library like this:
 
 ```python
-    from leapp.libraries.actor import private
+    from leapp.libraries.actor import private_my_actor
 
     def test_my_actor_library():
         assert private.my_function(0) == 42
@@ -185,40 +189,55 @@ Makefile of `leapp-repository` provides target for testing your actors.
 Issue `make test` in the root directory of the `leapp-repository` GitHub repository
 to test all actors.
 
+You can also run tests by simply running `pytest`
+
 To test specific actor using makefile, set `ACTOR` environment variable:
 
 ```sh
 ACTOR=myactor make test
 ```
 
+or
+
+```sh
+pytest {PATH_TO_ACTOR}
+```
+
+It is also possible to run only slected tests based on their name:
+
+```sh
+pytest -k "vim"    # to run all tests contains vim in name
+pytest -k "not vim"    # to run all tests, which not contains vim in name
+```
+More examples could be found in the 
+[pytest documentation](https://docs.pytest.org/en/latest/example/markers.html#using-k-expr-to-select-tests-based-on-their-name)
+
 ### Shared libraries' tests
 
 To run tests of all shared libraries (i.e. libraries stored in
-`repositories/system_upgrade/el7toel8/libraries`) environment variable
-`TEST_LIBS` need to be set:
+`repo/system_upgrade/el7toel8/libraries`) environment variable
+`TEST_LIBS` need to be set (only in case you use make command):
 
 ```sh
 TEST_LIBS=y make test
 ```
 
-It is also possible to test shared libraries using `pytest`, in which case
-environment variable `LEAPP_TESTED_LIBRARY` with path of the shared library
-needs to be specified for _pytest_ to be able to import leapp modules.
-
+It is also possible to test shared libraries using `pytest`.
 To run tests for all shared libraries:
 
 ```sh
-LEAPP_TESTED_LIBRARY="$PWD/libraries" pytest -sv libraries/tests
+pytest {PATH_TO_SHARED_LIBS}
 ```
+
 
 To run tests for one specific module:
 
 ```sh
-LEAPP_TESTED_LIBRARY="$PWD/libraries" pytest -sv libraries/tests/test_my_library.py
+pytest libraries/tests/test_my_library.py
 ```
 
 To run one specific test of module:
 
 ```sh
-LEAPP_TESTED_LIBRARY="$PWD/libraries" pytest -sv libraries/tests/test_my_library.py::test_something
+pytest libraries/tests/test_my_library.py::test_something
 ```

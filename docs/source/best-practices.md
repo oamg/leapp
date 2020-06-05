@@ -43,6 +43,11 @@ to a shared library function. You can introduce it in one of these two places:
   writing your actor for, e.g. for an OS in-place upgrade workflow, should go to the `<Leapp repository>/libraries`
   folder. In this case, we welcome your proposals under the
   [leapp-repository on GitHub](https://github.com/oamg/leapp-repository).
+  
+  Please note that the name of the library module in this case should be unique and contain
+  the actor name. For example:
+  `repos/system_upgrade/el7toel8/actors/vimmigrate/libraries/vimmigrate.py`
+ 
 
 ## Discover standard library functions
 
@@ -93,7 +98,7 @@ improve the respective actors.
 Write all the actor’s logic in the actor’s private library in order to be able to write unit tests for each of the
 function. It is not currently possible to unit test any method or function in the _actor.py_. Then, ideally, the
 `actor.process()` should contain only calling an entry point to the actor's library. To create an actor’s library,
-create _libraries_ folder in the actor’s folder and in there create an arbitrarily named python file, e.g. _library.py_.
+create _libraries_ folder in the actor’s folder and in there create an arbitrarily named python file, e.g. _{actor_name}.py_.
 
 _myactor/actor.py_:
 
@@ -106,7 +111,7 @@ class MyActor(Actor):
         do_the_actor_thingy(self)
 ```
 
-_myactor/libraries/library.py_:
+_myactor/libraries/myactor.py_:
 
 ```python
 def do_the_actor_thingy(actor):
