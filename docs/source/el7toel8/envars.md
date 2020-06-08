@@ -2,11 +2,48 @@
 
 Actors in the el7toel8 repository use environment variables specified below.
 All these envars use the suggested prefixes specified in
-[the best practices document](../best-practices.html#use-the-leapp-and-leapp-devel-prefixes-for-new-envars)
+[the best practices document](../best-practices#use-the-leapp-and-leapp-devel-prefixes-for-new-envars)
 for the leapp project to distinguish their purpose: *production* or *devel* use.
 
 If the argument for envars below is not specified, it is expected to set `0`
 (false) or `1` (true).
+
+## LEAPP_NO_RHSM
+
+Do not use Red Hat Subscription Management for the upgrade. Using it has the
+same effect as using the `--no-rhsm` leapp option.
+
+## LEAPP_OVL_SIZE
+
+For any partition that uses XFS with the ftype option set to 0, Leapp is
+creating a file of a specific size in order to proceed with the upgrade.
+By default, the size of that file is 2048 MB. In case the size needs to be
+increased, Leapp informs you in the pre-upgrade report that the environment
+variable needs to be specified.
+
+
+## LEAPP_DEBUG
+
+Enables debug logging. Equivalent to `--debug`, which takes precedence.
+
+
+## LEAPP_VERBOSE
+
+Enables debug logging. Equivalent to `--verbose`, which takes precedence.
+
+
+## LEAPP_CONFIG
+
+Overrides the default location of `leapp.conf`. If not specified,
+`leapp/leapp.conf` is used when the command is executed inside a leapp
+repository, otherwise the default `/etc/leapp/leapp.conf` is used.
+
+
+## LEAPP_LOGGER_CONFIG
+
+Overrides the default location of `logger.conf`. If not specified, the default
+`/etc/leapp/logger.conf` is used.
+
 
 ## LEAPP_UNSUPPORTED
 
