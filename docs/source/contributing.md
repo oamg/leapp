@@ -9,14 +9,12 @@ on GitHub.
 ## Code style guidelines
 
 Your code should follow our
-[Python Coding Guidelines](python-coding-guidelines.html)
+[Python Coding Guidelines](python-coding-guidelines)
 
 ## Best practices in actor development
 
-- actor development: [Best practices for actor development](best-practices.html)
-- actor directory layout might be found in 
-[Repository directory layout](repository-dir-layout.html)
-(under `actorname/`)
+* Actor development: [Best practices for actor development](best-practices)
+* Actor directory layout is to be found at [Repository directory layout](repository-dir-layout) (under `actorname/`)
 - actor testing: [Testing actors](test-actors.html)
 
 ## RPM packages naming schema
