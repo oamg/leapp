@@ -2,7 +2,7 @@
 
 ## Follow the contribution guidelines
 
-See the [contribution guidelines for leapp-repository](contributing).
+See the [contribution guidelines](contributing).
 
 ## Naming convention
 

@@ -10,7 +10,7 @@ The Leapp actors are covered by three types of tests - unit, component and e2e.
 
 ## Naming conventions
 
-Test modules names should match the following regex:
+Test module names should match the following regex:
 - test_*.py
 - unit_test_*.py
 - component_test_*.py
@@ -36,4 +36,4 @@ Test modules names should match the following regex:
 
 ## Bug fixing of actor
 
-Each bug found and fixed in the actor, should be covered by tests
+Each bug found and fixed in an actor should be covered by tests.

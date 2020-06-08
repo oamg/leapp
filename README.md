@@ -4,7 +4,7 @@
 for more infomation and documenation.**
 
 ## Contributing
-If you are looking for information about contributing into this project, kindly
+If you are looking for information about contributing to this project, kindly
 visit:
 [Contribution guidelines](https://leapp.readthedocs.io/en/latest/contributing.html)
 

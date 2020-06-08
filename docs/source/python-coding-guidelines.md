@@ -136,7 +136,7 @@ Follow [PEP 257 - Docstring Conventions](https://www.python.org/dev/peps/pep-025
   - with the exception, that the summary line of a multi-line docstring shall be on a new line, not on the same line as the opening quotes.
 
 There are some minimal requirements for the information that actor docstrings should provide, to learn more about the specifics please
-consult [leapp-repository contributing guidelines](https://github.com/oamg/leapp-repository/blob/master/CONTRIBUTING.md).
+consult the [contribution guidelines](contributing).
 
 This is example how to write docstrings:
 
