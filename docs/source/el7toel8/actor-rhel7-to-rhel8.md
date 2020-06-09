@@ -88,7 +88,7 @@ class MyNewActor(Actor):
 
 All communication between actors in Leapp is carried out using **“messages”**. An actor can consume or produce messages. A message may contain any data, but the data needs to be in a specific format defined by a **“model”**. If an actor wants to consume a message produced by another actor, it needs to specify the specific model of the consumed messages. Leapp will make sure to execute such an actor only after some message of the specified model was produced by another actor. If no message of the specified model was produced in previous phases or in the current phase, the consuming actor will get no messages of that kind.
 
-For further information about messaging refer to this [document](../messaging).
+For further information about messaging see [document](../messaging).
 
 One of the existing models in Leapp is [ActiveKernelModulesFacts](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/models/activekernelmodulesfacts.py). Messages from this model contain data about the system on which Leapp has been started. For example, it contains installed kernel modules. If an actor wants to perform some action based on existing kernel modules on the system, the actor can get list of these modules by consuming the _ActiveKernelModulesFacts_ messages. By extending the boilerplate, the code could look like this:
 
