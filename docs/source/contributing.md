@@ -15,7 +15,7 @@ Your code should follow our
 
 * Actor development: [Best practices for actor development](best-practices)
 * Actor directory layout is to be found at [Repository directory layout](repository-dir-layout) (under `actorname/`)
-- actor testing: [Testing actors](test-actors.html)
+* Actor testing: [Testing actors](test-actors.html)
 
 ## File naming convention
 
