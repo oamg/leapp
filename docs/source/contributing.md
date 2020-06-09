@@ -17,10 +17,12 @@ Your code should follow our
 * Actor directory layout is to be found at [Repository directory layout](repository-dir-layout) (under `actorname/`)
 - actor testing: [Testing actors](test-actors.html)
 
-## RPM packages naming schema
+## File naming convention
 
-Naming schema might be found in the following document:
-[Naming schema of Leapp-related packages](build-schema.html)
+1. New folders and/or Python files shall use lowercase without underscores.
+1. Do not use _actor_ in the actor's name, neither _model/topic/tag/phase_ 
+in the model/topic/tag/phase name, as these things are implicit.
+1. The actor's main file shall be named `actor.py`.
 
 ## Submitting a Pull Request
 

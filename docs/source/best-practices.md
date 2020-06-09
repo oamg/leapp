@@ -4,13 +4,6 @@
 
 See the [contribution guidelines](contributing).
 
-## Naming convention
-
-1. New folders and/or Python files must use lowercase without underscores.
-   - with the exception of test file names, which need to be named `test_*.py` or `*_test.py`
-1. Do not use _actor_ in the actor's name, neither _model/topic/tag/phase_ in the model/topic/tag/phase name, as these things are implicit.
-1. The actor's main file must be named `actor.py`.
-
 ## Avoid running code on a module level
 
 Despite the actors being written in Python, they are loaded beforehand to get all the meta-information from them. To
