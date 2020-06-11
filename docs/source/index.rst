@@ -18,7 +18,6 @@ Welcome to developer documentation for Leapp!
     inplace-upgrade-workflow
     contributing
     python-coding-guidelines
-    definition-of-done
     faq
     pydoc/leapp
 
