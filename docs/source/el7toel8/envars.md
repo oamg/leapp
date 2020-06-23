@@ -8,10 +8,17 @@ for the leapp project to distinguish their purpose: *production* or *devel* use.
 If the argument for envars below is not specified, it is expected to set `0`
 (false) or `1` (true).
 
+
+## LEAPP_GRUB_DEVICE
+
+Overrides the automatically detected storage device with GRUB core (e.g. /dev/sda).
+
+
 ## LEAPP_NO_RHSM
 
 Do not use Red Hat Subscription Management for the upgrade. Using it has the
 same effect as using the `--no-rhsm` leapp option.
+
 
 ## LEAPP_OVL_SIZE
 
