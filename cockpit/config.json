@@ -1,7 +1,0 @@
-{
-    "version": "0.2-master",
-    "daemon-address": "localhost",
-    "daemon-port": 8000,
-    "daemon-api-version": "v1",
-    "override-username": "root"
-}
