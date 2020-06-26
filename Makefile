@@ -116,16 +116,33 @@ install-container-test:
 	docker build -t leapp-tests -f res/docker-tests/Dockerfile.$(subst :,,${CONTAINER}) res/docker-tests
 
 install-test:
+ifeq ($(shell id -u), 0)
 	pip install -r requirements-tests.txt
+else
+	virtualenv --python /usr/bin/python tut
+	. tut/bin/activate ; \
+	pip install -r requirements-tests.txt
+endif
 
 container-test:
 	docker run --rm -ti -v ${PWD}:/payload leapp-tests
 
 test:   lint
+ifeq ($(shell id -u), 0)
 	pytest -vv --cov-report term-missing --cov=leapp tests/scripts
+else
+	. tut/bin/activate ; \
+	pytest -vv --cov-report term-missing --cov=leapp tests/scripts
+endif
 
 lint:
-	pytest --cache-clear --pylint -m pylint leapp tests/scripts/*.py
+ifeq ($(shell id -u), 0)
+	pytest --cache-clear --pylint -m pylint leapp tests/scripts/*.py; \
 	pytest --cache-clear --flake8 -m flake8 leapp tests/scripts/*.py
+else
+	. tut/bin/activate ; \
+	pytest --cache-clear --pylint -m pylint leapp tests/scripts/*.py; \
+	pytest --cache-clear --flake8 -m flake8 leapp tests/scripts/*.py
+endif
 
 .PHONY: clean copr_build install install-deps install-test srpm test lint
