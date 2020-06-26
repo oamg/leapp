@@ -3,8 +3,8 @@ import socket
 import sys
 import types
 import uuid
+from multiprocessing import Process, Queue
 
-from multiprocessing import Queue, Process
 import pytest
 from _pytest.python import pytest_pyfunc_call as original_pytest_pyfunc_call
 
@@ -16,7 +16,13 @@ from leapp.utils.audit import Execution, get_connection
 from leapp.utils.repository import find_repository_basedir
 
 
-def _patched_name(code, name):
+PY27 = sys.version_info[:2] == (2, 7)
+PY36 = sys.version_info[:2] == (3, 6)
+PY38 = sys.version_info[:2] == (3, 8)
+HIGHER = sys.version_info[:2] > (3, 8)
+
+
+def _patched_name_py27(code, name):
     return types.CodeType(
         code.co_argcount,
         code.co_nlocals,
@@ -33,6 +39,32 @@ def _patched_name(code, name):
         code.co_freevars,
         code.co_cellvars,
     )
+
+
+def _patched_name_py36(code, name):
+    return types.CodeType(
+        code.co_argcount,
+        code.co_kwonlyargcount,
+        code.co_nlocals,
+        code.co_stacksize,
+        code.co_flags,
+        code.co_code,
+        code.co_consts,
+        code.co_names,
+        code.co_varnames,
+        code.co_filename,
+        name,
+        code.co_firstlineno,
+        code.co_lnotab,
+        code.co_freevars,
+        code.co_cellvars,
+
+    )
+
+
+def _patched_name_py38(code, name):
+    code.replace(co_name=name)
+    return code
 
 
 def _tb_pack(tb):
@@ -53,7 +85,18 @@ def _tb_unpack(packed):
             '%sdef %s(): raise %s()' % ('\n' * (lineno - 1), current, previous), filename, 'exec'), globs)
         previous = current
         func = globs[current]
-        func.func_code = _patched_name(func.func_code, name)
+        if PY27:
+            func.func_code = _patched_name_py27(func.func_code, name)
+        elif PY36:
+            func.__code__ = _patched_name_py36(func.__code__, name)
+        elif PY38 or HIGHER:
+            func.__code__ = _patched_name_py38(func.__code__, name)
+        else:
+            raise NotImplementedError(
+                "Traceback forwarding is not implemented for your"
+                " Python version. Currently supported 2.7, 3.6, 3.8"
+                " and higher"
+            )
     try:
         globs[previous]()
     except StopIteration:
