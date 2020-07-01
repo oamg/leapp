@@ -30,3 +30,4 @@ pip-selfcheck.json
 leapp/utils/schemas.py
 res/schema/schemas.py
 .vscode/
+leapp.db
