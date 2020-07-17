@@ -1,12 +1,16 @@
 import multiprocessing
-from six.moves import configparser
+
 import six
+from six.moves import configparser
+
+from leapp.utils.audit import create_audit_entry
 
 
 class AnswerStore(object):
     """
     AnswerStore handles storing and loading answer files for user questions.
     """
+
     def __init__(self, manager=None):
         """
         Initialize the answer store.
@@ -81,7 +85,9 @@ class AnswerStore(object):
         :param fallback: Fallback value to return if not found.
         :return:
         """
-        return self._storage.get(scope, fallback)
+        answer = self._storage.get(scope, fallback)
+        create_audit_entry('dialog-answer', {'scope': scope, 'fallback': fallback, 'answer': answer})
+        return answer
 
     def translate_for_workflow(self, workflow):
         """
