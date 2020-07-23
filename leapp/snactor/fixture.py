@@ -1,8 +1,10 @@
+import logging
 import os
 import socket
 import sys
 import types
 import uuid
+from logging import handlers
 from multiprocessing import Process, Queue
 
 import pytest
@@ -14,7 +16,6 @@ from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils import get_api_models
 from leapp.utils.audit import Execution, get_connection
 from leapp.utils.repository import find_repository_basedir
-
 
 PY27 = sys.version_info[:2] == (2, 7)
 PY36 = sys.version_info[:2] == (3, 6)
@@ -115,6 +116,8 @@ class ActorContext(object):
     def __init__(self, actor=None):
         self._actor = actor
         self._messaging = InProcessMessaging()
+        self.logger_queue = Queue()
+        self._prepare_logger()
 
     def set_actor(self, actor):
         """
@@ -156,6 +159,7 @@ class ActorContext(object):
             self._messaging._config_models = (config_model_cls,)
         # the same as above applies here for actor
         self._actor(messaging=self._messaging, config_model=config_model_cls).run()
+        self._restore_logs()
 
     def messages(self):
         """
@@ -175,6 +179,20 @@ class ActorContext(object):
         :return:
         """
         return tuple(self._messaging.consume(self, *models))
+
+    def _prepare_logger(self):
+        logger = logging.getLogger()
+        logger.addHandler(handlers.QueueHandler(self.logger_queue))
+
+    def _restore_logs(self):
+        while not self.logger_queue.empty():
+            logger = logging.getLogger("leapp.actors." + self._actor.name)
+            log_record = self.logger_queue.get()
+            logger._log(
+                level=log_record.levelno,
+                msg=log_record.message,
+                args=log_record.args,
+            )
 
 
 @pytest.fixture(scope='module')
