@@ -31,7 +31,9 @@ disable=
  too-many-public-methods,
  too-many-statements,
 # new for python3 version of pylint
- useless-object-inheritance
+ useless-object-inheritance,
+ super-with-arguments,  # required in python 2
+ raise-missing-from,  # no 'raise from' in python 2
 
 [FORMAT]
 # Maximum number of characters on a single line.
