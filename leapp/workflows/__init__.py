@@ -14,6 +14,7 @@ from leapp.utils import reboot_system
 from leapp.utils.audit import checkpoint, get_errors
 from leapp.utils.meta import with_metaclass, get_flattened_subclasses
 from leapp.utils.output import display_status_current_phase, display_status_current_actor
+from leapp.utils.phaselogs import add_phase_logs
 from leapp.workflows.phases import Phase
 from leapp.workflows.policies import Policies
 from leapp.workflows.phaseactors import PhaseActors
@@ -230,7 +231,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
         if phase:
             return phase in [name for phs in self._phase_actors for name in phase_names(phs)]
 
-    def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None, skip_dialogs=False):
+    def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None,
+            skip_dialogs=False, phase_logs_archive=None, phase_logs=None):
         """
         Executes the workflow
 
@@ -255,6 +257,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
                              The value of skip_dialogs will be passed to the actors that can theoretically use it for
                              their purposes.
         :type skip_dialogs: bool
+        TODO document phase_logs(_archive)
 
         """
         context = context or str(uuid.uuid4())
@@ -358,6 +361,9 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     break
 
             checkpoint(actor='', phase=phase[0].name, context=context, hostname=os.environ['LEAPP_HOSTNAME'])
+
+            if phase_logs and phase_logs_archive:  # TODO refine condition?
+                add_phase_logs(phase_logs_archive, phase_logs, phase, logger=current_logger)
 
             if self._errors and phase[0].policies.error is Policies.Errors.FailPhase:
                 self.log.info('Workflow interrupted due to the FailPhase error policy')

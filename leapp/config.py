@@ -21,10 +21,21 @@ _LOGS = [
     'leapp-preupgrade.log'
 ]
 
+# special debug logs that will get captured and archived after each phase
+_PHASE_LOGS_FILES = [
+    '/var/log/dnf.log',
+    '/var/log/rhsm/rhsm.log'
+]
+
+# path to the archive holding phase logs
+_PHASE_LOGS_ARCHIVE = '/var/log/leapp/phase-logs.tar.gz'
+
 # files that will go into the leapp-logs.tar.gz archive and get deleted each time a run is started
 _FILES_TO_ARCHIVE = [
     'dnf-plugin-data.txt',
+    _PHASE_LOGS_ARCHIVE
 ] + _REPORTS + _LOGS
+
 
 _CONFIG_DEFAULTS = {
     'archive': {
@@ -43,6 +54,10 @@ _CONFIG_DEFAULTS = {
     'logs': {
         'dir': '/var/log/leapp/',
         'files': ','.join(_LOGS),
+    },
+    'phase_logs': {
+        'files': ','.join(_PHASE_LOGS_FILES),
+        'archive': _PHASE_LOGS_ARCHIVE
     },
     'report': {
         'dir': '/var/log/leapp/',

@@ -17,6 +17,7 @@ from leapp.utils.audit import Execution, get_connection, get_checkpoints
 from leapp.utils.clicmd import command, command_opt
 from leapp.utils.output import (report_errors, report_info, beautify_actor_exception, report_unsupported,
                                 report_inhibitors)
+from leapp.utils.phaselogs import init_phase_logs
 from leapp.utils.report import fetch_upgrade_report_messages, generate_report_file
 
 
@@ -201,6 +202,8 @@ def upgrade(args):
     configuration = prepare_configuration(args)
     answerfile_path = cfg.get('report', 'answerfile')
     userchoices_path = cfg.get('report', 'userchoices')
+    phase_logs = cfg.get('phase_logs', 'files').split(',')
+    phase_logs_archive = cfg.get('phase_logs', 'archive')
 
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
@@ -224,6 +227,7 @@ def upgrade(args):
         e.store()
         archive_logfiles()
         logger = configure_logger('leapp-upgrade.log')
+        init_phase_logs(phase_logs_archive, logger=logger)
     os.environ['LEAPP_EXECUTION_ID'] = context
 
     if args.resume:
@@ -238,7 +242,8 @@ def upgrade(args):
     with beautify_actor_exception():
         logger.info("Using answerfile at %s", answerfile_path)
         workflow.load_answers(answerfile_path, userchoices_path)
-        workflow.run(context=context, skip_phases_until=skip_phases_until, skip_dialogs=True)
+        workflow.run(context=context, skip_phases_until=skip_phases_until, skip_dialogs=True,
+                     phase_logs_archive=phase_logs_archive, phase_logs=phase_logs)
 
     logger.info("Answerfile will be created at %s", answerfile_path)
     workflow.save_answers(answerfile_path, userchoices_path)
@@ -268,6 +273,8 @@ def preupgrade(args):
     configuration = prepare_configuration(args)
     answerfile_path = cfg.get('report', 'answerfile')
     userchoices_path = cfg.get('report', 'userchoices')
+    phase_logs = cfg.get('phase_logs')
+    phase_logs_archive = cfg.get('phase_logs_archive')
 
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
@@ -275,6 +282,7 @@ def preupgrade(args):
     e.store()
     archive_logfiles()
     logger = configure_logger('leapp-preupgrade.log')
+    init_phase_logs(phase_logs_archive, logger=logger)
     os.environ['LEAPP_EXECUTION_ID'] = context
 
     try:
@@ -288,7 +296,8 @@ def preupgrade(args):
         workflow.load_answers(answerfile_path, userchoices_path)
         until_phase = 'ReportsPhase'
         logger.info('Executing workflow until phase: %s', until_phase)
-        workflow.run(context=context, until_phase=until_phase, skip_dialogs=True)
+        workflow.run(context=context, until_phase=until_phase, skip_dialogs=True,
+                     phase_logs_archive=phase_logs_archive, phase_logs=phase_logs)
 
     logger.info("Answerfile will be created at %s", answerfile_path)
     workflow.save_answers(answerfile_path, userchoices_path)
