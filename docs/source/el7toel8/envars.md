@@ -52,6 +52,14 @@ Overrides the default location of `logger.conf`. If not specified, the default
 `/etc/leapp/logger.conf` is used.
 
 
+## LEAPP_ENABLE_REPOS
+
+Specify repositories (repoids) split by comma, that should be used during the
+in-place upgrade to the target system. It's overwritten automatically in case
+the `--enablerepo` option of the leapp utility is used. It's recommended to use
+the `--enablerepo` option instead of the envar.
+
+
 ## LEAPP_UNSUPPORTED
 
 Necessary to use in case you use any envar with the LEAPP_DEVEL prefix
