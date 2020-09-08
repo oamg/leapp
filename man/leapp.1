@@ -82,6 +82,11 @@ Overrides the default location of \fIleapp.conf\fR. If not specified, \fI.leapp/
 Overrides the default location of \fIlogger.conf\fR. If not specified, the default \fI/etc/leapp/logger.conf\fR is used.
 .RE
 
+.B LEAPP_ENABLE_REPOS
+.RS 4
+Specify repositories (repoids) split by comma, that should be used during the in-place upgrade to the target system. It's overwritten automatically in case the \fI--enablerepo\fR option of the leapp utility is used. It's recommended to use the \fI--enablerepo\fR option instead of the envar.
+.RE
+
 .B LEAPP_DEBUG
 .RS 4
 Enables debug logging. Equivalent to \fB--debug\fR, which takes precedence.
