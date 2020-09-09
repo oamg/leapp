@@ -24,6 +24,18 @@ def test_fun(self):
     foobar()
 
 
+@suppress_deprecation(SuppressedDeprecatedModel)
+def test_fun1(self):
+    self.produce(SuppressedDeprecatedModel())
+    test_fun(self)
+
+
+@suppress_deprecation(SuppressedDeprecatedModel)
+def test_fun2(self):
+    test_fun(self)
+    self.produce(SuppressedDeprecatedModel())
+
+
 class DeprecationTests(Actor):
     """
     No documentation has been provided for the deprecation_tests actor.
@@ -36,6 +48,8 @@ class DeprecationTests(Actor):
 
     def process(self):
         test_fun(self)
+        test_fun1(self)
+        test_fun2(self)
         deprecated_function()
         self.produce(DeprecatedModel())
         DeprecatedNoInit()
