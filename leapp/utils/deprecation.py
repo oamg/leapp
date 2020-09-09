@@ -23,6 +23,13 @@ def suppress_deprecation(*suppressed_items):
         target_item = item
         if inspect.isclass(item):
             target_item = getattr(item, 'process', None)
+            if target_item is None:
+                raise ValueError(
+                    'The suppress_deprecation decorator has been used on a class which'
+                    ' does not contain the process method. The decorator can be used'
+                    ' only for classes with that method (e.g. classes derived from Actor).'
+                    ' Use the decorator on the affected methods instead of the current class.'
+                )
 
         @functools.wraps(target_item)
         def process_wrapper(*args, **kwargs):
