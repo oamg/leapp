@@ -15,7 +15,7 @@ def suppress_deprecation(*suppressed_items):
     Decorator to suppress deprecation warnings during the execution of the decorated entity.
 
     This can be used directly on Actor classes OR functions. This relies on the fact that a class has a `process`
-    method, if the method does not exist, this may cause mayhem.
+    method, if the method does not exist the ValueError exeption is raised.
 
     :param suppressed_items: Variable number of arguments each for entities to suppress the deprecation warnings for.
     """
@@ -33,13 +33,15 @@ def suppress_deprecation(*suppressed_items):
 
         @functools.wraps(target_item)
         def process_wrapper(*args, **kwargs):
-            for suppressed in suppressed_items:
-                _suppressed_deprecations.add(suppressed)
+            # we need to remove later just items that we add right now
+            # added_items == new items we add now to ...
+            added_items = set(suppressed_items) - _suppressed_deprecations
+            _suppressed_deprecations.update(added_items)
             try:
                 return target_item(*args, **kwargs)
             finally:
-                for suppressed in suppressed_items:
-                    _suppressed_deprecations.remove(suppressed)
+                # remove the added items
+                _suppressed_deprecations.difference_update(added_items)
         if inspect.isclass(item):
             item.process = process_wrapper
             return item
