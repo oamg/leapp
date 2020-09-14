@@ -31,3 +31,5 @@ leapp/utils/schemas.py
 res/schema/schemas.py
 .vscode/
 leapp.db
+# do not ignore the directory with tests...
+!tests/scripts/
