@@ -1,8 +1,14 @@
 from collections import namedtuple
+import datetime
 
 import pytest
 
-from leapp.reporting import _add_to_dict, create_report_from_error
+from leapp.reporting import (
+    _add_to_dict,
+    _DEPRECATION_SEVERITY_THRESHOLD,
+    create_report_from_deprecation,
+    create_report_from_error,
+)
 
 
 ReportPrimitive = namedtuple('ReportPrimitive', ['data', 'path', 'value', 'is_leaf_list'])
@@ -82,10 +88,10 @@ def test_convert_from_error_to_report():
         'actor': 'verify_check_results',
         'severity': 'error'}
     report = create_report_from_error(error_dict_no_details)
-    assert report["severity"] == "high"
-    assert report["title"] == "The system is not registered or subscribed."
-    assert report["audience"] == "sysadmin"
-    assert report["summary"] == ""
+    assert report['severity'] == 'high'
+    assert report['title'] == 'The system is not registered or subscribed.'
+    assert report['audience'] == 'sysadmin'
+    assert report['summary'] == ''
     error_dict_with_details = {
         'message': 'The system is not registered or subscribed.',
         'time': '2019-11-19T05:13:04.447562Z',
@@ -93,7 +99,32 @@ def test_convert_from_error_to_report():
         'actor': 'verify_check_results',
         'severity': 'error'}
     report = create_report_from_error(error_dict_with_details)
-    assert report["severity"] == "high"
-    assert report["title"] == "The system is not registered or subscribed."
-    assert report["audience"] == "sysadmin"
-    assert report["summary"] == "Some other info that should go to report summary"
+    assert report['severity'] == 'high'
+    assert report['title'] == 'The system is not registered or subscribed.'
+    assert report['audience'] == 'sysadmin'
+    assert report['summary'] == 'Some other info that should go to report summary'
+
+
+def test_create_report_from_deprecation():
+    curr_date = datetime.datetime.today()
+    old_date = curr_date - _DEPRECATION_SEVERITY_THRESHOLD - datetime.timedelta(days=1)
+
+    for (since, severity) in ((curr_date, 'medium'), (old_date, 'high')):
+        data = {
+            'message': 'Usage of deprecated Model "DeprecatedModel"',
+            'filename': '/etc/leapp/repos.d/system_upgrade/el7toel8/actors/fooactor/actor.py',
+            'line': '        self.produce(DeprecatedModel(foo=bar))\n',
+            'lineno': 51,
+            'since': since.strftime('%Y-%m-%d'),
+            'reason': 'The DeprecatedModel has been deprecated.'}
+        report = create_report_from_deprecation(data)
+        # I do not want to just copy-paste the code from the function, so let's
+        # do the check in this way
+        assert data['message'] in report['title']
+        assert '{}:{}'.format(data['filename'], data['lineno']) in report['title']
+        assert '{}:{}'.format(data['filename'], data['lineno']) in report['summary']
+        assert report['severity'] == severity
+        assert report['audience'] == 'developer'
+        assert data['reason'] in report['summary']
+        assert data['since'] in report['summary']
+        assert data['line'] in report['summary']
