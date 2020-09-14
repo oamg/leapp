@@ -13,7 +13,8 @@ def _create_reports_from_deprecations(context_id):
         data = json.loads(entry['data'])
 
         # Drop duplicates
-        data_hash = hashlib.sha256(json.dumps(data, sort_keys=True)).hexdigest()
+        _data_dump = json.dumps(data, sort_keys=True).encode('utf-8')
+        data_hash = hashlib.sha256(_data_dump).hexdigest()
         if data_hash in cache:
             continue
         cache.add(data_hash)
