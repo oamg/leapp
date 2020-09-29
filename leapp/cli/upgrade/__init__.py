@@ -209,7 +209,7 @@ def upgrade(args):
         context, configuration = fetch_last_upgrade_context()
         if not context:
             raise CommandError('No previous upgrade run to continue, remove `--resume` from leapp invocation to'
-                               'start a new upgrade flow')
+                               ' start a new upgrade flow')
         os.environ['LEAPP_DEBUG'] = '1' if check_env_and_conf('LEAPP_DEBUG', 'debug', configuration) else '0'
 
         if os.environ['LEAPP_DEBUG'] == '1' or check_env_and_conf('LEAPP_VERBOSE', 'verbose', configuration):
