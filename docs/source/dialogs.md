@@ -76,7 +76,7 @@ The upgrade itself, from the operator's point of view, consists of 3 distinct st
 
 Leapp preupgrade stage should be treated as "non-invasive system upgradeability analysis", when the upgrade workflow
 stops right after preliminary system facts collection phases and a preupgrade report containing all the information
-about potential issues is generated. If an actor containing dialog is discover during this stage, a specific
+about potential issues is generated. If an actor containing dialog is discovered during this stage, a specific
 message is added to the preupgrade report file saying that for the successful upgrade the operator should record
 their decision in the answerfile.
 

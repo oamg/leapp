@@ -118,7 +118,7 @@ $ snactor run CheckSystemArch --verbose --print-output
 
 ```
 
-Or to inspect closely the message.data filed, we could use `jq` tool:
+Or to inspect closely the message.data field, we could use `jq` tool:
 
 ```sh
 snactor run CheckSystemArch --verbose --print-output | jq '.[] | .message.data | fromjson'
