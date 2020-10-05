@@ -109,3 +109,11 @@ Expected values: `ga`, `beta`, `htb`.
 
 Analogy to the LEAPP_DEVEL_SOURCE_PRODUCT_TYPE envar, just for the target
 system this time. Again, `ga` is the default.
+
+
+# LEAPP_DEVEL_PCIS_HOST
+
+Overwrite the host and port of the web service.
+Should be specified in the following format:
+`{host}:{port}`
+For example: `10.10.10.10:1010`
