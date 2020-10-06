@@ -18,7 +18,7 @@ class Dialog(object):
         address values.
     """
 
-    def __init__(self, scope, reason, title=None, components=None):
+    def __init__(self, scope, reason, title=None, components=None, key=None):
         """
 
         :param scope: Unique scope identifier for the data to be stored in the answer files. Scope + component key
@@ -30,11 +30,14 @@ class Dialog(object):
         :type title: str
         :param components: Components to display in the given order in the dialog
         :type components: tuple(leapp.dialogs.components.Component)
+        :param key: Key to appear in the dialog-related report entry
+        :type key: str
         """
         self.components = components or self.components
         self.title = title
         self.scope = scope
         self.reason = reason
+        self.key = key
         self._store = None
         self._min_label_width = None
 

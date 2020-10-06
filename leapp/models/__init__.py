@@ -156,6 +156,7 @@ class DialogModel(Model):
     answerfile_sections = fields.JSON()
     actor = fields.String()
     details = fields.Nullable(fields.String())
+    key = fields.Nullable(fields.String())
 
 
 def get_models():

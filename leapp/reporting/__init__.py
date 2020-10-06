@@ -1,7 +1,10 @@
 import datetime
 import json
+import hashlib
+import os
 
 from leapp.compat import string_types
+from leapp.logger import configure_logger
 from leapp.models import fields, Model, ErrorModel
 from leapp.topics import ReportTopic
 from leapp.libraries.stdlib.api import produce
@@ -123,6 +126,14 @@ class Flags(BasePrimitive):
         if not isinstance(value, list):
             raise TypeError('Value of "Flags" must be a list')
         self._value = value
+
+
+class Key(BasePrimitive):
+    """Stable identifier for report entries."""
+    name = 'key'
+
+    def __init__(self, uuid):
+        self._value = uuid
 
 
 class Tags(BasePrimitive):
@@ -272,6 +283,37 @@ def _sanitize_entries(entries):
         entries.append(Severity('info'))
     if not any(isinstance(e, Audience) for e in entries):
         entries.append(Audience('sysadmin'))
+    _check_stable_key(entries, raise_if_undefined=os.getenv('LEAPP_DEVEL_FIXED_REPORT_KEY', '0') != '0')
+
+
+def _check_stable_key(entries, raise_if_undefined=False):
+    """
+    Inserts a Key into the entries of the report if it doesn't exist.
+
+    The resulting id is calculated from the mandatory report
+    entries (severity, audience, title).
+    Please note that the original entries list is modified.
+    """
+    def _find_entry(cls):
+        entry = next((e for e in entries if isinstance(e, cls)), None)
+        if entry:
+            return entry._value
+
+    if _find_entry(Key):
+        # Key is already there, nothing to do
+        return
+
+    if raise_if_undefined:
+        raise ValueError('Stable Key report entry with specified unique value not provided')
+
+    # No Key found - let's generate one!
+    logger = configure_logger()
+    key_str = u'{severity}:{audience}:{title}'.format(severity=_find_entry(Severity),
+                                                      audience=_find_entry(Audience),
+                                                      title=_find_entry(Title))
+    key_value = hashlib.sha1(key_str.encode('utf-8')).hexdigest()
+    entries.append(Key(key_value))
+    logger.warning('Stable Key report entry not provided, dynamically generating one - {}'.format(key_value))
 
 
 def _create_report_object(entries):
