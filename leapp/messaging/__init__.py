@@ -157,7 +157,11 @@ class BaseMessaging(object):
         userchoices = dialog.get_answers(self._answers)
         if not userchoices:
             # produce DialogModel messages for all the dialogs that don't have answers in answerfile
-            self.produce(DialogModel(actor=actor.name, answerfile_sections=dialog.answerfile_sections), actor)
+            stable_key = dialog.key if dialog.key else hashlib.sha1(
+                ','.join(sorted(dialog.answerfile_sections.keys())).encode('utf-8')).hexdigest()
+            self.produce(DialogModel(actor=actor.name,
+                                     answerfile_sections=dialog.answerfile_sections,
+                                     key=stable_key), actor)
         else:
             # update dialogs with answers from answerfile. That is necessary for proper answerfile generation
             for component, value in userchoices.items():

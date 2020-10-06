@@ -100,6 +100,7 @@ def generate_report_file(messages_to_report, context, path):
                 remediation = Remediation.from_dict(message.get('detail', {}))
                 if remediation:
                     f.write('Remediation: {}\n'.format(remediation))
+                f.write('Key: {}\n'.format(message['key']))
                 f.write('-' * 40 + '\n')
     elif path.endswith(".json"):
         with open(path, 'w') as f:
