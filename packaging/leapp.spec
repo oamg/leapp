@@ -89,11 +89,6 @@ BuildRequires:  python-setuptools
 %else # rhel <> 7 or fedora
 BuildRequires:  python2-devel
 BuildRequires:  python2-setuptools
-
-%if 0%{?fedora}
-BuildRequires:  python2-pytest-cov
-# BuildRequires:  python2-pytest-flake8
-%endif # fedora
 %endif # rhel <> 7
 
 Provides: leapp-framework = %{framework_version}
@@ -151,11 +146,6 @@ Summary: %{summary}
 
 BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
-
-%if 0%{?fedora}
-# Fedora
-BuildRequires:  python3-pytest-cov
-%endif
 
 Requires: leapp-framework-dependencies = %{framework_dependencies}
 
