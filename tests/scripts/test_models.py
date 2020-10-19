@@ -1,10 +1,24 @@
 import pytest
+from test_topics import UnitTestTopic
 
 import leapp.models
 import leapp.models.fields
-from leapp.models.utils import init_from_tuple
 from leapp.exceptions import ModelDefinitionError
-from test_topics import UnitTestTopic
+from leapp.models.fields import ModelViolationError
+from leapp.models.utils import init_from_tuple
+
+
+class SimpleModel(leapp.models.Model):
+    topic = UnitTestTopic
+    simple_attrib_1 = leapp.models.fields.String()
+
+
+class NewDictModel(leapp.models.Model):
+    topic = UnitTestTopic
+    attrib_1 = leapp.models.fields.Dict(
+        leapp.models.fields.String(),
+        leapp.models.fields.Model(SimpleModel),
+    )
 
 
 class UnitTestModel(leapp.models.Model):
@@ -96,3 +110,79 @@ def test_inheritance_list_field_not_shared():
     for i, model_i in enumerate(models):
         for model_j in models[i + 1:]:
             assert model_i.items is not model_j.items
+
+
+def test_dict_field_basic():
+    new_model = NewDictModel(
+        attrib_1={
+            "1": SimpleModel(simple_attrib_1="A"),
+            "2": SimpleModel(simple_attrib_1="A"),
+        }
+    )
+    model_signature_serialized = new_model.serialize()
+    assert model_signature_serialized == {
+        "class_name": "NewDictModel",
+        "fields": {
+            "attrib_1": {
+                "nullable": False,
+                "class_name": "Dict",
+                "default": None,
+                "help": None,
+                "key_element": {
+                    "nullable": False,
+                    "class_name": "String",
+                    "default": None,
+                    "help": None,
+                },
+                "value_element": {
+                    "nullable": False,
+                    "class_name": "Model",
+                    "default": None,
+                    "help": None,
+                    "model": "SimpleModel",
+                },
+            }
+        },
+        "topic": "UnitTestTopic",
+    }
+    serialized_model = new_model.dump()
+    assert serialized_model == {
+        "attrib_1": {
+            "1": {"simple_attrib_1": "A"},
+            "2": {"simple_attrib_1": "A"},
+        }
+    }
+    deserialized_model = NewDictModel.create(serialized_model)
+    assert isinstance(deserialized_model, NewDictModel)
+    assert isinstance(deserialized_model.attrib_1["1"], SimpleModel)
+    assert new_model.attrib_1["1"] == SimpleModel(simple_attrib_1="A")
+
+
+def test_dict_field_type_validation():
+    NewDictModel(
+        attrib_1={
+            "1": SimpleModel(simple_attrib_1="A"),
+            "2": SimpleModel(simple_attrib_1="A"),
+        }
+    )
+    with pytest.raises(ModelViolationError):
+        NewDictModel(
+            attrib_1={
+                1: SimpleModel(simple_attrib_1="A"),
+                2: SimpleModel(simple_attrib_1="A"),
+            }
+        )
+    with pytest.raises(ModelViolationError):
+        NewDictModel(
+            attrib_1={
+                "1": SimpleModel(simple_attrib_1="A"),
+                2: SimpleModel(simple_attrib_1="A"),
+            }
+        )
+    with pytest.raises(ModelViolationError):
+        NewDictModel(
+            attrib_1={
+                "1": SimpleModel(simple_attrib_1="A"),
+                "2": {"bla": "bla"},
+            }
+        )

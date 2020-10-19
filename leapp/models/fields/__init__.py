@@ -478,6 +478,82 @@ class Model(Field):
         return result
 
 
+class Dict(Field):
+    """
+    Represents a dict with keys and values of a given type (TypedDict like).
+    """
+    def __init__(self, key_elem_field, value_elem_field, **kwargs):
+        """
+        :param key_elem_field: the type of dict keys
+        :type key_elem_field: Instance of :py:class:`Field`
+        :param value_elem_field: the type of dict values
+        :type value_elem_field: Instance of :py:class:`Field`
+        :param default: Default value to use if the field is not set
+        :type default: Dict[key_element_field, value_elem_field]
+        :param help: Documentation string for generating model documentation
+        :type help: str
+        """
+        super(Dict, self).__init__(**kwargs)
+        # We do a copy of the data in default, to avoid some unwanted side effects
+        # Comparison to None is necessary
+        if self._default is not None:
+            self._default = copy.copy(self._default)
+        if not (isinstance(key_elem_field, Field) and isinstance(value_elem_field, Field)):
+            raise ModelMisuseError("elem_field key and value should be an instance of a type derived from Field")
+        self._key_elem_type = key_elem_field
+        self._value_elem_type = value_elem_field
+
+    def _validate_model_value(self, value, name):
+        super(Dict, self)._validate_model_value(value, name)
+        if isinstance(value, dict):
+            for idx, (key, val) in enumerate(value.items()):
+                self._key_elem_type._validate_model_value(key, name='{}[{}]'.format(name, idx))
+                self._value_elem_type._validate_model_value(val, name='{}[{}]'.format(name, idx))
+        elif value is not None:
+            raise ModelViolationError('Expected dict but got {} for the {} field'.format(type(value).__name__, name))
+
+    def _validate_builtin_value(self, value, name):
+        super(Dict, self)._validate_model_value(value, name)
+        if isinstance(value, dict):
+            for idx, (key, val) in enumerate(value.items()):
+                self._key_elem_type._validate_builtin_value(key, name='{}[{}]'.format(name, idx))
+                self._value_elem_type._validate_builtin_value(val, name='{}[{}]'.format(name, idx))
+        elif value is not None:
+            raise ModelViolationError('Expected dict but got {} for the {} field'.format(type(value).__name__, name))
+
+    def _convert_from_model(self, value, name):
+        self._validate_model_value(value=value, name=name)
+        if value is None:
+            return value
+        key_converter = self._key_elem_type._convert_from_model
+        value_converter = self._value_elem_type._convert_from_model
+        return {
+            key_converter(key, name='{}[{}]'.format(name, idx)):
+            value_converter(value, name='{}[{}]'.format(name, idx))
+            for idx, (key, value) in enumerate(value.items())
+        }
+
+    def _convert_to_model(self, value, name):
+        self._validate_builtin_value(value=value, name=name)
+        if value is None:
+            return value
+        key_converter = self._key_elem_type._convert_to_model
+        value_converter = self._value_elem_type._convert_to_model
+        return {
+            key_converter(key, name='{}[{}]'.format(name, idx)):
+                value_converter(value, name='{}[{}]'.format(name, idx))
+            for idx, (key, value) in enumerate(value.items())
+        }
+
+    def serialize(self):
+        result = super(Dict, self).serialize()
+        result.update({
+            'key_element': self._key_elem_type.serialize(),
+            'value_element': self._value_elem_type.serialize(),
+        })
+        return result
+
+
 class JSON(String):
     """
     The JSON field allows to use json encodable python types as a value.
