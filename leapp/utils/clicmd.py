@@ -4,6 +4,8 @@ import sys
 
 from argparse import ArgumentParser, _SubParsersAction, RawDescriptionHelpFormatter
 
+import six
+
 from leapp.exceptions import CommandDefinitionError, UsageError, CommandError
 
 
@@ -277,7 +279,7 @@ def command(name, help='', description=None, parent=None):  # noqa; pylint: disa
 
 
 def _ensure_command(wrapped):
-    @functools.wraps(wrapped)
+    @six.wraps(wrapped)
     def wrapper(f):
         if not hasattr(f, 'command'):
             f.command = Command('')
@@ -324,4 +326,4 @@ def command_aware_wraps(f):
     additional = ()
     if hasattr(f, 'command'):
         additional = ('command',)
-    return functools.wraps(f, assigned=functools.WRAPPER_ASSIGNMENTS + additional)
+    return six.wraps(f, assigned=functools.WRAPPER_ASSIGNMENTS + additional)
