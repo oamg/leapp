@@ -1,8 +1,9 @@
 import datetime
-import functools
 import inspect
 import warnings
 from collections import namedtuple
+
+import six
 
 from leapp.models import Model
 
@@ -31,7 +32,7 @@ def suppress_deprecation(*suppressed_items):
                     ' Use the decorator on the affected methods instead of the current class.'
                 )
 
-        @functools.wraps(target_item)
+        @six.wraps(target_item)
         def process_wrapper(*args, **kwargs):
             # we need to remove later just items that we add right now
             # added_items == new items we add now to ...
@@ -106,14 +107,14 @@ def deprecated(since, message, stack_level_offset=0):
         if inspect.isclass(item):
             old_init = item.__init__
 
-            @functools.wraps(item.__init__, assigned=('__name__', '__doc__'))
+            @six.wraps(item.__init__, assigned=('__name__', '__doc__'))
             def wrapper(*args, **kwargs):
                 do_warn()
                 return old_init(*args, **kwargs)
             item.__init__ = wrapper
             result = item
         else:
-            @functools.wraps(item)
+            @six.wraps(item)
             def wrapper(*args, **kwargs):
                 do_warn()
                 return item(*args, **kwargs)

@@ -10,6 +10,7 @@ import pytest
 import leapp.utils.audit
 from leapp.messaging.inprocess import InProcessMessaging
 from leapp.repository.scan import scan_repo
+from leapp.utils.deprecation import suppress_deprecation, deprecated
 
 
 @pytest.fixture(scope='module')
@@ -34,3 +35,14 @@ def test_deprecations(repository):
     entries = [entry for entry in entries
                if datetime.datetime.strptime(entry['stamp'].rstrip('Z'), '%Y-%m-%dT%H:%M:%S.%f') > start]
     assert entries and len(entries) == 5
+
+
+# This is test to show the current suppress_deprecation limitation
+@deprecated(since='2011-11-11', message='never to be seen')
+def foobar():
+    pass
+
+
+@suppress_deprecation(foobar)
+def test_suppress_with_fixture(monkeypatch):
+    assert monkeypatch
