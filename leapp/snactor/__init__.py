@@ -1,17 +1,10 @@
 import os
 import pkgutil
 import socket
-
 # for profilling
 import cProfile
 import pstats
-try:
-    from StringIO import StringIO
-except ImportError:
-    # TODO: low possibility of the problem with encoding with Python3;
-    # # but it should not be so problematic in this case, so keeping now just
-    # # like that to keep it simple
-    from io import StringIO
+import six
 
 from leapp.utils.i18n import _  # noqa; pylint: disable=redefined-builtin
 from leapp.snactor import commands
@@ -93,7 +86,7 @@ def main():
     cli.command.execute(version=_('snactor version {}').format(VERSION))
     if profile_enabled:
         pr.disable()
-        s = StringIO()
+        s = six.StringIO()
         sortby = 'cumulative'
         ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
         ps.print_stats()
