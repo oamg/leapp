@@ -1,5 +1,5 @@
 PYTHON_VENV ?= python
-
+VENVNAME ?= tut
 CONFDIR=${DESTDIR}/etc/leapp
 LIBDIR=${DESTDIR}/var/lib/leapp
 
@@ -121,8 +121,8 @@ install-test:
 ifeq ($(shell id -u), 0)
 	pip install -r requirements-tests.txt
 else
-	virtualenv --python $(PYTHON_VENV) tut
-	. tut/bin/activate ; \
+	virtualenv --python $(PYTHON_VENV) $(VENVNAME)
+	. $(VENVNAME)/bin/activate ; \
 	pip install -r requirements-tests.txt
 endif
 
@@ -133,7 +133,7 @@ test:   lint
 ifeq ($(shell id -u), 0)
 	pytest -vv --cov-report term-missing --cov=leapp tests/scripts
 else
-	. tut/bin/activate ; \
+	. $(VENVNAME)/bin/activate ; \
 	pytest -vv --cov-report term-missing --cov=leapp tests/scripts
 endif
 
@@ -142,7 +142,7 @@ ifeq ($(shell id -u), 0)
 	pytest --cache-clear --pylint -m pylint leapp tests/scripts/*.py; \
 	pytest --cache-clear --flake8 -m flake8 leapp tests/scripts/*.py
 else
-	. tut/bin/activate ; \
+	. $(VENVNAME)/bin/activate ; \
 	pytest --cache-clear --pylint -m pylint leapp tests/scripts/*.py; \
 	pytest --cache-clear --flake8 -m flake8 leapp tests/scripts/*.py
 endif
