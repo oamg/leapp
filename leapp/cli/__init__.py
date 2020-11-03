@@ -16,7 +16,8 @@ def cli(args): # noqa; pylint: disable=unused-argument
 
 
 def main():
-    profile_enabled = os.environ.get('LEAPP_CPROFILE', '0') == '1'
+    os.environ['LEAPP_CPROFILE'] = os.environ.get('LEAPP_CPROFILE', '0')
+    profile_enabled = os.environ['LEAPP_CPROFILE'] == '1'
     if profile_enabled:
         pr = cProfile.Profile()
         pr.enable()
