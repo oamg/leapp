@@ -57,10 +57,10 @@ def print_error(error):
 
 def report_inhibitors(context_id):
     # The following imports are required to be here to avoid import loop problems
-    from leapp.reporting import Flags  # pylint: disable=import-outside-toplevel
+    from leapp.reporting import Groups  # pylint: disable=import-outside-toplevel
     from leapp.utils.report import fetch_upgrade_report_messages  # pylint: disable=import-outside-toplevel
     reports = fetch_upgrade_report_messages(context_id)
-    inhibitors = [report for report in reports if Flags.INHIBITOR in report.get('flags', [])]
+    inhibitors = [report for report in reports if Groups.INHIBITOR in report.get('groups', [])]
     if inhibitors:
         text = 'UPGRADE INHIBITED'
         with pretty_block(text=text, end_text=text, color=Color.red, target=sys.stdout):
