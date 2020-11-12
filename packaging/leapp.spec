@@ -20,15 +20,15 @@
 %global framework_dependencies 3
 
 # Do not build bindings for python3 for RHEL == 7
+# # Currently Py2 is dead on Fedora and we don't have to support it. As well,
+# # our current packaging is not prepared for Py2 & Py3 packages in the same
+# # time. Instead of that, make Py2 and Py3 exclusive. Possibly rename macros..
 %if 0%{?rhel} && 0%{?rhel} == 7
-%define with_python2 1
+  %define with_python2 1
+  %define without_python3 1
 %else
-%if 0%{?rhel} && 0%{?rhel} > 7
-%bcond_with python2
-%else
-%bcond_without python2
-%endif
-%bcond_without python3
+  %define without_python2 1
+  %define with_python3 1
 %endif
 
 Name:       leapp
@@ -153,7 +153,7 @@ Requires: leapp-framework-dependencies = %{framework_dependencies}
 #    https://serverfault.com/questions/411444/rpm-set-required-somepackage-0-5-0-and-somepackage-0-6-0
 # Currently, we do not use this rpm, so commenting the provides for now, until
 # we come up with reliable solution. E.g. avoid possibility to install both
-# version of frameworks - for Py2 and Py3 in the same time. Or rename the 
+# version of frameworks - for Py2 and Py3 in the same time. Or rename the
 # capability; e.g.: leapp-framework-py3
 # Provides: leapp-framework = %{framework_version}
 
@@ -234,7 +234,11 @@ rm -f %{buildroot}/%{_bindir}/leapp
 %{_bindir}/leapp
 %dir %{_sharedstatedir}/leapp
 %dir %{_localstatedir}/log/leapp
+%if %{with python2}
 %{python2_sitelib}/leapp/cli
+%else
+%{python3_sitelib}/leapp/cli
+%endif
 %endif
 
 
@@ -244,7 +248,11 @@ rm -f %{buildroot}/%{_bindir}/leapp
 ##################################################
 %files -n snactor
 %license COPYING
+%if %{with python2}
 %{python2_sitelib}/leapp/snactor
+%else
+%{python3_sitelib}/leapp/snactor
+%endif
 %{_mandir}/man1/snactor.1*
 %{_bindir}/snactor
 
@@ -271,8 +279,9 @@ rm -f %{buildroot}/%{_bindir}/leapp
 %files -n python3-%{name}
 %license COPYING
 %{python3_sitelib}/*
-#TODO: ignoring leapp and snactor in separate rpms now as we do not provide
-# entrypoints for Py3 in those subpackages anyway
+# TODO: check valid entry points for leapp & snactor
+%exclude %{python3_sitelib}/leapp/cli
+%exclude %{python3_sitelib}/leapp/snactor
 
 %endif
 
