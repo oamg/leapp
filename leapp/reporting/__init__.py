@@ -23,14 +23,17 @@ class Report(Model):
     report = fields.JSON()
 
 
-def _add_to_dict(data, path, value, leaf_list=False):
+def _add_to_dict(data, path, value, leaf_list=False, flat_list=False):
     for p in path[:-1]:
         if p not in data:
             data[p] = {}
         data = data[p]
 
     if leaf_list:
-        data[path[-1]] = data.get(path[-1], []) + [value]
+        list_val = [value]
+        if flat_list and isinstance(value, list):
+            list_val = value
+        data[path[-1]] = data.get(path[-1], []) + list_val
     else:
         if path[-1] in data:
             raise ValueError('Path {} is already taken'.format('.'.join(path)))
@@ -74,7 +77,7 @@ class BaseListPrimitive(BasePrimitive):
 
     def apply(self, report):
         """Add report entry to the report dict based on provided path"""
-        _add_to_dict(report, self.path, self.value, leaf_list=True)
+        _add_to_dict(report, self.path, self.value, leaf_list=True, flat_list=True)
 
 
 class Title(BasePrimitive):
@@ -116,17 +119,53 @@ class Audience(BasePrimitive):
         self._value = value
 
 
-class Flags(BasePrimitive):
-    """Report flags"""
-    name = 'flags'
+class Groups(BaseListPrimitive):
+    """Report groups."""
+    name = 'groups'
 
     INHIBITOR = 'inhibitor'
     FAILURE = 'failure'
+    ACCESSIBILITY = 'accessibility'
+    AUTHENTICATION = 'authentication'
+    BOOT = 'boot'
+    COMMUNICATION = 'communication'
+    DESKTOP = 'desktop environment'
+    DRIVERS = 'drivers'
+    EMAIL = 'email'
+    ENCRYPTION = 'encryption'
+    FILESYSTEM = 'filesystem'
+    FIREWALL = 'firewall'
+    HIGH_AVAILABILITY = 'high availability'
+    KERNEL = 'kernel'
+    MONITORING = 'monitoring'
+    NETWORK = 'network'
+    OS_FACTS = 'OS facts'
+    POST = 'post'
+    PUBLIC_CLOUD = 'public cloud'
+    PYTHON = 'python'
+    REPOSITORY = 'repository'
+    RHUI = 'rhui'
+    SANITY = 'sanity'
+    SECURITY = 'security'
+    SELINUX = 'selinux'
+    SERVICES = 'services'
+    TIME_MANAGEMENT = 'time management'
+    TOOLS = 'tools'
+    UPGRADE_PROCESS = 'upgrade process'
 
     def __init__(self, value=None):
         if not isinstance(value, list):
-            raise TypeError('Value of "Flags" must be a list')
+            raise TypeError('Value of "Groups" must be a list')
         self._value = value
+
+
+# To gradually switch from using Tags and Flags to using Groups make Tags and Flags aliases of Groups
+Tags = Groups
+Flags = Groups
+
+# To allow backwards-compatibility with previous report-schema
+# Groups that match _DEPRECATION_FLAGS will be shown as flags, the rest as tags
+_DEPRECATION_FLAGS = [Groups.INHIBITOR, Groups.FAILURE]
 
 
 class Key(BasePrimitive):
@@ -139,50 +178,6 @@ class Key(BasePrimitive):
             raise ValueError('Key value should be a string.')
 
         self._value = uuid
-
-
-class Tags(BasePrimitive):
-    """Report tags"""
-    name = 'tags'
-
-    class _Value(object):
-        def __init__(self, value):
-            self.value = value
-
-    ACCESSIBILITY = _Value('accessibility')
-    AUTHENTICATION = _Value('authentication')
-    BOOT = _Value('boot')
-    COMMUNICATION = _Value('communication')
-    DESKTOP = _Value('desktop environment')
-    DRIVERS = _Value('drivers')
-    EMAIL = _Value('email')
-    ENCRYPTION = _Value('encryption')
-    FILESYSTEM = _Value('filesystem')
-    FIREWALL = _Value('firewall')
-    HIGH_AVAILABILITY = _Value('high availability')
-    KERNEL = _Value('kernel')
-    MONITORING = _Value('monitoring')
-    NETWORK = _Value('network')
-    OS_FACTS = _Value('OS facts')
-    PUBLIC_CLOUD = _Value('public cloud')
-    PYTHON = _Value('python')
-    REPOSITORY = _Value('repository')
-    RHUI = _Value('rhui')
-    SANITY = _Value('sanity')
-    SECURITY = _Value('security')
-    SELINUX = _Value('selinux')
-    SERVICES = _Value('services')
-    TIME_MANAGEMENT = _Value('time management')
-    TOOLS = _Value('tools')
-    UPGRADE_PROCESS = _Value('upgrade process')
-
-    def __init__(self, value=None):
-        if not isinstance(value, list):
-            raise TypeError('Value of "Tags" must be a list')
-        if not all(isinstance(v, Tags._Value) for v in value):
-            raise TypeError('Unsupported tag value passed for Report Tags.')
-        # after the objects validation we need the actual values in the list
-        self._value = [v.value for v in value]
 
 
 class ExternalLink(BaseListPrimitive):

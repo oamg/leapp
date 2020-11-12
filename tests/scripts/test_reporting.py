@@ -13,7 +13,7 @@ from leapp.reporting import (
     create_report_from_deprecation,
     create_report_from_error,
     _create_report_object,
-    Audience, Key, Title, Summary, Severity, RelatedResource
+    Audience, Flags, Groups, Key, RelatedResource, Summary, Severity, Tags, Title
 )
 from leapp.utils.report import generate_report_file
 
@@ -85,6 +85,21 @@ def test_add_to_dict_func_append():
     assert is_path_valid(data, path)
     assert_leaf_list(data, path, is_leaf_list)
     assert len(value_from_path(data, path)) == 2
+
+
+def test_report_groups():
+    assert Groups.INHIBITOR == "inhibitor"
+    assert Groups.REPOSITORY == "repository"
+    # make sure you can use a custom group in pressing need
+    assert Groups(["This is a new group", Groups.INHIBITOR]).value == ["This is a new group", "inhibitor"]
+
+
+def test_report_tags_and_flags():
+    # For compatibility purposes make sure that those primitives are still available to be used by actor writers
+    assert Flags.INHIBITOR == "inhibitor"
+    assert Tags.REPOSITORY == "repository"
+    # make sure you can use a custom flag in pressing need
+    assert Flags(["This is a new flag", Groups.INHIBITOR]).value == ["This is a new flag", "inhibitor"]
 
 
 def test_convert_from_error_to_report():
