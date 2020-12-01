@@ -155,7 +155,9 @@ Requires: leapp-framework-dependencies = %{framework_dependencies}
 # we come up with reliable solution. E.g. avoid possibility to install both
 # version of frameworks - for Py2 and Py3 in the same time. Or rename the
 # capability; e.g.: leapp-framework-py3
-# Provides: leapp-framework = %{framework_version}
+# UPDATE: the current SPEC file build exclusively just for Py3 or Py2, so we
+# should not have these problems anymore.
+Provides: leapp-framework = %{framework_version}
 
 %description -n python3-%{name}
 Python 3 leapp framework libraries.
