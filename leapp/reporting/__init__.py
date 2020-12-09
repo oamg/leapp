@@ -133,7 +133,7 @@ class Key(BasePrimitive):
     name = 'key'
 
     def __init__(self, uuid):
-        self._value = uuid
+        self._value = str(uuid)
 
 
 class Tags(BasePrimitive):
@@ -299,15 +299,19 @@ def _check_stable_key(entries, raise_if_undefined=False):
         if entry:
             return entry._value
 
-    if _find_entry(Key):
-        # Key is already there, nothing to do
+    logger = configure_logger()
+    key = _find_entry(Key)
+    if key is not None:
+        # Key is already there, check that it's not an empty string
+        if not key.strip():
+            logger.error('An empty string is specified as Key')
+            raise ValueError('Key can not be an empty string.')
         return
 
     if raise_if_undefined:
         raise ValueError('Stable Key report entry with specified unique value not provided')
 
     # No Key found - let's generate one!
-    logger = configure_logger()
     key_str = u'{severity}:{audience}:{title}'.format(severity=_find_entry(Severity),
                                                       audience=_find_entry(Audience),
                                                       title=_find_entry(Title))
