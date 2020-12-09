@@ -185,7 +185,13 @@ def test_create_report_stable_key(monkeypatch):
     # check that providing a key for the dialog report is a solution
     assert report_dialog1.report["key"] != report_dialog_key_set.report["key"]
     assert report_dialog_key_set.report["key"] == "dialogkey42"
+    # check that empty string can't serve as report Key
+    with pytest.raises(ValueError) as err:
+        _create_report_object([Title('A title'), Summary('A summary'), Key('')])
+    assert str(err.value) == 'Key can not be an empty string.'
     # check that if LEAPP_DEVEL_FIXED_REPORT_KEY is set and there is no key in the report - a ValueError is raised
     monkeypatch.setenv('LEAPP_DEVEL_FIXED_REPORT_KEY', '1')
     with pytest.raises(ValueError):
         _create_report_object([Title('A title'), Summary('A summary')])
+    # check that integers as string parameters are converted to strings
+    assert Key(42)._value == Key("42")._value == "42"
