@@ -193,5 +193,8 @@ def test_create_report_stable_key(monkeypatch):
     monkeypatch.setenv('LEAPP_DEVEL_FIXED_REPORT_KEY', '1')
     with pytest.raises(ValueError):
         _create_report_object([Title('A title'), Summary('A summary')])
-    # check that integers as string parameters are converted to strings
-    assert Key(42)._value == Key("42")._value == "42"
+    # check that Key accepts string parameters only
+    for bad_uuid in [42, object(), 42.42]:
+        with pytest.raises(ValueError) as err:
+            Key(bad_uuid)
+        assert str(err.value) == 'Key value should be a string.'
