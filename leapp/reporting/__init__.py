@@ -133,7 +133,9 @@ class Key(BasePrimitive):
     name = 'key'
 
     def __init__(self, uuid):
-        self._value = str(uuid)
+        if not isinstance(uuid, str):
+            raise ValueError('Key value should be a string.')
+        self._value = uuid
 
 
 class Tags(BasePrimitive):
