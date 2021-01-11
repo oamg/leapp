@@ -2,6 +2,7 @@ import datetime
 import json
 import hashlib
 import os
+import six
 
 from leapp.compat import string_types
 from leapp.logger import configure_logger
@@ -134,7 +135,7 @@ class Key(BasePrimitive):
 
     def __init__(self, uuid):
         # uuid is allowed to be string or unicode only, checking in py2/py3 friendly mode
-        if not isinstance(uuid, unicode) and not isinstance(uuid, str):
+        if not isinstance(uuid, six.string_types):
             raise ValueError('Key value should be a string.')
 
         self._value = uuid
