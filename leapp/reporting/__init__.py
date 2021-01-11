@@ -133,8 +133,10 @@ class Key(BasePrimitive):
     name = 'key'
 
     def __init__(self, uuid):
-        if not isinstance(uuid, str):
+        # uuid is allowed to be string or unicode only, checking in py2/py3 friendly mode
+        if not isinstance(uuid, unicode) and not isinstance(uuid, str):
             raise ValueError('Key value should be a string.')
+
         self._value = uuid
 
 
