@@ -1,7 +1,9 @@
 -r requirements.txt
 -e .
 
+jsonschema==3.2.0
 mock
+pyrsistent==0.16.1
 pytest==3.6.4
 pytest-flake8
 pytest-cov==2.9.0
