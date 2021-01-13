@@ -1,0 +1,590 @@
+{
+  "leapp_run_id": "f3c5841f-9d0f-42c4-9446-c69f5905b8d2", 
+  "entries": [
+    {
+      "hostname": "ivasilev-masterleappprerelease", 
+      "severity": "high", 
+      "tags": [
+        "python"
+      ], 
+      "timeStamp": "2021-02-03T10:41:28.815987Z", 
+      "title": "Difference in Python versions and support in RHEL 8", 
+      "detail": {
+        "related_resources": [
+          {
+            "scheme": "package", 
+            "title": "python"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "python2"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "python3"
+          }
+        ], 
+        "external": [
+          {
+            "url": "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html-single/configuring_basic_system_settings/#using-python3", 
+            "title": "Difference in Python versions and support in RHEL 8"
+          }
+        ], 
+        "remediations": [
+          {
+            "type": "hint", 
+            "context": "Please run \"alternatives --set python /usr/bin/python3\" after upgrade"
+          }
+        ]
+      }, 
+      "actor": "python_inform_user", 
+      "summary": "In RHEL 8, there is no 'python' command. Python 3 (backward incompatible) is the primary Python version and Python 2 is available with limited support and limited set of packages. Read more here: https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html-single/configuring_basic_system_settings/#using-python3", 
+      "audience": "developer", 
+      "key": "0c98585b1d8d252eb540bf61560094f3495351f5", 
+      "id": "b2bf3d63f24c1db20aec710db920a5378674118d15e20705b79ca4cdb5235a31"
+    }, 
+    {
+      "hostname": "ivasilev-masterleappprerelease", 
+      "severity": "high", 
+      "title": "Packages not signed by Red Hat found on the system", 
+      "timeStamp": "2021-02-03T10:41:31.406560Z", 
+      "tags": [
+        "sanity"
+      ], 
+      "actor": "red_hat_signed_rpm_check", 
+      "summary": "The following packages have not been signed by Red Hat and may be removed during the upgrade process in case Red Hat-signed packages to be removed during the upgrade depend on them:\n- cockpit-leapp\n- leapp\n- leapp-deps\n- leapp-repository\n- leapp-repository-deps\n- python2-leapp", 
+      "audience": "sysadmin", 
+      "key": "13f0791ae5f19f50e7d0d606fb6501f91b1efb2c", 
+      "id": "c53aace32759102a15eda7d2099624ac9fdc5261fda4853434ebad13c2bc7a1b"
+    }, 
+    {
+      "hostname": "ivasilev-masterleappprerelease", 
+      "severity": "info", 
+      "tags": [
+        "authentication", 
+        "security", 
+        "tools"
+      ], 
+      "timeStamp": "2021-02-03T10:41:31.867660Z", 
+      "title": "Current PAM and nsswitch.conf configuration will be kept.", 
+      "detail": {
+        "related_resources": [
+          {
+            "scheme": "package", 
+            "title": "authselect"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "authconfig"
+          }, 
+          {
+            "scheme": "file", 
+            "title": "/etc/nsswitch.conf"
+          }
+        ]
+      }, 
+      "actor": "authselect_check", 
+      "summary": "There is a new tool called authselect in RHEL8 that replaced authconfig. The upgrade process was unable to find an authselect profile that would be equivalent to your current configuration. Therefore your configuration will be left intact.", 
+      "audience": "sysadmin", 
+      "key": "40c4ab1da4a30dc1ca40e543f6385e1336d8810c", 
+      "id": "4730b112b4644cb5fe569f539f7c5fb9c3653fbebb8bc5669f64482a79dfdef4"
+    }, 
+    {
+      "hostname": "ivasilev-masterleappprerelease", 
+      "severity": "low", 
+      "tags": [
+        "services", 
+        "email"
+      ], 
+      "timeStamp": "2021-02-03T10:41:32.446634Z", 
+      "title": "Postfix has incompatible changes in the next major version", 
+      "detail": {
+        "related_resources": [
+          {
+            "scheme": "package", 
+            "title": "postfix"
+          }
+        ]
+      }, 
+      "actor": "check_postfix", 
+      "summary": "Postfix 3.x has so called \"compatibility safety net\" that runs Postfix programs with backwards-compatible default settings. It will log a warning whenever backwards-compatible default setting may be required for continuity of service. Based on this logging the system administrator can decide if any backwards-compatible settings need to be made permanent in main.cf or master.cf, before turning off the backwards-compatibility safety net.\nThe backward compatibility safety net is by default turned off in Red Hat Enterprise Linux 8.\nIt can be turned on by running:  \"postconf -e compatibility_level=0\nIt can be turned off by running: \"postconf -e compatibility_level=2\n\nIn the Postfix MySQL database client, the default \"option_group\" value has changed to \"client\", i.e. it now reads options from the [client] group from the MySQL configuration file. To disable it, set \"option_group\" to the empty string.\n\nThe postqueue command no longer forces all message arrival times to be reported in UTC. To get the old behavior, set TZ=UTC in main.cf:import_environment.\n\nPostfix 3.2 enables elliptic curve negotiation. This changes the default smtpd_tls_eecdh_grade setting to \"auto\", and introduces a new parameter \"tls_eecdh_auto_curves\" with the names of curves that may be negotiated.\n\nThe \"master.cf\" chroot default value has changed from \"y\" (yes) to \"n\" (no). This applies to master.cf services where chroot field is not explicitly specified.\n\nThe \"append_dot_mydomain\" default value has changed from \"yes\" to \"no\". You may need changing it to \"yes\" if senders cannot use complete domain names in e-mail addresses.\n\nThe \"relay_domains\" default value has changed from \"$mydestination\" to the empty value. This could result in unexpected \"Relay access denied\" errors or ETRN errors, because now will postfix by default relay only for the localhost.\n\nThe \"mynetworks_style\" default value has changed from \"subnet\" to \"host\". This parameter is used to implement the \"permit_mynetworks\" feature. The change could result in unexpected \"access denied\" errors, because postfix will now by default trust only the local machine, not the remote SMTP clients on the same IP subnetwork.\n\nPostfix now supports dynamically loaded database plugins. Plugins are shipped in individual RPM sub-packages. Correct database plugins have to be installed, otherwise the specific database client will not work. For example for PostgreSQL map to work, the postfix-pgsql RPM package has to be installed.\n", 
+      "audience": "sysadmin", 
+      "key": "5721e0a07a67d82cf7e5ea6f17662cd4f82e0a33", 
+      "id": "1c5cfd0b438a6b5a51f21b19dcc467020fdd007c88b53650abe825ef3eb23edf"
+    }, 
+    {
+      "hostname": "ivasilev-masterleappprerelease", 
+      "severity": "info", 
+      "title": "SElinux relabeling has been scheduled", 
+      "timeStamp": "2021-02-03T10:41:33.414806Z", 
+      "tags": [
+        "selinux", 
+        "security"
+      ], 
+      "actor": "check_se_linux", 
+      "summary": "SElinux relabeling has been scheduled as the status was permissive/enforcing.", 
+      "audience": "sysadmin", 
+      "key": "c12a05a22be0b5bc0af3f1119898ea6d8639d9c4", 
+      "id": "da79239740a8ea898f05dd56d5272e12e4eb3b25f44a00553c08a7085629456e"
+    }, 
+    {
+      "hostname": "ivasilev-masterleappprerelease", 
+      "severity": "low", 
+      "title": "SElinux will be set to permissive mode", 
+      "timeStamp": "2021-02-03T10:41:33.455495Z", 
+      "tags": [
+        "selinux", 
+        "security"
+      ], 
+      "actor": "check_se_linux", 
+      "summary": "SElinux will be set to permissive mode. Current mode: enforcing. This action is required by the upgrade process", 
+      "audience": "sysadmin", 
+      "key": "39d7183dafba798aa4bbb1e70b0ef2bbe5b1772f", 
+      "id": "585370523ef2c526eabad6657714cbd0cd7f847e86c92a9f287c8b0370f595e6"
+    }, 
+    {
+      "hostname": "ivasilev-masterleappprerelease", 
+      "severity": "high", 
+      "tags": [
+        "authentication", 
+        "security", 
+        "network", 
+        "services"
+      ], 
+      "timeStamp": "2021-02-03T10:41:34.652935Z", 
+      "title": "Possible problems with remote login using root account", 
+      "detail": {
+        "related_resources": [
+          {
+            "scheme": "package", 
+            "title": "openssh-server"
+          }, 
+          {
+            "scheme": "file", 
+            "title": "/etc/ssh/sshd_config"
+          }
+        ], 
+        "remediations": [
+          {
+            "type": "hint", 
+            "context": "If you depend on remote root logins using passwords, consider setting up a different user for remote administration or adding \"PermitRootLogin yes\" to sshd_config."
+          }
+        ]
+      }, 
+      "actor": "openssh_permit_root_login", 
+      "summary": "OpenSSH configuration file does not explicitly state the option PermitRootLogin in sshd_config file, which will default in RHEL8 to \"prohibit-password\".", 
+      "audience": "sysadmin", 
+      "flags": [
+        "inhibitor"
+      ], 
+      "key": "3d21e8cc9e1c09dc60429de7716165787e99515f", 
+      "id": "d167087cb6ae606377a1b61b050cabeb29a11d83d4e0f302ae6c385a88353cf8"
+    }, 
+    {
+      "hostname": "ivasilev-masterleappprerelease", 
+      "severity": "medium", 
+      "tags": [
+        "services", 
+        "time management"
+      ], 
+      "timeStamp": "2021-02-03T10:41:35.571250Z", 
+      "title": "chrony using default configuration", 
+      "detail": {
+        "related_resources": [
+          {
+            "scheme": "package", 
+            "title": "ntpd"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "chrony"
+          }, 
+          {
+            "scheme": "file", 
+            "title": "/etc/chrony.conf"
+          }
+        ]
+      }, 
+      "actor": "check_chrony", 
+      "summary": "default chrony configuration in RHEL8 uses leapsectz directive, which cannot be used with leap smearing NTP servers, and uses a single pool directive instead of four server directives", 
+      "audience": "sysadmin", 
+      "key": "c4222ebd18730a76f6bc7b3b66df898b106e6554", 
+      "id": "e28db93cdcecda460d3d0d0b468b76369a15ee41cd1e50cd865eb0a13eed2cb7"
+    }, 
+    {
+      "hostname": "ivasilev-masterleappprerelease", 
+      "severity": "low", 
+      "tags": [
+        "repository"
+      ], 
+      "timeStamp": "2021-02-03T10:41:36.748925Z", 
+      "title": "Some enabled RPM repositories are unknown to Leapp", 
+      "detail": {
+        "related_resources": [
+          {
+            "scheme": "package", 
+            "title": "perl-HTTP-Tiny"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "vim-common"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Time-HiRes"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "python2-libcomps"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "libcomps"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-libs"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "vim-filesystem"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "dnf-data"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Time-Local"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-parent"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "cockpit-bridge"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Pod-Simple"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "json-glib"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Filter"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "gsettings-desktop-schemas"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-threads-shared"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "libmodulemd"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "python-enum34"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "python2-libdnf"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "dnf"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "libsolv"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-macros"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Encode"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Error"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "libproxy"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Pod-Perldoc"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Carp"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "librhsm"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "trousers"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-File-Path"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-constant"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Storable"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "python2-dnf"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "glib-networking"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "nmap-ncat"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-podlators"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Exporter"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Socket"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "libdnf"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Getopt-Long"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "libreport-filesystem"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "cockpit"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Pod-Escapes"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "git"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "cockpit-ws"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "bash-completion"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "wget"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "librepo"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-File-Temp"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Pod-Usage"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "vim-enhanced"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-PathTools"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Text-ParseWords"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "gpm-libs"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "python2-hawkey"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Git"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "cockpit-system"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "patch"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-TermReadKey"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "nettle"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-threads"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "libmodman"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "gnutls"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "pciutils"
+          }, 
+          {
+            "scheme": "package", 
+            "title": "perl-Scalar-List-Utils"
+          }, 
+          {
+            "scheme": "repository", 
+            "title": "rhel7-extras_rpms"
+          }, 
+          {
+            "scheme": "repository", 
+            "title": "rhel7server_rpms"
+          }
+        ], 
+        "remediations": [
+          {
+            "type": "hint", 
+            "context": "You can file a request to add this repository to the scope of in-place upgrades by filing a support ticket"
+          }
+        ]
+      }, 
+      "actor": "check_skipped_repositories", 
+      "summary": "The following repositories with Red Hat-signed packages are unknown to Leapp:\n- rhel7-extras_rpms\n- rhel7server_rpms\nAnd the following packages installed from those repositories may not be upgraded:\n- perl-HTTP-Tiny\n- vim-common\n- perl-Time-HiRes\n- python2-libcomps\n- libcomps\n- perl-libs\n- vim-filesystem\n- dnf-data\n- perl-Time-Local\n- perl-parent\n- cockpit-bridge\n- perl-Pod-Simple\n- json-glib\n- perl-Filter\n- gsettings-desktop-schemas\n- perl\n- perl-threads-shared\n- libmodulemd\n- python-enum34\n- python2-libdnf\n- dnf\n- libsolv\n- perl-macros\n- perl-Encode\n- perl-Error\n- libproxy\n- perl-Pod-Perldoc\n- perl-Carp\n- librhsm\n- trousers\n- perl-File-Path\n- perl-constant\n- perl-Storable\n- python2-dnf\n- glib-networking\n- nmap-ncat\n- perl-podlators\n- perl-Exporter\n- perl-Socket\n- libdnf\n- perl-Getopt-Long\n- libreport-filesystem\n- cockpit\n- perl-Pod-Escapes\n- git\n- cockpit-ws\n- bash-completion\n- wget\n- librepo\n- perl-File-Temp\n- perl-Pod-Usage\n- vim-enhanced\n- perl-PathTools\n- perl-Text-ParseWords\n- gpm-libs\n- python2-hawkey\n- perl-Git\n- cockpit-system\n- patch\n- perl-TermReadKey\n- nettle\n- perl-threads\n- libmodman\n- gnutls\n- pciutils\n- perl-Scalar-List-Utils", 
+      "audience": "sysadmin", 
+      "key": "8e89e20c645cea600b240156071d81c64daab7ad", 
+      "id": "207a1511c259d167e452fd56c365c1f41a0d8024d80cbe45f2dd1b7afa245ef6"
+    }, 
+    {
+      "hostname": "ivasilev-masterleappprerelease", 
+      "severity": "low", 
+      "tags": [
+        "tools"
+      ], 
+      "timeStamp": "2021-02-03T10:41:37.796435Z", 
+      "title": "Grep has incompatible changes in the next major version", 
+      "detail": {
+        "related_resources": [
+          {
+            "scheme": "package", 
+            "title": "grep"
+          }
+        ], 
+        "remediations": [
+          {
+            "type": "hint", 
+            "context": "Please update your scripts to be compatible with the changes."
+          }
+        ]
+      }, 
+      "actor": "checkgrep", 
+      "summary": "If a file contains data improperly encoded for the current locale, and this is discovered before any of the file's contents are output, grep now treats the file as binary.\nThe 'grep -P' no longer reports an error and exits when given invalid UTF-8 data. Instead, it considers the data to be non-matching.\nIn locales with multibyte character encodings other than UTF-8, grep -P now reports an error and exits instead of misbehaving.\nWhen searching binary data, grep now may treat non-text bytes as line terminators. This can boost performance significantly.\nThe 'grep -z' no longer automatically treats the byte '\\200' as binary data.\nContext no longer excludes selected lines omitted because of -m. For example, 'grep \"^\" -m1 -A1' now outputs the first two input lines, not just the first line.\n", 
+      "audience": "sysadmin", 
+      "key": "94665a499e2eeee35eca3e7093a7abe183384b16", 
+      "id": "2c848d316714106b899d298f07523c1d3988699bf32684288b4b7ad9c034cbab"
+    }, 
+    {
+      "hostname": "ivasilev-masterleappprerelease", 
+      "severity": "high", 
+      "title": "GRUB core will be updated during upgrade", 
+      "timeStamp": "2021-02-03T10:41:38.043734Z", 
+      "tags": [
+        "boot"
+      ], 
+      "actor": "check_grub_core", 
+      "summary": "On legacy (BIOS) systems, GRUB core (located in the gap between the MBR and the first partition) does not get automatically updated when GRUB is upgraded.", 
+      "audience": "sysadmin", 
+      "key": "baa75fad370c42fd037481909201cde9495dacf4", 
+      "id": "d56dc1491457c1af7559c8146900e1588cda6105ef9850b2da97230896e08598"
+    }, 
+    {
+      "severity": "high", 
+      "title": "Missing required answers in the answer file", 
+      "timeStamp": "2021-02-03T10:41:38.629899Z", 
+      "hostname": "ivasilev-masterleappprerelease", 
+      "detail": {
+        "related_resources": [
+          {
+            "scheme": "dialog", 
+            "title": "remove_pam_pkcs11_module_check.confirm"
+          }
+        ], 
+        "remediations": [
+          {
+            "type": "hint", 
+            "context": "Please register user choices with leapp answer cli command or by manually editing the answerfile."
+          }, 
+          {
+            "type": "command", 
+            "context": [
+              "leapp", 
+              "answer", 
+              "--section", 
+              "remove_pam_pkcs11_module_check.confirm=True"
+            ]
+          }
+        ]
+      }, 
+      "actor": "verify_check_results", 
+      "summary": "One or more sections in answerfile are missing user choices: remove_pam_pkcs11_module_check.confirm\nFor more information consult https://leapp.readthedocs.io/en/latest/dialogs.html", 
+      "audience": "sysadmin", 
+      "flags": [
+        "inhibitor"
+      ], 
+      "key": "d35f6c6b1b1fa6924ef442e3670d90fa92f0d54b", 
+      "id": "e6f361340317b64fbdfad76ad63ff38f81a43a58ea2ca514ef8e5cc505e33dea"
+    }
+  ]
+}

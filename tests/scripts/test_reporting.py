@@ -1,6 +1,9 @@
 from collections import namedtuple
 import datetime
+import json
+import os
 
+import jsonschema
 import pytest
 
 from leapp.reporting import (
@@ -198,3 +201,22 @@ def test_create_report_stable_key(monkeypatch):
         with pytest.raises(ValueError) as err:
             Key(bad_uuid)
         assert str(err.value) == 'Key value should be a string.'
+
+
+def test_report_jsonschema():
+    reports_dir = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        'data',
+        'report-schema',
+    )
+
+    def _load_json(a_file):
+        with open(a_file) as f:
+            return json.loads(f.read())
+
+    for report in [r for r in os.listdir(reports_dir) if os.path.isfile(r)]:
+        report_data = _load_json(os.path.join(reports_dir, report))
+        for schema in ['report-schema-v100.json', 'report-schema-v110.json']:
+            # schemas directory contain a symlink to report json-schemas
+            schema_data = _load_json(os.path.join(reports_dir, 'schemas', schema))
+            jsonschema.validate(report_data, schema_data)

@@ -191,6 +191,9 @@ install -m 0755 -d %{buildroot}%{_mandir}/man1
 install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
 
 %if !0%{?fedora}
+install -m 0755 -d %{buildroot}%{_datadir}/leapp
+install -m 0755 -d %{buildroot}%{_datadir}/leapp/report_schema
+install -m 0644 -p report-schema-v110.json %{buildroot}%{_datadir}/leapp/report_schema/report-schema.json
 install -m 0755 -d %{buildroot}%{_sharedstatedir}/leapp
 install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp
 install -m 0755 -d %{buildroot}%{_sysconfdir}/leapp/repos.d
@@ -234,6 +237,9 @@ rm -f %{buildroot}/%{_bindir}/leapp
 %{_bindir}/leapp
 %dir %{_sharedstatedir}/leapp
 %dir %{_localstatedir}/log/leapp
+%dir %{_datadir}/leapp/
+%dir %{_datadir}/leapp/report_schema/
+%{_datadir}/leapp/report_schema
 %{python2_sitelib}/leapp/cli
 %endif
 
