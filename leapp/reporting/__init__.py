@@ -1,11 +1,11 @@
 import datetime
 import json
 import hashlib
+import logging
 import os
 import six
 
 from leapp.compat import string_types
-from leapp.logger import configure_logger
 from leapp.models import fields, Model, ErrorModel
 from leapp.topics import ReportTopic
 from leapp.libraries.stdlib.api import produce
@@ -304,7 +304,7 @@ def _check_stable_key(entries, raise_if_undefined=False):
         if entry:
             return entry._value
 
-    logger = configure_logger()
+    logger = logging.getLogger('leapp.reporting')
     key = _find_entry(Key)
     if key is not None:
         # Key is already there, check that it's not an empty string
