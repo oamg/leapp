@@ -2,6 +2,7 @@ from collections import namedtuple
 import datetime
 import json
 import os
+import tempfile
 
 import jsonschema
 import pytest
@@ -14,6 +15,7 @@ from leapp.reporting import (
     _create_report_object,
     Audience, Key, Title, Summary, Severity, RelatedResource
 )
+from leapp.utils.report import generate_report_file
 
 
 ReportPrimitive = namedtuple('ReportPrimitive', ['data', 'path', 'value', 'is_leaf_list'])
@@ -220,3 +222,33 @@ def test_report_jsonschema():
             # schemas directory contain a symlink to report json-schemas
             schema_data = _load_json(os.path.join(reports_dir, 'schemas', schema))
             jsonschema.validate(report_data, schema_data)
+
+
+def test_report_backwards_compatibility():
+    msg1 = {u'groups': [u'selinux', u'security'],
+            u'title': u'SElinux relabeling has been scheduled',
+            'timeStamp': u'2021-02-10T13:13:40.576437Z',
+            'hostname': u'ivasilev-tagsflagsgroups',
+            'actor': u'check_se_linux',
+            u'summary': u'SElinux relabeling has been scheduled as the status was permissive/enforcing.',
+            u'audience': u'sysadmin',
+            u'key': u'c12a05a22be0b5bc0af3f1119898ea6d8639d9c4',
+            'id': '29279fc2e3100cfdf8ac30f48b293185192672d5a5ae9e0cfbc76cbfc919d807',
+            u'severity': u'info'}
+    report = [msg1]
+    # make sure normal mode works
+    for report_format in ['.json', '.txt']:
+        reportfile = tempfile.NamedTemporaryFile(suffix=report_format)
+        generate_report_file(report, 'leapp-run-id', reportfile.name, '1.1.0')
+    # make sure report output conversion to specific version works as well
+    for report_format in ['.json', '.txt']:
+        reportfile = tempfile.NamedTemporaryFile(suffix=report_format)
+        generate_report_file(report, 'leapp-run-id', reportfile.name, '1.0.0')
+        with open(reportfile.name) as f:
+            data = f.read()
+        if report_format == '.json':
+            a_report = json.loads(data)
+            msg = a_report['entries'][0]
+            assert 'key' not in msg
+        else:
+            assert 'Key' not in data

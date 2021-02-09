@@ -48,7 +48,8 @@ _CONFIG_DEFAULTS = {
         'dir': '/var/log/leapp/',
         'files': ','.join(_REPORTS),
         'answerfile': '/var/log/leapp/answerfile',
-        'userchoices': '/var/log/leapp/answerfile.userchoices'
+        'userchoices': '/var/log/leapp/answerfile.userchoices',
+        'schema': '1.1.0'
     },
     'repositories': {
         'repo_path': '.',

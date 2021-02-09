@@ -89,7 +89,9 @@ def importance(message):
     return SEVERITY_LEVELS.get(message['severity'], 99)
 
 
-def generate_report_file(messages_to_report, context, path):
+def generate_report_file(messages_to_report, context, path, report_schema='1.1.0'):
+    # NOTE(ivasilev) Int conversion should not break as only specific formats of report_schema versions are allowed
+    report_schema_tuple = tuple([int(x) for x in report_schema.split('.')])
     if path.endswith(".txt"):
         with open(path, 'w') as f:
             for message in sorted(messages_to_report, key=importance):
@@ -100,8 +102,17 @@ def generate_report_file(messages_to_report, context, path):
                 remediation = Remediation.from_dict(message.get('detail', {}))
                 if remediation:
                     f.write('Remediation: {}\n'.format(remediation))
-                f.write('Key: {}\n'.format(message['key']))
+                if report_schema_tuple > (1, 0, 0):
+                    # report-schema 1.0.0 doesn't have a stable report key
+                    f.write('Key: {}\n'.format(message['key']))
                 f.write('-' * 40 + '\n')
     elif path.endswith(".json"):
         with open(path, 'w') as f:
+            # Here all possible convertions will take place
+            if report_schema_tuple < (1, 1, 0):
+                # report-schema 1.0.0 doesn't have a stable report key
+                # copy list of messages here not to mess the initial structure for possible further invocations
+                messages_to_report = list(messages_to_report)
+                for m in messages_to_report:
+                    m.pop('key')
             json.dump({'entries': messages_to_report, 'leapp_run_id': context}, f, indent=2)
