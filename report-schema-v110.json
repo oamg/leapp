@@ -5,7 +5,7 @@
     "title": "The (pre)upgrade report schema",
     "description": "The root schema comprises the entire JSON document.",
     "default": {},
-    "version": "1.0.0",
+    "version": "1.1.0",
     "examples": [
         {
             "leapp_run_id": "a91dccab-84e8-4a28-b28e-102b073200a9",
