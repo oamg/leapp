@@ -8,3 +8,4 @@ This is the official upstream documentation for the leapp repository for in-plac
     actor-rhel7-to-rhel8
     inhibit-rhel7-to-rhel8
     envars
+    deprecation

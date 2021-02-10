@@ -6,6 +6,15 @@ is evolving, it happens that some functionality needs to be changed, replaced
 or dropped completely. Such situations are inevitable. To reduce negative
 impact on your code, we introduce the deprecation process described below.
 
+## List of the deprecated functionality in leapp
+
+The following lists cover deprecated functionality in the leapp utility, snactor,
+the leapp standard library, etc. But don't cover deprecated functionalities
+from particular leapp repositories (e.g. the [elt7toel8](https://github.com/oamg/leapp-repository/tree/master/repos/system_upgrade/el7toel8) leapp repository). For
+such information, see [Deprecated functionality in the el7toel8 repository](el7toel8/deprecation.html#deprecated-functionality-in-the-el7toel8-repository).
+
+*Note: No new deprecation present yet.*
+
 ## What is covered by deprecation process in leapp?
 
 In short, leapp entities that are supposed to be used by other developers.
