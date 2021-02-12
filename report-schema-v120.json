@@ -1,0 +1,626 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "http://example.com/example.json",
+    "type": "object",
+    "title": "The (pre)upgrade report schema",
+    "description": "The root schema comprises the entire JSON document.",
+    "default": {},
+    "version": "1.2.0",
+    "examples": [
+        {
+            "leapp_run_id": "a91dccab-84e8-4a28-b28e-102b073200a9",
+            "entries": [
+                {
+                    "hostname": "vagrant-leapp-20210113121507",
+                    "severity": "info",
+                    "timeStamp": "2021-01-13T13:04:06.895402Z",
+                    "title": "Excluded RHEL 8 repositories",
+                    "detail": {
+                        "external": [
+                            {
+                                "url": "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/package_manifest/codereadylinuxbuilder-repository.",
+                                "title": "CodeReady Linux Builder repository"
+                            }
+                        ]
+                    },
+                    "actor": "repositories_blacklist",
+                    "summary": "The following repositories are not supported by Red Hat and are excluded from the list of repositories used during the upgrade.\n- codeready-builder-for-rhel-8-x86_64-rpms",
+                    "audience": "sysadmin",
+                    "groups": [
+                        "failure", "repository"
+                    ],
+                    "key": "a12013a95a6d305adc9f4f675186f89760af1a7e",
+                    "id": "88e518df66f34e0097ef7b4a4121f50eb5bcf9e8b2c017d1d07dca5e22db65e5"
+                },
+                {
+                    "hostname": "vagrant-leapp-20210113121507",
+                    "severity": "high",
+                    "title": "Packages not signed by Red Hat found on the system",
+                    "timeStamp": "2021-01-13T13:04:20.582335Z",
+                    "actor": "red_hat_signed_rpm_check",
+                    "summary": "The following packages have not been signed by Red Hat and may be removed during the upgrade process in case Red Hat-signed packages to be removed during the upgrade depend on them:\n- cockpit-leapp\n- leapp\n- leapp-deps\n- leapp-repository\n- leapp-repository-deps\n- python2-leapp\n- snactor",
+                    "audience": "sysadmin",
+                    "groups": [
+                        "sanity"
+                    ],
+                    "key": "13f0791ae5f19f50e7d0d606fb6501f91b1efb2c",
+                    "id": "181fd075531341d88f5bdd9c17a379faa483fe188f2d0bfc125c66de3fd9c03f"
+                },
+                {
+                    "hostname": "vagrant-leapp-20210113121507",
+                    "severity": "low",
+                    "title": "Grep has incompatible changes in the next major version",
+                    "timeStamp": "2021-01-13T13:04:21.087993Z",
+                    "detail": {
+                        "related_resources": [
+                            {
+                                "scheme": "package",
+                                "title": "grep"
+                            }
+                        ],
+                        "remediations": [
+                            {
+                                "type": "hint",
+                                "context": "Please update your scripts to be compatible with the changes."
+                            }
+                        ],
+                        "external": [
+                            {
+                                "url": "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/package_manifest/codereadylinuxbuilder-repository.",
+                                "title": "CodeReady Linux Builder repository"
+                            }
+                        ]
+                    },
+                    "actor": "checkgrep",
+                    "summary": "If a file contains data improperly encoded for the current locale, and this is discovered before any of the file's contents are output, grep now treats the file as binary.\nThe 'grep -P' no longer reports an error and exits when given invalid UTF-8 data. Instead, it considers the data to be non-matching.\nIn locales with multibyte character encodings other than UTF-8, grep -P now reports an error and exits instead of misbehaving.\nWhen searching binary data, grep now may treat non-text bytes as line terminators. This can boost performance significantly.\nThe 'grep -z' no longer automatically treats the byte '\\200' as binary data.\nContext no longer excludes selected lines omitted because of -m. For example, 'grep \"^\" -m1 -A1' now outputs the first two input lines, not just the first line.\n",
+                    "audience": "sysadmin",
+                    "groups": [
+                        "tools"
+                    ],
+                    "key": "94665a499e2eeee35eca3e7093a7abe183384b16",
+                    "id": "d8f145577982de8387eb7a6427320065182e32f68cd09a5c768c5f3359a6734e"
+                }
+            ]
+        }
+    ],
+    "required": [
+        "leapp_run_id",
+        "entries"
+    ],
+    "properties": {
+        "leapp_run_id": {
+            "$id": "#/properties/leapp_run_id",
+            "type": "string",
+            "title": "The leapp_run_id schema",
+            "description": "Unique id of a leapp execution.",
+            "default": "",
+            "examples": [
+                "a91dccab-84e8-4a28-b28e-102b073200a9"
+            ]
+        },
+        "entries": {
+            "$id": "#/properties/entries",
+            "type": "array",
+            "title": "The report entries schema",
+            "description": "A list of all report entries that comprise a report",
+            "default": [],
+            "examples": [
+                [
+                    {
+                        "hostname": "vagrant-leapp-20210113121507",
+                        "severity": "info",
+                        "timeStamp": "2021-01-13T13:04:06.895402Z",
+                        "title": "Excluded RHEL 8 repositories",
+                        "detail": {
+                            "external": [
+                                {
+                                    "url": "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/package_manifest/codereadylinuxbuilder-repository.",
+                                    "title": "CodeReady Linux Builder repository"
+                                }
+                            ]
+                        },
+                        "actor": "repositories_blacklist",
+                        "summary": "The following repositories are not supported by Red Hat and are excluded from the list of repositories used during the upgrade.\n- codeready-builder-for-rhel-8-x86_64-rpms",
+                        "audience": "sysadmin",
+                        "groups": [
+                            "failure", "repository"
+                        ],
+                        "key": "a12013a95a6d305adc9f4f675186f89760af1a7e",
+                        "id": "88e518df66f34e0097ef7b4a4121f50eb5bcf9e8b2c017d1d07dca5e22db65e5"
+                    },
+                    {
+                        "hostname": "vagrant-leapp-20210113121507",
+                        "severity": "high",
+                        "title": "Packages not signed by Red Hat found on the system",
+                        "timeStamp": "2021-01-13T13:04:20.582335Z",
+                        "actor": "red_hat_signed_rpm_check",
+                        "summary": "The following packages have not been signed by Red Hat and may be removed during the upgrade process in case Red Hat-signed packages to be removed during the upgrade depend on them:\n- cockpit-leapp\n- leapp\n- leapp-deps\n- leapp-repository\n- leapp-repository-deps\n- python2-leapp\n- snactor",
+                        "audience": "sysadmin",
+                        "groups": [
+                            "sanity"
+                        ],
+                        "key": "13f0791ae5f19f50e7d0d606fb6501f91b1efb2c",
+                        "id": "181fd075531341d88f5bdd9c17a379faa483fe188f2d0bfc125c66de3fd9c03f"
+                    }
+                ]
+            ],
+            "additionalItems": true,
+            "items": {
+                "$id": "#/properties/entries/items",
+                "anyOf": [
+                    {
+                        "$id": "#/properties/entries/items/anyOf/0",
+                        "type": "object",
+                        "title": "The first anyOf schema",
+                        "description": "A report entry.",
+                        "default": {},
+                        "examples": [
+                            {
+                                "hostname": "vagrant-leapp-20210113121507",
+                                "severity": "info",
+                                "timeStamp": "2021-01-13T13:04:06.895402Z",
+                                "title": "Excluded RHEL 8 repositories",
+                                "detail": {
+                                    "external": [
+                                        {
+                                            "url": "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/package_manifest/codereadylinuxbuilder-repository.",
+                                            "title": "CodeReady Linux Builder repository"
+                                        }
+                                    ]
+                                },
+                                "actor": "repositories_blacklist",
+                                "summary": "The following repositories are not supported by Red Hat and are excluded from the list of repositories used during the upgrade.\n- codeready-builder-for-rhel-8-x86_64-rpms",
+                                "audience": "sysadmin",
+                                "groups": [
+                                    "failure", "repository"
+                                ],
+                                "key": "a12013a95a6d305adc9f4f675186f89760af1a7e",
+                                "id": "88e518df66f34e0097ef7b4a4121f50eb5bcf9e8b2c017d1d07dca5e22db65e5"
+                            }
+                        ],
+                        "required": [
+                            "hostname",
+                            "severity",
+                            "timeStamp",
+                            "title",
+                            "actor",
+                            "summary",
+                            "audience",
+                            "id"
+                        ],
+                        "properties": {
+                            "hostname": {
+                                "$id": "#/properties/entries/items/anyOf/0/properties/hostname",
+                                "type": "string",
+                                "title": "The hostname schema",
+                                "description": "A hostname specified in a report entry.",
+                                "default": "",
+                                "examples": [
+                                    "vagrant-leapp-20210113121507"
+                                ]
+                            },
+                            "severity": {
+                                "$id": "#/properties/entries/items/anyOf/0/properties/severity",
+                                "type": "string",
+                                "title": "The severity schema",
+                                "description": "Report severity.",
+                                "default": "info",
+                                "enum": ["info", "low", "medium", "high"],
+                                "examples": [
+                                    "info"
+                                ]
+                            },
+                            "timeStamp": {
+                                "$id": "#/properties/entries/items/anyOf/0/properties/timeStamp",
+                                "type": "string",
+                                "title": "The timeStamp schema",
+                                "description": "Report entry timestamp.",
+                                "default": "",
+                                "examples": [
+                                    "2021-01-13T13:04:06.895402Z"
+                                ]
+                            },
+                            "title": {
+                                "$id": "#/properties/entries/items/anyOf/0/properties/title",
+                                "type": "string",
+                                "title": "The title schema",
+                                "description": "Report title.",
+                                "default": "",
+                                "examples": [
+                                    "Excluded RHEL 8 repositories"
+                                ]
+                            },
+                            "detail": {
+                                "$id": "#/properties/entries/items/anyOf/0/properties/detail",
+                                "type": "object",
+                                "title": "The detail schema",
+                                "description": "Additional information connected to the report (remediations, external links, related resources).",
+                                "default": {},
+                                "examples": [
+                                    {
+                                        "external": [
+                                            {
+                                                "url": "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/package_manifest/codereadylinuxbuilder-repository.",
+                                                "title": "CodeReady Linux Builder repository"
+                                            }
+                                        ]
+                                    }
+                                ],
+                                "anyOf": [
+                                    { "required": [ "external" ] },
+                                    { "required": [ "remediations" ] },
+                                    { "required": [ "related_resources" ] }
+                                ],
+                                "properties": {
+                                    "external": {
+                                        "$id": "#/properties/entries/items/anyOf/0/properties/detail/properties/external",
+                                        "type": "array",
+                                        "title": "The external links schema",
+                                        "description": "List of external links mentioned in the report entry.",
+                                        "default": [],
+                                        "examples": [
+                                            [
+                                                {
+                                                    "url": "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/package_manifest/codereadylinuxbuilder-repository.",
+                                                    "title": "CodeReady Linux Builder repository"
+                                                }
+                                            ]
+                                        ],
+                                        "additionalItems": true,
+                                        "items": {
+                                            "$id": "#/properties/entries/items/anyOf/0/properties/detail/properties/external/items",
+                                            "anyOf": [
+                                                {
+                                                    "$id": "#/properties/entries/items/anyOf/0/properties/detail/properties/external/items/anyOf/0",
+                                                    "type": "object",
+                                                    "title": "The first external link",
+                                                    "description": "An external link.",
+                                                    "default": {},
+                                                    "examples": [
+                                                        {
+                                                            "url": "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/package_manifest/codereadylinuxbuilder-repository.",
+                                                            "title": "CodeReady Linux Builder repository"
+                                                        }
+                                                    ],
+                                                    "required": [
+                                                        "url",
+                                                        "title"
+                                                    ],
+                                                    "properties": {
+                                                        "url": {
+                                                            "$id": "#/properties/entries/items/anyOf/0/properties/detail/properties/external/items/anyOf/0/properties/url",
+                                                            "type": "string",
+                                                            "title": "The url schema",
+                                                            "description": "An external link url.",
+                                                            "default": "",
+                                                            "examples": [
+                                                                "https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/html/package_manifest/codereadylinuxbuilder-repository."
+                                                            ]
+                                                        },
+                                                        "title": {
+                                                            "$id": "#/properties/entries/items/anyOf/0/properties/detail/properties/external/items/anyOf/0/properties/title",
+                                                            "type": "string",
+                                                            "title": "The title schema",
+                                                            "description": "An external link title.",
+                                                            "default": "",
+                                                            "examples": [
+                                                                "CodeReady Linux Builder repository"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "additionalProperties": true
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "related_resources": {
+                                        "$id": "#/properties/detail/properties/related_resources",
+                                        "type": "array",
+                                        "title": "The related_resources schema",
+                                        "description": "A list of related resources.",
+                                        "default": [],
+                                        "examples": [
+                                            [
+                                                {
+                                                    "scheme": "package",
+                                                    "title": "grep"
+                                                }
+                                            ]
+                                        ],
+                                        "additionalItems": true,
+                                        "items": {
+                                            "$id": "#/properties/detail/properties/related_resources/items",
+                                            "anyOf": [
+                                                {
+                                                    "$id": "#/properties/detail/properties/related_resources/items/anyOf/0",
+                                                    "type": "object",
+                                                    "title": "The first related resource",
+                                                    "description": "A resource related to the report entry.",
+                                                    "default": {},
+                                                    "examples": [
+                                                        {
+                                                            "scheme": "package",
+                                                            "title": "grep"
+                                                        }
+                                                    ],
+                                                    "required": [
+                                                        "scheme",
+                                                        "title"
+                                                    ],
+                                                    "properties": {
+                                                        "scheme": {
+                                                            "$id": "#/properties/detail/properties/related_resources/items/anyOf/0/properties/scheme",
+                                                            "type": "string",
+                                                            "title": "The scheme schema",
+                                                            "description": "A scheme (type) of the related resource.",
+                                                            "default": "",
+                                                            "examples": [
+                                                                "package"
+                                                            ]
+                                                        },
+                                                        "title": {
+                                                            "$id": "#/properties/detail/properties/related_resources/items/anyOf/0/properties/title",
+                                                            "type": "string",
+                                                            "title": "The title schema",
+                                                            "description": "Title of the related resource.",
+                                                            "default": "",
+                                                            "examples": [
+                                                                "grep"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "additionalProperties": true
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "remediations": {
+                                        "$id": "#/properties/detail/properties/remediations",
+                                        "type": "array",
+                                        "title": "The remediations schema",
+                                        "description": "A list of remediations, describes what needs to be done to fix the problem.",
+                                        "default": [],
+                                        "examples": [
+                                            [
+                                                {
+                                                    "type": "hint",
+                                                    "context": "Please update your scripts to be compatible with the changes."
+                                                }
+                                            ],
+                                            [
+                                                {
+                                                  "type": "hint",
+                                                  "context": "This is remediation with hint and the command."
+                                                },
+                                                {
+                                                  "type": "command",
+                                                  "context": [ "echo", "some text" ]
+                                                }
+                                            ],
+                                            [
+                                              {
+                                                "type": "command",
+                                                "context": [ "echo", "some text", "2" ]
+                                              },
+                                              {
+                                                "type": "command",
+                                                "context": [ "echo", "2nd", "cmd" ]
+                                              }
+                                            ],
+                                            [
+                                              {
+                                                "type": "hint",
+                                                "context": "The remediation with hint, command, and playbook."
+                                              },
+                                              {
+                                                "type": "command",
+                                                "context": [ "echo", "some text" ]
+                                              },
+                                              {
+                                                "type": "playbook",
+                                                "context": "/path/to/playbook"
+                                              }
+                                            ],
+                                            [
+                                              {
+                                                "type": "playbook",
+                                                "context": "/path/to/playbook"
+                                              }
+                                            ]
+                                        ],
+                                        "additionalItems": true,
+                                        "items": {
+                                            "$id": "#/properties/detail/properties/remediations/items",
+                                            "anyOf": [
+                                                {
+                                                    "$id": "#/properties/detail/properties/remediations/items/anyOf/0",
+                                                    "type": "object",
+                                                    "title": "The first remediation",
+                                                    "description": "",
+                                                    "default": {},
+                                                    "examples": [
+                                                        {
+                                                            "type": "hint",
+                                                            "context": "Please update your scripts to be compatible with the changes."
+                                                        }
+                                                    ],
+                                                    "required": [
+                                                        "type",
+                                                        "context"
+                                                    ],
+                                                    "properties": {
+                                                            "type": {
+                                                                    "$id": "#/properties/detail/properties/remediations/items/anyOf/0/properties/type",
+                                                                    "type": "string",
+                                                                    "title": "The type schema",
+                                                                    "description": "Type of remediation.",
+                                                                    "default": "",
+                                                                    "enum": ["hint", "playbook"],
+                                                                    "examples": [
+                                                                        "hint"
+                                                                    ]
+                                                            },
+                                                            "context": {
+                                                                    "$id": "#/properties/detail/properties/remediations/items/anyOf/0/properties/context",
+                                                                    "type": "string",
+                                                                    "title": "The context schema",
+                                                                    "description": "The remediation itself.",
+                                                                    "default": "",
+                                                                    "examples": [
+                                                                        "Please update your scripts to be compatible with the changes."
+                                                                    ]
+                                                            }
+                                                    },
+                                                    "additionalProperties": true
+                                                },
+                                                {
+                                                    "$id": "#/properties/detail/properties/remediations/items/anyOf/1",
+                                                    "type": "object",
+                                                    "title": "The first remediation",
+                                                    "description": "",
+                                                    "default": {},
+                                                    "examples": [
+                                                        {
+                                                            "type": "command",
+                                                            "context": [ "rm -rf /tmp/42" ]
+                                                        }
+                                                    ],
+                                                    "required": [
+                                                        "type",
+                                                        "context"
+                                                    ],
+                                                    "properties": {
+                                                            "type": {
+                                                                    "$id": "#/properties/detail/properties/remediations/items/anyOf/1/properties/type",
+                                                                    "type": "string",
+                                                                    "title": "The type schema",
+                                                                    "description": "Type of remediation.",
+                                                                    "default": "",
+                                                                    "enum": ["command"],
+                                                                    "examples": ["command"]
+                                                            },
+                                                            "context": {
+                                                                    "$id": "#/properties/detail/properties/remediations/items/anyOf/1/properties/context",
+                                                                    "type": "array",
+                                                                    "title": "The context schema",
+                                                                    "description": "List of remediation commands.",
+                                                                    "default": [],
+                                                                    "examples": [
+                                                                        [
+                                                                            "rm -rf /tmp/42"
+                                                                        ]
+                                                                    ],
+                                                                    "additionalItems": true,
+                                                                    "items": {
+                                                                        "$id": "#/properties/detail/properties/remediations/items/anyOf/1/properties/context/items",
+                                                                        "anyOf": [
+                                                                            {
+                                                                                "$id": "#/properties/detail/properties/remediations/items/anyOf/1/properties/context/items/anyOf/0",
+                                                                                "type": "string",
+                                                                                "title": "The remediation command schema",
+                                                                                "description": "The remediation in form of a command.",
+                                                                                "default": "",
+                                                                                "examples": [
+                                                                                    "rm -rf /tmp/42"
+                                                                                ]
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                            }
+                                                    },
+                                                    "additionalProperties": true
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
+                                "additionalProperties": true
+                            },
+                            "actor": {
+                                "$id": "#/properties/entries/items/anyOf/0/properties/actor",
+                                "type": "string",
+                                "title": "The actor name schema",
+                                "description": "Name of the actor that reported a problem.",
+                                "default": "",
+                                "examples": [
+                                    "repositories_blacklist"
+                                ]
+                            },
+                            "summary": {
+                                "$id": "#/properties/entries/items/anyOf/0/properties/summary",
+                                "type": "string",
+                                "title": "The summary schema",
+                                "description": "Details of the reported problem.",
+                                "default": "",
+                                "examples": [
+                                    "The following repositories are not supported by Red Hat and are excluded from the list of repositories used during the upgrade.\n- codeready-builder-for-rhel-8-x86_64-rpms"
+                                ]
+                            },
+                            "audience": {
+                                "$id": "#/properties/entries/items/anyOf/0/properties/audience",
+                                "type": "string",
+                                "title": "The audience schema",
+                                "description": "The key audience of the reported problem.",
+                                "default": "",
+                                "enum": ["sysadmin", "developer"],
+                                "examples": [
+                                    "sysadmin"
+                                ]
+                            },
+                            "groups": {
+                                "$id": "#/properties/entries/items/anyOf/0/properties/groups",
+                                "type": "array",
+                                "title": "The groups schema",
+                                "description": "Groups used for the report. The promised merge of Tags and Flags",
+                                "default": [],
+                                "examples": [
+                                    [
+                                        "failure", "repository"
+                                    ]
+                                ],
+                                "additionalItems": true,
+                                "items": {
+                                    "$id": "#/properties/entries/items/anyOf/0/properties/groups/items",
+                                    "anyOf": [
+                                        {
+                                            "$id": "#/properties/entries/items/anyOf/0/properties/groups/items/anyOf/0",
+                                            "type": "string",
+                                            "title": "The first anyOf schema",
+                                            "description": "A report group.",
+                                            "default": "",
+                                            "examples": [
+                                                "failure", "repository"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            },
+                            "key": {
+                                "$id": "#/properties/entries/items/anyOf/0/properties/key",
+                                "type": "string",
+                                "title": "The key schema",
+                                "description": "The stable unique report entry key.",
+                                "default": "",
+                                "examples": [
+                                    "a12013a95a6d305adc9f4f675186f89760af1a7e"
+                                ]
+                            },
+                            "id": {
+                                "$id": "#/properties/entries/items/anyOf/0/properties/id",
+                                "type": "string",
+                                "title": "The id schema",
+                                "description": "Unique id for the report entry. Not stable.",
+                                "default": "",
+                                "examples": [
+                                    "88e518df66f34e0097ef7b4a4121f50eb5bcf9e8b2c017d1d07dca5e22db65e5"
+                                ]
+                            }
+                        },
+                        "additionalProperties": true
+                    }
+                ]
+            }
+        }
+    },
+    "additionalProperties": true
+}
