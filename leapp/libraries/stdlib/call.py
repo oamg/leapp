@@ -70,9 +70,9 @@ def _multiplex(ep, read_fds, callback_raw, callback_linebuffered,
                     continue
                 offset += os.write(fd, data[offset:])
                 if offset == len(data):
-                    os.close(fd)
                     hupped.add(fd)
                     ep.unregister(fd)
+                    os.close(fd)
 
     # Process leftovers from line buffering
     if encoding:
