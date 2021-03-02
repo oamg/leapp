@@ -1,0 +1,8 @@
+summary: Run a single jats test
+duration: 10m
+test: ./test.sh
+framework: shell
+environment:
+    TESTSUITE: leapp
+    TESTNAME: fw
+tier: jats

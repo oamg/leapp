@@ -1,0 +1,7 @@
+summary: Run a single jats test
+test: ./test.sh
+framework: shell
+environment:
+    TESTSUITE: leapp
+    TESTNAME: cli
+tier: jats

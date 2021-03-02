@@ -1,0 +1,15 @@
+summary: Basic smoke test
+execute:
+    how: tmt
+discover:
+    name: tier42
+    how: fmf
+    filter: 'tier: jats'
+provision:
+    how: connect
+    guest: 10.0.79.250
+    key: /home/ivasilev/.ssh/id_rsa
+
+#prepare:
+#    how: ansible
+#    playbook: ./ansible/leapp_with_tests.yml
