@@ -1,8 +1,8 @@
-summary: Run a single jats test
+summary: Run jats-leapp sanity tests
 duration: 30m
 test: ./test.sh
 framework: shell
 environment:
     TESTSUITE: leapp
     TESTNAME: sanity
-tier: jats
+tier: jats-leapp

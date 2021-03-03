@@ -1,7 +1,7 @@
-summary: Run a single jats test
+summary: Run jats-leapp cli tests
 test: ./test.sh
 framework: shell
 environment:
     TESTSUITE: leapp
     TESTNAME: cli
-tier: jats
+tier: jats-leapp

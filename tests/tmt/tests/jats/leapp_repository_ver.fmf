@@ -1,0 +1,8 @@
+summary: Run jats-leapp-repository ver tests
+duration: 30m
+test: ./test.sh
+framework: shell
+environment:
+    TESTSUITE: leapp-repository
+    TESTNAME: ver
+tier: jats-leapp-repository

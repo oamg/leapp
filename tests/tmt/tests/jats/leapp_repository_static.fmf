@@ -1,0 +1,8 @@
+summary: Run jats-leapp-repository static tests
+duration: 30m
+test: ./test.sh
+framework: shell
+environment:
+    TESTSUITE: leapp-repository
+    TESTNAME: static
+tier: jats-leapp-repository
