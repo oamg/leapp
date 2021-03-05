@@ -1,10 +1,10 @@
-summary: Basic smoke test
+summary: leapp JATS tests
 execute:
     how: tmt
 discover:
-    name: jats-leapp-repository
+    name: jats-leapp
     how: fmf
-    filter: 'tier: jats-leapp-repository'
+    filter: 'tier: jats-leapp'
 provision:
     how: connect
     guest: 10.0.79.250

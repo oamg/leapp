@@ -1,0 +1,15 @@
+summary: leapp-repository JATS tests
+execute:
+    how: tmt
+discover:
+    name: jats-leapp-repository
+    how: fmf
+    filter: 'tier: jats-leapp-repository'
+provision:
+    how: connect
+    guest: 10.0.79.250
+    key: /home/ivasilev/.ssh/id_rsa
+
+#prepare:
+#    how: ansible
+#    playbook: ./ansible/leapp_with_tests.yml

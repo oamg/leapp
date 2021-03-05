@@ -1,5 +1,5 @@
 summary: Run jats-leapp api tests
-duration: 30m
+duration: 180m
 test: ./test.sh
 framework: shell
 environment:
