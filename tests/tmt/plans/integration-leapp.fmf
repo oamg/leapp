@@ -4,7 +4,7 @@ execute:
 discover:
     name: jats-leapp
     how: jats
-    filter: 'tier: jats-leapp-api, jats-leapp'
+    filter: 'tier: jats-leapp-api,jats-leapp'
 provision:
     how: connect
     guest: 10.0.79.250
