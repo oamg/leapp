@@ -3,7 +3,7 @@ execute:
     how: tmt
 discover:
     name: jats-leapp-repository
-    how: fmf
+    how: jats
     filter: 'tier: jats-leapp-repository'
 provision:
     how: connect

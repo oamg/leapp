@@ -2,6 +2,7 @@ summary: Run jats-leapp fw tests
 duration: 10m
 test: ./test.sh
 framework: shell
+path: /tests/tests/jats
 environment:
     TESTSUITE: leapp
     TESTNAME: fw

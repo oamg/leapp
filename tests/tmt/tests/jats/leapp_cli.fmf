@@ -1,6 +1,7 @@
 summary: Run jats-leapp cli tests
 test: ./test.sh
 framework: shell
+path: /tests/tests/jats
 environment:
     TESTSUITE: leapp
     TESTNAME: cli

@@ -1,0 +1,9 @@
+summary: Run jats-leapp api/run/environment tests
+duration: 30m
+test: ./test.sh
+path: /tests/tests/jats
+framework: shell
+environment:
+    TESTSUITE: leapp
+    TESTNAME: api/run/environment
+tier: jats-leapp-api

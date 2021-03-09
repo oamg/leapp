@@ -3,8 +3,8 @@ execute:
     how: tmt
 discover:
     name: jats-leapp
-    how: fmf
-    filter: 'tier: jats-leapp'
+    how: jats
+    filter: 'tier: jats-leapp-api, jats-leapp'
 provision:
     how: connect
     guest: 10.0.79.250

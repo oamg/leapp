@@ -1,6 +1,7 @@
 summary: Run jats-leapp api tests
 duration: 180m
 test: ./test.sh
+path: /tests/tests/jats
 framework: shell
 environment:
     TESTSUITE: leapp

@@ -1,6 +1,7 @@
 summary: Run jats-leapp-repository ver tests
 duration: 30m
 test: ./test.sh
+path: /tests/tests/jats
 framework: shell
 environment:
     TESTSUITE: leapp-repository
