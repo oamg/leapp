@@ -1,6 +1,7 @@
 summary: Run jats-leapp static tests
-duration: 10m
+duration: 2h
 test: ./test.sh
+path: /tests/tests/jats
 framework: shell
 environment:
     TESTSUITE: leapp

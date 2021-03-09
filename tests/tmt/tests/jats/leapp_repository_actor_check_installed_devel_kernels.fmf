@@ -1,0 +1,9 @@
+summary: Run jats-leapp-repository actor/check_installed_devel_kernels tests
+duration: 30m
+test: ./test.sh
+path: /tests/tests/jats
+framework: shell
+environment:
+    TESTSUITE: leapp-repository
+    TESTNAME: actor/check_installed_devel_kernels
+tier: jats-leapp-repository-actor

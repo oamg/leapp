@@ -4,7 +4,7 @@ execute:
 discover:
     name: jats-leapp-repository
     how: jats
-    filter: 'tier: jats-leapp-repository'
+    filter: 'tier: jats-leapp-repository-actor,jats-leapp-repository-sanity,jats-leapp-repository'
 provision:
     how: connect
     guest: 10.0.79.250
