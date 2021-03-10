@@ -4,7 +4,8 @@ execute:
 discover:
     name: jats-leapp
     how: jats
-    filter: 'tier: jats-leapp-api,jats-leapp'
+    local_dir: /home/ivasilev/projects/jats-leapp
+    filter: 'tier: api,static,sanity,cli,fw,jats-leapp'
 provision:
     how: connect
     guest: 10.0.79.250
