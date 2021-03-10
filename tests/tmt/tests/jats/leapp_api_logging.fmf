@@ -1,9 +1,0 @@
-summary: Run jats-leapp api/logging tests
-duration: 60m
-test: ./test.sh
-path: /tests/tests/jats
-framework: shell
-environment:
-    TESTSUITE: leapp
-    TESTNAME: api/logging
-tier: jats-leapp-api

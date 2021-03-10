@@ -1,9 +1,0 @@
-summary: Run jats-leapp api/message tests
-duration: 20m
-test: ./test.sh
-path: /tests/tests/jats
-framework: shell
-environment:
-    TESTSUITE: leapp
-    TESTNAME: api/message
-tier: jats-leapp-api

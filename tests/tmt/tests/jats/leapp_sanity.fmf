@@ -1,9 +1,0 @@
-summary: Run jats-leapp sanity tests
-duration: 30m
-test: ./test.sh
-path: /tests/tests/jats
-framework: shell
-environment:
-    TESTSUITE: leapp
-    TESTNAME: sanity
-tier: jats-leapp

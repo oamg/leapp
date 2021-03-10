@@ -1,9 +1,0 @@
-summary: Run jats-leapp-repository sanity/pesdata tests
-duration: 60m
-test: ./test.sh
-path: /tests/tests/jats
-framework: shell
-environment:
-    TESTSUITE: leapp-repository
-    TESTNAME: sanity/pesdata
-tier: jats-leapp-repository-sanity

@@ -1,9 +1,0 @@
-summary: Run jats-leapp-repository sanity/preupgrade tests
-duration: 15m
-test: ./test.sh
-path: /tests/tests/jats
-framework: shell
-environment:
-    TESTSUITE: leapp-repository
-    TESTNAME: sanity/preupgrade
-tier: jats-leapp-repository-sanity

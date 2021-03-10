@@ -1,9 +1,0 @@
-summary: Run jats-leapp-repository leapp tests
-duration: 30m
-test: ./test.sh
-path: /tests/tests/jats
-framework: shell
-environment:
-    TESTSUITE: leapp-repository
-    TESTNAME: leapp
-tier: jats-leapp-repository
