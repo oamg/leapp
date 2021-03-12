@@ -4,7 +4,7 @@ execute:
 discover:
     name: jats-leapp-repository
     how: jats
-    local_dir: /home/ivasilev/projects/jats-leapp-repository
+    url: https://gitlab.cee.redhat.com/oamg/jats-leapp-repository
     filter: 'tier: actor,leapp,sanity,static,ver,jats-leapp-repository'
 provision:
     how: connect

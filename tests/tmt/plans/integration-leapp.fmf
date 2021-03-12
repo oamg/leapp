@@ -4,7 +4,7 @@ execute:
 discover:
     name: jats-leapp
     how: jats
-    local_dir: /home/ivasilev/projects/jats-leapp
+    url: https://gitlab.cee.redhat.com/oamg/jats-leapp
     filter: 'tier: api,static,sanity,cli,fw,jats-leapp'
 provision:
     how: connect
