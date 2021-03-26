@@ -39,6 +39,17 @@ def phase_names(phase=None):
     return (phase[0].__name__.lower(), phase[0].name.lower()) if phase else ()
 
 
+def tag_names(tag=None):
+    return (tag.__name__.lower(), tag.name.lower()) if tag else ()
+
+
+def contains_tag(needle_tags, actor_tags):
+    hay = set()
+    for tag in actor_tags:
+        hay.update(tag_names(tag))
+    return bool(hay.intersection([tag.lower() for tag in needle_tags]))
+
+
 class WorkflowMeta(type):
     """
     Meta class for the registration of workflows
@@ -230,7 +241,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
         if phase:
             return phase in [name for phs in self._phase_actors for name in phase_names(phs)]
 
-    def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None, skip_dialogs=False):
+    def run(self, context=None, until_phase=None, until_actor=None, skip_phases_until=None, skip_dialogs=False,
+            only_with_tags=None):
         """
         Executes the workflow
 
@@ -255,6 +267,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
                              The value of skip_dialogs will be passed to the actors that can theoretically use it for
                              their purposes.
         :type skip_dialogs: bool
+        :param only_with_tags: Executes only actors with the given tag, any other actor is going to get skipped.
+        :type only_with_tags: List[str]
 
         """
         context = context or str(uuid.uuid4())
@@ -309,6 +323,11 @@ class Workflow(with_metaclass(WorkflowMeta)):
                         if actor not in self.experimental_whitelist:
                             current_logger.info("Skipping experimental actor {actor}".format(actor=actor.name))
                             continue
+
+                    if only_with_tags and not contains_tag(only_with_tags, actor.tags):
+                        current_logger.info(
+                            "Actor {actor} does not contain any required tag. Skipping.".format(actor=actor.name))
+                        continue
 
                     display_status_current_actor(actor, designation=designation)
                     current_logger.info("Executing actor {actor} {designation}".format(designation=designation,
