@@ -6,6 +6,7 @@ import shutil
 import sys
 import tarfile
 import uuid
+from argparse import Namespace
 from datetime import datetime
 
 from leapp.config import get_config
@@ -14,10 +15,14 @@ from leapp.logger import configure_logger
 from leapp.messaging.answerstore import AnswerStore
 from leapp.repository.scan import find_and_scan_repositories
 from leapp.utils.audit import Execution, get_connection, get_checkpoints
-from leapp.utils.clicmd import command, command_opt
+from leapp.utils.audit.contextclone import clone_context
+from leapp.utils.clicmd import command, command_arg, command_opt
 from leapp.utils.output import (report_errors, report_info, beautify_actor_exception, report_unsupported,
                                 report_inhibitors)
 from leapp.utils.report import fetch_upgrade_report_messages, generate_report_file
+
+
+RERUN_SUPPORTED_PHASES = ('FirstBoot',)
 
 
 def archive_logfiles():
@@ -67,13 +72,17 @@ def load_repositories():
     return manager
 
 
-def fetch_last_upgrade_context():
+def fetch_last_upgrade_context(use_context=None):
     """
     :return: Context of the last execution
     """
     with get_connection(None) as db:
-        cursor = db.execute(
-            "SELECT context, stamp, configuration FROM execution WHERE kind = 'upgrade' ORDER BY id DESC LIMIT 1")
+        if use_context:
+            cursor = db.execute(
+                "SELECT context, stamp, configuration FROM execution WHERE context = ?", (use_context,))
+        else:
+            cursor = db.execute(
+                "SELECT context, stamp, configuration FROM execution WHERE kind = 'upgrade' ORDER BY id DESC LIMIT 1")
         row = cursor.fetchone()
         if row:
             return row[0], json.loads(row[2])
@@ -183,6 +192,68 @@ def process_whitelist_experimental(repositories, workflow, configuration, logger
             raise CommandError(msg)
 
 
+@command('rerun', help='Re-runs the upgrade from the given phase and using the information and progress '
+         'from the last invocation of leapp upgrade.')
+@command_arg('from-phase',
+             help='Phase to start running from again. Supported values: {}'.format(', '.join(RERUN_SUPPORTED_PHASES)))
+@command_opt('only-actors-with-tag', action='append', metavar='TagName',
+             help='Restrict actors to be re-run only with given tags. Others will not be executed')
+@command_opt('debug', is_flag=True, help='Enable debug mode', inherit=False)
+@command_opt('verbose', is_flag=True, help='Enable verbose logging', inherit=False)
+def rerun(args):
+
+    if os.environ.get('LEAPP_UNSUPPORTED') != '1':
+        raise CommandError('This command requires the environment variable LEAPP_UNSUPPORTED="1" to be set!')
+
+    if args.from_phase not in RERUN_SUPPORTED_PHASES:
+        raise CommandError('This command is only supported for {}'.format(', '.join(RERUN_SUPPORTED_PHASES)))
+
+    context = str(uuid.uuid4())
+    last_context, configuration = fetch_last_upgrade_context()
+    if args.from_phase not in set([chkpt['phase'] for chkpt in get_checkpoints(context=last_context)]):
+        raise CommandError('Phase {} has not been executed in the last leapp upgrade execution. '
+                           'Cannot rerun not executed phase'.format(args.from_phase))
+
+    if not last_context:
+        raise CommandError('No previous upgrade run to rerun - '
+                           'leapp upgrade has to be run before leapp rerun can be used')
+
+    with get_connection(None) as db:
+        e = Execution(context=context, kind='rerun', configuration=configuration)
+
+        e.store(db)
+
+        clone_context(last_context, context, db)
+        db.execute('''
+            DELETE FROM audit WHERE id IN (
+                SELECT
+                    audit.id          AS id
+                FROM
+                    audit
+                JOIN
+                    data_source ON data_source.id = audit.data_source_id
+                WHERE
+                    audit.context = ? AND audit.event = 'checkpoint'
+                    AND data_source.phase LIKE 'FirstBoot%'
+            );
+        ''', (context,))
+        db.execute('''DELETE FROM message WHERE context = ? and type = 'ErrorModel';''', (context,))
+
+    archive_logfiles()
+    upgrade(Namespace(
+        resume=True,
+        resume_context=context,
+        only_with_tags=args.only_actors_with_tag or [],
+        debug=args.debug,
+        verbose=args.verbose,
+        reboot=False,
+        no_rhsm=False,
+        whitelist_experimental=[],
+        enablerepo=[]))
+
+
+# If you are adding new parameters please ensure that they are set in the upgrade function invocation in `rerun`
+# otherwise there might be errors.
 @command('upgrade', help='Upgrade the current system to the next available major version.')
 @command_opt('resume', is_flag=True, help='Continue the last execution after it was stopped (e.g. after reboot)')
 @command_opt('reboot', is_flag=True, help='Automatically performs reboot when requested.')
@@ -202,11 +273,16 @@ def upgrade(args):
     answerfile_path = cfg.get('report', 'answerfile')
     userchoices_path = cfg.get('report', 'userchoices')
 
+    # Processing of parameters passed by the rerun call, these aren't actually command line arguments
+    # therefore we have to assume that they aren't even in `args` as they are added only by rerun.
+    only_with_tags = args.only_with_tags if 'only_with_tags' in args else None
+    resume_context = args.resume_context if 'resume_context' in args else None
+
     if os.getuid():
         raise CommandError('This command has to be run under the root user.')
 
     if args.resume:
-        context, configuration = fetch_last_upgrade_context()
+        context, configuration = fetch_last_upgrade_context(resume_context)
         if not context:
             raise CommandError('No previous upgrade run to continue, remove `--resume` from leapp invocation to'
                                ' start a new upgrade flow')
@@ -238,7 +314,8 @@ def upgrade(args):
     with beautify_actor_exception():
         logger.info("Using answerfile at %s", answerfile_path)
         workflow.load_answers(answerfile_path, userchoices_path)
-        workflow.run(context=context, skip_phases_until=skip_phases_until, skip_dialogs=True)
+        workflow.run(context=context, skip_phases_until=skip_phases_until, skip_dialogs=True,
+                     only_with_tags=only_with_tags)
 
     logger.info("Answerfile will be created at %s", answerfile_path)
     workflow.save_answers(answerfile_path, userchoices_path)
