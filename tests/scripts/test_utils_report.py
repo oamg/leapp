@@ -1,8 +1,5 @@
-from collections import namedtuple
 import datetime
 import json
-
-import pytest
 
 import leapp.utils.report
 

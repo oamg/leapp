@@ -172,7 +172,7 @@ def test_create_report_stable_key(monkeypatch):
     report_dialog_key_set = _create_report_object(report_entries_dialog_key_set)
     # check that all reports have key field
     for report in [report1, report2, report_with_severity, report_with_audience, report_fixed_key]:
-        assert "key" in report.report
+        assert "key" in report.report  # pylint: disable = unsupported-membership-test
     # check that reports with same title but different summary have same dynamically generated key
     assert report1.report["key"] == report2.report["key"]
     # check that entries different in severity only will have different generated keys
