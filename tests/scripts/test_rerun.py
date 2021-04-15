@@ -83,31 +83,37 @@ def _perform_rerun(tags=(), unsupported=True, run_upgrade=True):
         os.environ.pop('LEAPP_UNSUPPORTED', None)
 
 
+@pytest.mark.skip(reason='Commands have been moved to leapp-repository - The tests will be moved in a separate PR')
 def test_leapp_rerun_no_unsupported_environment_var():
     with pytest.raises(subprocess.CalledProcessError):
         _perform_rerun(unsupported=False, run_upgrade=False)
 
 
+@pytest.mark.skip(reason='Commands have been moved to leapp-repository - The tests will be moved in a separate PR')
 def test_leapp_rerun_no_upgrade():
     with pytest.raises(subprocess.CalledProcessError):
         _perform_rerun(run_upgrade=False)
 
 
+@pytest.mark.skip(reason='Commands have been moved to leapp-repository - The tests will be moved in a separate PR')
 def test_leapp_rerun_no_parameters():
     result = _perform_rerun(run_upgrade=True)
     _evaluate_results(result, 'FirstBootActor', 'ReRunActor', 'ReRunActorOther')
 
 
+@pytest.mark.skip(reason='Commands have been moved to leapp-repository - The tests will be moved in a separate PR')
 def test_leapp_rerun_only_actors_with_tag():
     result = _perform_rerun(tags=('ReRunVerifyTag',), run_upgrade=True)
     _evaluate_results(result, 'ReRunActor')
 
 
+@pytest.mark.skip(reason='Commands have been moved to leapp-repository - The tests will be moved in a separate PR')
 def test_leapp_rerun_only_actors_with_multiple_tags():
     result = _perform_rerun(tags=('ReRunVerifyTag', 'ReRunVerifyOtherTag'), run_upgrade=True)
     _evaluate_results(result, 'ReRunActor', 'ReRunActorOther')
 
 
+@pytest.mark.skip(reason='Commands have been moved to leapp-repository - The tests will be moved in a separate PR')
 def test_leapp_rerun_only_actors_with_not_used_tag():
     result = _perform_rerun(tags=('NoSuchTag',), run_upgrade=True)
     _evaluate_results(result)

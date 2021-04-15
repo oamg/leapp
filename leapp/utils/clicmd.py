@@ -179,6 +179,11 @@ class Command(object):
         :type cmd: :py:class:`leapp.utils.clicmd.Command`
         :return: self
         """
+        if not isinstance(cmd, Command):
+            if isinstance(getattr(cmd, 'command', None), Command):
+                cmd = cmd.command
+            else:
+                raise TypeError('Expected instance of Command or decorated command function as parameter')
         cmd.parent = self
         self._sub_commands[cmd.name] = cmd
         return self
