@@ -12,6 +12,7 @@ disable=
  bad-mcs-classmethod-argument,
  fixme,
  global-statement,
+ logging-format-interpolation,
  protected-access,
  redefined-outer-name,
  super-init-not-called,
