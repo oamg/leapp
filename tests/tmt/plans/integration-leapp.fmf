@@ -9,7 +9,7 @@ discover:
 provision:
     how: connect
     guest: 10.0.79.250
-    key: /home/ivasilev/.ssh/baseosci_id_rsa
+    key: ~/.ssh/baseosci_id_rsa
 
 prepare:
     how: ansible
