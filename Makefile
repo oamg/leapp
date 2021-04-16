@@ -114,7 +114,7 @@ install:
 	umask 177 && $(PYTHON_VENV) -c "import sqlite3; sqlite3.connect('${LIBDIR}/audit.db').executescript(open('res/audit-layout.sql', 'r').read())"
 
 install-container-test:
-	docker pull ${CONTAINER}
+	docker pull registry.centos.org/${CONTAINER}
 	docker build -t leapp-tests -f res/docker-tests/Dockerfile.$(subst :,,${CONTAINER}) res/docker-tests
 
 install-test:
