@@ -294,12 +294,12 @@ def upgrade(args):
             os.environ['LEAPP_VERBOSE'] = '0'
 
         skip_phases_until = get_last_phase(context)
-        logger = configure_logger()
     else:
         e = Execution(context=context, kind='upgrade', configuration=configuration)
         e.store()
         archive_logfiles()
-        logger = configure_logger('leapp-upgrade.log')
+
+    logger = configure_logger('leapp-upgrade.log')
     os.environ['LEAPP_EXECUTION_ID'] = context
 
     if args.resume:
