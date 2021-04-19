@@ -67,6 +67,16 @@ Necessary to use in case you use any envar with the LEAPP_DEVEL prefix
 for the Leapp tool.
 
 
+## LEAPP_SERVICE_HOST
+
+Overrides the host of the service to which leapp connects to fetch necessary data files in case they are missing. The used protocol (`http://` or `https://`) must be specified. Defaults to `https://cert.cloud.redhat.com`.
+
+
+## LEAPP_PROXY_HOST
+
+If set, leapp will use this proxy to fetch necessary data files in case they are missing. The used protocol (`http://` or `https://`) must be specified.
+
+
 ## LEAPP_DEVEL_RPMS_ALL_SIGNED
 
 Leapp will consider all installed pkgs to be signed by RH - that affects
