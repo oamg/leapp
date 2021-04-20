@@ -1,0 +1,8 @@
+summary: Check upgrade went well
+duration: 5m
+test: python3 make_test_results.py
+framework: shell
+environment:
+    RHEL_VERSION: 8.4
+    ARTIFACT_DIR: /var/leapp/artifacts
+tier: e2e

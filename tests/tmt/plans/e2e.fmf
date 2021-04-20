@@ -1,0 +1,14 @@
+summary: leapp e2e test
+execute:
+    how: tmt
+discover:
+    name: e2e
+    how: fmf
+    filter: 'tier: e2e'
+provision:
+    how: connect
+    guest: 10.0.79.250
+    key: /home/ivasilev/.ssh/id_rsa
+prepare:
+    how: ansible
+    playbook: /home/ivasilev/projects/leapp-upgrade-test/tests/tests.yml
