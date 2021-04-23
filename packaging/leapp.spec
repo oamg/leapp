@@ -32,7 +32,7 @@
 %endif
 
 Name:       leapp
-Version:    0.12.0
+Version:    0.12.1
 Release:    1%{?dist}
 Summary:    OS & Application modernization framework
 
