@@ -73,10 +73,20 @@ class TestReport:
             'logs': test_logs
             })
 
+    def print_results(self):
+        failed = False
+        for entry in self.results:
+            line = f'{entry["test"]} - {entry["result"]}'
+            if entry["result"] != 'pass':
+                failed = True
+            print(line)
+        res = 'pass' if not failed else 'fail'
+        print(f'Overall result: {res}')
+
     def make_results(self):
         with open('{}/results.yml'.format(ARTIFACT_DIR), 'w') as file:
             file.write("results:\n\n")
-            yaml.dump(self.results, file, default_flow_style=False, sort_keys=False)
+            yaml.dump(self.results, file, default_flow_style=False)
 
 
 def make_hint(test_name):
@@ -91,6 +101,7 @@ def get_result(log_file, pattern):
 
 
 def gather_results(test_report):
+    ec = EC
     #
     # initial reboot check
     #
@@ -103,7 +114,7 @@ def gather_results(test_report):
         # machine timed out and we cannot re-establish connection
         make_hint(test_name)
         test_report.add_result(test_name, 'fail', ['{0}/output.txt'.format(test_name), '{}/README.txt'.format(test_name)])
-        EC = 1
+        ec = 1
         raise Exception()
 
     #
@@ -115,7 +126,7 @@ def gather_results(test_report):
     else:
         make_hint(test_name)
         test_report.add_result(test_name, 'fail', ['{0}/output.txt'.format(test_name), '{}/README.txt'.format(test_name)])
-        EC = 1
+        ec = 1
         raise Exception()
 
     #
@@ -127,7 +138,7 @@ def gather_results(test_report):
     else:
         make_hint(test_name)
         test_report.add_result(test_name, 'fail', ['{0}/output.txt'.format(test_name), '{}/README.txt'.format(test_name)])
-        EC = 1
+        ec = 1
         raise Exception()
 
     #
@@ -144,7 +155,7 @@ def gather_results(test_report):
         # machine timed out and we cannot re-establish connection
         make_hint(test_name)
         test_report.add_result(test_name, 'fail', ['{0}/output.txt'.format(test_name), '{}/README.txt'.format(test_name)])
-        EC = 1
+        ec = 1
         raise Exception()
 
     #
@@ -156,7 +167,7 @@ def gather_results(test_report):
     else:
         make_hint(test_name)
         test_report.add_result(test_name, 'fail', ['{0}/output.txt'.format(test_name), '{}/README.txt'.format(test_name)])
-        EC = 1
+        ec = 1
 
     #
     # 'OS release' test
@@ -167,7 +178,7 @@ def gather_results(test_report):
     else:
         make_hint(test_name)
         test_report.add_result(test_name, 'fail', ['{0}/output.txt'.format(test_name), '{}/README.txt'.format(test_name)])
-        EC = 1
+        ec = 1
 
     #
     # 'rpm -q' test
@@ -176,22 +187,24 @@ def gather_results(test_report):
     if get_result('{0}/{1}/list.txt'.format(ARTIFACT_DIR, test_name), 'is not installed'):
         make_hint(test_name)
         test_report.add_result(test_name, 'fail', ['{0}/list.txt'.format(test_name), '{}/README.txt'.format(test_name)])
-        EC = 1
+        ec = 1
     else:
         test_report.add_result(test_name, 'pass', ['{0}/list.txt'.format(test_name)])
 
-    return EC
+    return ec
 
 
 if __name__ == "__main__":
+    ec = EC
     test_report = TestReport()
     try:
-        EC = gather_results(test_report)
+        ec = gather_results(test_report)
     except IOError as err:
         # problem when opening file
         test_report.add_result('Open log files', 'error', [])
-        EC = 2
+        ec = 2
 
     finally:
         test_report.make_results()
-        sys.exit(EC)
+        test_report.print_results()
+        sys.exit(ec)
