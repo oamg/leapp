@@ -1,3 +1,6 @@
+# there are bashisms used in this Makefile
+SHELL=/bin/bash
+
 PYTHON_VENV ?= python
 VENVNAME ?= tut
 CONFDIR=${DESTDIR}/etc/leapp
