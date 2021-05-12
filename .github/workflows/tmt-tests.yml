@@ -1,0 +1,135 @@
+name: tmt@TF
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  pr_commented:
+    # This job only runs for '/rerun' pull request comments by owner, member, or collaborator of the repo/organization.
+    name: Run tmt tests on Testing Farm service
+    if: |
+      github.event.issue.pull_request
+      && github.event.comment.body == '/rerun'
+      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Get pull request number
+        id: pr_nr
+        run: |
+          PR_URL="${{ github.event.comment.issue_url }}"
+          echo "::set-output name=pr_nr::${PR_URL##*/}"
+
+      - name: Checkout
+        # TODO: The correct way to checkout would be to use simmilar approach as in get_commit_by_timestamp function of
+        #       the github gluetool module (i.e. do not use HEAD but the last commit before comment).
+        id: checkout
+        uses: actions/checkout@v2
+        with:
+          ref: "refs/pull/${{ steps.pr_nr.outputs.pr_nr }}/head"
+
+      - name: Get ref and sha
+        id: ref_sha
+        run: |
+          echo "::set-output name=sha::$(git rev-parse --short HEAD)"
+          echo "::set-output name=ref::refs/pull/${{ steps.pr_nr.outputs.pr_nr }}/head"
+
+      - name: Trigger copr build
+        id: copr_build
+        run: |
+          cat << EOF > copr_fedora.conf
+          [copr-cli]
+          login = ${{ secrets.FEDORA_COPR_LOGIN }}
+          username = @oamg
+          token = ${{ secrets.FEDORA_COPR_TOKEN }}
+          copr_url = https://copr.fedorainfracloud.org
+          # expiration date: 2030-07-04
+          EOF
+
+          pip install copr-cli
+          PR=${{ steps.pr_nr.outputs.pr_nr }} COPR_CONFIG=copr_fedora.conf make copr_build | tee copr.log
+
+          COPR_URL=$(grep -Po 'https://copr.fedorainfracloud.org/coprs/build/\d+' copr.log)
+          echo "::set-output name=copr_url::${COPR_URL}"
+          echo "::set-output name=copr_id::${COPR_URL##*/}"
+
+      - name: Add comment with copr build url
+        # TODO: Create comment when copr build fails.
+        id: link_copr
+        uses: actions/github-script@v4
+        with:
+          script: |
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Copr build succeeded: ${{ steps.copr_build.outputs.copr_url }}'
+            })
+
+      - name: Schedule a tmt test
+        # This step schedules a tmt test. The test id is stored in `req_id` variable for a later use.
+
+        # TODO: The actual command that triggers a new test on TF service is commented out as it would fail, because
+        #       there are no tmt plans ready in the repository.
+
+        # Information about the repo/ref/sha from which the action was triggered is sent in the
+        # `environments.variables` field.
+
+        # All the discovered test plans from the repository specified in `tests.fmf.url` are run.
+        # It should be possible to specify which test plan to run as specified in `test.fmf.name`, however this is not
+        # working at this moment, see https://gitlab.com/testing-farm/general/-/issues/18
+        #
+        # At this moment repo/sha that triggered the action is used, i.e. all tests plans specified in THIS repository
+        # are run.
+
+        # TODO: The tests are run in `Fedora-33` compose, it should be possible to use `Fedora` symbolic name that
+        #       should be translated to the latest stable Fedora but the job ends in 'error' state:
+        #       "Guest couldn't be provisioned: Artemis resource ended in 'error' state"
+        #       However this is not a signifficant issue because it's expected that the test provisions a test machine
+        #       on its own.
+        id: sched_test
+        run: |
+          cat << EOF > request.json
+          {
+            "api_key": "${{ secrets.TF_API_KEY }}",
+            "test": {"fmf": {
+              "url": "https://gitlab.cee.redhat.com/oamg/tmt-plans",
+              "ref": "master"
+            }},
+            "environments": [{
+              "arch": "x86_64",
+              "os": {"compose": "Fedora-33"},
+              "variables": {
+                "REPO": "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY",
+                "REF": "${{ steps.ref_sha.outputs.ref }}",
+                "SHA": "${{ steps.ref_sha.outputs.sha }}"
+                "COPR_ID": "${{ steps.copr_build.outputs.copr_id }}"
+              }
+            }]
+          }
+          EOF
+
+          curl ${{ secrets.TF_ENDPOINT }}/requests \
+            --data @request.json \
+            --header "Content-Type: application/json" \
+            --output response.json
+
+          echo "::set-output name=req_id::$(jq -r .id response.json)"
+
+      - name: Add comment with Testing Farm request/result
+        # This step adds a new comment to the pull request with a link to the test.
+
+        # TODO: This is a temporary workaround until a proper way to set a commit status is implemented.
+        id: comment
+        uses: actions/github-script@v4
+        with:
+          script: |
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Testing Farm [request](${{ secrets.TF_ENDPOINT }}/requests/${{ steps.sched_test.outputs.req_id }})' +
+                    ' for tmt test was created. Once finished, results should be available' +
+                    ' [here](http://artifacts.osci.redhat.com/testing-farm/${{ steps.sched_test.outputs.req_id }}/).'
+            })
