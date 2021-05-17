@@ -1,0 +1,35 @@
+name: copr-build
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  copr_build:
+    name: Create copr build
+    runs-on: ubuntu-20.04
+    if: github.repository_owner == "oamg"
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v2
+        with:
+          ref: "refs/heads/master"
+
+      - name: Trigger fedora copr build
+        id: trigger_fedora_build
+        env:
+          COPR_CONFIG: "copr_fedora.conf"
+        run: |
+          cat << EOF > $COPR_CONFIG
+          [copr-cli]
+          login = ${{ secrets.FEDORA_COPR_LOGIN }}
+          username = @oamg
+          token = ${{ secrets.FEDORA_COPR_TOKEN }}
+          copr_url = https://copr.fedorainfracloud.org
+          EOF
+
+          pip install copr-cli
+          make copr_build
+
