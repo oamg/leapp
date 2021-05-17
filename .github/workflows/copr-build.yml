@@ -1,0 +1,47 @@
+name: copr-build
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  copr_build:
+    name: Create copr build
+    runs-on: ubuntu-20.04
+    # if: github.repository_owner == "oamg"
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v2
+        with:
+          ref: "refs/heads/master"
+
+      # - name: Trigger internal copr build
+      #   id: trigger_internal_build
+      #   run: |
+      #     cat << EOF > copr_internal.conf
+      #     [copr-cli]
+      #     login = ${{ secrets.INTERNAL_COPR_LOGIN }}
+      #     username = ${{ secrets.INTERNAL_COPR_USERNAME }}
+      #     token = ${{ secrets.INTERNAL_COPR_TOKEN }}
+      #     copr_url = https://copr.devel.redhat.com
+      #     EOF
+
+      #     pip install copr-cli
+      #     COPR_CONFIG=copr_internal.conf make copr_build
+
+      - name: Trigger fedora copr build
+        id: trigger_fedora_build
+        run: |
+          cat << EOF > copr_fedora.conf
+          [copr-cli]
+          login = ${{ secrets.INTERNAL_COPR_LOGIN }}
+          username = ${{ secrets.INTERNAL_COPR_USERNAME }}
+          token = ${{ secrets.INTERNAL_COPR_TOKEN }}
+          copr_url = https://copr.fedorainfracloud.org
+          EOF
+
+          pip install copr-cli
+          COPR_CONFIG=copr_fedora.conf make copr_build
+
