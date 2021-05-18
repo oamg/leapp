@@ -105,10 +105,20 @@ jobs:
           }
           EOF
 
+          if [ "${{ secrets.ACTIONS_STEP_DEBUG }}" = "true" ]; then
+              echo request.json
+              jq < request.json
+          fi
+
           curl ${{ secrets.TF_ENDPOINT }}/requests \
             --data @request.json \
             --header "Content-Type: application/json" \
             --output response.json
+
+          if [ "${{ secrets.ACTIONS_STEP_DEBUG }}" = "true" ]; then
+              echo response.json
+              jq < response.json
+          fi
 
           echo "::set-output name=req_id::$(jq -r .id response.json)"
 
