@@ -83,11 +83,6 @@ jobs:
         # At this moment repo/sha that triggered the action is used, i.e. all tests plans specified in THIS repository
         # are run.
 
-        # TODO: The tests are run in `Fedora-33` compose, it should be possible to use `Fedora` symbolic name that
-        #       should be translated to the latest stable Fedora but the job ends in 'error' state:
-        #       "Guest couldn't be provisioned: Artemis resource ended in 'error' state"
-        #       However this is not a signifficant issue because it's expected that the test provisions a test machine
-        #       on its own.
         id: sched_test
         run: |
           cat << EOF > request.json
@@ -99,21 +94,31 @@ jobs:
             }},
             "environments": [{
               "arch": "x86_64",
-              "os": {"compose": "Fedora-33"},
+              "os": {"compose": "RHEL-7.9-updates-20201124.0"},
               "variables": {
                 "REPO": "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY",
                 "REF": "${{ steps.ref_sha.outputs.ref }}",
-                "SHA": "${{ steps.ref_sha.outputs.sha }}"
+                "SHA": "${{ steps.ref_sha.outputs.sha }}",
                 "COPR_ID": "${{ steps.copr_build.outputs.copr_id }}"
               }
             }]
           }
           EOF
 
+          if [ "${{ secrets.ACTIONS_STEP_DEBUG }}" = "true" ]; then
+              echo request.json
+              jq < request.json
+          fi
+
           curl ${{ secrets.TF_ENDPOINT }}/requests \
             --data @request.json \
             --header "Content-Type: application/json" \
             --output response.json
+
+          if [ "${{ secrets.ACTIONS_STEP_DEBUG }}" = "true" ]; then
+              echo response.json
+              jq < response.json
+          fi
 
           echo "::set-output name=req_id::$(jq -r .id response.json)"
 
