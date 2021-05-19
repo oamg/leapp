@@ -95,11 +95,12 @@ jobs:
             "environments": [{
               "arch": "x86_64",
               "os": {"compose": "RHEL-7.9-updates-20201124.0"},
+              "artifacts": [{"type": "fedora-copr-build", "id": "${{ steps.copr_build.outputs.copr_id }}"}],
               "variables": {
                 "REPO": "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY",
                 "REF": "${{ steps.ref_sha.outputs.ref }}",
                 "SHA": "${{ steps.ref_sha.outputs.sha }}",
-                "COPR_ID": "${{ steps.copr_build.outputs.copr_id }}"
+                "PR_NUMBER": "${{ steps.pr_nr.outputs.pr_nr }}"
               }
             }]
           }
@@ -136,5 +137,6 @@ jobs:
               repo: context.repo.repo,
               body: 'Testing Farm [request](${{ secrets.TF_ENDPOINT }}/requests/${{ steps.sched_test.outputs.req_id }})' +
                     ' for tmt test was created. Once finished, results should be available' +
-                    ' [here](http://artifacts.osci.redhat.com/testing-farm/${{ steps.sched_test.outputs.req_id }}/).'
+                    ' [here](http://artifacts.osci.redhat.com/testing-farm/${{ steps.sched_test.outputs.req_id }}/).' +
+                    '\n[Full pipeline log](http://artifacts.osci.redhat.com/testing-farm/${{ steps.sched_test.outputs.req_id }}/pipeline.log).'
             })
