@@ -9,7 +9,7 @@ jobs:
   copr_build:
     name: Create copr build
     runs-on: ubuntu-20.04
-    if: github.repository_owner == "oamg"
+    if: github.repository_owner == 'oamg'
     steps:
       - name: Checkout
         id: checkout
