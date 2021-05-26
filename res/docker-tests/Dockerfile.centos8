@@ -3,7 +3,10 @@ FROM registry.centos.org/centos:8
 VOLUME /payload
 
 RUN yum update -y && \
-    yum install python3-virtualenv make -y
+    yum install python3-virtualenv make -y && \
+    yum -y install epel-release && \
+    yum -y install python3-pip && \
+    python3 -m pip install --upgrade pip==20.3.4
 
 WORKDIR /payload
 ENTRYPOINT virtualenv testenv && \
