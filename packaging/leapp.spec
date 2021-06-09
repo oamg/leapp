@@ -147,6 +147,7 @@ Summary: %{summary}
 BuildRequires:  python3-devel
 BuildRequires:  python3-setuptools
 
+Provides: leapp-framework = %{framework_version}
 Requires: leapp-framework-dependencies = %{framework_dependencies}
 
 # FIXME: avoiding problems with dependencies on virtual capabilities, see:
@@ -240,7 +241,11 @@ rm -f %{buildroot}/%{_bindir}/leapp
 %dir %{_datadir}/leapp/
 %dir %{_datadir}/leapp/report_schema/
 %{_datadir}/leapp/report_schema
+%if %{with python3}
+%{python3_sitelib}/leapp/cli
+%else
 %{python2_sitelib}/leapp/cli
+%endif
 %endif
 
 
@@ -250,7 +255,11 @@ rm -f %{buildroot}/%{_bindir}/leapp
 ##################################################
 %files -n snactor
 %license COPYING
-%{python2_sitelib}/leapp/snactor
+%if %{with python3}
+%{python3_sitelib}/leapp/cli
+%else
+%{python2_sitelib}/leapp/cli
+%endif
 %{_mandir}/man1/snactor.1*
 %{_bindir}/snactor
 
@@ -279,6 +288,8 @@ rm -f %{buildroot}/%{_bindir}/leapp
 %{python3_sitelib}/*
 #TODO: ignoring leapp and snactor in separate rpms now as we do not provide
 # entrypoints for Py3 in those subpackages anyway
+%exclude %{python3_sitelib}/leapp/cli
+%exclude %{python3_sitelib}/leapp/snactor
 
 %endif
 
