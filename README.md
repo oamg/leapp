@@ -25,7 +25,7 @@ visit:
 We’ll gladly answer your questions and lead you to through any troubles with the
 actor development.
 
-You can reach us at IRC: `#leapp` on freenode.
+You can reach us at IRC: `#leapp` on Libera.Chat IRC network.
 
 ## Your friendly Snactor
 ![Image of Snactor](docs/source/_static/images/snactor256.png)
