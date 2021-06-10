@@ -450,4 +450,4 @@ When filing an issue, include:
 
 ## Where can I seek help?
 
-We’ll gladly answer your questions and lead you to through any troubles with the actor development. You can reach us, the OS and Application Modernization Group, at freenode IRC server in channel **#leapp**.
+We’ll gladly answer your questions and lead you to through any troubles with the actor development. You can reach us, the OS and Application Modernization Group, at Libera.Chat IRC server in channel **#leapp**.

@@ -69,5 +69,5 @@ Before you submit your pull request, consider the following guidelines:
 
 ## Contact
 
-In case of any question, contact us on the freenode.net IRC channel #leapp, or write the question as an issue on
+In case of any question, contact us at `#leapp` on Libera.Chat IRC network, or write the question as an issue on
 GitHub.
