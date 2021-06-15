@@ -20,15 +20,25 @@
 %global framework_dependencies 3
 
 # Do not build bindings for python3 for RHEL == 7
+# # Currently Py2 is dead on Fedora and we don't have to support it. As well,
+# # our current packaging is not prepared for Py2 & Py3 packages in the same
+# # time. Instead of that, make Py2 and Py3 exclusive. Possibly rename macros..
 %if 0%{?rhel} && 0%{?rhel} == 7
-%define with_python2 1
+  %define leapp_python 2
+  %define leapp_python_sitelib %{python2_sitelib}
+  %define leapp_python_name python2
+  %define leapp_py_build %{py2_build}
+  %define leapp_py_install %{py2_install}
+
 %else
-%if 0%{?rhel} && 0%{?rhel} > 7
-%bcond_with python2
-%else
-%bcond_without python2
-%endif
-%bcond_without python3
+  %define leapp_python 3
+  %define leapp_python_sitelib %{python3_sitelib}
+  %define leapp_python_name python3
+  %define leapp_py_build %{py3_build}
+  %define leapp_py_install %{py3_install}
+  # we have to drop the dependency on python(abi) completely on el8+ because
+  # of IPU (python abi is different between systems)
+  %global __requires_exclude ^python\\(abi\\) = 3\\..+|/usr/libexec/platform-python
 %endif
 
 Name:       leapp
@@ -41,20 +51,29 @@ URL:        https://oamg.github.io/leapp/
 Source0:    https://github.com/oamg/%{name}/archive/v%{version}.tar.gz#/%{name}-%{version}.tar.gz
 BuildArch:  noarch
 
+Requires: %{leapp_python_name}-%{name} = %{version}-%{release}
+%{?python_disable_dependency_generator}
+
 %if !0%{?fedora}
-%if %{with python3}
-Requires: python3-%{name} = %{version}-%{release}
-%else
-Requires: python2-%{name} = %{version}-%{release}
-%endif
+# TODO: We plan to drop the dependency once we get ack for the planned changes.
+# # In such a case, leapp will not install leapp-repository automatically. For
+# # the full installation, people will have to install a metapackage which will
+# # be part of a particular leapp-repository (e.g. leapp-upgrade metapackage)
+# # Currently the leapp utility does not provide any subcommands (but help)
+# # so it doesn't require the leapp-repository anymore.
 
 # Just ensure the leapp repository will be installed as well. Compatibility
 # should be specified by the leapp-repository itself
 Requires: leapp-repository
 %endif # !fedora
 
+# FIXME: update the description
+# NOTE: tha man page is not updated yet!
 %description
-Leapp tool for handling upgrades.
+Leapp utility provides the possibility to use the Leapp framework via CLI.
+The utility itself does not define any subcommands but "help". All leapp
+subcommands are expected to be provided by other packages under a specific
+directory. See the man page for more details.
 
 
 ##################################################
@@ -62,46 +81,45 @@ Leapp tool for handling upgrades.
 ##################################################
 %package -n snactor
 Summary: %{summary}
-%if %{with python3}
-Requires: python3-%{name} = %{version}-%{release}
-%else
-Requires: python2-%{name} = %{version}-%{release}
-%endif
+Requires: %{leapp_python_name}-%{name} = %{version}-%{release}
+%{?python_disable_dependency_generator}
 
 %description -n snactor
 Leapp's snactor tool - actor development environment utility for creating and
 managing actor projects.
 
 ##################################################
-# Python 2 library package
+# the library package (the framework itself)
 ##################################################
-%if %{with python2}
-
-%package -n python2-%{name}
+%package -n %{leapp_python_name}-%{name}
 
 Summary: %{summary}
-%{?python_provide:%python_provide python2-%{name}}
+%{?python_provide:%python_provide %{leapp_python_name}-%{name}}
 
-%if 0%{?rhel} && 0%{?rhel} == 7
-# RHEL 7
+%if %{leapp_python} == 2
+# RHEL 7 only
 BuildRequires:  python-devel
 BuildRequires:  python-setuptools
-%else # rhel <> 7 or fedora
-BuildRequires:  python2-devel
-BuildRequires:  python2-setuptools
-%endif # rhel <> 7
+Conflicts:      python3-%{name}
+%else
+BuildRequires:  python3-devel
+BuildRequires:  python3-setuptools
+Conflicts:      python2-%{name}
+
+%{?python_disable_dependency_generator}
+%define __provides_exclude_from ^.*$
+%endif
 
 Provides: leapp-framework = %{framework_version}
 Requires: leapp-framework-dependencies = %{framework_dependencies}
 
-%description -n python2-%{name}
-Python 2 leapp framework libraries.
+%description -n %{leapp_python_name}-%{name}
+Python %{leapp_python} leapp framework libraries.
 
-%endif # with python2
 
-# FIXME:
-# this subpackages should be used by python2-%%{name} - so it makes sense to
-# improve name and dependencies inside - do same subpackage for python3-%%{name}
+##################################################
+# DEPS package for external dependencies
+##################################################
 %package deps
 Summary:    Meta-package with system dependencies of %{name} package
 
@@ -111,56 +129,24 @@ Provides: leapp-framework-dependencies = %{framework_dependencies}
 ##################################################
 # Real requirements for the leapp HERE
 ##################################################
-# NOTE: ignore Python3 completely now
 %if 0%{?rhel} && 0%{?rhel} == 7
 Requires: python-six
 Requires: python-setuptools
 Requires: python-requests
-%else
-%if %{with python3}
+%else # <> rhel 7
+# for Fedora & RHEL 8+ deliver just python3 stuff
 Requires: python3-six
 Requires: python3-setuptools
 Requires: python3-requests
-%else # with python2
-Requires: python2-six
-Requires: python2-setuptools
-Requires: python2-requests
-%endif
 %endif
 Requires: findutils
 ##################################################
 # end requirements here
 ##################################################
+
 %description deps
 %{summary}
 
-##################################################
-# Python 3 library package
-##################################################
-%if %{with python3}
-
-%package -n python3-%{name}
-Summary: %{summary}
-%{?system_python_abi}
-%{?python_provide:%python_provide python3-%{name}}
-
-BuildRequires:  python3-devel
-BuildRequires:  python3-setuptools
-
-Requires: leapp-framework-dependencies = %{framework_dependencies}
-
-# FIXME: avoiding problems with dependencies on virtual capabilities, see:
-#    https://serverfault.com/questions/411444/rpm-set-required-somepackage-0-5-0-and-somepackage-0-6-0
-# Currently, we do not use this rpm, so commenting the provides for now, until
-# we come up with reliable solution. E.g. avoid possibility to install both
-# version of frameworks - for Py2 and Py3 in the same time. Or rename the 
-# capability; e.g.: leapp-framework-py3
-# Provides: leapp-framework = %{framework_version}
-
-%description -n python3-%{name}
-Python 3 leapp framework libraries.
-
-%endif # with python3
 
 ##################################################
 # Prep
@@ -168,18 +154,12 @@ Python 3 leapp framework libraries.
 %prep
 %autosetup -n %{name}-%{version}
 
+
 ##################################################
 # Build
 ##################################################
 %build
-
-%if %{with python2}
-%py2_build
-%endif
-
-%if %{with python3}
-%py3_build
-%endif
+%{leapp_py_build}
 
 
 ##################################################
@@ -207,24 +187,14 @@ install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 install -m 0644 -p man/leapp.1 %{buildroot}%{_mandir}/man1/
 %endif # !fedora
 
-%if %{with python2}
-%py2_install
-%endif
-
-%if %{with python3}
-%py3_install
-%endif
-
-%if 0%{?fedora}
-rm -f %{buildroot}/%{_bindir}/leapp
-%endif
+%{leapp_py_install}
 
 
 ##################################################
 # leapp files
 ##################################################
 
-%if !0%{?fedora}
+# the condition should be dropped in future
 %files
 %doc README.md
 %license COPYING
@@ -240,9 +210,7 @@ rm -f %{buildroot}/%{_bindir}/leapp
 %dir %{_datadir}/leapp/
 %dir %{_datadir}/leapp/report_schema/
 %{_datadir}/leapp/report_schema
-%{python2_sitelib}/leapp/cli
-%endif
-
+%{leapp_python_sitelib}/leapp/cli
 
 
 ##################################################
@@ -250,37 +218,22 @@ rm -f %{buildroot}/%{_bindir}/leapp
 ##################################################
 %files -n snactor
 %license COPYING
-%{python2_sitelib}/leapp/snactor
+%{leapp_python_sitelib}/leapp/snactor
 %{_mandir}/man1/snactor.1*
 %{_bindir}/snactor
 
 
 ##################################################
-# python2-leapp files
+# python[23]-leapp files
 ##################################################
-%if %{with python2}
-
-%files -n python2-%{name}
+%files -n %{leapp_python_name}-%{name}
 %license COPYING
-%{python2_sitelib}/*
-# this one is related only to leapp tool
-%exclude %{python2_sitelib}/leapp/cli
-%exclude %{python2_sitelib}/leapp/snactor
+%{leapp_python_sitelib}/*
+# TODO: check valid entry points for leapp & snactor
+# These are delivered in other subpackages
+%exclude %{leapp_python_sitelib}/leapp/cli
+%exclude %{leapp_python_sitelib}/leapp/snactor
 
-%endif
-
-##################################################
-# python3-leapp files
-##################################################
-%if %{with python3}
-
-%files -n python3-%{name}
-%license COPYING
-%{python3_sitelib}/*
-#TODO: ignoring leapp and snactor in separate rpms now as we do not provide
-# entrypoints for Py3 in those subpackages anyway
-
-%endif
 
 %files deps
 # no files here

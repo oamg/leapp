@@ -3,6 +3,7 @@ SHELL=/bin/bash
 
 PYTHON_VENV ?= python
 VENVNAME ?= tut
+DIST_VERSION ?= 7
 CONFDIR=${DESTDIR}/etc/leapp
 LIBDIR=${DESTDIR}/var/lib/leapp
 
@@ -91,13 +92,13 @@ srpm: source
 	@rpmbuild -bs packaging/$(PKGNAME).spec \
 		--define "_sourcedir `pwd`/packaging/sources"  \
 		--define "_srcrpmdir `pwd`/packaging/SRPMS" \
-		--define "rhel 7" \
-		--define 'dist .el7' \
-		--define 'el7 1' || FAILED=1
+		--define "rhel $(DIST_VERSION)" \
+		--define 'dist .el$(DIST_VERSION)' \
+		--define 'el$(DIST_VERSION) 1' || FAILED=1
 	@mv packaging/$(PKGNAME).spec.bak packaging/$(PKGNAME).spec
 
 copr_build: srpm
-	@echo "--- Build RPM ${PKGNAME}-${VERSION}-${RELEASE}.el7.rpm in COPR ---"
+	@echo "--- Build RPM ${PKGNAME}-${VERSION}-${RELEASE}.el$(DIST_VERSION).rpm in COPR ---"
 	@echo copr-cli --config $(_COPR_CONFIG) build $(_COPR_REPO) \
 		packaging/SRPMS/${PKGNAME}-${VERSION}-${RELEASE}*.src.rpm
 	@copr-cli --config $(_COPR_CONFIG) build $(_COPR_REPO) \
