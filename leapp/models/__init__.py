@@ -25,13 +25,12 @@ Now, the models can be used like this::
 """
 import sys
 
+from leapp.exceptions import ModelDefinitionError
 from leapp.models import fields
 from leapp.models.error_severity import ErrorSeverity
-
-from leapp.exceptions import ModelDefinitionError
 from leapp.models.fields import ModelMisuseError
+from leapp.topics import DialogTopic, ErrorTopic, Topic
 from leapp.utils.meta import get_flattened_subclasses, with_metaclass
-from leapp.topics import ErrorTopic, DialogTopic, Topic
 
 
 class ModelMeta(type):
@@ -219,6 +218,10 @@ def _patch_module_getitem():
             delattr(self._module, name)
 
         def __getattr__(self, item):
+            # Redirect private imports to the module and don't use our magic
+            # We do not support importing private Module symbols
+            if item.startswith('_'):
+                return getattr(self._module, item)
             return getattr(self._module, item, None) or _module_ref(item)
 
     sys.modules[__name__] = ReferenceDict(sys.modules[__name__])
