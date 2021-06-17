@@ -40,7 +40,6 @@ class AnswerStore(object):
         # So don't even bother updating this to some more 'pythonic' coding style
         self._storage[scope] = dialog_scope
 
-
     @classmethod
     def _load_ini(cls, inifile):
         """
@@ -58,7 +57,6 @@ class AnswerStore(object):
             # Some of the sections were not in key = value format
             raise CommandError('Failed to load answer file {inifile} with the following errors: {errors}'.format(
                 inifile=inifile, errors=exc.message))
-
 
     def update(self, answer_file, allow_missing=False):
         """
@@ -80,7 +78,6 @@ class AnswerStore(object):
         with open(answer_file, 'w') as afile:
             conf.write(afile)
         return not_updated
-
 
     def load(self, answer_file):
         """

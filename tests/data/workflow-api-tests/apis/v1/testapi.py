@@ -1,5 +1,5 @@
 from leapp.workflows.api import WorkflowAPI
-from leapp.workflows.api import v2
+from leapp.workflows.api.v2 import testapi as v2
 
 
 class TestAPI(WorkflowAPI):

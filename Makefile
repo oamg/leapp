@@ -123,10 +123,6 @@ install:
 	install -dm 0755 ${LIBDIR}
 	umask 177 && $(PYTHON_VENV) -c "import sqlite3; sqlite3.connect('${LIBDIR}/audit.db').executescript(open('res/audit-layout.sql', 'r').read())"
 
-install-container-test:
-	docker pull registry.centos.org/${CONTAINER}
-	docker build -t leapp-tests -f res/docker-tests/Dockerfile.$(subst :,,${CONTAINER}) res/docker-tests
-
 install-test:
 ifeq ($(shell id -u), 0)
 	pip install -r requirements-tests.txt
@@ -136,8 +132,6 @@ else
 	pip install -r requirements-tests.txt
 endif
 
-container-test:
-	docker run --rm -ti -v ${PWD}:/payload leapp-tests
 
 test:   lint
 	@ $(ENTER_VENV) \

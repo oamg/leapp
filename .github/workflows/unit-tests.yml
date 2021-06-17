@@ -1,0 +1,38 @@
+name: Unit Tests
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Run unit tests in containers
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenarios:
+          - name: Run unit tests with python3.9 on el8
+            python: python3.9
+            container: ubi8
+          - name: Run unit tests with python 3.6 on el8
+            python: python3.6
+            container: ubi8
+          - name: Run unit tests with python2.7 on el7
+            python: python2.7
+            container: ubi7
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+      - name: Set master to origin/master
+        if: github.ref != 'refs/heads/master'
+        run: |
+          git branch -f master origin/master
+      - name: ${{matrix.scenarios.name}}
+        run: script -e -c /bin/bash -c 'TERM=xterm podman build --security-opt=seccomp=unconfined -t leapp-tests -f res/container-tests/Containerfile.${{matrix.scenarios.container}} res/container-tests && PYTHON_VENV=${{matrix.scenarios.python}} REPOSITORIES=${{matrix.scenarios.repos}} podman run --security-opt=seccomp=unconfined --rm -ti -v ${PWD}:/payload --env=PYTHON_VENV --env=REPOSITORIES leapp-tests'

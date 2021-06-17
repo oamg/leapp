@@ -1,0 +1,35 @@
+FROM registry.access.redhat.com/ubi7/ubi:7.9
+
+VOLUME /payload
+
+RUN yum -y install python27-python-pip && \
+    scl enable python27 -- pip install -U --target /usr/lib/python2.7/site-packages/ pip==20.3.0 && \
+    python -m pip install --ignore-installed pip==20.3.4 virtualenv
+
+WORKDIR /payload
+ENTRYPOINT virtualenv testenv && \
+    source testenv/bin/activate  && \
+    pip install -U setuptools && \
+    pip install -U funcsigs && \
+    pip install -U -r requirements-tests.txt && \
+    pip install -U . && \
+    export LINTABLES=$(find . -name '*.py' | grep -E -e '^\./leapp\/' -e '^\./tests/scripts/' | sort -u ) && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+    echo '===============   Running pylint   ===============' && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+	# echo $LINTABLES | xargs pylint --py3k && echo '===> pylint PASSED' && \
+    echo 'TEMPORARILY DISABLED' && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+    echo '===============   Running flake8   ===============' && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+	flake8 $LINTABLES && echo '===> flake8 PASSED' && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+    echo '===============   Running  tests   ===============' && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+    py.test -vv --cov-report term-missing --cov=leapp tests/scripts/*.py

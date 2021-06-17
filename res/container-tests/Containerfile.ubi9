@@ -1,0 +1,36 @@
+FROM registry.access.redhat.com/ubi8/ubi:latest
+
+VOLUME /payload
+
+RUN yum update -y && \
+    yum install python3 python39 python3-virtualenv make -y && \
+    yum -y install python3-pip && \
+    python3 -m pip install --upgrade pip==20.3.4
+
+WORKDIR /payload
+ENTRYPOINT virtualenv testenv -p "/usr/bin/$PYTHON_VENV" && \
+    source testenv/bin/activate  && \
+    pip install -U setuptools && \
+    pip install -U funcsigs && \
+    pip install -U -r requirements-tests.txt && \
+    pip install -U . && \
+    export LINTABLES=$(find . -name '*.py' | grep -E -e '^\./leapp\/' -e '^\./tests/scripts/' | sort -u ) && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+    echo '===============   Running pylint   ===============' && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+	# echo $LINTABLES | xargs pylint && echo '===> pylint PASSED' && \
+    echo 'TEMPORARILY DISABLED' && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+    echo '===============   Running flake8   ===============' && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+	flake8 $LINTABLES && echo '===> flake8 PASSED' && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+    echo '===============   Running  tests   ===============' && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+    py.test -vv --cov-report term-missing --cov=leapp tests/scripts/*.py

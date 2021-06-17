@@ -183,7 +183,6 @@ class Actor(object):
         """ Returns all actor tools paths related to the actor and common actors tools paths. """
         return self.actor_tools_paths + self.common_tools_paths
 
-
     def get_folder_path(self, name):
         """
         Finds the first matching folder path within :py:attr:`files_paths`.

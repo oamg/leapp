@@ -45,7 +45,6 @@ class RepositoryManager(object):
                 actors.append(actor)
         return actors
 
-
     def lookup_workflow(self, name):
         """
         Find workflow in all loaded repositories
