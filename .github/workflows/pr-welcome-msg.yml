@@ -1,0 +1,26 @@
+# IMPORTANT NOTE
+# In this workflow there should NOT be checkout action - because of security reasons.
+# More info:
+# https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request_target
+# https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+
+name: PR welcome message
+on:
+  pull_request_target:
+    types: opened
+
+jobs:
+  pr_comment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create comment
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## **Thank you for contributing to the Leapp project!**
+            Please note that every PR needs to comply with the [Leapp Guidelines](https://leapp.readthedocs.io/en/latest/contributing.html#) and must pass all tests in order to be mergable.
+            If you want to re-run tests or request review, you can use following commands as a comment:
+            - **leapp-ci build** to run copr build and e2e tests in **OAMG CI**
+            - **review please** to notify leapp developers of review request
+            **Note:** In case there are problems with tests not being triggered automatically on new PR/commit or pending for a long time, please consider rerunning the CI by commenting **leapp-ci build** (might require several comments). If the problem persists, contact leapp-infra.
