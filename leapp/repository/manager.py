@@ -26,6 +26,26 @@ class RepositoryManager(object):
                 return actor
         return None
 
+    def _lookup_actors(self, name):
+        """
+        Find all actors of the given name in all loaded repositories.
+
+        Returns list of all actors of the given name in the loaded repositories
+        or empty list.
+
+        :param name: Name of the actor
+        :type name: str
+        :return: list
+        """
+        # FIXME: returns max 1 actor per repository (bug in the lookup_actor)
+        actors = []
+        for repo in self._repos.values():
+            actor = repo.lookup_actor(name)
+            if actor:
+                actors.append(actor)
+        return actors
+
+
     def lookup_workflow(self, name):
         """
         Find workflow in all loaded repositories
