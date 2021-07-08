@@ -63,6 +63,7 @@ class Repository(object):
         :type name: str
         :return: None or Actor
         """
+        # TODO: what's the behaviour in case of multiple actors of the same name?
         name = name.lower()
         for actor in self.actors:
             actor_name = actor.name.lower()
