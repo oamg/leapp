@@ -94,7 +94,7 @@ jobs:
             }},
             "environments": [{
               "arch": "x86_64",
-              "os": {"compose": "RHEL-7.9-updates-20201124.0"},
+              "os": {"compose": "RHEL-7.9-updates-20210629.0"},
               "artifacts": [{"type": "fedora-copr-build", "id": "${{ steps.copr_build.outputs.copr_id }}:epel-7-x86_64"}],
               "variables": {
                 "REPO": "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY",
