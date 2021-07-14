@@ -170,7 +170,7 @@ Requires: findutils
 install -m 0755 -d %{buildroot}%{_mandir}/man1
 install -m 0644 -p man/snactor.1 %{buildroot}%{_mandir}/man1/
 
-%if !0%{?fedora}
+# This block of files was originally skipped for fedora. Adding now
 install -m 0755 -d %{buildroot}%{_datadir}/leapp
 install -m 0755 -d %{buildroot}%{_datadir}/leapp/report_schema
 install -m 0644 -p report-schema-v110.json %{buildroot}%{_datadir}/leapp/report_schema/report-schema.json
@@ -185,7 +185,6 @@ install -m 0700 -d %{buildroot}%{_sysconfdir}/leapp/answers
 install -m 0700 -d %{buildroot}%{_localstatedir}/log/leapp
 install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 install -m 0644 -p man/leapp.1 %{buildroot}%{_mandir}/man1/
-%endif # !fedora
 
 %{leapp_py_install}
 
