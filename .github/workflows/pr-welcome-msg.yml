@@ -23,5 +23,7 @@ jobs:
             If you want to re-run tests or request review, you can use following commands as a comment:
             - **leapp-ci build** to run copr build and e2e tests in **OAMG CI**
             - **review please** to notify leapp developers of review request
+
             Please [open ticket](https://url.corp.redhat.com/oamg-ci-issue) in case you experience technical problem with the CI. (RH internal only)
+
             **Note:** In case there are problems with tests not being triggered automatically on new PR/commit or pending for a long time, please consider rerunning the CI by commenting **leapp-ci build** (might require several comments). If the problem persists, contact leapp-infra.
