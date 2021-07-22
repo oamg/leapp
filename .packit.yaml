@@ -1,0 +1,42 @@
+specfile_path: packaging/leapp.spec
+
+upstream_project_url: https://github.com/oamg/leapp
+
+jobs:
+- job: copr_build
+  trigger: pull_request
+  metadata:
+    owner: "@oamg"
+    project: leapp
+    targets:
+    - epel-7-ppc64le
+    - epel-7-x86_64
+    - epel-8-x86_64
+    - fedora-all-aarch64
+    - fedora-all-x86_64
+  actions:
+    post-upstream-clone:
+    # builds from PRs should have lower NVR than those from master branch
+    - sed -i "s/1%{?dist}/0%{?dist}/g" packaging/leapp.spec
+    get-current-version:
+    # get version from spec file instead from git tag
+    - bash -c "grep -m1 '^Version:' packaging/leapp.spec | grep -om1 '[0-9].[0-9.]**'"
+- job: copr_build
+  trigger: commit
+  metadata:
+    branch: master
+    owner: "@oamg"
+    project: leapp
+    targets:
+    - epel-7-ppc64le
+    - epel-7-x86_64
+    - epel-8-x86_64
+    - fedora-all-aarch64
+    - fedora-all-x86_64
+  actions:
+    post-upstream-clone:
+    # builds from master branch should have the highest NVR
+    - sed -i "s/1%{?dist}/100%{?dist}/g" packaging/leapp.spec
+    get-current-version:
+    # get version from spec file instead from git tag
+    - bash -c "grep -m1 '^Version:' packaging/leapp.spec | grep -om1 '[0-9].[0-9.]**'"
