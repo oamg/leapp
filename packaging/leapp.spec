@@ -38,7 +38,7 @@
   %define leapp_py_install %{py3_install}
   # we have to drop the dependency on python(abi) completely on el8+ because
   # of IPU (python abi is different between systems)
-  %global __requires_exclude ^python\\(abi\\) = 3\\..+|/usr/libexec/platform-python
+  %global __requires_exclude ^python\\(abi\\) = 3\\..+|/usr/libexec/platform-python|/usr/bin/python.*
 %endif
 
 Name:       leapp
