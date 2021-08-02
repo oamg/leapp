@@ -23,7 +23,7 @@
 # # Currently Py2 is dead on Fedora and we don't have to support it. As well,
 # # our current packaging is not prepared for Py2 & Py3 packages in the same
 # # time. Instead of that, make Py2 and Py3 exclusive. Possibly rename macros..
-%if 0%{?rhel} && 0%{?rhel} == 7
+%if 0%{?rhel} == 7
   %define leapp_python 2
   %define leapp_python_sitelib %{python2_sitelib}
   %define leapp_python_name python2
@@ -54,21 +54,20 @@ BuildArch:  noarch
 Requires: %{leapp_python_name}-%{name} = %{version}-%{release}
 %{?python_disable_dependency_generator}
 
-%if !0%{?fedora}
-# TODO: We plan to drop the dependency once we get ack for the planned changes.
-# # In such a case, leapp will not install leapp-repository automatically. For
-# # the full installation, people will have to install a metapackage which will
-# # be part of a particular leapp-repository (e.g. leapp-upgrade metapackage)
-# # Currently the leapp utility does not provide any subcommands (but help)
-# # so it doesn't require the leapp-repository anymore.
+%if 0%{?rhel} == 7
+# The leapp tool doesn't require the leapp-repository anymore. However for the
+# compatibility purposes, we keep it here for RHEL 7 at least for a while.
+# The dependency on leapp is expected to be set by packages providing the
+# final functionality (e.g. conversion of system, in-place upgrade).
+# IOW, people should look for rpms like leapp-convert or leapp-upgrade
+# in future.
 
 # Just ensure the leapp repository will be installed as well. Compatibility
 # should be specified by the leapp-repository itself
 Requires: leapp-repository
 %endif # !fedora
 
-# FIXME: update the description
-# NOTE: tha man page is not updated yet!
+# FIXME(pstodulk): tha man page is not updated yet!
 %description
 Leapp utility provides the possibility to use the Leapp framework via CLI.
 The utility itself does not define any subcommands but "help". All leapp
@@ -152,7 +151,7 @@ Requires: findutils
 # Prep
 ##################################################
 %prep
-%autosetup -n %{name}-%{version}
+%setup -n %{name}-%{version}
 
 
 ##################################################
