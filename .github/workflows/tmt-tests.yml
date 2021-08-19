@@ -90,7 +90,8 @@ jobs:
             "api_key": "${{ secrets.TF_API_KEY }}",
             "test": {"fmf": {
               "url": "https://gitlab.cee.redhat.com/oamg/tmt-plans",
-              "ref": "master"
+              "ref": "master",
+              "name": "morf-leapp|integration|e2e"
             }},
             "environments": [{
               "arch": "x86_64",
