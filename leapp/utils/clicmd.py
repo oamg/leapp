@@ -87,7 +87,8 @@ class Command(object):
         parser.add_argument('--version', action='version', version=version)
         parser.set_defaults(func=None)
         if self._sub_commands:
-            s = parser.add_subparsers(title='Main commands', metavar='')
+            s = parser.add_subparsers(title='Required arguments', metavar='command')
+            s.required = True
         else:
             s = parser
         self.apply_parser(s, parser=parser)
