@@ -37,6 +37,15 @@ def _initialize_database(db):
         else:
             for migration in MIGRATIONS[index:]:
                 db.executescript(migration[1])
+
+    if os.environ.get('LEAPP_DEVEL_DATABASE_SYNC_OFF'):
+        db.execute('PRAGMA journal_mode = WAL')
+        # This code speeds up leapp by a factor of almost 18 in some scenarios
+        # however comes at the cost of potential database corruption
+        # According to the SQLITE documentation this corruption can only happen
+        # in case of power loss or an OS crash.
+        db.execute('PRAGMA synchronous = 0')
+
     return db
 
 
