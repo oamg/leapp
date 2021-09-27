@@ -42,6 +42,12 @@ REQUEST=`if test -n "$$PR"; then echo ".PR$${PR}"; elif test -n "$$MR"; then ech
 #    1.201810080027Z.4078402.master
 RELEASE="$(N_REL).$(TIMESTAMP).$(SHORT_SHA).$(BRANCH)$(REQUEST)$(_SUFFIX)"
 
+ifneq ($(shell id -u),0)
+	ENTER_VENV := . $(VENVNAME)/bin/activate;
+else
+	ENTER_VENV := 
+endif
+
 all: help
 
 help:
@@ -151,4 +157,21 @@ else
 	pytest --cache-clear --flake8 -m flake8 leapp tests/scripts/*.py
 endif
 
-.PHONY: clean copr_build install install-deps install-test srpm test lint
+fast_lint:
+	@ $(ENTER_VENV) \
+	FILES_TO_LINT="$$(git diff --name-only $(MASTER_BRANCH)| grep '\.py$$')"; \
+	if [[ -n "$$FILES_TO_LINT" ]]; then \
+		pylint -j 0 $$FILES_TO_LINT && \
+		flake8 $$FILES_TO_LINT; \
+		LINT_EXIT_CODE="$$?"; \
+		if [[ "$$LINT_EXIT_CODE" != "0" ]]; then \
+			exit $$LINT_EXIT_CODE; \
+		fi; \
+		if [[ "$(_PYTHON_VENV)" == "python2.7" ]] ; then \
+			pylint --py3k $$FILES_TO_LINT; \
+		fi; \
+	else \
+		echo "No files to lint."; \
+	fi
+
+.PHONY: clean copr_build install install-deps install-test srpm test lint fast-lint
