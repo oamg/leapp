@@ -198,7 +198,8 @@ class Command(object):
         self._options.append((args, kwargs, internal))
 
     def add_option(self, name, short_name='', help='',  # noqa; pylint: disable=redefined-builtin
-                   is_flag=False, inherit=False, value_type=str, wrapped=None, action=None, metavar=None):
+                   is_flag=False, inherit=False, value_type=str, wrapped=None, action=None, metavar=None,
+                   choices=None, default=None):
         """
         Add an option
 
@@ -220,6 +221,10 @@ class Command(object):
         :param metavar: Changes the display name of arguments in generated help messages.
                         It has no influence on the attribute name from the generated arguments namespace.
         :type metavar: str
+        :param choices: range of values that the argument is allowed to take
+        :type choices: list
+        :param choices: default value of the argument if nothing is specified
+        :type choices: str
         :return: self
         """
         name = name.lstrip('-')
@@ -238,6 +243,10 @@ class Command(object):
                 kwargs['type'] = value_type
         if metavar:
             kwargs['metavar'] = metavar
+        if choices:
+            kwargs['choices'] = choices
+        if default:
+            kwargs['default'] = default
         self._add_opt(*names, help=help,  # noqa; pylint: disable=redefined-builtin
                       action=action, internal={'wrapped': wrapped, 'inherit': inherit}, **kwargs)
         return self
