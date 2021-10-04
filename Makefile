@@ -140,22 +140,13 @@ container-test:
 	docker run --rm -ti -v ${PWD}:/payload leapp-tests
 
 test:   lint
-ifeq ($(shell id -u), 0)
+	@ $(ENTER_VENV) \
 	pytest -vv --cov-report term-missing --cov=leapp tests/scripts
-else
-	. $(VENVNAME)/bin/activate ; \
-	pytest -vv --cov-report term-missing --cov=leapp tests/scripts
-endif
 
 lint:
-ifeq ($(shell id -u), 0)
+	@ $(ENTER_VENV) \
 	pytest --cache-clear --pylint -m pylint leapp tests/scripts/*.py; \
 	pytest --cache-clear --flake8 -m flake8 leapp tests/scripts/*.py
-else
-	. $(VENVNAME)/bin/activate ; \
-	pytest --cache-clear --pylint -m pylint leapp tests/scripts/*.py; \
-	pytest --cache-clear --flake8 -m flake8 leapp tests/scripts/*.py
-endif
 
 fast_lint:
 	@ $(ENTER_VENV) \
@@ -174,4 +165,4 @@ fast_lint:
 		echo "No files to lint."; \
 	fi
 
-.PHONY: clean copr_build install install-deps install-test srpm test lint fast-lint
+.PHONY: clean copr_build install install-deps install-test srpm test lint fast_lint
