@@ -13,7 +13,7 @@ from leapp.models import ApiTestConsume, ApiTestProduce
 from leapp.repository.scan import scan_repo
 
 
-logging.basicConfig(format='%(asctime)-15s %(clientip)s %(user)-8s %(message)s')
+logging.basicConfig(format='%(asctime)-15s %(message)s')
 
 
 class _TestableMessaging(BaseMessaging):
