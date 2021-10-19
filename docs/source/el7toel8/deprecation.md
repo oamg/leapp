@@ -12,6 +12,9 @@ framework, see [List of deprecated functionality in leapp](../deprecation.html#l
 
 ## current upstream development <span style="font-size:0.5em; font-weight:normal">(till the next release + 6months)</span>
 
+- nothing yet...
+
+## v0.15.0 <span style="font-size:0.5em; font-weight:normal">(till April 2022)</span>
 - Models
   - **RequiredTargetUserspacePackages** - Deprecated because the new solution has been designed. Use the `TargetUserspacePreupgradeTasks` instead (see the `install_rpms` field).
   - **RequiredUpgradeInitramPackages** - Deprecated because the new solution around the upgrade initramfs has been designed. Use the `TargetUserspaceUpgradeTasks` instead (see the `install_rpms` field).
