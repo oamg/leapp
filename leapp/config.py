@@ -53,6 +53,9 @@ _CONFIG_DEFAULTS = {
     'repositories': {
         'repo_path': '.',
     },
+    'upgrade': {
+        'upgrade_paths': '/usr/share/leapp-repository/upgrade_paths.json',
+    },
 }
 
 
