@@ -91,7 +91,7 @@ jobs:
             "test": {"fmf": {
               "url": "https://gitlab.cee.redhat.com/oamg/tmt-plans",
               "ref": "master",
-              "name": "morf-leapp|integration|e2e"
+              "name": "^(?!.*c2r)(?!.*sap)"
             }},
             "environments": [{
               "arch": "x86_64",
