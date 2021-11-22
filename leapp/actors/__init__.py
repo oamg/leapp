@@ -109,6 +109,10 @@ class Actor(object):
         if config_model:
             self._configuration = next(self.consume(config_model), None)
 
+        # NOTE(ivasilev) Importing here because of circular dependencies
+        from leapp.libraries.stdlib import path  # noqa: C415; pylint: disable=import-outside-toplevel
+        self._path = path
+
         # Needed so produce allows to send messages for models specified also by workflow APIs
         type(self).produces = get_api_models(type(self), 'produces')
 
@@ -181,21 +185,6 @@ class Actor(object):
         """ Returns all actor tools paths related to the actor and common actors tools paths. """
         return self.actor_tools_paths + self.common_tools_paths
 
-    @staticmethod
-    def _get_folder_path(directories, name):
-        """
-        Finds the first matching folder path within directories.
-
-        :param name: Name of the folder
-        :type name: str
-        :return: Found folder path
-        :rtype: str or None
-        """
-        for path in directories:
-            path = os.path.join(path, name)
-            if os.path.isdir(path):
-                return path
-        return None
 
     def get_folder_path(self, name):
         """
@@ -206,7 +195,7 @@ class Actor(object):
         :return: Found folder path
         :rtype: str or None
         """
-        return self._get_folder_path(self.files_paths, name)
+        return self._path.get_folder_path(self.files_paths, name)
 
     def get_common_folder_path(self, name):
         """
@@ -217,7 +206,7 @@ class Actor(object):
         :return: Found folder path
         :rtype: str or None
         """
-        return self._get_folder_path(self.common_files_paths, name)
+        return self._path.get_folder_path(self.common_files_paths, name)
 
     def get_actor_folder_path(self, name):
         """
@@ -228,23 +217,7 @@ class Actor(object):
         :return: Found folder path
         :rtype: str or None
         """
-        return self._get_folder_path(self.actor_files_paths, name)
-
-    @staticmethod
-    def _get_file_path(directories, name):
-        """
-        Finds the first matching file path within directories.
-
-        :param name: Name of the file
-        :type name: str
-        :return: Found file path
-        :rtype: str or None
-        """
-        for path in directories:
-            path = os.path.join(path, name)
-            if os.path.isfile(path):
-                return path
-        return None
+        return self._path.get_folder_path(self.actor_files_paths, name)
 
     def get_file_path(self, name):
         """
@@ -255,7 +228,7 @@ class Actor(object):
         :return: Found file path
         :rtype: str or None
         """
-        return self._get_file_path(self.files_paths, name)
+        return self._path.get_file_path(self.files_paths, name)
 
     def get_common_file_path(self, name):
         """
@@ -266,7 +239,7 @@ class Actor(object):
         :return: Found file path
         :rtype: str or None
         """
-        return self._get_file_path(self.common_files_paths, name)
+        return self._path.get_file_path(self.common_files_paths, name)
 
     def get_actor_file_path(self, name):
         """
@@ -277,23 +250,7 @@ class Actor(object):
         :return: Found file path
         :rtype: str or None
         """
-        return self._get_file_path(self.actor_files_paths, name)
-
-    @staticmethod
-    def _get_tool_path(directories, name):
-        """
-        Finds the first matching executable file within directories.
-
-        :param name: Name of the file
-        :type name: str
-        :return: Found file path
-        :rtype: str or None
-        """
-        for path in directories:
-            path = os.path.join(path, name)
-            if os.path.isfile(path) and os.access(path, os.X_OK):
-                return path
-        return None
+        return self._path.get_file_path(self.actor_files_paths, name)
 
     def get_tool_path(self, name):
         """
@@ -304,7 +261,7 @@ class Actor(object):
         :return: Found file path
         :rtype: str or None
         """
-        return self._get_tool_path(self.tools_paths, name)
+        return self._path.get_tool_path(self.tools_paths, name)
 
     def get_common_tool_path(self, name):
         """
@@ -315,7 +272,7 @@ class Actor(object):
         :return: Found file path
         :rtype: str or None
         """
-        return self._get_tool_path(self.common_tools_paths, name)
+        return self._path.get_tool_path(self.common_tools_paths, name)
 
     def get_actor_tool_path(self, name):
         """
@@ -326,7 +283,7 @@ class Actor(object):
         :return: Found file path
         :rtype: str or None
         """
-        return self._get_tool_path(self.actor_tools_paths, name)
+        return self._path.get_tool_path(self.actor_tools_paths, name)
 
     def run(self, *args):
         """ Runs the actor calling the method :py:func:`process`. """
