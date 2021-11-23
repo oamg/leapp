@@ -9,7 +9,7 @@ from leapp.exceptions import (MissingActorAttributeError, RequestStopAfterPhase,
 from leapp.models import DialogModel, Model
 from leapp.models.error_severity import ErrorSeverity
 from leapp.tags import Tag
-from leapp.utils import get_api_models
+from leapp.utils import get_api_models, path
 from leapp.utils.i18n import install_translation_for_actor
 from leapp.utils.meta import get_flattened_subclasses
 from leapp.workflows.api import WorkflowAPI
@@ -109,8 +109,6 @@ class Actor(object):
         if config_model:
             self._configuration = next(self.consume(config_model), None)
 
-        # NOTE(ivasilev) Importing here because of circular dependencies
-        from leapp.libraries.stdlib import path  # noqa: C415; pylint: disable=import-outside-toplevel
         self._path = path
 
         # Needed so produce allows to send messages for models specified also by workflow APIs
