@@ -17,6 +17,10 @@ jobs:
         with:
           ref: "refs/heads/master"
 
+      - name: Install copr-cli
+        id: install-copr-cli
+        run: pip install copr-cli
+
       - name: Trigger fedora copr build
         id: trigger_fedora_build
         env:
@@ -30,6 +34,19 @@ jobs:
           copr_url = https://copr.fedorainfracloud.org
           EOF
 
-          pip install copr-cli
           make copr_build
 
+      - name: Trigger internal copr build
+        id: trigger_internal_build
+        env:
+          COPR_CONFIG: "copr_internal.conf"
+        run: |
+          cat << EOF > $COPR_CONFIG
+          [copr-cli]
+          login = ${{ secrets.INTERNAL_COPR_LOGIN }}
+          username = oam-group
+          token = ${{ secrets.INTERNAL_COPR_TOKEN }}
+          copr_url = ${{ secrets.INTERNAL_COPR_URL }}
+          EOF
+
+          make copr_build
