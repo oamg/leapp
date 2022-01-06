@@ -1,6 +1,7 @@
 specfile_path: packaging/leapp.spec
 
 upstream_project_url: https://github.com/oamg/leapp
+merge_pr_in_ci: false
 
 jobs:
 - job: copr_build
