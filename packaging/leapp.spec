@@ -17,7 +17,7 @@
 
 # IMPORTANT: everytime the requirements are changed, increment number by one
 # - same for Provides in deps subpackage
-%global framework_dependencies 4
+%global framework_dependencies 5
 
 # Do not build bindings for python3 for RHEL == 7
 # # Currently Py2 is dead on Fedora and we don't have to support it. As well,
@@ -38,9 +38,6 @@
   %define leapp_py_install %{py3_install}
   # we have to drop the dependency on python(abi) completely on el8+ because
   # of IPU (python abi is different between systems)
-  # NOTE: however, we will set the abi deps inside the meta-package, as RHEL 8
-  # could contain various python 3 versions and we can handle just one version
-  # per package.
   %global __requires_exclude ^python\\(abi\\) = 3\\..+|/usr/libexec/platform-python|/usr/bin/python.*
 %endif
 
@@ -137,16 +134,14 @@ Requires: python-setuptools
 Requires: python-requests
 %else # <> rhel 7
 # for Fedora & RHEL 8+ deliver just python3 stuff
+# NOTE: requirement on python3 refers to the general version of Python
+# for the particular system (3.6 on RHEL 8, 3.9 on RHEL 9, ...)
+# Do not use python(abi) deps, as on RHEL 8 it's provided by platform-python
+# which is not helpful for us
+Requires: python3
 Requires: python3-six
 Requires: python3-setuptools
 Requires: python3-requests
-%if 0%{?rhel} == 8
-# this prevents situation when someone would like to install leapp with
-# python-3.8+ on RHEL 8, but does not affect any else systems nor upgrades.
-Requires: python(abi) = 3.6
-%else # rhel 9
-Requires: python(abi) = 3.9
-%endif
 %endif
 Requires: findutils
 ##################################################
