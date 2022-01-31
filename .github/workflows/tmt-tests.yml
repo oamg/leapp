@@ -11,7 +11,7 @@ jobs:
     name: Run tmt tests on Testing Farm service
     if: |
       github.event.issue.pull_request
-      && github.event.comment.body == '/rerun'
+      && startsWith(github.event.comment.body, '/rerun')
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-20.04
     steps:
@@ -67,68 +67,59 @@ jobs:
               body: 'Copr build succeeded: ${{ steps.copr_build.outputs.copr_url }}'
             })
 
-      - name: Schedule a tmt test
-        # This step schedules a tmt test. The test id is stored in `req_id` variable for a later use.
+      - name: Get dependent leapp-repository pr number from rerun comment
+        uses: actions-ecosystem/action-regex-match@v2
+        id: leapp_repository_pr_regex_match
+        with:
+          text: ${{ github.event.comment.body }}
+          regex: '^/rerun\s+([0-9]+)\s*$'
 
-        # TODO: The actual command that triggers a new test on TF service is commented out as it would fail, because
-        #       there are no tmt plans ready in the repository.
-
-        # Information about the repo/ref/sha from which the action was triggered is sent in the
-        # `environments.variables` field.
-
-        # All the discovered test plans from the repository specified in `tests.fmf.url` are run.
-        # It should be possible to specify which test plan to run as specified in `test.fmf.name`, however this is not
-        # working at this moment, see https://gitlab.com/testing-farm/general/-/issues/18
-        #
-        # At this moment repo/sha that triggered the action is used, i.e. all tests plans specified in THIS repository
-        # are run.
-
-        id: sched_test
+      - name: If leapp_repository_pr was specified in the comment - trigger copr build
+        # TODO: XXX FIXME This should schedule copr build for leapp but for now it will be just setting an env var
+        id: leapp_repository_pr
+        if: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' }}
         run: |
-          cat << EOF > request.json
-          {
-            "api_key": "${{ secrets.TF_API_KEY }}",
-            "test": {"fmf": {
-              "url": "https://gitlab.cee.redhat.com/oamg/tmt-plans",
-              "ref": "master",
-              "name": "^(?!.*c2r)(?!.*sap)"
-            }},
-            "environments": [{
-              "arch": "x86_64",
-              "os": {"compose": "${{ secrets.COMPOSE_RHEL79 }}"},
-              "artifacts": [{"type": "fedora-copr-build", "id": "${{ steps.copr_build.outputs.copr_id }}:epel-7-x86_64"}],
-              "variables": {
-                "REPO": "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY",
-                "REF": "${{ steps.ref_sha.outputs.ref }}",
-                "SHA": "${{ steps.ref_sha.outputs.sha }}",
-                "PR_NUMBER": "${{ steps.pr_nr.outputs.pr_nr }}"
-              }
-            }]
-          }
+          echo "::set-output name=leapp_repository_pr::${{ steps.leapp_repository_pr_regex_match.outputs.group1 }}"
+
+      - name: Checkout leapp-repository
+        id: checkout_leapp_repository
+        if: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' }}
+        uses: actions/checkout@v2
+        with:
+          repository: "oamg/leapp-repository"
+          ref: "refs/pull/${{ steps.leapp_repository_pr.outputs.leapp_repository_pr }}/head"
+
+      - name: Get ref and sha for leapp-repository
+        id: ref_sha_leapp_repository
+        if: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' }}
+        run: |
+          echo "::set-output name=sha::$(git rev-parse --short HEAD)"
+          echo "::set-output name=ref::refs/pull/${{ steps.leapp_repository_pr.outputs.leapp_repository_pr }}/head"
+
+      - name: Trigger copr build for leapp-repository
+        id: copr_build_leapp_repository
+        if: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' }}
+        run: |
+          cat << EOF > copr_fedora.conf
+          [copr-cli]
+          login = ${{ secrets.FEDORA_COPR_LOGIN }}
+          username = @oamg
+          token = ${{ secrets.FEDORA_COPR_TOKEN }}
+          copr_url = https://copr.fedorainfracloud.org
+          # expiration date: 2030-07-04
           EOF
 
-          if [ "${{ secrets.ACTIONS_STEP_DEBUG }}" = "true" ]; then
-              echo request.json
-              jq < request.json
-          fi
+          pip install copr-cli
+          PR=${{ steps.leapp_repository_pr.outputs.leapp_repository_pr }} COPR_CONFIG=copr_fedora.conf make copr_build | tee copr.log
 
-          curl ${{ secrets.TF_ENDPOINT }}/requests \
-            --data @request.json \
-            --header "Content-Type: application/json" \
-            --output response.json
+          COPR_URL=$(grep -Po 'https://copr.fedorainfracloud.org/coprs/build/\d+' copr.log)
+          echo "::set-output name=copr_url::${COPR_URL}"
+          echo "::set-output name=copr_id::${COPR_URL##*/}"
 
-          if [ "${{ secrets.ACTIONS_STEP_DEBUG }}" = "true" ]; then
-              echo response.json
-              jq < response.json
-          fi
-
-          echo "::set-output name=req_id::$(jq -r .id response.json)"
-
-      - name: Add comment with Testing Farm request/result
-        # This step adds a new comment to the pull request with a link to the test.
-
-        # TODO: This is a temporary workaround until a proper way to set a commit status is implemented.
-        id: comment
+      - name: Add comment with copr build url for leapp-repository
+        # TODO: Create comment when copr build fails.
+        id: link_copr_leapp_repository
+        if: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' }}
         uses: actions/github-script@v4
         with:
           script: |
@@ -136,8 +127,44 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Testing Farm [request](${{ secrets.TF_ENDPOINT }}/requests/${{ steps.sched_test.outputs.req_id }})' +
-                    ' for tmt test was created. Once finished, results should be available' +
-                    ' [here](http://artifacts.osci.redhat.com/testing-farm/${{ steps.sched_test.outputs.req_id }}/).' +
-                    '\n[Full pipeline log](http://artifacts.osci.redhat.com/testing-farm/${{ steps.sched_test.outputs.req_id }}/pipeline.log).'
+              body: 'Copr build succeeded: ${{ steps.copr_build_leapp_repository.outputs.copr_url }}'
             })
+
+      - name: Schedule regression testing for 7to8
+        id: run_test_7to8
+        env:
+          ARTIFACTS: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' && format('{0},{1}', steps.copr_build_leapp_repository.outputs.copr_id, steps.copr_build.outputs.copr_id) || steps.copr_build.outputs.copr_id }}
+        uses: oamg/testing-farm-service-action@main
+        with:
+          # required
+          tft_server: ${{ secrets.TF_ENDPOINT }}
+          tft_token: ${{ secrets.TF_API_KEY }}
+          compose: ${{ secrets.COMPOSE_RHEL79 }}
+          artifacts: ${{ env.ARTIFACTS }}
+          # optional
+          tests_regex: "^(?!.*c2r)(?!.*sap)(?!.*8to9)"
+          arch: 'x86_64'
+          copr: 'epel-7-x86_64'
+          debug: ${{ secrets.ACTIONS_STEP_DEBUG }}
+          test_name: '7to8'
+          tmt_context: 'distro=rhel-7'
+
+      - name: Schedule regression testing for 8to9
+        id: run_test_8to9
+        env:
+          ARTIFACTS: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' && format('{0},{1}', steps.copr_build_leapp_repository.outputs.copr_id, steps.copr_build.outputs.copr_id) || steps.copr_build.outputs.copr_id }}
+        uses: oamg/testing-farm-service-action@main
+        with:
+          # required
+          tft_server: ${{ secrets.TF_ENDPOINT }}
+          tft_token: ${{ secrets.TF_API_KEY }}
+          compose: ${{ secrets.COMPOSE_RHEL86 }}
+          artifacts: ${{ env.ARTIFACTS }}
+          # optional
+          tests_regex: "^(?!.*c2r)(?!.*sap)(?!.*7to8)"
+          arch: 'x86_64'
+          copr: 'epel-8-x86_64'
+          debug: ${{ secrets.ACTIONS_STEP_DEBUG }}
+          test_name: '8to9'
+          env_vars: 'TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_SKU=RH00069;RHSM_REPOS=rhel-8-for-x86_64-appstream-beta-rpms,rhel-8-for-x86_64-baseos-beta-rpms;LEAPP_EXEC_ENV_VARS=LEAPP_DEVEL_TARGET_PRODUCT_TYPE=beta'
+          tmt_context: 'distro=rhel-8'
