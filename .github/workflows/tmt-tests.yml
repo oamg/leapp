@@ -15,6 +15,13 @@ jobs:
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
     runs-on: ubuntu-20.04
     steps:
+      - name: Get dependent leapp-repository pr number from rerun comment
+        uses: actions-ecosystem/action-regex-match@v2
+        id: leapp_repository_pr_regex_match
+        with:
+          text: ${{ github.event.comment.body }}
+          regex: '^/rerun\s+([0-9]+)\s*$'
+
       - name: Get pull request number
         id: pr_nr
         run: |
@@ -34,6 +41,24 @@ jobs:
         run: |
           echo "::set-output name=sha::$(git rev-parse --short HEAD)"
           echo "::set-output name=ref::refs/pull/${{ steps.pr_nr.outputs.pr_nr }}/head"
+
+      - name: Get latest leapp-repository master copr build id
+        id: get_latest_lpr_copr_build_id
+        if: ${{ steps.leapp_repository_pr_regex_match.outputs.match == '' }}
+        run: |
+          cat << EOF > copr_fedora.conf
+          [copr-cli]
+          login = ${{ secrets.FEDORA_COPR_LOGIN }}
+          username = @oamg
+          token = ${{ secrets.FEDORA_COPR_TOKEN }}
+          copr_url = https://copr.fedorainfracloud.org
+          # expiration date: 2030-07-04
+          EOF
+
+          pip install copr-cli
+          REGEX='leapp-repository.*master.*' COPR_REPO='@oamg/leapp' _COPR_CONFIG=copr_fedora.conf python ${{ github.workspace }}/utils/get_latest_copr_build > latest_lpr
+          COPR_ID=$(cat latest_lpr)
+          echo "::set-output name=copr_id::${COPR_ID##*/}"
 
       - name: Trigger copr build
         id: copr_build
@@ -66,13 +91,6 @@ jobs:
               repo: context.repo.repo,
               body: 'Copr build succeeded: ${{ steps.copr_build.outputs.copr_url }}'
             })
-
-      - name: Get dependent leapp-repository pr number from rerun comment
-        uses: actions-ecosystem/action-regex-match@v2
-        id: leapp_repository_pr_regex_match
-        with:
-          text: ${{ github.event.comment.body }}
-          regex: '^/rerun\s+([0-9]+)\s*$'
 
       - name: If leapp_repository_pr was specified in the comment - trigger copr build
         # TODO: XXX FIXME This should schedule copr build for leapp but for now it will be just setting an env var
@@ -133,7 +151,7 @@ jobs:
       - name: Schedule regression testing for 7to8
         id: run_test_7to8
         env:
-          ARTIFACTS: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' && format('{0},{1}', steps.copr_build_leapp_repository.outputs.copr_id, steps.copr_build.outputs.copr_id) || steps.copr_build.outputs.copr_id }}
+          ARTIFACTS: ${{ format('{0},{1}', steps.leapp_repository_pr_regex_match.outputs.match != '' && steps.copr_build_leapp_repository.outputs.copr_id || steps.get_latest_lpr_copr_build_id.outputs.copr_id, steps.copr_build.outputs.copr_id) }}
         uses: oamg/testing-farm-service-action@main
         with:
           # required
@@ -152,7 +170,7 @@ jobs:
       - name: Schedule regression testing for 8to9
         id: run_test_8to9
         env:
-          ARTIFACTS: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' && format('{0},{1}', steps.copr_build_leapp_repository.outputs.copr_id, steps.copr_build.outputs.copr_id) || steps.copr_build.outputs.copr_id }}
+          ARTIFACTS: ${{ format('{0},{1}', steps.leapp_repository_pr_regex_match.outputs.match != '' && steps.copr_build_leapp_repository.outputs.copr_id || steps.get_latest_lpr_copr_build_id.outputs.copr_id, steps.copr_build.outputs.copr_id) }}
         uses: oamg/testing-farm-service-action@main
         with:
           # required
