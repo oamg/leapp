@@ -1,0 +1,93 @@
+#!/usr/bin/python3
+
+import json
+import os
+import re
+import sys
+
+import copr.v3
+
+ENV_VARS = {
+    '_COPR_CONFIG': '~/.config/copr',  # Copr config file. Get it through https://<copr instance>/api/.
+    'COPR_OWNER': '',  # Owner of the Copr project
+    'COPR_PROJECT': '',  # The Copr project to search
+    'COPR_PACKAGE': '',  # Name of the package to look for. This is optional - if empty, any package in the
+                         # project is considered.
+    'PKG_RELEASE': '',  # The release part of the pkg NEVRA string, e.g.
+                        #  0.201906041623Z.f82f863.add_missing_deps.PR231
+    'COPR_REPO': '',  # An alternative to COPR_OWNER & COPR_PROJECT. This env var should hold "owner/project".
+    'REGEX': ''   # A more general way to search for release_id matches via regex. Generalization of PKG_RELEASE
+}
+# override defaults with environment variables
+for env, default in ENV_VARS.items():
+    ENV_VARS[env] = os.getenv(env, default)
+
+
+def _fail(error):
+    if not error.endswith('\n'):
+        error += '\n'
+    sys.stderr.write(error)
+    # dump ENV dictionary
+    sys.stderr.write('Passed (or default) environment variables:\n')
+    for var, value in ENV_VARS.items():
+        sys.stderr.write('  {}: {}\n'.format(var, value))
+    sys.exit(1)
+
+
+def get_builds(ownername, projectname, configpath, client=None, debug=False):
+    client = client or copr.v3.Client(copr.v3.config_from_file(path=configpath))
+    builds = client.build_proxy.get_list(status='succeeded',
+                                         pagination={'order': 'id', 'order_type': 'DESC'},
+                                         ownername=ownername,
+                                         projectname=projectname,
+                                         packagename=ENV_VARS['COPR_PACKAGE'])
+    if debug:
+        json.dump(builds, sys.stderr, sort_keys=True, indent=2)
+        sys.stderr.write('\n')
+    return builds
+
+
+def get_latest_build(ownername, projectname, configpath, match_criteria, client=None, debug=False):
+    client = client or copr.v3.Client(copr.v3.config_from_file(path=configpath))
+    builds = get_builds(ownername, projectname, configpath, client, debug)
+    for build in builds:
+        # Version in COPR contains VERSION-RELEASE string. We need just the release.
+        full_name = '{}-{}'.format(build['source_package']['name'], build['source_package']['version'])
+        release = build['source_package']['version'].split('-')[-1]
+        if re.match(match_criteria, full_name) or release.startswith(match_criteria):
+            return build['id']
+    return None
+
+
+if __name__ == "__main__":
+    # Vet arguments in ENV first
+    ownername = ENV_VARS['COPR_OWNER']
+    projectname = ENV_VARS['COPR_PROJECT']
+    if ENV_VARS['COPR_REPO']:
+        if '/' in ENV_VARS['COPR_REPO']:
+            ownername, projectname = ENV_VARS['COPR_REPO'].split('/', 1)
+        else:
+            projectname = ENV_VARS['COPR_REPO']
+    # If after all those actions either owner or project is not defined - give up and fail
+    if not ownername or not projectname:
+        error = ('Error: Use either COPR_REPO env var in a format "owner/project" or '
+                 'COPR_OWNER & COPR_PROJECT env vars to specify the Copr repository to search in.')
+        _fail(error)
+    # Check that match criteria is defined
+    match_criteria = ENV_VARS['REGEX'] or ENV_VARS['PKG_RELEASE']
+    # If both REGEX and PKG_RELEASE have been set - inform that regex takes over
+    if ENV_VARS['REGEX'] and ENV_VARS['PKG_RELEASE']:
+        sys.stderr.write('Warning: Both REGEX and PKG_RELEASE were set - REGEX has higher priority\n')
+    if not match_criteria:
+        error = 'Error: Use either PKG_RELEASE or REGEX env var to specify the match condition for NEVRA string.'
+        _fail(error)
+    build_id = get_latest_build(ownername=ownername,
+                                projectname=projectname,
+                                configpath=os.path.expandvars(ENV_VARS['_COPR_CONFIG']),
+                                match_criteria=match_criteria,
+                                debug='--debug' in sys.argv[1:])
+    if not build_id:
+        error = 'Error: The build with the required release has not been found: {}'.format(match_criteria)
+        _fail(error)
+    # Output the id of the latest matching build
+    print(build_id)
