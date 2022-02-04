@@ -3,6 +3,7 @@ import multiprocessing
 import six
 from six.moves import configparser
 
+from leapp.exceptions import CommandError
 from leapp.utils.audit import create_audit_entry
 
 
@@ -50,15 +51,34 @@ class AnswerStore(object):
             conf.write(afile)
         return not_updated
 
+
+    def _load_ini(self, inifile):
+        """
+        Loads an ini config file from the given location.
+
+        :param inifile: Path to the answer file to load.
+        :return: configparser.SafeConfigParser object
+        :raises CommandError if any of the values are not in key=value format
+        """
+        conf = configparser.SafeConfigParser(allow_no_value=False)
+        try:
+            conf.read(inifile)
+            return conf
+        except configparser.ParsingError as exc:
+            # Some of the sections were not in key = value format
+            raise CommandError('Failed to load answer file {inifile} with the following errors: {errors}'.format(
+                inifile=inifile, errors=exc.message))
+
+
     def load(self, answer_file):
         """
         Loads an answer file from the given location and updates the loaded data with it.
 
         :param answer_file: Path to the answer file to load.
         :return: None
+        :raises CommandError if any of the values are not in key=value format
         """
-        conf = configparser.SafeConfigParser(allow_no_value=True)
-        conf.read(answer_file)
+        conf = self._load_ini(answer_file)
         for section in conf.sections():
             self._storage[section] = self._manager.dict(conf.items(section=section, raw=True))
 
@@ -70,9 +90,9 @@ class AnswerStore(object):
         :param answer_file: Path to the answer file to load.
         :param workflow:
         :return: None
+        :raises CommandError if any of the values are not in key=value format
         """
-        conf = configparser.SafeConfigParser(allow_no_value=True)
-        conf.read(answer_file)
+        conf = self._load_ini(answer_file)
         for section in conf.sections():
             self._storage[section] = dict(conf.items(section=section, raw=True))
         self.translate_for_workflow(workflow)
