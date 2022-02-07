@@ -7,6 +7,17 @@ from leapp.exceptions import CommandError
 from leapp.utils.audit import create_audit_entry
 
 
+def _comment_out(key, text):
+    """Returns a commented-out string. If any newlines are present it properly deals with them"""
+    text = str(text)
+    split_by_newline = [s for s in text.split('\n') if s.strip()]
+    res = '# {key:<20}{line1}\n{linesN}'.format(key='{}:'.format(key) if key else '',
+                                                line1=split_by_newline[0],
+                                                linesN=''.join([_comment_out('', line)
+                                                                for line in split_by_newline[1:]]))
+    return res
+
+
 class AnswerStore(object):
     """
     AnswerStore handles storing and loading answer files for user questions.
@@ -29,30 +40,9 @@ class AnswerStore(object):
         # So don't even bother updating this to some more 'pythonic' coding style
         self._storage[scope] = dialog_scope
 
-    def update(self, answer_file, allow_missing=False):
-        """
-        Update answerfile with all answers from answerstore that have correspondent sections in the file.
 
-        Returns a list of sections that were not found in original answerfile and thus were not updated.
-        """
-        # NOTE(ivasilev): py2 configparser doesn't have any means to save comments in ini file. Switch to cfgparse?
-        conf = configparser.SafeConfigParser(allow_no_value=True)
-        conf.read(answer_file)
-        not_updated = []
-        for section, answerdict in self._storage.items():
-            for opt, val in answerdict.items():
-                if section not in conf.sections() and allow_missing:
-                    conf.add_section(section)
-                try:
-                    conf.set(section, opt, str(val))
-                except configparser.NoSectionError:
-                    not_updated.append("{sec}.{opt}={val}".format(sec=section, opt=opt, val=val))
-        with open(answer_file, 'w') as afile:
-            conf.write(afile)
-        return not_updated
-
-
-    def _load_ini(self, inifile):
+    @classmethod
+    def _load_ini(cls, inifile):
         """
         Loads an ini config file from the given location.
 
@@ -70,6 +60,28 @@ class AnswerStore(object):
                 inifile=inifile, errors=exc.message))
 
 
+    def update(self, answer_file, allow_missing=False):
+        """
+        Update answerfile with all answers from answerstore that have correspondent sections in the file.
+
+        Returns a list of sections that were not found in original answerfile and thus were not updated.
+        """
+        # NOTE(ivasilev): py2 configparser doesn't have any means to save comments in ini file. Switch to cfgparse?
+        conf = AnswerStore._load_ini(answer_file)
+        not_updated = []
+        for section, answerdict in self._storage.items():
+            for opt, val in answerdict.items():
+                if section not in conf.sections() and allow_missing:
+                    conf.add_section(section)
+                try:
+                    conf.set(section, opt, str(val))
+                except configparser.NoSectionError:
+                    not_updated.append("{sec}.{opt}={val}".format(sec=section, opt=opt, val=val))
+        with open(answer_file, 'w') as afile:
+            conf.write(afile)
+        return not_updated
+
+
     def load(self, answer_file):
         """
         Loads an answer file from the given location and updates the loaded data with it.
@@ -78,7 +90,7 @@ class AnswerStore(object):
         :return: None
         :raises CommandError if any of the values are not in key=value format
         """
-        conf = self._load_ini(answer_file)
+        conf = AnswerStore._load_ini(answer_file)
         for section in conf.sections():
             self._storage[section] = self._manager.dict(conf.items(section=section, raw=True))
 
@@ -92,7 +104,7 @@ class AnswerStore(object):
         :return: None
         :raises CommandError if any of the values are not in key=value format
         """
-        conf = self._load_ini(answer_file)
+        conf = AnswerStore._load_ini(answer_file)
         for section in conf.sections():
             self._storage[section] = dict(conf.items(section=section, raw=True))
         self.translate_for_workflow(workflow)
@@ -153,6 +165,7 @@ class AnswerStore(object):
         :param answer_file_path:
         :return:
         """
+
         with open(answer_file_path, 'w') as f:
             for dialog in dialogs:
                 if not dialog.components:
@@ -161,8 +174,8 @@ class AnswerStore(object):
 
                 f.writelines([
                     '[{}]\n'.format(dialog.scope),
-                    '# {:<20}{}\n'.format('Title:', dialog.title),
-                    '# {:<20}{}\n'.format('Reason:', dialog.reason)
+                    _comment_out('Title', dialog.title),
+                    _comment_out('Reason', dialog.reason)
                 ])
 
                 for component in dialog.components:
@@ -184,10 +197,10 @@ class AnswerStore(object):
 
                     f.writelines([
                         '# {}\n'.format(' {}.{} '.format(dialog.scope, component.key).center(77, '=')),
-                        '# {:<20}{}\n'.format('Label:', component.label),
-                        '# {:<20}{}\n'.format('Description:', component.description),
-                        '# {:<20}{}\n'.format('Type:', component.value_type.__name__),
-                        '# {:<20}{}\n'.format('Default:', default),
+                        _comment_out('Label', component.label),
+                        _comment_out('Description', component.description),
+                        _comment_out('Type', component.value_type.__name__),
+                        _comment_out('Default', default),
                         choices,
                         answer_entry,
                         '\n'
