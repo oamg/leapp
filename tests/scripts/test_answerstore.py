@@ -1,7 +1,7 @@
 import pytest
 
 import leapp.messaging.answerstore
-from leapp.messaging.answerstore import AnswerStore, multiprocessing
+from leapp.messaging.answerstore import AnswerStore, multiprocessing, _comment_out
 
 
 class MockManager(object):
@@ -312,3 +312,17 @@ def test_answerfile_generate(tmpdir, answerfile):
     assert store2['scope2']['key2'] == 'generate.scope2.key2'
     assert store2['boolscope']['key1'] is False
     assert store2['boolscope']['key2'] is True
+
+
+def test__comment_out():
+    text = 'A really long line of text.\nYep, with newlines.\n\nCouple of them.'
+    expected_text = ('# inikey:             A really long line of text.\n'
+                     '#                     Yep, with newlines.\n'
+                     '#                     Couple of them.\n')
+    key = 'inikey'
+    commented_text = _comment_out(key, text)
+    assert commented_text == expected_text
+    # make sure that text without newlines works as expected
+    text = 'A text without newline'
+    expected_text = '# inikey:             A text without newline\n'
+    assert _comment_out(key, text) == expected_text
