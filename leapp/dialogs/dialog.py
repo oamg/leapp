@@ -34,7 +34,7 @@ class Dialog(object):
         :type key: str
         """
         self.components = components or self.components
-        self.title = title
+        self.title = title.replace('\n', ' ').strip() if title else title
         self.scope = scope
         self.reason = reason
         self.key = key

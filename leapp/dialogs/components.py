@@ -23,7 +23,7 @@ class Component(object):
         :param reason: The reason why we need this value.
         """
         self.key = key or type(self).key
-        self.label = label or type(self).label
+        self.label = label.replace('\n', ' ').strip() if label else type(self).label
         self.description = description or type(self).description
         self.default = default if default is not None else type(self).default
         self.value = type(self).value
