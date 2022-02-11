@@ -93,7 +93,6 @@ jobs:
             })
 
       - name: If leapp_repository_pr was specified in the comment - trigger copr build
-        # TODO: XXX FIXME This should schedule copr build for leapp but for now it will be just setting an env var
         id: leapp_repository_pr
         if: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' }}
         run: |
@@ -151,38 +150,54 @@ jobs:
       - name: Schedule regression testing for 7to8
         id: run_test_7to8
         env:
-          ARTIFACTS: ${{ format('{0},{1}', steps.leapp_repository_pr_regex_match.outputs.match != '' && steps.copr_build_leapp_repository.outputs.copr_id || steps.get_latest_lpr_copr_build_id.outputs.copr_id, steps.copr_build.outputs.copr_id) }}
-        uses: oamg/testing-farm-service-action@main
+          ARTIFACTS: ${{ format('{0};{1}', steps.leapp_repository_pr_regex_match.outputs.match != '' && steps.copr_build_leapp_repository.outputs.copr_id || steps.get_latest_lpr_copr_build_id.outputs.copr_id, steps.copr_build.outputs.copr_id) }}
+        uses: sclorg/testing-farm-as-github-action@v1
         with:
           # required
-          tft_server: ${{ secrets.TF_ENDPOINT }}
-          tft_token: ${{ secrets.TF_API_KEY }}
-          compose: ${{ secrets.COMPOSE_RHEL79 }}
-          artifacts: ${{ env.ARTIFACTS }}
+          api_url: ${{ secrets.TF_ENDPOINT }}
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: 'https://gitlab.cee.redhat.com/oamg/tmt-plans'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           # optional
-          tests_regex: "^(?!.*c2r)(?!.*sap)(?!.*8to9)"
+          tf_scope: 'private'
+          tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*8to9)"
+          compose: ${{ secrets.COMPOSE_RHEL79 }}
           arch: 'x86_64'
           copr: 'epel-7-x86_64'
+          copr_artifacts: ${{ env.ARTIFACTS }}
           debug: ${{ secrets.ACTIONS_STEP_DEBUG }}
-          test_name: '7to8'
           tmt_context: 'distro=rhel-7'
+          pull_request_status_name: '7to8'
+          create_issue_comment: 'true'
+          # NOTE(ivasilev) In order to update pr status this workflow has to be massively refactored with artifacts
+          # preparation moved out to a different workflow and the rest split into 2 workflows - 7to8 and 8to9 that are
+          # triggered on a specific repository dispatch event.
+          update_pull_request_status: 'false'
 
       - name: Schedule regression testing for 8to9
         id: run_test_8to9
         env:
-          ARTIFACTS: ${{ format('{0},{1}', steps.leapp_repository_pr_regex_match.outputs.match != '' && steps.copr_build_leapp_repository.outputs.copr_id || steps.get_latest_lpr_copr_build_id.outputs.copr_id, steps.copr_build.outputs.copr_id) }}
-        uses: oamg/testing-farm-service-action@main
+          ARTIFACTS: ${{ format('{0};{1}', steps.leapp_repository_pr_regex_match.outputs.match != '' && steps.copr_build_leapp_repository.outputs.copr_id || steps.get_latest_lpr_copr_build_id.outputs.copr_id, steps.copr_build.outputs.copr_id) }}
+        uses: sclorg/testing-farm-as-github-action@v1
         with:
           # required
-          tft_server: ${{ secrets.TF_ENDPOINT }}
-          tft_token: ${{ secrets.TF_API_KEY }}
-          compose: ${{ secrets.COMPOSE_RHEL86 }}
-          artifacts: ${{ env.ARTIFACTS }}
+          api_url: ${{ secrets.TF_ENDPOINT }}
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: 'https://gitlab.cee.redhat.com/oamg/tmt-plans'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           # optional
-          tests_regex: "^(?!.*c2r)(?!.*sap)(?!.*7to8)"
+          tf_scope: 'private'
+          tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*7to8)"
+          compose: ${{ secrets.COMPOSE_RHEL86 }}
           arch: 'x86_64'
           copr: 'epel-8-x86_64'
+          copr_artifacts: ${{ env.ARTIFACTS }}
           debug: ${{ secrets.ACTIONS_STEP_DEBUG }}
-          test_name: '8to9'
-          env_vars: 'TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_SKU=RH00069;RHSM_REPOS=rhel-8-for-x86_64-appstream-beta-rpms,rhel-8-for-x86_64-baseos-beta-rpms;LEAPP_EXEC_ENV_VARS=LEAPP_DEVEL_TARGET_PRODUCT_TYPE=beta'
+          variables: 'TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_SKU=RH00069;RHSM_REPOS=rhel-8-for-x86_64-appstream-beta-rpms,rhel-8-for-x86_64-baseos-beta-rpms;LEAPP_EXEC_ENV_VARS=LEAPP_DEVEL_TARGET_PRODUCT_TYPE=beta'
           tmt_context: 'distro=rhel-8'
+          pull_request_status_name: '8to9'
+          create_issue_comment: 'true'
+          # NOTE(ivasilev) In order to update pr status this workflow has to be massively refactored with artifacts
+          # preparation moved out to a different workflow and the rest split into 2 workflows - 7to8 and 8to9 that are
+          # triggered on a specific repository dispatch event.
+          update_pull_request_status: 'false'
