@@ -118,7 +118,12 @@ class AnswerStore(object):
         :return:
         """
         answer = self._storage.get(scope, fallback)
-        create_audit_entry('dialog-answer', {'scope': scope, 'fallback': fallback, 'answer': answer})
+        try:
+            create_audit_entry('dialog-answer', {'scope': scope, 'fallback': fallback, 'answer': answer})
+        except TypeError:
+            # On Python3, the answer is "sometimes" DictProxy which is not JSON serialisable.
+            # Creating the shallow copy in such a case should be ok. This is happ
+            create_audit_entry('dialog-answer', {'scope': scope, 'fallback': fallback, 'answer': answer.copy()})
         return answer
 
     def translate_for_workflow(self, workflow):
