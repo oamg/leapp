@@ -98,7 +98,7 @@ class Dialog(object):
         :return: Dictionary with answers once retrieved
         """
         store.translate(self)
-        return dict(store.get(self.scope, {}))
+        return store.get(self.scope, {})
 
     def request_answers(self, store, renderer):
         """
@@ -114,4 +114,4 @@ class Dialog(object):
             self._store = store
             renderer.render(self)
             self._store = None
-        return dict(store.get(self.scope, {}))
+        return store.get(self.scope, {})

@@ -115,9 +115,11 @@ class AnswerStore(object):
 
         :param scope: Scope of the data to retrieve.
         :param fallback: Fallback value to return if not found.
-        :return:
+        :return: A shallow copy of data stored in _storage by scope key
         """
-        answer = self._storage.get(scope, fallback)
+        # NOTE(ivasilev) self.storage.get() will return a DictProxy. To avoid TypeError during later
+        # JSON serialization a copy() should be invoked to get a shallow copy of data
+        answer = self._storage.get(scope, fallback).copy()
         create_audit_entry('dialog-answer', {'scope': scope, 'fallback': fallback, 'answer': answer})
         return answer
 
