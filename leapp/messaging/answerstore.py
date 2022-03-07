@@ -201,6 +201,7 @@ class AnswerStore(object):
                         '# {}\n'.format(' {}.{} '.format(dialog.scope, component.key).center(77, '=')),
                         _comment_out('Label', component.label),
                         _comment_out('Description', component.description),
+                        _comment_out('Reason', component.reason),
                         _comment_out('Type', component.value_type.__name__),
                         _comment_out('Default', default),
                         choices,
