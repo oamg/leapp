@@ -18,7 +18,6 @@ _REPORTS = [
 # debug logs that will get reported at the end of a preupgrade/upgrade run if they were created/modified during it
 _LOGS = [
     'leapp-upgrade.log',
-    'leapp-preupgrade.log'
 ]
 
 # files that will go into the leapp-logs.tar.gz archive and get deleted each time a run is started
