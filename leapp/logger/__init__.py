@@ -59,7 +59,7 @@ def configure_logger(log_file=None):
         path = os.getenv('LEAPP_LOGGER_CONFIG', '/etc/leapp/logger.conf')
 
         if path and os.path.isfile(path):
-            logging.config.fileConfig(path)
+            logging.config.fileConfig(path, disable_existing_loggers=False)
         else:  # Fall back logging configuration
             logging.Formatter.converter = time.gmtime
             logging.basicConfig(
