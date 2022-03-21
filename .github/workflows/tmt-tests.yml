@@ -151,7 +151,7 @@ jobs:
         id: run_test_7to8
         env:
           ARTIFACTS: ${{ format('{0};{1}', steps.leapp_repository_pr_regex_match.outputs.match != '' && steps.copr_build_leapp_repository.outputs.copr_id || steps.get_latest_lpr_copr_build_id.outputs.copr_id, steps.copr_build.outputs.copr_id) }}
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v1.2.9
         with:
           # required
           api_url: ${{ secrets.TF_ENDPOINT }}
@@ -178,7 +178,7 @@ jobs:
         id: run_test_8to9
         env:
           ARTIFACTS: ${{ format('{0};{1}', steps.leapp_repository_pr_regex_match.outputs.match != '' && steps.copr_build_leapp_repository.outputs.copr_id || steps.get_latest_lpr_copr_build_id.outputs.copr_id, steps.copr_build.outputs.copr_id) }}
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v1.2.9
         with:
           # required
           api_url: ${{ secrets.TF_ENDPOINT }}
