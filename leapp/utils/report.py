@@ -2,7 +2,8 @@ import hashlib
 import json
 import os
 
-from leapp.reporting import Remediation, Severity, create_report_from_error, create_report_from_deprecation
+from leapp.reporting import (_DEPRECATION_FLAGS, Groups, Remediation, Severity, create_report_from_error,
+                             create_report_from_deprecation)
 from leapp.utils.audit import get_messages, get_audit_entry
 
 
@@ -83,8 +84,18 @@ SEVERITY_LEVELS = {
 }
 
 
+def is_inhibitor(message):
+    """
+    A helper function to check if a message is inhibiting upgrade.
+    It takes care of possible differences in report schema, like tags/flags -> groups merge in 1.2.0
+    """
+    # NOTE(ivasilev) As groups and flags are mutual exclusive, let's not bother with report_schema version
+    # and just check both fields for inhibitor presence
+    return Groups.INHIBITOR in message.get('groups', message.get('flags', []))
+
+
 def importance(message):
-    if 'inhibitor' in message.get('flags', []):
+    if is_inhibitor(message):
         return 0
     return SEVERITY_LEVELS.get(message['severity'], 99)
 
@@ -95,8 +106,8 @@ def generate_report_file(messages_to_report, context, path, report_schema='1.1.0
     if path.endswith(".txt"):
         with open(path, 'w') as f:
             for message in sorted(messages_to_report, key=importance):
-                is_inhibitor = 'inhibitor' in message.get('flags', [])
-                f.write('Risk Factor: {}{}\n'.format(message['severity'], ' (inhibitor)' if is_inhibitor else ''))
+                f.write('Risk Factor: {}{}\n'.format(message['severity'],
+                                                     ' (inhibitor)' if is_inhibitor(message) else ''))
                 f.write('Title: {}\n'.format(message['title']))
                 f.write('Summary: {}\n'.format(message['summary']))
                 remediation = Remediation.from_dict(message.get('detail', {}))
@@ -115,4 +126,11 @@ def generate_report_file(messages_to_report, context, path, report_schema='1.1.0
                 messages_to_report = list(messages_to_report)
                 for m in messages_to_report:
                     m.pop('key')
+            if report_schema_tuple < (1, 2, 0):
+                # groups were introduced in 1.2.0, before that there was a tags/flags split
+                messages_to_report = list(messages_to_report)
+                for msg in messages_to_report:
+                    groups = msg.pop('groups', [])
+                    msg['flags'] = [g for g in groups if g in _DEPRECATION_FLAGS]
+                    msg['tags'] = [g for g in groups if g not in _DEPRECATION_FLAGS]
             json.dump({'entries': messages_to_report, 'leapp_run_id': context}, f, indent=2)
