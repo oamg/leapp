@@ -91,7 +91,7 @@ def importance(message):
 
 def generate_report_file(messages_to_report, context, path, report_schema='1.1.0'):
     # NOTE(ivasilev) Int conversion should not break as only specific formats of report_schema versions are allowed
-    report_schema_tuple = tuple([int(x) for x in report_schema.split('.')])
+    report_schema_tuple = tuple(int(x) for x in report_schema.split('.'))
     if path.endswith(".txt"):
         with open(path, 'w') as f:
             for message in sorted(messages_to_report, key=importance):

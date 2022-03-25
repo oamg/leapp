@@ -48,7 +48,7 @@ def cli(args):
     tag_imports = ''
     model_imports = ''
     if args.tag:
-        tag_imports = '\nfrom leapp.tags import {}'.format(', '.join(tuple([x.split('.')[0] for x in args.tag])))
+        tag_imports = '\nfrom leapp.tags import {}'.format(', '.join(tuple(x.split('.')[0] for x in args.tag)))
     if args.consumes or args.produces:
         models = set((args.produces or []) + (args.consumes or []))
         model_imports = '\nfrom leapp.models import {}'.format(', '.join(models))

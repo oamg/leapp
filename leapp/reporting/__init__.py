@@ -179,7 +179,7 @@ class Tags(BasePrimitive):
     def __init__(self, value=None):
         if not isinstance(value, list):
             raise TypeError('Value of "Tags" must be a list')
-        if not all([isinstance(v, Tags._Value) for v in value]):
+        if not all(isinstance(v, Tags._Value) for v in value):
             raise TypeError('Unsupported tag value passed for Report Tags.')
         # after the objects validation we need the actual values in the list
         self._value = [v.value for v in value]

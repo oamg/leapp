@@ -77,6 +77,8 @@ class Model(with_metaclass(ModelMeta)):
     Models are defining the data structure of the payload of messages and the
     metadata required, such as a name and topic.
     """
+    # NOTE(ivasilev) Until someone comes up with a good hash implementation for Model, let's disable the warning
+    # pylint: disable=eq-without-hash
     def __init__(self, init_method='from_initialization', **kwargs):
         super(Model, self).__init__()
         defined_fields = type(self).fields or {}
@@ -84,7 +86,7 @@ class Model(with_metaclass(ModelMeta)):
             if key not in defined_fields:
                 raise ModelMisuseError(
                     'Trying to initialize model {} with value for undefined field {}'.format(type(self).__name__, key))
-        for field in defined_fields:
+        for field in defined_fields:  # noqa; pylint: disable=consider-using-dict-items
             getattr(defined_fields[field], init_method)(kwargs, field, self)
 
     topic = None

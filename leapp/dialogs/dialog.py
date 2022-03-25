@@ -110,7 +110,7 @@ class Dialog(object):
         :return: Dictionary with answers once retrieved
         """
         store.translate(self)
-        if any([component.value is None for component in self.components]):
+        if any(component.value is None for component in self.components):
             self._store = store
             renderer.render(self)
             self._store = None

@@ -47,7 +47,7 @@ class EventLoopKQUEUE(object):
                 results[fd] |= POLL_IN
             elif e.filter == select.KQ_FILTER_WRITE:
                 results[fd] |= POLL_OUT
-        return results.items()
+        return list(results.items())
 
     def register(self, fd, mode):
         self._fds[fd] = mode

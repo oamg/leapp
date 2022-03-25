@@ -104,6 +104,8 @@ def safe_discover(pivot):
     # class SecondOrderModel(FirstOrderModel):
     #     pass
     #
+    # NOTE(ivasilev) L126, disabling here not to get too long a line that will need another disable check comment
+    # pylint: disable=filter-builtin-not-iterating,map-builtin-not-iterating
     collected_types = {
         'models': set(['Model']),
         'actors': set(['Actor']),

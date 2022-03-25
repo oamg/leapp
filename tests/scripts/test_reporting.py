@@ -238,17 +238,17 @@ def test_report_backwards_compatibility():
     report = [msg1]
     # make sure normal mode works
     for report_format in ['.json', '.txt']:
-        reportfile = tempfile.NamedTemporaryFile(suffix=report_format)
-        generate_report_file(report, 'leapp-run-id', reportfile.name, '1.1.0')
+        with tempfile.NamedTemporaryFile(suffix=report_format) as reportfile:
+            generate_report_file(report, 'leapp-run-id', reportfile.name, '1.1.0')
     # make sure report output conversion to specific version works as well
     for report_format in ['.json', '.txt']:
-        reportfile = tempfile.NamedTemporaryFile(suffix=report_format)
-        generate_report_file(report, 'leapp-run-id', reportfile.name, '1.0.0')
-        with open(reportfile.name) as f:
-            data = f.read()
-        if report_format == '.json':
-            a_report = json.loads(data)
-            msg = a_report['entries'][0]
-            assert 'key' not in msg
-        else:
-            assert 'Key' not in data
+        with tempfile.NamedTemporaryFile(suffix=report_format) as reportfile:
+            generate_report_file(report, 'leapp-run-id', reportfile.name, '1.0.0')
+            with open(reportfile.name) as f:
+                data = f.read()
+            if report_format == '.json':
+                a_report = json.loads(data)
+                msg = a_report['entries'][0]
+                assert 'key' not in msg
+            else:
+                assert 'Key' not in data

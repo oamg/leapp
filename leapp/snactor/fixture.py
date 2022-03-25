@@ -323,7 +323,7 @@ if hasattr(pytest, 'hookimpl'):
         :py:func:`current_actor_context` fixture. If it doesn't use the :py:func:`current_actor_context` fixture, it
         will default to the default `pytest_pyfunc_call` implementation.
         """
-        if not any([arg in pyfuncitem.funcargs for arg in ('current_actor_context', 'leapp_forked')]):
+        if not any(arg in pyfuncitem.funcargs for arg in ('current_actor_context', 'leapp_forked')):
             return None
         q = Queue()
         p = Process(target=_execute_test, args=(q, pyfuncitem))

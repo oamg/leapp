@@ -19,8 +19,7 @@ ENTRYPOINT virtualenv testenv && \
     echo '===============   Running pylint   ===============' && \
     echo '==================================================' && \
     echo '==================================================' && \
-	# echo $LINTABLES | xargs pylint --py3k && echo '===> pylint PASSED' && \
-    echo 'TEMPORARILY DISABLED' && \
+    echo $LINTABLES | xargs pylint --py3k && echo '===> pylint PASSED' && \
     echo '==================================================' && \
     echo '==================================================' && \
     echo '===============   Running flake8   ===============' && \
