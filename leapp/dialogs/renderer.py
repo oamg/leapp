@@ -253,7 +253,7 @@ class CommandlineRenderer(DialogRendererBase):
             default = ''
             if component.default is not None:
                 if component.multi:
-                    default = ' [{}]'.format(tuple([component.choices.index(x) for x in component.default]))
+                    default = ' [{}]'.format(tuple(component.choices.index(x) for x in component.default))
                 else:
                     default = ' [{}]'.format(component.choices.index(component.default))
             if component.multi:

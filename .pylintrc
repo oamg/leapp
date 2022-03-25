@@ -31,18 +31,27 @@ disable=
  too-many-locals,
  too-many-public-methods,
  too-many-statements,
+ print-statement,
 # new for python3 version of pylint
  useless-object-inheritance,
  super-with-arguments,  # required in python 2
  raise-missing-from,  # no 'raise from' in python 2
+ consider-using-f-string,  # nope, we still have py2 to support
+ redundant-u-string-prefix, # nope, we still have py2 to support
+ exception-message-attribute, # nope, still have py2 to support
+ no-absolute-import,  # XXX FIXME nice to have one day
+ unspecified-encoding,  # XXX FIXME May be a good thing to have one day though
 
 [FORMAT]
 # Maximum number of characters on a single line.
 max-line-length=120
 
 [DESIGN]
-max-args=11  # 2x + 1 from default
+max-args=12  # 2x + 2 from default
 max-attributes=21  # 4x + 1 from default
 
 [TYPECHECK]
 disable=bad-option-value  # unavoidable as the project requires both py2 and py3
+
+[IMPORTS]
+known-third-party=leapp

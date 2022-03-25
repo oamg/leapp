@@ -10,7 +10,7 @@ def _evaluate_results(results, *expected):
     if PY3:
         results = results.decode('utf-8')
     expected = set(expected)
-    lines = set([line.split()[-1] for line in results.split('\n') if line.startswith('<<<TEST>>>: ')])
+    lines = set(line.split()[-1] for line in results.split('\n') if line.startswith('<<<TEST>>>: '))
     assert lines == expected
 
 

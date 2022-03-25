@@ -6,7 +6,7 @@ import requests.adapters
 import requests.exceptions
 
 try:
-    import requests.packages.urllib3 as urllib3
+    import requests.packages.urllib3 as urllib3  # noqa # pylint: disable=consider-using-from-import
 except ImportError:
     import urllib3
 

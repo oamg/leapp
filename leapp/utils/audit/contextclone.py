@@ -15,7 +15,7 @@ def _fetch_table_for_context(db, table, context):
 
 
 def _row_tuple(row, *fields):
-    return tuple([row[name] for name in fields or row.keys()])
+    return tuple(row[name] for name in fields or row.keys())
 
 
 def _dup_host(db, newcontext, oldcontext):

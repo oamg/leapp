@@ -2,7 +2,9 @@ import subprocess
 
 
 def reboot_system():
-    subprocess.Popen(['/sbin/shutdown', '-r', 'now'])
+    # NOTE(ivasilev) Maybe we could use run? We still can't rely on any code to be finished after workflow calls this
+    # method.
+    subprocess.Popen(['/sbin/shutdown', '-r', 'now'])  # noqa; pylint: disable=consider-using-with
 
 
 def get_api_models(actor, what):

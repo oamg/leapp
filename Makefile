@@ -139,8 +139,19 @@ test:   lint
 
 lint:
 	@ $(ENTER_VENV) \
-	pytest --cache-clear --pylint -m pylint leapp tests/scripts/*.py; \
-	pytest --cache-clear --flake8 -m flake8 leapp tests/scripts/*.py
+	LINTABLES="$$(find . -name '*.py' | grep -E -e '^\./leapp\/' -e '^\./tests/scripts/' | sort -u )"; \
+	echo '==================================================' && \
+	echo '==================================================' && \
+	echo '===============   Running pylint   ===============' && \
+	echo '==================================================' && \
+	echo '==================================================' && \
+	[[ "$(_PYTHON_VENV)" == "python2.7" ]] && echo "$$LINTABLES" | xargs pylint --py3k || echo "$$LINTABLES" | xargs pylint && echo '===> pylint PASSED' && \
+	echo '==================================================' && \
+	echo '==================================================' && \
+	echo '===============   Running flake8   ===============' && \
+	echo '==================================================' && \
+	echo '==================================================' && \
+	echo "$$LINTABLES" | xargs flake8 && echo '===> flake8 PASSED';
 
 fast_lint:
 	@ $(ENTER_VENV) \

@@ -368,7 +368,7 @@ def _is_tuple_of(value_type):
         if not value:
             raise WrongAttributeTypeError(
                 'Actor {} attribute {} should contain at least one item of the type {}'.format(actor, name, value_type))
-        if not all([isinstance(item, value_type) for item in value]):
+        if not all(isinstance(item, value_type) for item in value):
             raise WrongAttributeTypeError(
                 'Actor {} attribute {} should contain only values of the type {}'.format(actor, name, value_type))
         return value
