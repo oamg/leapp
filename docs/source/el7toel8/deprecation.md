@@ -12,6 +12,10 @@ framework, see [List of deprecated functionality in leapp](../deprecation.html#l
 
 ## current upstream development <span style="font-size:0.5em; font-weight:normal">(till the next release + 6months)</span>
 
+- nothing yet...
+
+## v0.16.0 <span style="font-size:0.5em; font-weight:normal">(till September 2022)</span>
+
 - Shared libraries
     - **`leapp.libraries.common.utils.apply_yum_workaround`** - The `apply_yum_workaround` function has been deprecated, use `DNFWorkaround` message as used in the successing `RegisterYumAdjustment` actor.
 
