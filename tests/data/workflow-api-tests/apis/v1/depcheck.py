@@ -17,8 +17,8 @@ DepCheckAPI4 Produces: DepCheck4 Inherits: Produces: DepCheck2, Consumes DepChec
 """
 
 from leapp.libraries.stdlib import api
-from leapp.workflows.api import WorkflowAPI
 from leapp.models import DepCheck1, DepCheck2, DepCheck3, DepCheck4
+from leapp.workflows.api import WorkflowAPI
 
 
 class DepCheckAPI1(WorkflowAPI):

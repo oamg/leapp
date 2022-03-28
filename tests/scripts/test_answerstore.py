@@ -18,6 +18,7 @@ class MockComponentKey1(object):
     key = 'key1'
     label = 'label key1'
     description = 'description key1'
+    reason = 'Unbelievable reason'
     default = False
     value = None
 
@@ -27,6 +28,7 @@ class MockComponentKey2(object):
     key = 'key2'
     label = 'label key2'
     description = 'description key2'
+    reason = 'Cannot reason with this reason'
     default = 'Default'
     value = None
 
@@ -36,6 +38,7 @@ class MockComponentKey1Bool(object):
     key = 'key1'
     label = 'label bool key1'
     description = 'description bool key1'
+    reason = 'Unreasonable Reason'
     default = True
     value = None
 
@@ -45,6 +48,7 @@ class MockComponentKey2Bool(object):
     key = 'key2'
     label = 'label bool key2'
     description = 'description bool key2'
+    reason = 'Unbearable\nReason\nxxx'
     default = False
     value = None
 
