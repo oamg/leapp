@@ -70,13 +70,13 @@ def test_base_usage():
 
 def test_basic_model():
     m = BasicModel(message='Some message')
-    m2 = BasicModel.create(m.dump())
+    m2 = BasicModel.create(None, m.dump())
     assert m.message == m2.message
 
 
 def test_string_list_model():
     m = WithStringListModel(messages=['Some message'])
-    m2 = WithStringListModel.create(m.dump())
+    m2 = WithStringListModel.create(None, m.dump())
     assert m.messages == m2.messages
     m2.messages = 'str'
 
@@ -98,7 +98,7 @@ def test_string_fields_violations():
 
 def test_nested_model():
     m = WithNestedModel(basic=BasicModel(message='Some message'))
-    m2 = WithNestedModel.create(m.dump())
+    m2 = WithNestedModel.create(None, m.dump())
     assert m.basic == m2.basic
 
     with pytest.raises(fields.ModelMisuseError):
@@ -120,24 +120,24 @@ def test_nested_model():
         x.dump()
 
     with pytest.raises(fields.ModelViolationError):
-        WithNestedModel.create(dict(basic=None))
+        WithNestedModel.create(None, dict(basic=None))
 
     with pytest.raises(fields.ModelViolationError):
         WithNestedModel(basic=None)
 
-    assert WithNestedModel.create({'basic': {'message': 'test-message'}}).basic.message == 'test-message'
+    assert WithNestedModel.create(None, {'basic': {'message': 'test-message'}}).basic.message == 'test-message'
     assert WithNestedModel(basic=BasicModel(message='test-message')).basic.message == 'test-message'
 
 
 def test_nested_list_model():
     m = WithNestedListModel(items=[BasicModel(message='Some message')])
-    m2 = WithNestedListModel.create(m.dump())
+    m2 = WithNestedListModel.create(None, m.dump())
     assert m.items == m2.items
 
 
 def test_field_types():
     m = AllFieldTypesModel()
-    m2 = AllFieldTypesModel.create(m.dump())
+    m2 = AllFieldTypesModel.create(None, m.dump())
     assert m == m2
 
 
