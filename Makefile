@@ -14,6 +14,15 @@ VERSION=`grep -m1 "^Version:" packaging/$(PKGNAME).spec | grep -om1 "[0-9].[0-9.
 # use it instead of the default
 _COPR_REPO=$${COPR_REPO:-leapp}
 _COPR_CONFIG=$${COPR_CONFIG:-~/.config/copr_rh_oamg.conf}
+# NOTE(ivasilev) Borrowed from leapp-repository's Makefile
+# In case just specific CHROOTs should be used for the COPR build, you can
+# set the multiple CHROOTs separated by comma in the COPR_CHROOT envar, e.g.
+# "epel-7-x86_64,epel-8-x86_64". But for the copr-cli utility, each of them
+# has to be specified separately for the -r option; So we transform it
+# automatically to "-r epel-7-x86_64 -r epel-8-x86_64" (without quotes).
+ifdef COPR_CHROOT
+	_COPR_CHROOT=`echo $${COPR_CHROOT} | grep -o "[^,]*" | sed "s/^/-r /g"`
+endif
 
 # just to reduce number of unwanted builds mark as the upstream one when
 # someone will call copr_build without additional parameters
@@ -105,9 +114,9 @@ srpm: source
 
 copr_build: srpm
 	@echo "--- Build RPM ${PKGNAME}-${VERSION}-${RELEASE}.el$(DIST_VERSION).rpm in COPR ---"
-	@echo copr-cli --config $(_COPR_CONFIG) build $(_COPR_REPO) \
+	@echo copr-cli --config $(_COPR_CONFIG) build $(_COPR_REPO) $(_COPR_CHROOT) \
 		packaging/SRPMS/${PKGNAME}-${VERSION}-${RELEASE}*.src.rpm
-	@copr-cli --config $(_COPR_CONFIG) build $(_COPR_REPO) \
+	@copr-cli --config $(_COPR_CONFIG) build $(_COPR_REPO) $(_COPR_CHROOT) \
 		packaging/SRPMS/${PKGNAME}-${VERSION}-${RELEASE}*.src.rpm
 
 print_release:

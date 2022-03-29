@@ -45,8 +45,13 @@ jobs:
       - name: Get latest leapp-repository master copr build id
         id: get_latest_lpr_copr_build_id
         if: ${{ steps.leapp_repository_pr_regex_match.outputs.match == '' }}
+        env:
+          COPR_CONFIG: "copr_fedora.conf"
+          COPR_CHROOT: "epel-7-x86_64,epel-8-x86_64"
+          COPR_REPO: "@oamg/leapp"
+          REGEX: "leapp-repository.*master.*"
         run: |
-          cat << EOF > copr_fedora.conf
+          cat << EOF > $COPR_CONFIG
           [copr-cli]
           login = ${{ secrets.FEDORA_COPR_LOGIN }}
           username = @oamg
@@ -56,14 +61,17 @@ jobs:
           EOF
 
           pip install copr-cli
-          REGEX='leapp-repository.*master.*' COPR_REPO='@oamg/leapp' _COPR_CONFIG=copr_fedora.conf python ${{ github.workspace }}/utils/get_latest_copr_build > latest_lpr
+          REGEX=$REGEX COPR_REPO=$COPR_REPO _COPR_CONFIG=$COPR_CONFIG python ${{ github.workspace }}/utils/get_latest_copr_build > latest_lpr
           COPR_ID=$(cat latest_lpr)
           echo "::set-output name=copr_id::${COPR_ID##*/}"
 
       - name: Trigger copr build
         id: copr_build
+        env:
+          COPR_CONFIG: "copr_fedora.conf"
+          COPR_CHROOT: "epel-7-x86_64,epel-8-x86_64"
         run: |
-          cat << EOF > copr_fedora.conf
+          cat << EOF > $COPR_CONFIG
           [copr-cli]
           login = ${{ secrets.FEDORA_COPR_LOGIN }}
           username = @oamg
@@ -73,7 +81,7 @@ jobs:
           EOF
 
           pip install copr-cli
-          PR=${{ steps.pr_nr.outputs.pr_nr }} COPR_CONFIG=copr_fedora.conf make copr_build | tee copr.log
+          PR=${{ steps.pr_nr.outputs.pr_nr }} COPR_CONFIG=$COPR_CONFIG COPR_CHROOT=$COPR_CHROOT make copr_build | tee copr.log
 
           COPR_URL=$(grep -Po 'https://copr.fedorainfracloud.org/coprs/build/\d+' copr.log)
           echo "::set-output name=copr_url::${COPR_URL}"
@@ -116,8 +124,11 @@ jobs:
       - name: Trigger copr build for leapp-repository
         id: copr_build_leapp_repository
         if: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' }}
+        env:
+          COPR_CONFIG: "copr_fedora.conf"
+          COPR_CHROOT: "epel-7-x86_64,epel-8-x86_64"
         run: |
-          cat << EOF > copr_fedora.conf
+          cat << EOF > $COPR_CONFIG
           [copr-cli]
           login = ${{ secrets.FEDORA_COPR_LOGIN }}
           username = @oamg
@@ -127,7 +138,7 @@ jobs:
           EOF
 
           pip install copr-cli
-          PR=${{ steps.leapp_repository_pr.outputs.leapp_repository_pr }} COPR_CONFIG=copr_fedora.conf make copr_build | tee copr.log
+          PR=${{ steps.leapp_repository_pr.outputs.leapp_repository_pr }} COPR_CHROOT=$COPR_CHROOT COPR_CONFIG=$COPR_CONFIG make copr_build | tee copr.log
 
           COPR_URL=$(grep -Po 'https://copr.fedorainfracloud.org/coprs/build/\d+' copr.log)
           echo "::set-output name=copr_url::${COPR_URL}"

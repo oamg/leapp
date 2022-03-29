@@ -21,6 +21,7 @@ jobs:
         id: trigger_fedora_build
         env:
           COPR_CONFIG: "copr_fedora.conf"
+          COPR_CHROOT: "epel-7-x86_64,epel-8-x86_64"
         run: |
           cat << EOF > $COPR_CONFIG
           [copr-cli]
@@ -31,5 +32,4 @@ jobs:
           EOF
 
           pip install copr-cli
-          make copr_build
-
+          COPR_CHROOT=$COPR_CHROOT COPR_CONFIG=$COPR_CONFIG make copr_build
