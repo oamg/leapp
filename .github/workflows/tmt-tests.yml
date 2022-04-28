@@ -151,7 +151,7 @@ jobs:
         id: run_test_7to8
         env:
           ARTIFACTS: ${{ format('{0};{1}', steps.leapp_repository_pr_regex_match.outputs.match != '' && steps.copr_build_leapp_repository.outputs.copr_id || steps.get_latest_lpr_copr_build_id.outputs.copr_id, steps.copr_build.outputs.copr_id) }}
-        uses: sclorg/testing-farm-as-github-action@v1.2.9
+        uses: sclorg/testing-farm-as-github-action@v1.2.10
         with:
           # required
           api_url: ${{ secrets.TF_ENDPOINT }}
@@ -173,12 +173,13 @@ jobs:
           # preparation moved out to a different workflow and the rest split into 2 workflows - 7to8 and 8to9 that are
           # triggered on a specific repository dispatch event.
           update_pull_request_status: 'false'
+          environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
 
       - name: Schedule regression testing for 8to9
         id: run_test_8to9
         env:
           ARTIFACTS: ${{ format('{0};{1}', steps.leapp_repository_pr_regex_match.outputs.match != '' && steps.copr_build_leapp_repository.outputs.copr_id || steps.get_latest_lpr_copr_build_id.outputs.copr_id, steps.copr_build.outputs.copr_id) }}
-        uses: sclorg/testing-farm-as-github-action@v1.2.9
+        uses: sclorg/testing-farm-as-github-action@v1.2.10
         with:
           # required
           api_url: ${{ secrets.TF_ENDPOINT }}
@@ -201,3 +202,4 @@ jobs:
           # preparation moved out to a different workflow and the rest split into 2 workflows - 7to8 and 8to9 that are
           # triggered on a specific repository dispatch event.
           update_pull_request_status: 'false'
+          environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
