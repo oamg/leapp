@@ -2,8 +2,14 @@ import hashlib
 import json
 import os
 
-from leapp.reporting import (_DEPRECATION_FLAGS, Groups, Remediation, Severity, create_report_from_error,
-                             create_report_from_deprecation)
+from leapp.reporting import (
+    _DEPRECATION_FLAGS,
+    Groups,
+    Remediation,
+    Severity,
+    create_report_from_error,
+    create_report_from_deprecation
+)
 from leapp.utils.audit import get_messages, get_audit_entry
 
 
