@@ -2,6 +2,7 @@
 import os
 import pkgutil
 import socket
+import sys
 
 from leapp import VERSION
 from leapp.cli import commands
@@ -32,6 +33,11 @@ def main():
     """
     leapp entry point
     """
+
+    if os.getuid() != 0:
+        sys.stderr.write('Leapp has to be executed with root privileges.\n')
+        sys.exit(1)
+
     os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
     _load_commands(cli.command)
     cli.command.execute('leapp version {}'.format(VERSION))
