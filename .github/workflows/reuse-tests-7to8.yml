@@ -1,0 +1,44 @@
+name: reuse-tests-7to8@TF
+
+on:
+  workflow_call:
+    secrets:
+      TF_ENDPOINT:
+        required: True
+      TF_API_KEY:
+        required: True
+      COMPOSE_RHEL79:
+        required: True
+    inputs:
+      copr_artifacts:
+        required: True
+        type: string
+
+jobs:
+  reusable_workflow_job:
+    # This job only runs for '/rerun' pull request comments by owner, member, or collaborator of the repo/organization.
+    name: Schedule regression tests on Testing Farm
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Schedule regression testing for 7to8
+        id: run_test_7to8
+        uses: sclorg/testing-farm-as-github-action@v1.2.10
+        with:
+          # required
+          api_url: ${{ secrets.TF_ENDPOINT }}
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: 'https://gitlab.cee.redhat.com/oamg/tmt-plans'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # optional
+          tf_scope: 'private'
+          tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*8to9)"
+          compose: ${{ secrets.COMPOSE_RHEL79 }}
+          arch: 'x86_64'
+          copr: 'epel-7-x86_64'
+          copr_artifacts: ${{ inputs.copr_artifacts }}
+          debug: ${{ secrets.ACTIONS_STEP_DEBUG }}
+          tmt_context: 'distro=rhel-7'
+          pull_request_status_name: '7to8'
+          create_issue_comment: 'true'
+          update_pull_request_status: 'true'
+          environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
