@@ -7,19 +7,61 @@ on:
 
 jobs:
   call_workflow_copr_build:
-    uses: fernflower/leapp/.github/workflows/reuse-copr-build.yml@master
+    uses: ./.github/workflows/reuse-copr-build.yml
     secrets: inherit
 
-  call_workflow_tests_7to8:
+  call_workflow_tests_7to8_integration:
     needs: call_workflow_copr_build
-    uses: fernflower/leapp/.github/workflows/reuse-tests-7to8.yml@master
+    uses: ./.github/workflows/reuse-tests-7to8.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
+      tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*morf)"
 
-  call_workflow_tests_8to9:
+  call_workflow_tests_7to8_sst:
     needs: call_workflow_copr_build
-    uses: fernflower/leapp/.github/workflows/reuse-tests-8to9.yml@master
+    uses: ./.github/workflows/reuse-tests-7to8.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
+      tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*8to9)(.*morf)"
+      pull_request_status_name: "7to8-sst"
+      update_pull_request_status: 'false'
+    if: |
+      github.event.issue.pull_request
+      && startsWith(github.event.comment.body, '/rerun-all')
+      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+
+  call_workflow_tests_7to8_aws:
+    needs: call_workflow_copr_build
+    uses: ./.github/workflows/reuse-tests-7to8.yml
+    secrets: inherit
+    with:
+      copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
+      tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*8to9)(.*e2e)"
+      compose: "RHEL-7.9-rhui"
+      environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys; echo 42; yum-config-manager --enable rhel-7-server-rhui-optional-rpms"}}'
+      pull_request_status_name: "7to8-aws-e2e"
+      variables: "RHUI=aws"
+
+  call_workflow_tests_8to9_integration:
+    needs: call_workflow_copr_build
+    uses: ./.github/workflows/reuse-tests-8to9.yml
+    secrets: inherit
+    with:
+      copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
+      tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*morf)"
+
+  call_workflow_tests_8to9_sst:
+    needs: call_workflow_copr_build
+    uses: ./.github/workflows/reuse-tests-8to9.yml
+    secrets: inherit
+    with:
+      copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
+      tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*7to8)(.*morf)"
+      pull_request_status_name: "8to9-sst"
+      update_pull_request_status: 'false'
+    if: |
+      github.event.issue.pull_request
+      && startsWith(github.event.comment.body, '/rerun-all')
+      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
