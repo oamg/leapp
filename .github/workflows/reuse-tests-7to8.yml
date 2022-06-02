@@ -7,16 +7,40 @@ on:
         required: True
       TF_API_KEY:
         required: True
-      COMPOSE_RHEL79:
-        required: True
     inputs:
       copr_artifacts:
         required: True
         type: string
+      tmt_plan_regex:
+        type: string
+        default: "^(?!.*c2r)(?!.*sap)(?!.*8to9)"
+      environment_settings:
+        type: string
+        default: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
+      arch:
+        type: string
+        default: 'x86_64'
+      pull_request_status_name:
+        type: string
+        default: '7to8'
+      copr:
+        type: string
+        default: 'epel-7-x86_64'
+      tmt_context:
+        type: string
+        default: 'distro=rhel-7'
+      compose:
+        type: string
+        default: 'RHEL-7.9-ZStream'
+      variables:
+        type: string
+        default: ''
+      update_pull_request_status:
+        type: string
+        default: 'true'
 
 jobs:
   reusable_workflow_job:
-    # This job only runs for '/rerun' pull request comments by owner, member, or collaborator of the repo/organization.
     name: Schedule regression tests on Testing Farm
     runs-on: ubuntu-20.04
     steps:
@@ -31,14 +55,15 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # optional
           tf_scope: 'private'
-          tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*8to9)"
-          compose: ${{ secrets.COMPOSE_RHEL79 }}
-          arch: 'x86_64'
-          copr: 'epel-7-x86_64'
+          create_issue_comment: 'true'
+          update_pull_request_status: ${{ inputs.update_pull_request_status }}
+          tmt_plan_regex: ${{ inputs.tmt_plan_regex }}
+          compose: ${{ inputs.compose }}
+          arch: ${{ inputs.arch }}
+          copr: ${{ inputs.copr }}
           copr_artifacts: ${{ inputs.copr_artifacts }}
           debug: ${{ secrets.ACTIONS_STEP_DEBUG }}
-          tmt_context: 'distro=rhel-7'
-          pull_request_status_name: '7to8'
-          create_issue_comment: 'true'
-          update_pull_request_status: 'true'
-          environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
+          tmt_context: ${{ inputs.tmt_context }}
+          pull_request_status_name: ${{ inputs.pull_request_status_name }}
+          environment_settings: ${{ inputs.environment_settings }}
+          variables: ${{ inputs.variables }}

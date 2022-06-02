@@ -1,4 +1,4 @@
-name: reuse-tests-7to8@TF
+name: reuse-tests-8to9@TF
 
 on:
   workflow_call:
@@ -7,12 +7,37 @@ on:
         required: True
       TF_API_KEY:
         required: True
-      COMPOSE_RHEL86:
-        required: True
     inputs:
       copr_artifacts:
         required: True
         type: string
+      tmt_plan_regex:
+        type: string
+        default: "^(?!.*c2r)(?!.*sap)(?!.*7to8)"
+      environment_settings:
+        type: string
+        default: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
+      arch:
+        type: string
+        default: 'x86_64'
+      pull_request_status_name:
+        type: string
+        default: '8to9'
+      copr:
+        type: string
+        default: 'epel-8-x86_64'
+      tmt_context:
+        type: string
+        default: 'distro=rhel-8'
+      compose:
+        type: string
+        default: 'RHEL-8.6.0-Nightly'
+      variables:
+        type: string
+        default: 'TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms'
+      update_pull_request_status:
+        type: string
+        default: 'true'
 
 jobs:
   reusable_workflow_job:
@@ -31,15 +56,15 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           # optional
           tf_scope: 'private'
-          tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*7to8)"
-          compose: ${{ secrets.COMPOSE_RHEL86 }}
-          arch: 'x86_64'
-          copr: 'epel-8-x86_64'
+          create_issue_comment: 'true'
+          update_pull_request_status: ${{ inputs.update_pull_request_status }}
+          tmt_plan_regex: ${{ inputs.tmt_plan_regex }}
+          compose: ${{ inputs.compose }}
+          arch: ${{ inputs.arch }}
+          copr: ${{ inputs.copr }}
           copr_artifacts: ${{ inputs.copr_artifacts }}
           debug: ${{ secrets.ACTIONS_STEP_DEBUG }}
-          variables: 'TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_SKU=RH00069;RHSM_REPOS=rhel-8-for-x86_64-appstream-beta-rpms,rhel-8-for-x86_64-baseos-beta-rpms;LEAPP_EXEC_ENV_VARS=LEAPP_DEVEL_TARGET_PRODUCT_TYPE=beta'
-          tmt_context: 'distro=rhel-8'
-          pull_request_status_name: '8to9'
-          create_issue_comment: 'true'
-          update_pull_request_status: 'true'
-          environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
+          tmt_context: ${{ inputs.tmt_context }}
+          pull_request_status_name: ${{ inputs.pull_request_status_name }}
+          environment_settings: ${{ inputs.environment_settings }}
+          variables: ${{ inputs.variables }}
