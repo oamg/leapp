@@ -41,6 +41,7 @@ disable=
  exception-message-attribute, # nope, still have py2 to support
  no-absolute-import,  # XXX FIXME nice to have one day
  unspecified-encoding,  # XXX FIXME May be a good thing to have one day though
+ deprecated-class,  # We still have < 3.9 to support
 
 [FORMAT]
 # Maximum number of characters on a single line.
