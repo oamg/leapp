@@ -33,7 +33,7 @@ jobs:
         id: leapp_repository_pr_regex_match
         with:
           text: ${{ github.event.comment.body }}
-          regex: '^/rerun\s+([0-9]+)\s*$'
+          regex: '^/(rerun|rerun-all)\s+([0-9]+)\s*$'
 
       - name: Get pull request number
         id: pr_nr
@@ -109,7 +109,7 @@ jobs:
         id: leapp_repository_pr
         if: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' }}
         run: |
-          echo "::set-output name=leapp_repository_pr::${{ steps.leapp_repository_pr_regex_match.outputs.group1 }}"
+          echo "::set-output name=leapp_repository_pr::${{ steps.leapp_repository_pr_regex_match.outputs.group2 }}"
 
       - name: Checkout leapp-repository
         id: checkout_leapp_repository
