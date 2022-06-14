@@ -65,3 +65,15 @@ jobs:
       github.event.issue.pull_request
       && startsWith(github.event.comment.body, '/rerun-all')
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
+
+  call_workflow_tests_8to9_aws:
+    needs: call_workflow_copr_build
+    uses: ./.github/workflows/reuse-tests-8to9.yml
+    secrets: inherit
+    with:
+      copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
+      tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*7to8)(.*e2e)"
+      compose: "RHEL-8.6-rhui"
+      environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
+      pull_request_status_name: "8to9-aws-e2e"
+      variables: "RHUI=aws"
