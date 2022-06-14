@@ -10,8 +10,9 @@ when we agree it's worthwhile.
 
 But we need a mechanism to be able to synchronize with other projects, when we
 provide new functionality in the upstream (master) branch without the need
-of immadiate release of the new version of leapp. For these purposes the
+of immediate release of the new version of leapp. For these purposes the
 `leapp-framework` capability is provided in the framework (python[23]-leapp) rpms.
+
 
 ## When and how change the capability
 
@@ -57,3 +58,18 @@ on the system, you could end up with:
 which both are broken for leapp repository and the dependency from the point of
 rpms is satisfied. This should happen rarely. We suggest you to ensure that you
 use such repositories where only one of those rpms exists.
+
+
+# Leapp developer's point of view
+
+Some big and cool feature requests expect changes to land in both leapp and leapp-repository projects simultaneously.
+To instruct how to pick up the proper version, you need to make changes to the spec files that reside in the
+`packaging` directory of both projects.
+
+For example, let's say that [packaging/leapp.spec](../../packaging/leapp.spec#L16) has `framework_version 42.42` and
+the cool change you are working on is breaking previous functionality.
+
+* In a leapp PR you would need to bump the version in the spec file to `framework_version 43.0`.
+
+* In a leapp-repository PR you would then need to address the expected version by adjusting the Requires directive,
+like `Requires:       leapp-framework >= 43.0, leapp-framework < 44`
