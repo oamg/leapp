@@ -139,4 +139,15 @@ def generate_report_file(messages_to_report, context, path, report_schema='1.1.0
                     groups = msg.pop('groups', [])
                     msg['flags'] = [g for g in groups if g in _DEPRECATION_FLAGS]
                     msg['tags'] = [g for g in groups if g not in _DEPRECATION_FLAGS]
+            if report_schema_tuple == (1, 2, 0):
+                # DEPRECATED: flags, tags
+                # NOTE(pstodulk): This is a temporary solution to ensure that
+                # flags are not present in the JSON output as we need to re-introduce
+                # flags internally to ensure that any inhibitor checks will not
+                # be negatively affected until we drop flags and tags completely.
+                messages_to_report = list(messages_to_report)
+                for msg in messages_to_report:
+                    # NOTE(ivasilev) As flags field is created only if there is an inhibitor
+                    # a default value to pop has to be specified not to end up with a KeyError
+                    msg.pop('flags', None)
             json.dump({'entries': messages_to_report, 'leapp_run_id': context}, f, indent=2)
