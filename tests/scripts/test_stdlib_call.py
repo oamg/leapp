@@ -77,6 +77,16 @@ def test_env_injection():
     assert ret['stdout'] == 'SUCCESS\n'
 
 
+def test_env_preservation():
+    os.environ['TEST'] = 'FAILURE'
+    ret = _call(('bash', '-c', 'echo $TEST'), env={'TEST': 'SUCCESS', 'TEST2': 'HELLO_WORLD'})
+    assert isinstance(ret['exit_code'], int)
+    assert ret['exit_code'] == 0
+    assert 'TEST2' not in os.environ
+    assert os.environ['TEST'] == 'FAILURE'
+    assert ret['stdout'] == 'SUCCESS\n'
+
+
 def test_callability_check():
     with pytest.raises(TypeError):
         _call(('true',), callback_raw='nope')

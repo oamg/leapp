@@ -121,7 +121,7 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
     if not isinstance(read_buffer_size, int) or isinstance(read_buffer_size, bool) or read_buffer_size <= 0:
         raise ValueError('read_buffer_size parameter has to be integer greater than zero')
 
-    environ = os.environ
+    environ = os.environ.copy()
     if env:
         if not isinstance(env, dict):
             raise TypeError('env parameter has to be a dictionary')
