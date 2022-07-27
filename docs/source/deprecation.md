@@ -13,7 +13,11 @@ the leapp standard library, etc. But don't cover deprecated functionalities
 from particular leapp repositories (e.g. the [elt7toel8](https://github.com/oamg/leapp-repository/tree/master/repos/system_upgrade/el7toel8) leapp repository). For
 such information, see [Deprecated functionality in the el7toel8 repository](el7toel8/deprecation.html#deprecated-functionality-in-the-el7toel8-repository).
 
-*Note: No new deprecation present yet.*
+## current upstream development <span style="font-size:0.5em; font-weight:normal">(till the next release + 6months)</span>
+
+- Reporting primitives
+    - **`leapp.reporting.Flags`** - The `Flags` report primitive has been deprecated in favor of the more general `Groups` one.
+    - **`leapp.reporting.Tags`** - The `Tags` report primitive has been deprecated in favor of the more general `Groups` one.
 
 ## What is covered by deprecation process in leapp?
 
