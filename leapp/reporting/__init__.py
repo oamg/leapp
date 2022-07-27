@@ -326,6 +326,12 @@ def _create_report_object(entries):
     _sanitize_entries(entries)
     for entry in entries:
         entry.apply(report)
+    if Groups.INHIBITOR in report.get('groups', []):
+        # Before removing Flags, the original inhibitor detection worked
+        # by checking the `flags` field; keep the `flags` field until we drop Flags completely
+        # Currently we know that 'flags' does not exist otherwise so it's
+        # safe to just set it
+        report['flags'] = [Groups.INHIBITOR]
 
     return Report(report=report)
 
