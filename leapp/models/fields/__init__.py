@@ -1,3 +1,4 @@
+import base64
 import copy
 import datetime
 import json
@@ -237,6 +238,33 @@ class String(BuiltinField):
     @property
     def _model_type(self):
         return six.string_types + (six.binary_type,)
+
+
+class Blob(BuiltinField):
+    """
+    Blob field
+    """
+    @property
+    def _model_type(self):
+        # NOTE(ivasilev) Both string_types and binary_types are necessary here to pass value checks on
+        # serialization/deserialization. Serialized JSON-friendly model will have a string type field (the base64
+        # ascii string) while deserialized model will have a binary type field.
+        return six.string_types + (six.binary_type,)
+
+    def _convert_to_model(self, value, name):
+        self._validate_model_value(value=value, name=name)
+        if value is None:
+            return None
+
+        return base64.b64decode(value)
+
+    def _convert_from_model(self, value, name):
+        self._validate_model_value(value=value, name=name)
+        if value is None:
+            return None
+
+        # NOTE(ivasilev) b64 encoding is always ascii, thus ascii decoding to get a string
+        return base64.b64encode(value).decode('ascii')
 
 
 class DateTime(BuiltinField):
