@@ -1,0 +1,11 @@
+FROM centos:7
+
+VOLUME /payload
+
+ENV DIST_VERSION 7
+
+RUN yum update -y && \
+    yum install -y make git rpm-build python-setuptools python-devel
+
+WORKDIR /payload
+ENTRYPOINT make build

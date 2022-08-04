@@ -1,0 +1,12 @@
+# FROM statement is inserted in Makefile
+
+VOLUME /payload
+
+ENV DIST_VERSION 8
+
+RUN dnf update -y && \
+    dnf install -y python3 make git rpm-build python3-devel
+    #yum install -y python3-pip && \ python3 -m pip install --upgrade pip==20.3.4
+
+WORKDIR /payload
+ENTRYPOINT make build
