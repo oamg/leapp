@@ -76,7 +76,13 @@ help:
 	@echo "                         - available containers are: rhel7, rhel8, rhel9"
 	@echo "  test_container_all     runs linter and tests in all available containers"
 	@echo "  lint                   runs just the linter"
-	@echo "  clean_containers       cleans up all testing containers"
+	@echo "  build                  create the RPM"
+	@echo "  build_container        create the RPM in container"
+	@echo "                         - set BUILD_CONTAINER to select the container"
+	@echo "                         - available containers are: el7, el8, f35, f36, rawhide"
+	@echo "                         - this can't be used to build in parallel,"
+	@echo "                           as build containers operate on the same files"
+	@echo "  clean_containers      clean container images used for building"
 	@echo ""
 	@echo "Possible use:"
 	@echo "  make <target>"
@@ -85,11 +91,12 @@ help:
 	@echo "  PR=7 SUFFIX='my_additional_suffix' make <target>"
 	@echo "  MR=6 COPR_CONFIG='path/to/the/config/copr/file' <target>"
 	@echo "  TEST_CONTAINER=rhel7 make test_container"
+	@echo "  BUILD_CONTAINER=el7 make build_container"
 	@echo ""
 
 clean:
 	@echo "--- Clean repo ---"
-	@rm -rf packaging/{sources,SRPMS}/
+	@rm -rf packaging/{sources,SRPMS,BUILD,BUILDROOT,RPMS}/
 	@rm -rf build/ dist/ *.egg-info
 	@find . -name '__pycache__' -exec rm -fr {} +
 	@find . -name '*.pyc' -exec rm -f {} +
@@ -97,7 +104,7 @@ clean:
 
 prepare: clean
 	@echo "--- Prepare build directories ---"
-	@mkdir -p packaging/{sources,SRPMS}/
+	@mkdir -p packaging/{sources,SRPMS,BUILD,BUILDROOT,RPMS}/
 
 source: prepare
 	@echo "--- Create source tarball ---"
@@ -122,6 +129,50 @@ copr_build: srpm
 		packaging/SRPMS/${PKGNAME}-${VERSION}-${RELEASE}*.src.rpm
 	@copr-cli --config $(_COPR_CONFIG) build $(_COPR_REPO) \
 		packaging/SRPMS/${PKGNAME}-${VERSION}-${RELEASE}*.src.rpm
+
+build: source
+	@echo "--- Build RPM ${PKGNAME}-${VERSION}-${RELEASE}.el$(DIST_VERSION).rpm ---"
+	@cp packaging/$(PKGNAME).spec packaging/$(PKGNAME).spec.bak
+	@sed -i "s/1%{?dist}/$(RELEASE)%{?dist}/g" packaging/$(PKGNAME).spec
+	@rpmbuild -ba packaging/$(PKGNAME).spec \
+		--define "_sourcedir `pwd`/packaging/sources"  \
+		--define "_srcrpmdir `pwd`/packaging/SRPMS" \
+		--define "_builddir `pwd`/packaging/BUILD" \
+		--define "_buildrootdir `pwd`/packaging/BUILDROOT" \
+		--define "_rpmdir `pwd`/packaging/RPMS" \
+		--define "rhel $(DIST_VERSION)" \
+		--define 'dist .el$(DIST_VERSION)' \
+		--define 'el$(DIST_VERSION) 1' || FAILED=1
+	@mv packaging/$(PKGNAME).spec.bak packaging/$(PKGNAME).spec
+
+build_container:
+	@case "$$BUILD_CONTAINER" in \
+	el7) \
+		_CONT_FILE="Containerfile.centos7"; \
+		;; \
+	el8) \
+		_CONT_FILE="Containerfile.ubi8"; \
+		;; \
+	f3[56]|rawhide) \
+		[ $$BUILD_CONTAINER = rawhide ] && VERSION=latest || VERSION=$${BUILD_CONTAINER: -2}; \
+		_CONT_FILE=".Containerfile.$${BUILD_CONTAINER}"; \
+		cp res/container-builds/Containerfile.fedora_generic res/container-builds/$$_CONT_FILE && \
+		sed -i "1i FROM fedora:$${VERSION}" res/container-builds/$$_CONT_FILE \
+		;; \
+	"") \
+		echo "BUILD_CONTAINER must be set"; \
+		exit 1; \
+		;; \
+	*) \
+		echo "Available containers are el7, el8, f35, f36, rawhide"; \
+		exit 1; \
+		;; \
+	esac && \
+	echo "--- Preparing $$BUILD_CONTAINER container for building ---" && \
+	IMAGE_NAME="leapp-build-$${BUILD_CONTAINER}"; \
+	podman build -f res/container-builds/$$_CONT_FILE -t $$IMAGE_NAME res/container-builds/ && \
+	podman run --rm -ti -v $$PWD:/payload:Z --name "$${IMAGE_NAME}-cont" $$IMAGE_NAME && \
+	[ '$${_CONT_FILE:0:1}' = '.' ] && rm -f res/container-builds/$$_CONT_FILE || :
 
 print_release:
 	@echo $(RELEASE)
@@ -179,8 +230,8 @@ test_container_all:
 	done
 
 clean_containers:
-	@for i in "leapp-tests-rhel"{7,8,9}; do \
-		podman rmi "$$i" > /dev/null 2>&1 || :;  \
+	@for i in "leapp-build-"{el7,el8,f35,f36,rawhide} "leapp-tests-rhel"{7,8,9}; do \
+		podman rmi "$$i" > /dev/null 2>&1 || :; \
 	done
 
 lint:
@@ -216,4 +267,4 @@ fast_lint:
 		echo "No files to lint."; \
 	fi
 
-.PHONY: clean copr_build install install-deps install-test srpm test test_container test_container_all lint fast_lint clean_containers
+.PHONY: clean copr_build build build_container install install-deps install-test srpm test test_container test_container_all lint fast_lint clean_containers
