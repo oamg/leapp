@@ -170,7 +170,7 @@ test_container:
 	esac; \
 	export TEST_IMAGE="leapp-tests-$(_TEST_CONTAINER)"; \
 	rm -rf testenv/ && \
-	podman build -t $$TEST_IMAGE --env PYTHON_VENV=$$_VENV -f $$_CONT_FILE res/container-tests && \
+	podman build -t $$TEST_IMAGE -f $$_CONT_FILE res/container-tests && \
 	podman run --rm -v $${PWD}:/payload:Z -e PYTHON_VENV=$$_VENV $$TEST_IMAGE
 
 test_container_all:
