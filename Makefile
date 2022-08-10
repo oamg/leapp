@@ -15,6 +15,9 @@ VERSION=`grep -m1 "^Version:" packaging/$(PKGNAME).spec | grep -om1 "[0-9].[0-9.
 _COPR_REPO=$${COPR_REPO:-leapp}
 _COPR_CONFIG=$${COPR_CONFIG:-~/.config/copr_rh_oamg.conf}
 
+# container used to run unit tests
+_TEST_CONTAINER=$${TEST_CONTAINER:-rhel8}
+
 # just to reduce number of unwanted builds mark as the upstream one when
 # someone will call copr_build without additional parameters
 MASTER_BRANCH=master
@@ -65,6 +68,15 @@ help:
 	@echo "  copr_build             create the COPR build using the COPR TOKEN"
 	@echo "                         - default path is: $(_COPR_CONFIG)"
 	@echo "                         - can be changed by the COPR_CONFIG env"
+	@echo "  install-test           installs test dependencies"
+	@echo "  test                   runs linter and unit tests"
+	@echo "  test_container         runs linter and unit tests in a container"
+	@echo "                         - by default rhel8 container is used"
+	@echo "                         - can be changed by setting TEST_CONTAINER env variable"
+	@echo "                         - available containers are: rhel7, rhel8, rhel9"
+	@echo "  test_container_all     runs linter and tests in all available containers"
+	@echo "  lint                   runs just the linter"
+	@echo "  clean_containers       cleans up all testing containers"
 	@echo ""
 	@echo "Possible use:"
 	@echo "  make <target>"
@@ -72,6 +84,7 @@ help:
 	@echo "  MR=6 <target>"
 	@echo "  PR=7 SUFFIX='my_additional_suffix' make <target>"
 	@echo "  MR=6 COPR_CONFIG='path/to/the/config/copr/file' <target>"
+	@echo "  TEST_CONTAINER=rhel7 make test_container"
 	@echo ""
 
 clean:
@@ -132,10 +145,43 @@ else
 	pip install -r requirements-tests.txt
 endif
 
-
 test:   lint
 	@ $(ENTER_VENV) \
 	pytest -vv --cov-report term-missing --cov=leapp tests/scripts
+
+test_container:
+	@case $(_TEST_CONTAINER) in \
+		rhel7) \
+			export _VENV=python2.7; \
+			export _CONT_FILE="res/container-tests/Containerfile.ubi7"; \
+			;; \
+		rhel8) \
+			export _VENV=python3.6; \
+			export _CONT_FILE="res/container-tests/Containerfile.ubi8"; \
+			;; \
+		rhel9) \
+			export _VENV=python3.9; \
+			export _CONT_FILE="res/container-tests/Containerfile.ubi9"; \
+			;; \
+		*) \
+			echo "Available test containers are rhel7, rhel8, rhel9"; \
+			exit 1; \
+			;; \
+	esac; \
+	export TEST_IMAGE="leapp-tests-$(_TEST_CONTAINER)"; \
+	rm -rf testenv/ && \
+	podman build -t $$TEST_IMAGE -f $$_CONT_FILE res/container-tests && \
+	podman run --rm -v $${PWD}:/payload:Z -e PYTHON_VENV=$$_VENV $$TEST_IMAGE
+
+test_container_all:
+	@for container in "rhel"{7,8,9}; do \
+		TEST_CONTAINER=$$container $(MAKE) test_container; \
+	done
+
+clean_containers:
+	@for i in "leapp-tests-rhel"{7,8,9}; do \
+		podman rmi "$$i" > /dev/null 2>&1 || :;  \
+	done
 
 lint:
 	@ $(ENTER_VENV) \
@@ -170,4 +216,4 @@ fast_lint:
 		echo "No files to lint."; \
 	fi
 
-.PHONY: clean copr_build install install-deps install-test srpm test lint fast_lint
+.PHONY: clean copr_build install install-deps install-test srpm test test_container test_container_all lint fast_lint clean_containers
