@@ -10,22 +10,33 @@ jobs:
     uses: ./.github/workflows/reuse-copr-build.yml
     secrets: inherit
 
-  call_workflow_tests_7to8_integration:
+  call_workflow_tests_79to84_integration:
     needs: call_workflow_copr_build
     uses: ./.github/workflows/reuse-tests-7to8.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*morf)"
+      pull_request_status_name: "7.9to8.4"
 
-  call_workflow_tests_7to8_sst:
+  call_workflow_tests_79to86_integration:
+    needs: call_workflow_copr_build
+    uses: ./.github/workflows/reuse-tests-7to8.yml
+    secrets: inherit
+    with:
+      copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
+      tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*morf)"
+      variables: 'TARGET_RELEASE=8.6'
+      pull_request_status_name: "7.9to8.6"
+
+  call_workflow_tests_79to84_sst:
     needs: call_workflow_copr_build
     uses: ./.github/workflows/reuse-tests-7to8.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*8to9)(.*morf)"
-      pull_request_status_name: "7to8-sst"
+      pull_request_status_name: "7.9to8.4-sst"
       update_pull_request_status: 'false'
     if: |
       github.event.issue.pull_request
@@ -44,22 +55,34 @@ jobs:
       pull_request_status_name: "7to8-aws-e2e"
       variables: "RHUI=aws"
 
-  call_workflow_tests_8to9_integration:
+  call_workflow_tests_86to90_integration:
     needs: call_workflow_copr_build
     uses: ./.github/workflows/reuse-tests-8to9.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*morf)"
+      pull_request_status_name: "8.6to9.0"
 
-  call_workflow_tests_8to9_sst:
+  call_workflow_tests_87to91_integration:
+    needs: call_workflow_copr_build
+    uses: ./.github/workflows/reuse-tests-8to9.yml
+    secrets: inherit
+    with:
+      copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
+      tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*morf)"
+      variables: 'LEAPP_DEVEL_TARGET_PRODUCT_TYPE=beta;RHSM_SKU=RH00069;TARGET_RELEASE=9.1;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms'
+      compose: 'RHEL-8.7.0-Nightly'
+      pull_request_status_name: "8.7to9.1"
+
+  call_workflow_tests_86to90_sst:
     needs: call_workflow_copr_build
     uses: ./.github/workflows/reuse-tests-8to9.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*c2r)(?!.*sap)(?!.*7to8)(.*morf)"
-      pull_request_status_name: "8to9-sst"
+      pull_request_status_name: "8.6to9.0-sst"
       update_pull_request_status: 'false'
     if: |
       github.event.issue.pull_request
