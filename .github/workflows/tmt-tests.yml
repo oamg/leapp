@@ -74,6 +74,7 @@ jobs:
       variables: 'LEAPP_DEVEL_TARGET_PRODUCT_TYPE=beta;RHSM_SKU=RH00069;TARGET_RELEASE=9.1;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms'
       compose: 'RHEL-8.7.0-Nightly'
       pull_request_status_name: "8.7to9.1"
+      tmt_context: "distro=rhel-8.7"
 
   call_workflow_tests_86to90_sst:
     needs: call_workflow_copr_build
