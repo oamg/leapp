@@ -28,7 +28,7 @@ on:
         default: 'epel-8-x86_64'
       tmt_context:
         type: string
-        default: 'distro=rhel-8'
+        default: 'distro=rhel-8.6'
       compose:
         type: string
         default: 'RHEL-8.6.0-Nightly'

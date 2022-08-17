@@ -28,7 +28,7 @@ on:
         default: 'epel-7-x86_64'
       tmt_context:
         type: string
-        default: 'distro=rhel-7'
+        default: 'distro=rhel-7.9'
       compose:
         type: string
         default: 'RHEL-7.9-ZStream'
