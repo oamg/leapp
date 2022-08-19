@@ -41,6 +41,12 @@ class WithNestedListModel(Model):
     items = fields.List(fields.Model(BasicModel))
 
 
+class WithBlobModel(Model):
+    topic = ModelTestTopic
+    message = fields.Blob()
+    can_be_empty = fields.Nullable(fields.Blob())
+
+
 class AllFieldTypesModel(Model):
     topic = ModelTestTopic
     float_field = fields.Float(default=3.14)
@@ -71,6 +77,12 @@ def test_base_usage():
 def test_basic_model():
     m = BasicModel(message='Some message')
     m2 = BasicModel.create(m.dump())
+    assert m.message == m2.message
+
+
+def test_bytestring_model():
+    m = WithBlobModel(message=b'\xf3\xcf\xcf\xc2\xdd\xc5\xce\xc9\xc5')
+    m2 = WithBlobModel.create(m.dump())
     assert m.message == m2.message
 
 
