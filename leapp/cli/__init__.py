@@ -44,10 +44,13 @@ def main():
     try:
         cli.command.execute('leapp version {}'.format(VERSION))
     except UnknownCommandError as e:
-        print(textwrap.dedent('''
-        Command "{CMD}" is unknown.
-        Most likely there is a typo in the command or particular leapp repositories that provide this command
-        are not present on the system.
-        You can try to install the missing content e.g. by the following command: `dnf install 'leapp-command({CMD})'`
-        '''.format(CMD=e.requested)))
+        bad_cmd = (
+            "Command \"{CMD}\" is unknown.\nMost likely there is a typo in the command or particular "
+            "leapp repositories that provide this command are not present on the system.\n"
+            "You can try to install the missing content e.g. by the following command: "
+            "`dnf install 'leapp-command({CMD})'`")
+        if e.requested.startswith('-'):
+            # A quick ack not to confuse users with install a leapp-command(--some-wrong-argument) suggestion
+            bad_cmd = "No such argument {CMD}"
+        print(bad_cmd.format(CMD=e.requested))
         sys.exit(1)
