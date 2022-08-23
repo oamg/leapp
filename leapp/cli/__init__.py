@@ -1,11 +1,12 @@
-
 import os
 import pkgutil
 import socket
 import sys
+import textwrap
 
 from leapp import VERSION
 from leapp.cli import commands
+from leapp.exceptions import UnknownCommandError
 from leapp.utils.clicmd import command
 
 
@@ -40,4 +41,16 @@ def main():
 
     os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
     _load_commands(cli.command)
-    cli.command.execute('leapp version {}'.format(VERSION))
+    try:
+        cli.command.execute('leapp version {}'.format(VERSION))
+    except UnknownCommandError as e:
+        bad_cmd = (
+            "Command \"{CMD}\" is unknown.\nMost likely there is a typo in the command or particular "
+            "leapp repositories that provide this command are not present on the system.\n"
+            "You can try to install the missing content e.g. by the following command: "
+            "`dnf install 'leapp-command({CMD})'`")
+        if e.requested.startswith('-'):
+            # A quick ack not to confuse users with install a leapp-command(--some-wrong-argument) suggestion
+            bad_cmd = "No such argument {CMD}"
+        print(bad_cmd.format(CMD=e.requested))
+        sys.exit(1)

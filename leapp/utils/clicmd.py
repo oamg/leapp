@@ -1,12 +1,12 @@
 import functools
 import os
 import sys
-
-from argparse import ArgumentParser, _SubParsersAction, RawDescriptionHelpFormatter
+from argparse import (ArgumentParser, RawDescriptionHelpFormatter,
+                      _SubParsersAction)
 
 import six
-
-from leapp.exceptions import CommandDefinitionError, UsageError, CommandError
+from leapp.exceptions import (CommandDefinitionError, CommandError,
+                              UnknownCommandError, UsageError)
 
 
 class _LeappArgumentParser(ArgumentParser):
@@ -23,6 +23,7 @@ class _LeappHelpFormatter(RawDescriptionHelpFormatter):
     """
     Capitalizes section headings in the help output
     """
+
     def start_section(self, heading):
         return super(_LeappHelpFormatter, self).start_section(heading.capitalize())
 
@@ -38,6 +39,7 @@ class _SubParserActionOverride(_SubParsersAction):
 
     The additional code will not be executed if python 2.7.9 or higher is found.
     """
+
     def __call__(self, parser, namespace, values, option_string=None):
         super(_SubParserActionOverride, self).__call__(parser, namespace, values, option_string)
         if sys.version_info >= (2, 7, 9):
@@ -54,6 +56,7 @@ class Command(object):
     """
     Command implements a convenient command-based argument parsing the framework.
     """
+
     def __init__(self, name, target=None, help='', description=None):  # noqa; pylint: disable=redefined-builtin
         """
         :param name: Name of the sub command
@@ -100,8 +103,10 @@ class Command(object):
         args, leftover = parser.parse_known_args()
         if leftover:
             cmdname = args.prog.split()[-1]
-            # NOTE(ivasilev) No vetting of cmdname is necessary here as unless a proper leapp subcommand was
-            # invocated parser.parse_known_args() would have thrown an exception
+            if cmdname not in self._sub_commands:
+                cmdname = leftover[0]
+            if cmdname not in self._sub_commands:
+                raise UnknownCommandError(cmdname)
             self._sub_commands[cmdname].parser.error(leftover)
         args.func(args)
 

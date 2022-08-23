@@ -102,6 +102,12 @@ class CommandDefinitionError(LeappError):
     pass
 
 
+class UnknownCommandError(LeappError):
+    def __init__(self, command):
+        super().__init__('Unknown command: {}'.format(command))
+        self.requested = command
+
+
 class LeappRuntimeError(LeappError):
     pass
 
