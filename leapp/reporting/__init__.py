@@ -161,7 +161,7 @@ class Groups(BaseListPrimitive):
 
 
 @deprecated(
-    since='2022-09-01',
+    since='2022-08-23',
     message=(
         'The primitive is deprecated as Tags and Flags have been joined into the Groups primitive.'
         'Please use Groups for report message typing instead.'
@@ -173,7 +173,7 @@ class Tags(Groups):
 
 
 @deprecated(
-    since='2022-09-01',
+    since='2022-08-23',
     message=(
         'The primitive is deprecated as Tags and Flags have been joined into the Groups primitive.'
         'Please use Groups for report message typing instead.'

@@ -15,6 +15,10 @@ such information, see [Deprecated functionality in the el7toel8 repository](el7t
 
 ## current upstream development <span style="font-size:0.5em; font-weight:normal">(till the next release + 6months)</span>
 
+- nothing yet...
+
+## current upstream development <span style="font-size:0.5em; font-weight:normal">(till Mar 2023)</span>
+
 - Reporting primitives
     - **`leapp.reporting.Flags`** - The `Flags` report primitive has been deprecated in favor of the more general `Groups` one.
     - **`leapp.reporting.Tags`** - The `Tags` report primitive has been deprecated in favor of the more general `Groups` one.
