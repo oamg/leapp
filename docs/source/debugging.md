@@ -26,3 +26,22 @@ It's possible to go minimal and debug actor execution with remote debugger like
 3. In a separate console connect to the debugger via network utility of your choice. The default port is 4444.
 
 ```nc localhost 4444```
+
+
+### Initramfs
+
+One of the biggest debugging challenges is exploring something in initamfs stage, as currently there is no network
+connectivity (this might change soon though).
+
+1. (can be skipped if you already ended up with an emergency console)
+To get access to the emergency console right after leapp execution in initramfs stage has finished you should add an
+`rd.break=leapp-upgrade` argument to the kernel commandline. One way to do this is by changing the code of the
+[addupgradebootentry actor](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/common/actors/addupgradebootentry/libraries/addupgradebootentry.py#L23)
+
+2. (can be skipped if you don't need any extra binaries) [TBD] Information on how to include additional binaries into
+the initramfs
+
+3. To get access to the common binaries change `PATH` accordingly. Setting
+`PATH="$PATH:$PATH:/sysroot/bin:/sysroot/sbin:/sysroot/usr/bin"` should do the trick.
+
+4. [TBD] Put info how to collect the logs
