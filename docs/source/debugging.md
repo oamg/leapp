@@ -30,7 +30,7 @@ It's possible to go minimal and debug actor execution with remote debugger like
 
 ### Initramfs
 
-One of the biggest debugging challenges is exploring something in initamfs stage, as currently there is no network
+One of the biggest debugging challenges is exploring something in initramfs stage, as currently there is no network
 connectivity (this might change soon though).
 
 1. (can be skipped if you already ended up with an emergency console)
@@ -45,3 +45,6 @@ the initramfs
 `PATH="$PATH:$PATH:/sysroot/bin:/sysroot/sbin:/sysroot/usr/bin"` should do the trick.
 
 4. [TBD] Put info how to collect the logs
+
+> **_NOTE:_** When working in initramfs stage you will need a serial console. Though openstack machines can provide
+you with a novnc console, unless you need a shared dev environment consider using vagrant/libvirt.
