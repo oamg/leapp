@@ -44,7 +44,9 @@ the initramfs
 3. To get access to the common binaries change `PATH` accordingly. Setting
 `PATH="$PATH:$PATH:/sysroot/bin:/sysroot/sbin:/sysroot/usr/bin"` should do the trick.
 
-4. [TBD] Put info how to collect the logs
+4. If the binaries are complaining about missing shared libraries, try changing root to /sysroot: `chroot /sysroot`
+
+5. [TBD] Put info how to collect the logs
 
 > **_NOTE:_** When working in initramfs stage you will need a serial console. Though openstack machines can provide
 you with a novnc console, unless you need a shared dev environment consider using vagrant/libvirt.
