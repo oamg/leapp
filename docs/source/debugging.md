@@ -43,8 +43,10 @@ the initramfs
 
 3. To get access to the common binaries change `PATH` accordingly. Setting
 `PATH="$PATH:$PATH:/sysroot/bin:/sysroot/sbin:/sysroot/usr/bin"` should do the trick.
+If `/sysroot` is not mounted at the time you may need to mount it manually, e.g. with `systemctl start sysroot.mount`.
 
-4. If the binaries are complaining about missing shared libraries, try changing root to /sysroot: `chroot /sysroot`
+4. If the binaries are complaining about missing shared libraries, you could either set `LD_LIBRARY_PATH` variable
+to `LD_LIBRARY_PATH=/lib64:/sysroot/lib64` or change root to /sysroot: `chroot /sysroot`
 
 5. [TBD] Put info how to collect the logs
 
