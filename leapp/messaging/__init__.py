@@ -152,10 +152,17 @@ class BaseMessaging(object):
         """
         self._stop_after_phase.set(True)
 
-    def register_dialog(self, dialog, actor):
-        self._dialogs.append(dialog)
+    def _unanswered_questions(self, dialog):
         userchoices = dialog.get_answers(self._answers)
-        if not userchoices:
+        res = [s for s in dialog.answerfile_sections.keys() if s.split('.', 2)[1] not in userchoices]
+        return res
+
+    def register_dialog(self, dialog, actor):
+        # FIXME(ivasilev) Make sure it works correctly in case of a dialog with several questions. Currently there
+        # is no such dialog in actors but this code should be revisited if this changes. OAMG-7523
+        self._dialogs.append(dialog)
+        unanswered = self._unanswered_questions(dialog)
+        if unanswered:
             # produce DialogModel messages for all the dialogs that don't have answers in answerfile
             stable_key = dialog.key if dialog.key else hashlib.sha1(
                 ','.join(sorted(dialog.answerfile_sections.keys())).encode('utf-8')).hexdigest()
@@ -164,6 +171,7 @@ class BaseMessaging(object):
                                      key=stable_key), actor)
         else:
             # update dialogs with answers from answerfile. That is necessary for proper answerfile generation
+            userchoices = dialog.get_answers(self._answers)
             for component, value in userchoices.items():
                 dialog_component = dialog.component_by_key(component)
                 if dialog_component:
