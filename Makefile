@@ -15,6 +15,9 @@ VERSION=`grep -m1 "^Version:" packaging/$(PKGNAME).spec | grep -om1 "[0-9].[0-9.
 _COPR_REPO=$${COPR_REPO:-leapp}
 _COPR_CONFIG=$${COPR_CONFIG:-~/.config/copr_rh_oamg.conf}
 
+# tool used to run containers for testing and building packages
+_CONTAINER_TOOL=$${CONTAINER_TOOL:-podman}
+
 # container used to run unit tests
 _TEST_CONTAINER=$${TEST_CONTAINER:-rhel8}
 
@@ -92,6 +95,7 @@ help:
 	@echo "  MR=6 COPR_CONFIG='path/to/the/config/copr/file' <target>"
 	@echo "  TEST_CONTAINER=rhel7 make test_container"
 	@echo "  BUILD_CONTAINER=el7 make build_container"
+	@echo "  CONTAINER_TOOL=docker make test_container"
 	@echo ""
 
 clean:
@@ -170,8 +174,8 @@ build_container:
 	esac && \
 	echo "--- Preparing $$BUILD_CONTAINER container for building ---" && \
 	IMAGE_NAME="leapp-build-$${BUILD_CONTAINER}"; \
-	podman build -f res/container-builds/$$_CONT_FILE -t $$IMAGE_NAME res/container-builds/ && \
-	podman run --rm -ti -v $$PWD:/payload:Z --name "$${IMAGE_NAME}-cont" $$IMAGE_NAME && \
+	$(_CONTAINER_TOOL) build -f res/container-builds/$$_CONT_FILE -t $$IMAGE_NAME res/container-builds/ && \
+	$(_CONTAINER_TOOL) run --rm -v $$PWD:/payload:Z --name "$${IMAGE_NAME}-cont" $$IMAGE_NAME && \
 	[ '$${_CONT_FILE:0:1}' = '.' ] && rm -f res/container-builds/$$_CONT_FILE || :
 
 print_release:
@@ -221,8 +225,8 @@ test_container:
 	esac; \
 	export TEST_IMAGE="leapp-tests-$(_TEST_CONTAINER)"; \
 	rm -rf testenv/ && \
-	podman build -t $$TEST_IMAGE -f $$_CONT_FILE res/container-tests && \
-	podman run --rm -v $${PWD}:/payload:Z -e PYTHON_VENV=$$_VENV $$TEST_IMAGE
+	$(_CONTAINER_TOOL) build -t $$TEST_IMAGE -f $$_CONT_FILE res/container-tests && \
+	$(_CONTAINER_TOOL) run --rm -v $${PWD}:/payload:Z -e PYTHON_VENV=$$_VENV $$TEST_IMAGE
 
 test_container_all:
 	@for container in "rhel"{7,8,9}; do \
@@ -231,7 +235,8 @@ test_container_all:
 
 clean_containers:
 	@for i in "leapp-build-"{el7,el8,f35,f36,rawhide} "leapp-tests-rhel"{7,8,9}; do \
-		podman rmi "$$i" > /dev/null 2>&1 || :; \
+		[ -z $$($(_CONTAINER_TOOL) images -q "$$i") ] || \
+		$(_CONTAINER_TOOL) rmi "$$i" > /dev/null 2>&1 || :; \
 	done
 
 lint:
