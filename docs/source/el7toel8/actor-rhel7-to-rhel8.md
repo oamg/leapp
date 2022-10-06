@@ -327,6 +327,17 @@ data is stored in the database for the current session:
 ```shell
 snactor run --save-output IPUWorkflowConfig
 ```
+Since the leapp supports several upgrade paths, the `snactor` needs to know target system and upgrade flavor specification for correct execution.
+If you see similar errors when running `snactor`
+```
+leapp.models.fields.ModelViolationError: The value of "target" field is None, but this is not allowed
+```
+please, set the following environment variables (adjust the `LEAPP_UPGRADE_PATH_TARGET_RELEASE` as needed):
+```
+export LEAPP_UPGRADE_PATH_TARGET_RELEASE=8.6
+export LEAPP_UPGRADE_PATH_FLAVOUR=default
+snactor run --save-output IPUWorkflowConfig
+```
 
 ### Executing the whole upgrade workflow with the new actor
 
