@@ -327,7 +327,7 @@ data is stored in the database for the current session:
 ```shell
 snactor run --save-output IPUWorkflowConfig
 ```
-Since the leapp supports several upgrade paths, the `snactor` needs to know target system and upgrade flavor specification for correct execution.
+Since the leapp upgrade repositories support several upgrade paths, the `snactor` needs to get additional data for the correct execution, like the release of the target system, the flavor specification, etc.
 If you see similar errors when running `snactor`
 ```
 leapp.models.fields.ModelViolationError: The value of "target" field is None, but this is not allowed
