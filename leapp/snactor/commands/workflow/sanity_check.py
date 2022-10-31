@@ -29,9 +29,10 @@ def print_fail(error):
 
 
 def _ignore_file_content(path):
-    if path:
-        with open(path) as f:
-            return [line.strip() for line in f.read().split('\n') if not line.strip().startswith('#')]
+    if not path:
+        return []
+    with open(path) as f:
+        return [line.strip() for line in f.read().split('\n') if line.strip() and not line.strip().startswith('#')]
 
 
 @workflow.command('sanity-check', help='Perform workflow sanity checks', description=_LONG_DESCRIPTION)
