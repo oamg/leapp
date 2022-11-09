@@ -4,9 +4,10 @@ import logging
 import os
 import pkgutil
 import sys
+import traceback
 import warnings
 from io import UnsupportedOperation
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Pipe
 
 import leapp.libraries.actor  # noqa # pylint: disable=unused-import
 from leapp.actors import get_actor_metadata, get_actors
@@ -56,7 +57,7 @@ class ActorCallContext(object):
         self.skip_dialogs = skip_dialogs
 
     @staticmethod
-    def _do_run(stdin, logger, messaging, definition, config_model, skip_dialogs, args, kwargs):
+    def _do_run(stdin, logger, messaging, definition, config_model, skip_dialogs, error_pipe, args, kwargs):
         if stdin is not None:
             try:
                 sys.stdin = os.fdopen(stdin)
@@ -69,7 +70,13 @@ class ActorCallContext(object):
                 target_actor = [actor for actor in get_actors() if actor.name == definition.name][0]
                 actor_instance = target_actor(logger=logger, messaging=messaging, config_model=config_model,
                                               skip_dialogs=skip_dialogs)
-                actor_instance.run(*args, **kwargs)
+                try:
+                    actor_instance.run(*args, **kwargs)
+                except Exception:
+                    # Send the exception data string to the parent process
+                    # and reraise.
+                    error_pipe.send(traceback.format_exc())
+                    raise
             try:
                 # By this time this is no longer set, so we have to get it back
                 os.environ['LEAPP_CURRENT_ACTOR'] = actor_instance.name
@@ -96,15 +103,25 @@ class ActorCallContext(object):
             stdin = sys.stdin.fileno()
         except UnsupportedOperation:
             stdin = None
+
+        pipe_receiver, pipe_sender = Pipe()
         p = Process(target=self._do_run,
                     args=(stdin, self.logger, self.messaging, self.definition, self.config_model,
-                          self.skip_dialogs, args, kwargs))
+                          self.skip_dialogs, pipe_sender, args, kwargs))
         p.start()
         p.join()
         if p.exitcode != 0:
-            raise LeappRuntimeError(
-                'Actor {actorname} unexpectedly terminated with exit code: {exitcode}'
-                .format(actorname=self.definition.name, exitcode=p.exitcode))
+            err_message = "Actor {actorname} unexpectedly terminated with exit code: {exitcode}".format(
+                actorname=self.definition.name, exitcode=p.exitcode)
+
+            exception_info = None
+            # If there's data in the pipe, it's formatted exception info.
+            if pipe_receiver.poll():
+                exception_info = pipe_receiver.recv()
+
+            # This LeappRuntimeError will contain an exception traceback
+            # in addition to the above message.
+            raise LeappRuntimeError(err_message, exception_info)
 
 
 class ActorDefinition(object):
