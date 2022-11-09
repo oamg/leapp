@@ -109,7 +109,9 @@ class UnknownCommandError(LeappError):
 
 
 class LeappRuntimeError(LeappError):
-    pass
+    def __init__(self, message, exception_info):
+        super().__init__(message)
+        self.exception_info = exception_info
 
 
 class StopActorExecution(Exception):
