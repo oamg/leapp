@@ -109,7 +109,7 @@ class UnknownCommandError(LeappError):
 
 
 class LeappRuntimeError(LeappError):
-    def __init__(self, message, exception_info):
+    def __init__(self, message, exception_info=None):
         super().__init__(message)
         self.exception_info = exception_info
 
