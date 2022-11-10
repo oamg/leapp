@@ -18,6 +18,10 @@ jobs:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*morf)"
       pull_request_status_name: "7.9to8.4"
+    if: |
+      github.event.issue.pull_request
+      && ! startsWith(github.event.comment.body, '/rerun-sst')
+      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
   call_workflow_tests_79to86_integration:
     needs: call_workflow_copr_build
@@ -28,6 +32,10 @@ jobs:
       tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*morf)"
       variables: 'TARGET_RELEASE=8.6'
       pull_request_status_name: "7.9to8.6"
+    if: |
+      github.event.issue.pull_request
+      && ! startsWith(github.event.comment.body, '/rerun-sst')
+      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
   call_workflow_tests_79to84_sst:
     needs: call_workflow_copr_build
@@ -40,7 +48,7 @@ jobs:
       update_pull_request_status: 'false'
     if: |
       github.event.issue.pull_request
-      && startsWith(github.event.comment.body, '/rerun-all')
+      && startsWith(github.event.comment.body, '/rerun-sst')
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
   call_workflow_tests_7to8_aws:
@@ -54,6 +62,10 @@ jobs:
       environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys; echo 42; yum-config-manager --enable rhel-7-server-rhui-optional-rpms"}}'
       pull_request_status_name: "7to8-aws-e2e"
       variables: "RHUI=aws"
+    if: |
+      github.event.issue.pull_request
+      && ! startsWith(github.event.comment.body, '/rerun-sst')
+      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
   call_workflow_tests_86to90_integration:
     needs: call_workflow_copr_build
@@ -63,6 +75,10 @@ jobs:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*morf)"
       pull_request_status_name: "8.6to9.0"
+    if: |
+      github.event.issue.pull_request
+      && ! startsWith(github.event.comment.body, '/rerun-sst')
+      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
   call_workflow_tests_87to91_integration:
     needs: call_workflow_copr_build
@@ -75,6 +91,10 @@ jobs:
       compose: 'RHEL-8.7.0-Nightly'
       pull_request_status_name: "8.7to9.1"
       tmt_context: "distro=rhel-8.7"
+    if: |
+      github.event.issue.pull_request
+      && ! startsWith(github.event.comment.body, '/rerun-sst')
+      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
   call_workflow_tests_86to90_sst:
     needs: call_workflow_copr_build
@@ -87,7 +107,7 @@ jobs:
       update_pull_request_status: 'false'
     if: |
       github.event.issue.pull_request
-      && startsWith(github.event.comment.body, '/rerun-all')
+      && startsWith(github.event.comment.body, '/rerun-sst')
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
   call_workflow_tests_8to9_aws:
@@ -101,3 +121,7 @@ jobs:
       environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
       pull_request_status_name: "8to9-aws-e2e"
       variables: "RHUI=aws"
+    if: |
+      github.event.issue.pull_request
+      && ! startsWith(github.event.comment.body, '/rerun-sst')
+      && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
