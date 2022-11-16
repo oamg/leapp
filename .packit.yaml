@@ -46,7 +46,7 @@ jobs:
 
 - job: tests
   fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
-  fmf_ref: "main"
+  fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
   targets:
@@ -58,7 +58,7 @@ jobs:
 
 - job: tests
   fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
-  fmf_ref: "main"
+  fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
   targets:
@@ -72,7 +72,7 @@ jobs:
 
 - job: tests
   fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
-  fmf_ref: "main"
+  fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
   targets:
@@ -86,7 +86,7 @@ jobs:
 
 - job: tests
   fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
-  fmf_ref: "main"
+  fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
   targets:
@@ -100,7 +100,7 @@ jobs:
 
 - job: tests
   fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
-  fmf_ref: "main"
+  fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
   targets:
@@ -114,7 +114,7 @@ jobs:
 
 - job: tests
   fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
-  fmf_ref: "main"
+  fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
   targets:
@@ -130,7 +130,7 @@ jobs:
 
 - job: tests
   fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
-  fmf_ref: "main"
+  fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
   targets:
@@ -146,7 +146,7 @@ jobs:
 
 - job: tests
   fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
-  fmf_ref: "main"
+  fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
   targets:
