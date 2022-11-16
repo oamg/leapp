@@ -45,7 +45,7 @@ jobs:
     - bash -c "grep -m1 '^Version:' packaging/leapp.spec | grep -om1 '[0-9].[0-9.]**'"
 
 - job: tests
-  fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
   fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
@@ -57,7 +57,7 @@ jobs:
   tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys;curl https://copr.fedorainfracloud.org/coprs/g/oamg/leapp/repo/epel-7/group_oamg-leapp-epel-7.repo --output /etc/yum.repos.d/copr_build.repo; yum install -y leapp*master*"
 
 - job: tests
-  fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
   fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
@@ -71,7 +71,7 @@ jobs:
     TARGET_RELEASE: 8.6
 
 - job: tests
-  fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
   fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
@@ -85,7 +85,7 @@ jobs:
     RHUI: "aws"
 
 - job: tests
-  fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
   fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
@@ -99,7 +99,7 @@ jobs:
     TARGET_RELEASE: 8.6
 
 - job: tests
-  fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
   fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
@@ -113,7 +113,7 @@ jobs:
     RHUI: aws
 
 - job: tests
-  fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
   fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
@@ -129,7 +129,7 @@ jobs:
     RHSM_REPOS: rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms
 
 - job: tests
-  fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
   fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
@@ -145,7 +145,7 @@ jobs:
     RHSM_REPOS: rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms
 
 - job: tests
-  fmf_url: "https://gitlab.cee.redhat.com/oamg/tmt-plans"
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
   fmf_ref: "master"
   use_internal_tf: True
   trigger: pull_request
