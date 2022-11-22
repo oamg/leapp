@@ -42,13 +42,15 @@ To get access to the emergency console right after leapp execution in initramfs 
 the initramfs
 
 3. To get access to the common binaries change `PATH` accordingly. Setting
-`PATH="$PATH:$PATH:/sysroot/bin:/sysroot/sbin:/sysroot/usr/bin"` should do the trick.
+`PATH="$PATH:/sysroot/bin:/sysroot/sbin:/sysroot/usr/bin"` should do the trick.
 If `/sysroot` is not mounted at the time you may need to mount it manually, e.g. with `systemctl start sysroot.mount`.
 
 4. If the binaries are complaining about missing shared libraries, you could either set `LD_LIBRARY_PATH` variable
-to `LD_LIBRARY_PATH=/lib64:/sysroot/lib64` or change root to /sysroot: `chroot /sysroot`
+to `LD_LIBRARY_PATH=/sysroot/lib64:/lib64` or change root to /sysroot: `chroot /sysroot`
 
-5. [TBD] Put info how to collect the logs
+5. If you need to make changes to files on /sysroot, make sure you remount it `mount -o remount,rw /sysroot`
+
+6. [TBD] Put info how to collect the logs
 
 > **_NOTE:_** When working in initramfs stage you will need a serial console. Though openstack machines can provide
 you with a novnc console, unless you need a shared dev environment consider using vagrant/libvirt.
