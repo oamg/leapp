@@ -13,7 +13,7 @@ on:
         type: string
       tmt_plan_regex:
         type: string
-        default: "^(?!.*upgrade_plugin)(?!.*c2r)(?!.*sap)(?!.*7to8)"
+        default: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)"
       environment_settings:
         type: string
         default: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
