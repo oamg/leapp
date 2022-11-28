@@ -10,14 +10,15 @@ jobs:
     uses: ./.github/workflows/reuse-copr-build.yml
     secrets: inherit
 
-  call_workflow_tests_79to84_integration:
+  call_workflow_tests_79to88_integration:
     needs: call_workflow_copr_build
     uses: ./.github/workflows/reuse-tests-7to8.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
-      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*morf)"
-      pull_request_status_name: "7.9to8.4"
+      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*morf)"
+      pull_request_status_name: "7.9to8.8"
+      variables: 'TARGET_RELEASE=8.8'
     if: |
       github.event.issue.pull_request
       && ! startsWith(github.event.comment.body, '/rerun-sst')
@@ -29,7 +30,7 @@ jobs:
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
-      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*morf)"
+      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*morf)"
       variables: 'TARGET_RELEASE=8.6'
       pull_request_status_name: "7.9to8.6"
     if: |
@@ -37,15 +38,16 @@ jobs:
       && ! startsWith(github.event.comment.body, '/rerun-sst')
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
-  call_workflow_tests_79to84_sst:
+  call_workflow_tests_79to88_sst:
     needs: call_workflow_copr_build
     uses: ./.github/workflows/reuse-tests-7to8.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(/plans/morf)(?!.*sap)"
-      pull_request_status_name: "7.9to8.4-sst"
+      pull_request_status_name: "7.9to8.8-sst"
       update_pull_request_status: 'false'
+      variables: 'TARGET_RELEASE=8.8'
     if: |
       github.event.issue.pull_request
       && startsWith(github.event.comment.body, '/rerun-sst')
@@ -57,7 +59,7 @@ jobs:
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
-      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*c2r)(?!.*sap)(?!.*8to9)(.*e2e)"
+      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*8to9)(.*e2e)"
       compose: "RHEL-7.9-rhui"
       environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys; echo 42; yum-config-manager --enable rhel-7-server-rhui-optional-rpms"}}'
       pull_request_status_name: "7to8-aws-e2e"
@@ -73,23 +75,24 @@ jobs:
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
-      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*morf)"
+      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*morf)"
+      variables: 'TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms'
       pull_request_status_name: "8.6to9.0"
     if: |
       github.event.issue.pull_request
       && ! startsWith(github.event.comment.body, '/rerun-sst')
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
-  call_workflow_tests_87to91_integration:
+  call_workflow_tests_87to90_integration:
     needs: call_workflow_copr_build
     uses: ./.github/workflows/reuse-tests-8to9.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
-      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*morf)"
-      variables: 'LEAPP_DEVEL_TARGET_PRODUCT_TYPE=beta;RHSM_SKU=RH00069;TARGET_RELEASE=9.1;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms'
+      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*morf)"
+      variables: 'TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms'
       compose: 'RHEL-8.7.0-Nightly'
-      pull_request_status_name: "8.7to9.1"
+      pull_request_status_name: "8.7to9.0"
       tmt_context: "distro=rhel-8.7"
     if: |
       github.event.issue.pull_request
@@ -103,6 +106,7 @@ jobs:
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(/plans/morf)(?!.*sap)"
+      variables: 'TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms'
       pull_request_status_name: "8.6to9.0-sst"
       update_pull_request_status: 'false'
     if: |
@@ -110,17 +114,17 @@ jobs:
       && startsWith(github.event.comment.body, '/rerun-sst')
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
-  call_workflow_tests_8to9_aws:
+  call_workflow_tests_86to90_aws:
     needs: call_workflow_copr_build
     uses: ./.github/workflows/reuse-tests-8to9.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
-      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*c2r)(?!.*sap)(?!.*7to8)(.*e2e)"
+      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(.*e2e)"
       compose: "RHEL-8.6-rhui"
       environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
       pull_request_status_name: "8to9-aws-e2e"
-      variables: "RHUI=aws"
+      variables: 'TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms;RHUI=aws'
     if: |
       github.event.issue.pull_request
       && ! startsWith(github.event.comment.body, '/rerun-sst')
