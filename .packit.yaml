@@ -81,7 +81,7 @@ jobs:
     epel-7-x86_64:
       distros: [RHEL-7.9-rhui]
   identifier: tests-7to8-aws
-  tmt_plan: "^(?!.*upgrade_plugin)(?!.*c2r)(?!.*sap)(?!.*8to9)(.*e2e)"
+  tmt_plan: "^(?!.*c2r)(?!.*sap)(?!.*8to9)(.*e2e)"
   tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys; echo 42; yum-config-manager --enable rhel-7-server-rhui-optional-rpms"
   env: 
     RHUI: "aws"
@@ -109,7 +109,7 @@ jobs:
     epel-8-x86_64:
       distros: [RHEL-8.6-rhui]
   identifier: tests-8to9-aws
-  tmt_plan: "^(?!.*upgrade_plugin)(?!.*c2r)(?!.*sap)(?!.*7to8)(.*e2e)"
+  tmt_plan: "^(?!.*c2r)(?!.*sap)(?!.*7to8)(.*e2e)"
   tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
   env:
     RHUI: aws
