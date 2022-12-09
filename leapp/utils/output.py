@@ -5,6 +5,7 @@ import json
 import os
 import sys
 from contextlib import contextmanager
+import six
 
 from leapp.exceptions import LeappRuntimeError
 from leapp.models import ErrorModel
@@ -43,9 +44,14 @@ def pretty_block(text, target, end_text=None, color=Color.bold, width=60):
 
 def print_error(error):
     model = ErrorModel.create(json.loads(error['message']['data']))
+
+    error_message = model.message
+    if six.PY2:
+        error_message = model.message.encode('utf-8', 'xmlcharrefreplace')
+
     sys.stdout.write("{red}{time} [{severity}]{reset} Actor: {actor}\nMessage: {message}\n".format(
         red=Color.red, reset=Color.reset, severity=model.severity.upper(),
-        message=model.message, time=model.time, actor=model.actor))
+        message=error_message, time=model.time, actor=model.actor))
     if model.details:
         print('Summary:')
         details = json.loads(model.details)
