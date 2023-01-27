@@ -24,6 +24,10 @@ jobs:
       && startsWith(github.event.comment.body, '/rerun')
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
     steps:
+      - name: Update repository
+        id: repo_update
+        run: sudo apt-get update
+
       - name: Install necessary deps
         id: deps_install
         run: sudo apt-get install -y libkrb5-dev
