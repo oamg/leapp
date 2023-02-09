@@ -59,8 +59,8 @@ jobs:
     tf_extra_params:
       environments:
         - tmt:
-          context:
-            distro: "rhel-7.9"
+            context:
+              distro: "rhel-7.9"
     env:
       SOURCE_RELEASE: "7.9"
       TARGET_RELEASE: "8.6"
@@ -79,8 +79,8 @@ jobs:
     tf_extra_params:
       environments:
         - tmt:
-          context:
-            distro: "rhel-7.9"
+            context:
+              distro: "rhel-7.9"
     env:
       SOURCE_RELEASE: "7.9"
       TARGET_RELEASE: "8.8"
@@ -99,8 +99,8 @@ jobs:
     tf_extra_params:
       environments:
         - tmt:
-          context:
-            distro: "rhel-7.9"
+            context:
+              distro: "rhel-7.9"
     env:
       SOURCE_RELEASE: "7.9"
       TARGET_RELEASE: "8.8"
@@ -119,8 +119,8 @@ jobs:
     tf_extra_params:
       environments:
         - tmt:
-          context:
-            distro: "rhel-7.9"
+            context:
+              distro: "rhel-7.9"
     env:
       SOURCE_RELEASE: "7.9"
       TARGET_RELEASE: "8.6"
@@ -140,8 +140,8 @@ jobs:
     tf_extra_params:
       environments:
         - tmt:
-          context:
-            distro: "rhel-8.6"
+            context:
+              distro: "rhel-8.6"
     env:
       SOURCE_RELEASE: "8.6"
       TARGET_RELEASE: "9.0"
@@ -162,8 +162,8 @@ jobs:
     tf_extra_params:
       environments:
         - tmt:
-          context:
-            distro: "rhel-8.7"
+            context:
+              distro: "rhel-8.7"
     env:
       SOURCE_RELEASE: "8.7"
       TARGET_RELEASE: "9.0"
@@ -184,8 +184,8 @@ jobs:
     tf_extra_params:
       environments:
         - tmt:
-          context:
-            distro: "rhel-8.6"
+            context:
+              distro: "rhel-8.6"
     env:
       SOURCE_RELEASE: "8.6"
       TARGET_RELEASE: "9.0"
@@ -206,8 +206,8 @@ jobs:
     tf_extra_params:
       environments:
         - tmt:
-          context:
-            distro: "rhel-8.6"
+            context:
+              distro: "rhel-8.6"
     env:
       SOURCE_RELEASE: "8.6"
       TARGET_RELEASE: "9.0"
