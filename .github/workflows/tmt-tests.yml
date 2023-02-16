@@ -18,7 +18,7 @@ jobs:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*max_sst)"
       pull_request_status_name: "7.9to8.8"
-      variables: 'SOURCE_RELEASE=7.9;TARGET_RELEASE=8.8'
+      variables: 'SOURCE_RELEASE=7.9;TARGET_RELEASE=8.8;LEAPPDATA_BRANCH=upstream'
     if: |
       github.event.issue.pull_request
       && ! startsWith(github.event.comment.body, '/rerun-sst')
@@ -31,7 +31,7 @@ jobs:
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*max_sst)"
-      variables: 'SOURCE_RELEASE=7.9;TARGET_RELEASE=8.6'
+      variables: 'SOURCE_RELEASE=7.9;TARGET_RELEASE=8.6;LEAPPDATA_BRANCH=upstream'
       pull_request_status_name: "7.9to8.6"
     if: |
       github.event.issue.pull_request
@@ -47,7 +47,7 @@ jobs:
       tmt_plan_regex: "^(?!.*tier[2-3].*)(.*max_sst.*)"
       pull_request_status_name: "7.9to8.8-sst"
       update_pull_request_status: 'false'
-      variables: 'SOURCE_RELEASE=7.9;TARGET_RELEASE=8.8'
+      variables: 'SOURCE_RELEASE=7.9;TARGET_RELEASE=8.8;LEAPPDATA_BRANCH=upstream'
     if: |
       github.event.issue.pull_request
       && startsWith(github.event.comment.body, '/rerun-sst')
@@ -63,7 +63,7 @@ jobs:
       compose: "RHEL-7.9-rhui"
       environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys; echo 42; yum-config-manager --enable rhel-7-server-rhui-optional-rpms"}}'
       pull_request_status_name: "7to8-aws-e2e"
-      variables: 'SOURCE_RELEASE=7.9;TARGET_RELEASE=8.6;RHUI=aws'
+      variables: 'SOURCE_RELEASE=7.9;TARGET_RELEASE=8.6;RHUI=aws;LEAPPDATA_BRANCH=upstream'
     if: |
       github.event.issue.pull_request
       && ! startsWith(github.event.comment.body, '/rerun-sst')
@@ -76,7 +76,7 @@ jobs:
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*max_sst)"
-      variables: 'SOURCE_RELEASE=8.6;TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms'
+      variables: 'SOURCE_RELEASE=8.6;TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms;LEAPPDATA_BRANCH=upstream'
       pull_request_status_name: "8.6to9.0"
     if: |
       github.event.issue.pull_request
@@ -90,7 +90,7 @@ jobs:
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*max_sst)"
-      variables: 'SOURCE_RELEASE=8.7;TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms'
+      variables: 'SOURCE_RELEASE=8.7;TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms;LEAPPDATA_BRANCH=upstream'
       compose: 'RHEL-8.7.0-Nightly'
       pull_request_status_name: "8.7to9.0"
       tmt_context: "distro=rhel-8.7"
@@ -106,7 +106,7 @@ jobs:
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*tier[2-3].*)(.*max_sst.*)"
-      variables: 'SOURCE_RELEASE=8.6;TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms'
+      variables: 'SOURCE_RELEASE=8.6;TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms;LEAPPDATA_BRANCH=upstream'
       pull_request_status_name: "8.6to9.0-sst"
       update_pull_request_status: 'false'
     if: |
@@ -124,7 +124,7 @@ jobs:
       compose: "RHEL-8.6-rhui"
       environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
       pull_request_status_name: "8to9-aws-e2e"
-      variables: 'SOURCE_RELEASE=8.6;TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms;RHUI=aws'
+      variables: 'SOURCE_RELEASE=8.6;TARGET_RELEASE=9.0;TARGET_KERNEL=el9;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms;RHUI=aws;LEAPPDATA_BRANCH=upstream'
     if: |
       github.event.issue.pull_request
       && ! startsWith(github.event.comment.body, '/rerun-sst')
