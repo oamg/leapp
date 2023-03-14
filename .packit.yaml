@@ -132,7 +132,7 @@ jobs:
     use_internal_tf: True
     trigger: pull_request
     targets:
-      epel-7-x86_64:
+      epel-8-x86_64:
         distros: [RHEL-8.6.0-Nightly]
     identifier: tests-8.6to9.0
     tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*max_sst)"
@@ -154,7 +154,7 @@ jobs:
     use_internal_tf: True
     trigger: pull_request
     targets:
-      epel-7-x86_64:
+      epel-8-x86_64:
         distros: [RHEL-8.7.0-Nightly]
     identifier: tests-8.7to9.0
     tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*max_sst)"
@@ -176,7 +176,7 @@ jobs:
     use_internal_tf: True
     trigger: pull_request
     targets:
-      epel-7-x86_64:
+      epel-8-x86_64:
         distros: [RHEL-8.6.0-Nightly]
     identifier: tests-8.6to9.0-sst
     tmt_plan: "^(?!.*tier[2-3].*)(.*max_sst.*)"
@@ -198,7 +198,7 @@ jobs:
     use_internal_tf: True
     trigger: pull_request
     targets:
-      epel-7-x86_64:
+      epel-8-x86_64:
         distros: [RHEL-8.6-rhui]
     identifier: tests-8to9-aws-e2e
     tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(.*e2e)"
