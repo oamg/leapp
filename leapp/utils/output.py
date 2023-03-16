@@ -61,6 +61,12 @@ def print_error(error):
                 v=details[detail].rstrip().replace('\n', '\n' + ' ' * (6 + len(detail)))))
 
 
+def _print_report_titles(reports):
+    width = 4 + len(str(len(reports)))
+    for position, report in enumerate(reports, start=1):
+        print('{idx:{width}}. {title}'.format(idx=position, width=width, title=report['title']))
+
+
 def report_inhibitors(context_id):
     # The following imports are required to be here to avoid import loop problems
     from leapp.utils.report import fetch_upgrade_report_messages, is_inhibitor  # noqa; pylint: disable=import-outside-toplevel
@@ -70,8 +76,7 @@ def report_inhibitors(context_id):
         text = 'UPGRADE INHIBITED'
         with pretty_block(text=text, end_text=text, color=Color.red, target=sys.stdout):
             print('Upgrade has been inhibited due to the following problems:')
-            for position, report in enumerate(inhibitors, start=1):
-                print('{idx:5}. Inhibitor: {title}'.format(idx=position, title=report['title']))
+            _print_report_titles(inhibitors)
             print('Consult the pre-upgrade report for details and possible remediation.')
 
 
@@ -105,7 +110,33 @@ def report_errors(errors):
                 print_error(error)
 
 
-def report_info(report_paths, log_paths, answerfile=None, fail=False):
+def _filter_reports(reports, severity=None, is_inhibitor=False):
+    # The following imports are required to be here to avoid import loop problems
+    from leapp.utils.report import is_inhibitor as isinhibitor # noqa; pylint: disable=import-outside-toplevel
+    if not severity:
+        return [report for report in reports if isinhibitor(report) == is_inhibitor]
+    return [report for report in reports if report['severity'] == severity and isinhibitor(report) == is_inhibitor]
+
+
+def _print_reports_summary(reports):
+    # The following imports are required to be here to avoid import loop problems
+    from leapp.reporting import Severity # noqa; pylint: disable=import-outside-toplevel
+
+    inhibitors = _filter_reports(reports, is_inhibitor=True)
+    high = _filter_reports(reports, Severity.HIGH)
+    medium = _filter_reports(reports, Severity.MEDIUM)
+    low = _filter_reports(reports, Severity.LOW)
+    info = _filter_reports(reports, Severity.INFO)
+
+    print('Reports summary:')
+    print('    Inhibitors:              {:5}'.format(len(inhibitors)))
+    print('    HIGH severity reports:   {:5}'.format(len(high)))
+    print('    MEDIUM severity reports: {:5}'.format(len(medium)))
+    print('    LOW severity reports:    {:5}'.format(len(low)))
+    print('    INFO severity reports:   {:5}'.format(len(info)))
+
+
+def report_info(context_id, report_paths, log_paths, answerfile=None, fail=False):
     report_paths = [report_paths] if not isinstance(report_paths, list) else report_paths
     log_paths = [log_paths] if not isinstance(log_paths, list) else log_paths
 
@@ -115,9 +146,34 @@ def report_info(report_paths, log_paths, answerfile=None, fail=False):
             sys.stdout.write("Debug output written to {path}\n".format(path=log_path))
 
     if report_paths:
-        with pretty_block("REPORT", target=sys.stdout, color=Color.bold if fail else Color.green):
+        # The following imports are required to be here to avoid import loop problems
+        from leapp.reporting import Severity  # noqa; pylint: disable=import-outside-toplevel
+        from leapp.utils.report import fetch_upgrade_report_messages  # noqa; pylint: disable=import-outside-toplevel
+        reports = fetch_upgrade_report_messages(context_id)
+
+        high = _filter_reports(reports, Severity.HIGH)
+        medium = _filter_reports(reports, Severity.MEDIUM)
+
+        color = Color.green
+        if medium or high:
+            color = Color.yellow
+        if fail:
+            color = Color.bold
+
+        with pretty_block("REPORT", target=sys.stdout, color=color):
+            if high or medium:
+                print('HIGH and MEDIUM severity reports:')
+                _print_report_titles(high + medium)
+
+            sys.stdout.write('\n')
+            _print_reports_summary(reports)
+
+            print(
+                '\n{bold}Before continuing consult the full report:{reset}'
+                .format(bold=Color.bold, reset=Color.reset)
+            )
             for report_path in report_paths:
-                sys.stdout.write("A report has been generated at {path}\n".format(path=report_path))
+                sys.stdout.write("    A report has been generated at {path}\n".format(path=report_path))
 
     if answerfile:
         sys.stdout.write("Answerfile has been generated at {}\n".format(answerfile))
