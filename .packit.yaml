@@ -6,211 +6,206 @@ merge_pr_in_ci: false
 srpm_build_deps: []
 
 jobs:
-  - job: copr_build
-    trigger: pull_request
-    metadata:
-      owner: "@oamg"
-      project: leapp
-      targets:
-        - epel-7-ppc64le
-        - epel-7-x86_64
-        - epel-8-x86_64
-        - fedora-all-aarch64
-        - fedora-all-x86_64
-    actions:
-      post-upstream-clone:
-        # builds from PRs should have lower NVR than those from master branch
-        - sed -i "s/1%{?dist}/0%{?dist}/g" packaging/leapp.spec
-      get-current-version:
-        # get version from spec file instead from git tag
-        - bash -c "grep -m1 '^Version:' packaging/leapp.spec | grep -om1 '[0-9].[0-9.]**'"
-
-  - job: copr_build
-    trigger: commit
-    metadata:
-      branch: master
-      owner: "@oamg"
-      project: leapp
-      targets:
-        - epel-7-ppc64le
-        - epel-7-x86_64
-        - epel-8-x86_64
-        - fedora-all-aarch64
-        - fedora-all-x86_64
-    actions:
-      post-upstream-clone:
-        # builds from master branch should have the highest NVR
-        - sed -i "s/1%{?dist}/100%{?dist}/g" packaging/leapp.spec
-      get-current-version:
-        # get version from spec file instead from git tag
-        - bash -c "grep -m1 '^Version:' packaging/leapp.spec | grep -om1 '[0-9].[0-9.]**'"
-
-  - job: tests
-    fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
-    fmf_ref: "master"
-    use_internal_tf: True
-    trigger: pull_request
+- job: copr_build
+  trigger: pull_request
+  metadata:
+    owner: "@oamg"
+    project: leapp
     targets:
-      epel-7-x86_64:
-        distros: [RHEL-7.9-ZStream]
-    identifier: tests-7.9to8.6
-    tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*max_sst)"
-    tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
-    tf_extra_params:
-      environments:
-        - tmt:
-            context:
-              distro: "rhel-7.9"
-    env:
-      SOURCE_RELEASE: "7.9"
-      TARGET_RELEASE: "8.6"
-
-  - job: tests
-    fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
-    fmf_ref: "master"
-    use_internal_tf: True
-    trigger: pull_request
+    - epel-7-ppc64le
+    - epel-7-x86_64
+    - epel-8-x86_64
+    - fedora-all-aarch64
+    - fedora-all-x86_64
+  actions:
+    post-upstream-clone:
+    # builds from PRs should have lower NVR than those from master branch
+    - sed -i "s/1%{?dist}/0%{?dist}/g" packaging/leapp.spec
+    get-current-version:
+    # get version from spec file instead from git tag
+    - bash -c "grep -m1 '^Version:' packaging/leapp.spec | grep -om1 '[0-9].[0-9.]**'"
+- job: copr_build
+  trigger: commit
+  metadata:
+    branch: master
+    owner: "@oamg"
+    project: leapp
     targets:
-      epel-7-x86_64:
-        distros: [RHEL-7.9-ZStream]
-    identifier: tests-7.9to8.8
-    tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*max_sst)"
-    tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
-    tf_extra_params:
-      environments:
-        - tmt:
-            context:
-              distro: "rhel-7.9"
-    env:
-      SOURCE_RELEASE: "7.9"
-      TARGET_RELEASE: "8.8"
+    - epel-7-ppc64le
+    - epel-7-x86_64
+    - epel-8-x86_64
+    - fedora-all-aarch64
+    - fedora-all-x86_64
+  actions:
+    post-upstream-clone:
+    # builds from master branch should have the highest NVR
+    - sed -i "s/1%{?dist}/100%{?dist}/g" packaging/leapp.spec
+    get-current-version:
+    # get version from spec file instead from git tag
+    - bash -c "grep -m1 '^Version:' packaging/leapp.spec | grep -om1 '[0-9].[0-9.]**'"
 
-  - job: tests
-    fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
-    fmf_ref: "master"
-    use_internal_tf: True
-    trigger: pull_request
-    targets:
-      epel-7-x86_64:
-        distros: [RHEL-7.9-ZStream]
-    identifier: tests-7.9to8.8-sst
-    tmt_plan: "^(?!.*tier[2-3].*)(.*max_sst.*)"
-    tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
-    tf_extra_params:
-      environments:
-        - tmt:
-            context:
-              distro: "rhel-7.9"
-    env:
-      SOURCE_RELEASE: "7.9"
-      TARGET_RELEASE: "8.8"
+- job: tests
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
+  fmf_ref: "master"
+  use_internal_tf: True
+  trigger: pull_request
+  targets:
+    epel-7-x86_64:
+      distros: [RHEL-7.9-ZStream]
+  identifier: tests-7.9to8.6
+  tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*max_sst)"
+  tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
+  tf_extra_params:
+    environments:
+      - tmt:
+          context:
+            distro: "rhel-7.9"
+  env:
+    SOURCE_RELEASE: "7.9"
+    TARGET_RELEASE: "8.6"
 
-  - job: tests
-    fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
-    fmf_ref: "master"
-    use_internal_tf: True
-    trigger: pull_request
-    targets:
-      epel-7-x86_64:
-        distros: [RHEL-7.9-rhui]
-    identifier: tests-7to8-aws-e2e
-    tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*8to9)(.*e2e)"
-    tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys; echo 42; yum-config-manager --enable rhel-7-server-rhui-optional-rpms"
-    tf_extra_params:
-      environments:
-        - tmt:
-            context:
-              distro: "rhel-7.9"
-    env:
-      SOURCE_RELEASE: "7.9"
-      TARGET_RELEASE: "8.6"
-      RHUI: "aws"
+- job: tests
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
+  fmf_ref: "master"
+  use_internal_tf: True
+  trigger: pull_request
+  targets:
+    epel-7-x86_64:
+      distros: [RHEL-7.9-ZStream]
+  identifier: tests-7.9to8.8
+  tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*max_sst)"
+  tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
+  tf_extra_params:
+    environments:
+      - tmt:
+          context:
+            distro: "rhel-7.9"
+  env:
+    SOURCE_RELEASE: "7.9"
+    TARGET_RELEASE: "8.8"
 
-  - job: tests
-    fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
-    fmf_ref: "master"
-    use_internal_tf: True
-    trigger: pull_request
-    targets:
-      epel-8-x86_64:
-        distros: [RHEL-8.6.0-Nightly]
-    identifier: tests-8.6to9.0
-    tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*max_sst)"
-    tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
-    tf_extra_params:
-      environments:
-        - tmt:
-            context:
-              distro: "rhel-8.6"
-    env:
-      SOURCE_RELEASE: "8.6"
-      TARGET_RELEASE: "9.0"
-      TARGET_KERNEL: "el9"
-      RHSM_REPOS: "rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms"
+# - job: tests
+#   fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
+#   fmf_ref: "master"
+#   use_internal_tf: True
+#   trigger: pull_request
+#   targets:
+#     epel-7-x86_64:
+#       distros: [RHEL-7.9-ZStream]
+#   identifier: tests-7.9to8.8-sst
+#   tmt_plan: "^(?!.*tier[2-3].*)(.*max_sst.*)"
+#   tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
+#   tf_extra_params:
+#     environments:
+#       - tmt:
+#           context:
+#             distro: "rhel-7.9"
+#   env:
+#     SOURCE_RELEASE: "7.9"
+#     TARGET_RELEASE: "8.8"
 
-  - job: tests
-    fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
-    fmf_ref: "master"
-    use_internal_tf: True
-    trigger: pull_request
-    targets:
-      epel-8-x86_64:
-        distros: [RHEL-8.7.0-Nightly]
-    identifier: tests-8.7to9.0
-    tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*max_sst)"
-    tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
-    tf_extra_params:
-      environments:
-        - tmt:
-            context:
-              distro: "rhel-8.7"
-    env:
-      SOURCE_RELEASE: "8.7"
-      TARGET_RELEASE: "9.0"
-      TARGET_KERNEL: "el9"
-      RHSM_REPOS: "rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms"
+- job: tests
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
+  fmf_ref: "master"
+  use_internal_tf: True
+  trigger: pull_request
+  targets:
+    epel-7-x86_64:
+      distros: [RHEL-7.9-rhui]
+  identifier: tests-7to8-aws-e2e
+  tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*8to9)(.*e2e)"
+  tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys; echo 42; yum-config-manager --enable rhel-7-server-rhui-optional-rpms"
+  tf_extra_params:
+    environments:
+      - tmt:
+          context:
+            distro: "rhel-7.9"
+  env:
+    SOURCE_RELEASE: "7.9"
+    TARGET_RELEASE: "8.6"
+    RHUI: "aws"
 
-  - job: tests
-    fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
-    fmf_ref: "master"
-    use_internal_tf: True
-    trigger: pull_request
-    targets:
-      epel-8-x86_64:
-        distros: [RHEL-8.6.0-Nightly]
-    identifier: tests-8.6to9.0-sst
-    tmt_plan: "^(?!.*tier[2-3].*)(.*max_sst.*)"
-    tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
-    tf_extra_params:
-      environments:
-        - tmt:
-            context:
-              distro: "rhel-8.6"
-    env:
-      SOURCE_RELEASE: "8.6"
-      TARGET_RELEASE: "9.0"
-      TARGET_KERNEL: "el9"
-      RHSM_REPOS: "rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms"
+- job: tests
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
+  fmf_ref: "master"
+  use_internal_tf: True
+  trigger: pull_request
+  targets:
+    epel-8-x86_64:
+      distros: [RHEL-8.6.0-Nightly]
+  identifier: tests-8.6to9.0
+  tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*max_sst)"
+  tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
+  tf_extra_params:
+    environments:
+      - tmt:
+          context:
+            distro: "rhel-8.6"
+  env:
+    SOURCE_RELEASE: "8.6"
+    TARGET_RELEASE: "9.0"
+    RHSM_REPOS: "rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms"
 
-  - job: tests
-    fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
-    fmf_ref: "master"
-    use_internal_tf: True
-    trigger: pull_request
-    targets:
-      epel-8-x86_64:
-        distros: [RHEL-8.6-rhui]
-    identifier: tests-8to9-aws-e2e
-    tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(.*e2e)"
-    tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
-    tf_extra_params:
-      environments:
-        - tmt:
-            context:
-              distro: "rhel-8.6"
-    env:
-      SOURCE_RELEASE: "8.6"
-      TARGET_RELEASE: "9.0"
-      TARGET_KERNEL: "el9"
-      RHSM_REPOS: "rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms"
-      RHUI: "aws"
+- job: tests
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
+  fmf_ref: "master"
+  use_internal_tf: True
+  trigger: pull_request
+  targets:
+    epel-8-x86_64:
+      distros: [RHEL-8.8.0-Nightly]
+  identifier: tests-8.8to9.2
+  tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*max_sst)"
+  tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
+  tf_extra_params:
+    environments:
+      - tmt:
+          context:
+            distro: "rhel-8.8"
+  env:
+    SOURCE_RELEASE: "8.8"
+    TARGET_RELEASE: "9.2"
+    RHSM_REPOS: "rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms"
+
+# - job: tests
+#   fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
+#   fmf_ref: "master"
+#   use_internal_tf: True
+#   trigger: pull_request
+#   targets:
+#     epel-8-x86_64:
+#       distros: [RHEL-8.6.0-Nightly]
+#   identifier: tests-8.6to9.0-sst
+#   tmt_plan: "^(?!.*tier[2-3].*)(.*max_sst.*)"
+#   tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
+#   tf_extra_params:
+#     environments:
+#       - tmt:
+#           context:
+#             distro: "rhel-8.6"
+#   env:
+#     SOURCE_RELEASE: "8.6"
+#     TARGET_RELEASE: "9.0"
+#     RHSM_REPOS: "rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms"
+
+- job: tests
+  fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
+  fmf_ref: "master"
+  use_internal_tf: True
+  trigger: pull_request
+  targets:
+    epel-8-x86_64:
+      distros: [RHEL-8.6-rhui]
+  identifier: tests-8to9-aws-e2e
+  tmt_plan: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(.*e2e)"
+  tf_post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
+  tf_extra_params:
+    environments:
+      - tmt:
+          context:
+            distro: "rhel-8.6"
+  env:
+    SOURCE_RELEASE: "8.6"
+    TARGET_RELEASE: "9.0"
+    RHSM_REPOS: "rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms"
+    RHUI: "aws"
