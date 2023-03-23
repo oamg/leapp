@@ -84,6 +84,7 @@ jobs:
     SOURCE_RELEASE: "7.9"
     TARGET_RELEASE: "8.8"
 
+
 # - job: tests
 #   fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
 #   fmf_ref: "master"
@@ -165,7 +166,8 @@ jobs:
   env:
     SOURCE_RELEASE: "8.8"
     TARGET_RELEASE: "9.2"
-    RHSM_REPOS: "rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms"
+    RHSM_REPOS: "rhel-8-for-x86_64-appstream-beta-rpms,rhel-8-for-x86_64-baseos-beta-rpms"
+    LEAPP_DEVEL_TARGET_RELEASE: "9.2"
 
 # - job: tests
 #   fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
