@@ -1,6 +1,9 @@
 import hashlib
+import io
 import json
 import os
+
+import six
 
 from leapp.reporting import (
     _DEPRECATION_FLAGS,
@@ -110,21 +113,29 @@ def generate_report_file(messages_to_report, context, path, report_schema='1.1.0
     # NOTE(ivasilev) Int conversion should not break as only specific formats of report_schema versions are allowed
     report_schema_tuple = tuple(int(x) for x in report_schema.split('.'))
     if path.endswith(".txt"):
-        with open(path, 'w') as f:
+        with io.open(path, 'w', encoding='utf-8') as f:
             for message in sorted(messages_to_report, key=importance):
-                f.write('Risk Factor: {}{}\n'.format(message['severity'],
-                                                     ' (inhibitor)' if is_inhibitor(message) else ''))
-                f.write('Title: {}\n'.format(message['title']))
-                f.write('Summary: {}\n'.format(message['summary']))
+                f.write(u'Risk Factor: {}{}\n'.format(message['severity'],
+                                                      ' (inhibitor)' if is_inhibitor(message) else ''))
+                f.write(u'Title: {}\n'.format(message['title']))
+                f.write(u'Summary: {}\n'.format(message['summary']))
                 remediation = Remediation.from_dict(message.get('detail', {}))
                 if remediation:
-                    f.write('Remediation: {}\n'.format(remediation))
+                    # NOTE(ivasilev) Decoding is necessary in case of python2 as remediation is an encoded string,
+                    # while io.open expects "true text" input. For python3 repr will return proper py3 str, no
+                    # decoding will be needed.
+                    # This hassle and clumsiness makes me sad, so suggestions are welcome.
+                    remediation_text = 'Remediation: {}\n'.format(remediation)
+                    if isinstance(remediation_text, six.binary_type):
+                        # This will be true for py2 where repr returns an encoded string
+                        remediation_text = remediation_text.decode('utf-8')
+                    f.write(remediation_text)
                 if report_schema_tuple > (1, 0, 0):
                     # report-schema 1.0.0 doesn't have a stable report key
-                    f.write('Key: {}\n'.format(message['key']))
-                f.write('-' * 40 + '\n')
+                    f.write(u'Key: {}\n'.format(message['key']))
+                f.write(u'-' * 40 + '\n')
     elif path.endswith(".json"):
-        with open(path, 'w') as f:
+        with io.open(path, 'w', encoding='utf-8') as f:
             # Here all possible convertions will take place
             if report_schema_tuple < (1, 1, 0):
                 # report-schema 1.0.0 doesn't have a stable report key
@@ -150,4 +161,8 @@ def generate_report_file(messages_to_report, context, path, report_schema='1.1.0
                     # NOTE(ivasilev) As flags field is created only if there is an inhibitor
                     # a default value to pop has to be specified not to end up with a KeyError
                     msg.pop('flags', None)
-            json.dump({'entries': messages_to_report, 'leapp_run_id': context}, f, indent=2)
+            # NOTE(ivasilev) Has to be done in this way (dumps + py2 conversion + write to file instead of json.dump)
+            # because of a py2 bug in the json module that can produce a mix of unicode and str objects that will be
+            # incompatible with write. https://bugs.python.org/issue13769
+            data = json.dumps({'entries': messages_to_report, 'leapp_run_id': context}, indent=2, ensure_ascii=False)
+            f.write(data)

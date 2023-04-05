@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from collections import namedtuple
 import datetime
 import json
@@ -13,7 +14,7 @@ from leapp.reporting import (
     create_report_from_deprecation,
     create_report_from_error,
     _create_report_object,
-    Audience, Flags, Groups, Key, RelatedResource, Summary, Severity, Tags, Title
+    Audience, Flags, Groups, Key, RelatedResource, Remediation, Summary, Severity, Tags, Title
 )
 from leapp.utils.report import generate_report_file
 
@@ -100,6 +101,21 @@ def test_report_tags_and_flags():
     assert Tags.REPOSITORY == "repository"
     # make sure you can use a custom flag in pressing need
     assert Flags(["This is a new flag", Groups.INHIBITOR]).value == ["This is a new flag", "inhibitor"]
+
+
+@pytest.mark.parametrize("report_suffix", ('.json', '.txt'))
+def test_remediation_with_non_ascii_value(report_suffix):
+    report_entries = [Title('Some report title'), Summary('Some summary not used for dynamical key generation'),
+                      Audience('sysadmin')]
+    # Partly related to leapp-repository PR1052
+    rem_command = ["ln", "-snf", "root/břeťa", "/bobošík"]
+    rem_hint = "Don't forget to check /bobošík directory!"
+    rem_playbook = "bobošík.yml"
+    rem = Remediation(commands=[rem_command], hint=rem_hint, playbook=rem_playbook)
+    report_entries.append(rem)
+    report_message = _create_report_object(report_entries).report
+    with tempfile.NamedTemporaryFile(suffix=report_suffix) as reportfile:
+        generate_report_file([report_message], 'leapp-run-id', reportfile.name, '1.1.0')
 
 
 def test_convert_from_error_to_report():
