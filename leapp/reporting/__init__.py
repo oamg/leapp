@@ -238,30 +238,61 @@ class BaseRemediation(BaseListPrimitive):
         return ('detail', 'remediations')
 
 
+def _guarantee_encoded_str(text, encoding='utf-8'):
+    """Guarantees that result is a utf-8 encoded string"""
+    # Apply conversion only in py2 case
+    if six.PY3:
+        return text
+    # Unless data is already encoded -> encode it
+    try:
+        return text.encode(encoding)
+    except (UnicodeDecodeError, AttributeError):
+        return text
+
+
+def _guarantee_decoded_str(text, encoding='utf-8'):
+    """Guarantees that result is 'native' text"""
+    # Apply conversion only in py2 case
+    if six.PY3:
+        return text
+    # Unless data is already decoded -> decode it
+    try:
+        return text.decode(encoding)
+    except (UnicodeEncodeError, AttributeError):
+        return text
+
+
 class RemediationCommand(BaseRemediation):
     def __init__(self, value=None):
         if not isinstance(value, list):
             raise TypeError('Value of "RemediationCommand" must be a list')
-        self._value = {'type': 'command', 'context': value}
+        self._value = {'type': 'command', 'context': [_guarantee_decoded_str(c) for c in value]}
 
     def __repr__(self):
-        return "[{}] {}".format(self._value['type'], ' '.join(self._value['context']))
+        # NOTE(ivasilev) As the message can contain non-ascii characters let's deal with it properly.
+        # As per python practices repr has to return an encoded string
+        return "[{}] {}".format(self._value['type'],
+                                ' '.join([_guarantee_encoded_str(c) for c in self._value['context']]))
 
 
 class RemediationHint(BaseRemediation):
     def __init__(self, value=None):
-        self._value = {'type': 'hint', 'context': value}
+        self._value = {'type': 'hint', 'context': _guarantee_decoded_str(value)}
 
     def __repr__(self):
-        return "[{}] {}".format(self._value['type'], self._value['context'])
+        # NOTE(ivasilev) As the message can contain non-ascii characters let's deal with it properly.
+        # As per python practices repr has to return an encoded string
+        return "[{}] {}".format(self._value['type'], _guarantee_encoded_str(self._value['context']))
 
 
 class RemediationPlaybook(BaseRemediation):
     def __init__(self, value=None):
-        self._value = {'type': 'playbook', 'context': value}
+        self._value = {'type': 'playbook', 'context': _guarantee_decoded_str(value)}
 
     def __repr__(self):
-        return "[{}] {}".format(self._value['type'], self._value['context'])
+        # NOTE(ivasilev) As the message can contain non-ascii characters let's deal with it properly.
+        # As per python practices repr has to return an encoded string
+        return "[{}] {}".format(self._value['type'], _guarantee_encoded_str(self._value['context']))
 
 
 class Remediation(object):
