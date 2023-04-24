@@ -172,8 +172,7 @@ class MyNewActor(Actor):
                                 'adopting-rhel-8#btrfs-has-been-removed_file-systems-and-storage'
                         ),
                         reporting.Severity(reporting.Severity.HIGH),
-                        reporting.Flags([reporting.Flags.INHIBITOR]),
-                        reporting.Tags([reporting.Tags.FILESYSTEM]),
+                        reporting.Groups([reporting.Groups.INHIBITOR, reporting.Groups.FILESYSTEM]),
                         reporting.RelatedResource('driver', 'btrfs')
                     ])
                     break
@@ -238,20 +237,26 @@ reporting.Remediation(hint='Please remove the dropped options from your scripts.
 reporting.Remediation(playbook=<link_to_playbook>)
 ```
 
-**Available tags**
+**Available Groups**
 
+The following groups were originally known as **Tags**:
 ```
 'accessibility', 'authentication', 'boot', 'communication', 'drivers', 'email', 'encryption',
 'filesystem', 'firewall', 'high availability', 'kernel', 'monitoring', 'network', 'OS facts',
-'python', 'repository', 'sanity', 'security', 'selinux', 'services', 'time management',
+'post', 'python', 'repository', 'sanity', 'security', 'selinux', 'services', 'time management',
 'tools', 'upgrade process'
 ```
 
-In case of more report message tags then currently provided is needed, please open a GH issue or a PR.
+The following groups were originally known as **Flags**:
+```
+'failure', 'inhibitor'
+```
 
-**Flags**
+The **failure** Group is recommended to be used when the report is related to
+a command or other action failure.
 
-Besides the above mentioned **"inhibitor"** flag, there is also a **"failure"** flag which is recommended to use when we report a command or other action failure.
+If you need additional report groups, please open a GH issue or a PR,
+with the description why new required groups are needed.
 
 **Related resources**
 

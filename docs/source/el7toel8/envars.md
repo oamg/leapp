@@ -15,8 +15,9 @@ Overrides the automatically detected storage device with GRUB core (e.g.
 
 ## LEAPP_NO_RHSM
 
-Do not use Red Hat Subscription Management for the upgrade. Using it has the
-same effect as using the `--no-rhsm` leapp option.
+If set to 1, Leapp does not use Red Hat Subscription Management for the upgrade.
+It's equivalent to the `--no-rhsm` leapp option.
+
 
 ## LEAPP_OVL_SIZE
 
@@ -78,6 +79,34 @@ anything. The actor usually creates UDEV rules to preserve original NICs in
 case they are changed. However, in some cases it's not wanted and it leads
 in malfunction network configuration (e.g. in case the bonding is configured
 on the system). It's expected that NICs have to be handled manually if needed.
+
+## LEAPP_DATABASE_FORCE_SYNC_ON
+
+If set to 1, Leapp will explicitly enable synchronization on the SQLite database.
+Enabling the synchronization has negative impact on the performance
+(sometimes very negative). However, it is more reliable in case of extreme
+situations (e.g. lost power).
+Note the synchronization is nowadays switched off by default only during the phases
+executed before the reboot of the system to the upgrade environment, which we consider
+safe. As a result, we do not expect that someone would want to use this option now.
+
+## LEAPP_NO_INSIGHTS_REGISTER
+
+If set to 1, Leapp does not register the system into Red Hat Insights automatically.
+It's equivalent to the `--no-insights-register` leapp option.
+
+## LEAPP_NO_RHSM_FACTS
+If set to 1, Leapp does not store migration information using Red Hat Subscription Manager.
+It's equivalent to the `--no-rhsm-facts` leapp option.
+
+## LEAPP_NOGPGCHECK
+Set to 1 to disable RPM GPG checks (same as yum/dnf --nogpgckeck option).
+It's equivalent to the `--nogpgcheck` leapp option.
+
+## LEAPP_TARGET_ISO
+Set the path to the target OS ISO image that should be used for the IPU.
+It's equivalent to the `--iso` leapp option.
+
 
 ## LEAPP_UNSUPPORTED
 
@@ -146,3 +175,16 @@ If set to 1, leapp will disable explicit synchronization on the SQLite
 database. The positive effect is significant speed up of the leapp execution,
 however it comes at the cost of risking a corrupted database, so it is
 currently used for testing / development purposes, only.
+
+## LEAPP_DEVEL_INITRAM_NETWORK
+You can specify one of the following values: 'network-manager', 'scripts'.
+The 'scripts' value is used for a legacy dracut module when the network is not
+handled by NetworkManager.
+Using the option allows experimental upgrades, bringing up the networking inside
+the upgrade initramfs environment (upgrade phases after the first reboot).
+It also allows the upgrade e.g. when a network based storage is used
+on the system. Currently it works only for the most simple configurations
+(e.g. when only 1 NIC is present, no rdma, no bonding, ...). Network based
+storage is not handled anyhow during the upgrade, so it's possible that the network
+based storage will not be correctly initialized and usable as expected).
+
