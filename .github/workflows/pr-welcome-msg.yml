@@ -19,9 +19,9 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ## **Thank you for contributing to the Leapp project!**
-            Please note that every PR needs to comply with the [Leapp Guidelines](https://leapp.readthedocs.io/en/latest/contributing.html#) and must pass all tests in order to be mergable.
+            Please note that every PR needs to comply with the [Leapp Guidelines](https://leapp.readthedocs.io/en/latest/contributing.html#) and must pass all tests in order to be mergeable.
             If you want to request a review or rebuild a package in copr, you can use following commands as a comment:
-            - **review please** to notify leapp developers of review request
+            - **review please @oamg/developers** to notify leapp developers of the review request
             - **/packit copr-build** to submit a public copr build using packit
 
             To launch regression testing public members of oamg organization can leave the following comment:
