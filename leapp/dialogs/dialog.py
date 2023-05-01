@@ -54,7 +54,7 @@ class Dialog(object):
 
     @property
     def answerfile_sections(self):
-        return {"{}.{}".format(self.scope, c.key): c.choices for c in self.components}
+        return {"{}.{}".format(self.scope, c.key): getattr(c, "choices", []) for c in self.components}
 
     @property
     def min_label_width(self):
