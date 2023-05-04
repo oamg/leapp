@@ -7,6 +7,7 @@ import py
 import pytest
 
 from leapp.actors import Actor, get_actors
+from leapp.config import get_config
 from leapp.libraries.stdlib import api
 from leapp.messaging import BaseMessaging
 from leapp.models import ApiTestConsume, ApiTestProduce
@@ -168,3 +169,29 @@ def test_actor_all_files_paths(leapp_forked, repository, actor_name):  # noqa; p
 
         assert not actor.get_actor_file_path('directory/repository')
         assert not api.get_actor_file_path('directory/repository')
+
+
+@pytest.fixture(scope="module")
+def setup_database():
+    get_config().set('database', 'path', '/tmp/leapp-test.db')
+
+
+@pytest.mark.parametrize("actor_name", ('first',))
+def test_actor_get_answers(monkeypatch, leapp_forked, setup_database, repository, actor_name):  # noqa; pylint: disable=unused-argument
+    user_responses = {
+        'text': ('expected_value', 'expected_value'),
+        'bool': ('Yes', True),
+        'num': (42, 42),
+        'choice': ("3", "Four"),
+    }
+
+    def mocked_input(title):
+        return user_responses[title.split()[0].split(':')[0].lower()][0]
+
+    monkeypatch.setattr('leapp.dialogs.renderer.input', mocked_input)
+
+    messaging = _TestableMessaging()
+    with _with_loaded_actor(repository, actor_name, messaging) as (_unused, actor):
+        answers = actor.get_answers(actor.dialogs[0])
+        for component in actor.dialogs[0].components:
+            assert answers.get(component.key) == user_responses[component.key][1]
