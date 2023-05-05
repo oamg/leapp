@@ -171,3 +171,5 @@ def generate_report_file(messages_to_report, context, path, report_schema='1.1.0
                 # unicode object.
                 data = data.decode('utf-8')
             f.write(data)
+            # append the empty new line to be POSIX compatible
+            f.write(u'\n')
