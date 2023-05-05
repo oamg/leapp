@@ -165,4 +165,9 @@ def generate_report_file(messages_to_report, context, path, report_schema='1.1.0
             # because of a py2 bug in the json module that can produce a mix of unicode and str objects that will be
             # incompatible with write. https://bugs.python.org/issue13769
             data = json.dumps({'entries': messages_to_report, 'leapp_run_id': context}, indent=2, ensure_ascii=False)
+            if isinstance(data, six.binary_type):
+                # Note: if messages_to_report is empty, the produced data is str instead of unicode
+                # at least one string must be unicode for the json.dumps function to produce actually
+                # unicode object.
+                data = data.decode('utf-8')
             f.write(data)
