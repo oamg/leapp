@@ -118,6 +118,12 @@ def test_remediation_with_non_ascii_value(report_suffix):
         generate_report_file([report_message], 'leapp-run-id', reportfile.name, '1.1.0')
 
 
+@pytest.mark.parametrize("report_suffix", ('.json', '.txt'))
+def test_generation_of_empty_report(report_suffix):
+    with tempfile.NamedTemporaryFile(suffix=report_suffix) as reportfile:
+        generate_report_file([], 'leapp-run-id', reportfile.name, '1.1.0')
+
+
 def test_convert_from_error_to_report():
     error_dict_no_details = {
         'message': 'The system is not registered or subscribed.',
