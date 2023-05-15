@@ -39,7 +39,7 @@ Stage is a part of a [phase](#phase). There are three defined stages:
 - Main
 - After
 
-Before and After phases can be used to allow an actor to be run before or after any
+Before and After stages can be used to allow an actor to be run before or after any
 other actors in the phase. This should be useful in some hooking scenarios, where
 an action is supposed to be happening before or after another action. This way, other
 actors could be influenced.
