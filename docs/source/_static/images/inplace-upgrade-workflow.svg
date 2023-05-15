@@ -1,25 +1,24 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <svg
-   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    width="210mm"
    height="420mm"
    viewBox="0 0 210 420"
    version="1.1"
    id="svg8"
-   inkscape:version="1.0.2 (e86c870879, 2021-01-15)"
-   sodipodi:docname="inplace-upgrade-workflow.svg">
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   sodipodi:docname="inplace-upgrade-workflow.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
   <defs
      id="defs2">
     <linearGradient
        id="linearGradient5942"
-       osb:paint="gradient">
+       inkscape:swatch="gradient">
       <stop
          style="stop-color:#000000;stop-opacity:1;"
          offset="0"
@@ -37,11 +36,11 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="4.028103"
-     inkscape:cx="283.04444"
-     inkscape:cy="361.59929"
+     inkscape:zoom="0.99178505"
+     inkscape:cx="279.79853"
+     inkscape:cy="630.17687"
      inkscape:document-units="mm"
-     inkscape:current-layer="layer1"
+     inkscape:current-layer="g7338"
      showgrid="false"
      showguides="true"
      inkscape:guide-bbox="true"
@@ -56,7 +55,10 @@
      fit-margin-bottom="10"
      units="mm"
      inkscape:document-rotation="0"
-     height="297mm" />
+     height="297mm"
+     inkscape:showpageshadow="2"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1" />
   <metadata
      id="metadata5">
     <rdf:RDF>
@@ -65,7 +67,6 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -86,15 +87,15 @@
          style="fill:#e6e6e6;stroke:#000000;stroke-width:0.239809;stroke-miterlimit:4;stroke-dasharray:none" />
       <text
          id="text5886"
-         y="-3.0513096"
-         x="23.597286"
-         style="font-style:normal;font-weight:normal;font-size:3.313px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.155297"
+         y="-2.6862679"
+         x="32.166508"
+         style="font-style:normal;font-weight:normal;font-size:3.313px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.155297"
          xml:space="preserve"><tspan
-           style="font-size:3.313px;stroke-width:0.155297"
-           y="-3.0513096"
-           x="23.597286"
+           style="font-size:3.313px;text-align:center;text-anchor:middle;stroke-width:0.155297"
+           y="-2.6862679"
+           x="32.166508"
            id="tspan5884"
-           sodipodi:role="line">Main Steps</tspan></text>
+           sodipodi:role="line">Main Phases</tspan></text>
     </g>
     <text
        xml:space="preserve"
@@ -1362,7 +1363,7 @@
          id="g932"
          transform="matrix(0.586949,0,0,0.586949,-12.187113,-22.290623)">
         <rect
-           style="fill:#ccaaff;stroke:#000000;stroke-width:0.154672"
+           style="fill:#c6afe9;stroke:#000000;stroke-width:0.154672;fill-opacity:1"
            y="424.58749"
            x="56.846737"
            height="21.520247"
@@ -1426,7 +1427,7 @@
          id="g947"
          transform="matrix(0.586949,0,0,0.586949,-11.275277,-22.965869)">
         <rect
-           style="fill:#ccaaff;stroke:#000000;stroke-width:0.154672"
+           style="fill:#c6afe9;stroke:#000000;stroke-width:0.154672;fill-opacity:1"
            y="457.99619"
            x="4.4807582"
            height="21.520247"
@@ -1463,7 +1464,7 @@
            height="21.520247"
            x="56.846737"
            y="457.99619"
-           style="fill:#ccaaff;stroke:#000000;stroke-width:0.154672" />
+           style="fill:#c6afe9;stroke:#000000;stroke-width:0.154672;fill-opacity:1" />
         <text
            xml:space="preserve"
            style="font-style:normal;font-weight:normal;font-size:4.93889px;line-height:1.25;font-family:sans-serif;text-align:center;letter-spacing:0px;word-spacing:0px;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.264583"
