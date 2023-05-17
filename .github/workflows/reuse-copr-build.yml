@@ -143,7 +143,7 @@ jobs:
           cat << EOF > copr_fedora.conf
           [copr-cli]
           login = ${{ secrets.FEDORA_COPR_LOGIN }}
-          username = @oamg
+          username = oamgbot
           token = ${{ secrets.FEDORA_COPR_TOKEN }}
           copr_url = https://copr.fedorainfracloud.org
           # expiration date: 2030-07-04
