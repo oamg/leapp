@@ -55,7 +55,7 @@ Requires: your-dependency
 And do not forget to increment value of `leapp-framework-dependencies`:
 
 ```spec
-# IMPORTANT: everytime the requirements are changed, increment number by one
+# IMPORTANT: every time the requirements are changed, increment number by one
 # - same for Provides in deps subpackage
 Requires: leapp-framework-dependencies = 1
 ```

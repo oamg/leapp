@@ -280,7 +280,7 @@ During development of your new actor, it is expected that you will test your wor
 
 ### Executing a single actor
 
-You should use snactor tool to run a single actor and verify its output. Assuming that there are no errors, the actor was placed inside a valid leapp repository and snactor tool is aware of such repository, you can call snactor run to execute it. Bellow we are executing the existing [OSReleaseCollector](https://github.com/oamg/leapp-repository/tree/master/repos/system_upgrade/el7toel8/actors/osreleasecollector) actor that provides information about operating system release from target system. For the `snactor run` command you can use either the actor’s folder name (osreleasecollector), the actor’s class name (OSReleaseCollector) or the value of the name attribute of the actor’s class (os_release_collector).
+You should use snactor tool to run a single actor and verify its output. Assuming that there are no errors, the actor was placed inside a valid leapp repository and snactor tool is aware of such repository, you can call snactor run to execute it. Below we are executing the existing [OSReleaseCollector](https://github.com/oamg/leapp-repository/tree/master/repos/system_upgrade/el7toel8/actors/osreleasecollector) actor that provides information about operating system release from target system. For the `snactor run` command you can use either the actor’s folder name (osreleasecollector), the actor’s class name (OSReleaseCollector) or the value of the name attribute of the actor’s class (os_release_collector).
 
 ```shell
 # pwd

@@ -24,7 +24,7 @@ framework, see [List of deprecated functionality in leapp](../deprecation.html#l
   - **RequiredTargetUserspacePackages** - Deprecated because the new solution has been designed. Use the `TargetUserspacePreupgradeTasks` instead (see the `install_rpms` field).
   - **RequiredUpgradeInitramPackages** - Deprecated because the new solution around the upgrade initramfs has been designed. Use the `TargetUserspaceUpgradeTasks` instead (see the `install_rpms` field).
   - **UpgradeDracutModule** - Replaced by `UpgradeInitramfsTasks` (see the `include_dracut_modules` field).
-  - **InitrdIncludes** - Deprecated becase the new solution around the target initramfs (read: initramfs created for the upgraded system) has been designed. Use the `TargetInitramfsTasks` instead (see the `include_files` field).
+  - **InitrdIncludes** - Deprecated because the new solution around the target initramfs (read: initramfs created for the upgraded system) has been designed. Use the `TargetInitramfsTasks` instead (see the `include_files` field).
 
 ## v0.12.0  <span style="font-size:0.5em; font-weight:normal">(till April  2021)</span>
 - Models

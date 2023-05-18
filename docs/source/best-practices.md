@@ -1,4 +1,4 @@
-# Best Practices for actor developmemt
+# Best Practices for actor development
 
 ## Follow the contribution guidelines
 
