@@ -203,7 +203,7 @@ or
 pytest {PATH_TO_ACTOR}
 ```
 
-It is also possible to run only slected tests based on their name:
+It is also possible to run only selected tests based on their name:
 
 ```sh
 pytest -k "vim"    # to run all tests contains vim in name

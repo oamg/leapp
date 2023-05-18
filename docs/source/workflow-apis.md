@@ -112,7 +112,7 @@ Workflow APIs support having tests defined for them. We actually encourage you t
 
 Tests for APIs are supposed to be defines in the `apis/tests` directory.
 
-### Depedencies
+### Dependencies
 
 Workflow APIs can depend on another Workflow API, to allow API compositiion. Actors using APIs with dependencies on 
 other APIs just have to specify the API they want to use and do not need to know that those depend on other APIs.

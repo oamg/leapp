@@ -169,7 +169,7 @@ Reason: This model has been deprecated.
 Apparently, the `Reason` is not so good. It's just example. In real world
 example, you would like to provide usually a little bit better explanation.
 Anyway, much more interesting is the point, that the message is now printed
-everytime the actor is executed.
+every time the actor is executed.
 
 Obviously we do not want to remove the actor yet, because in such a case, the
 model could be hardly called as deprecated - we need to keep the same
