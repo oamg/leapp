@@ -146,6 +146,11 @@ class BaseMessaging(object):
                            time=datetime.datetime.now())
         self._do_produce(model, actor, self._errors)
 
+    def report_stacktrace(self, message, trace, actorname):
+        model = ErrorModel(message="{message}\n{trace}".format(message=message, trace=trace),
+                           actor=actorname, severity="fatal", time=datetime.datetime.now())
+        self._do_produce(model, actorname, self._errors)
+
     def request_stop_after_phase(self):
         """
         If called, it will cause the workflow to stop the execution after the current phase ends.
@@ -222,7 +227,7 @@ class BaseMessaging(object):
         data = json.dumps(model.dump(), sort_keys=True)
         message = {
             'type': type(model).__name__,
-            'actor': type(actor).name,
+            'actor': type(actor).name if not isinstance(actor, str) else actor,
             'topic': model.topic.name,
             'stamp': datetime.datetime.utcnow().isoformat() + 'Z',
             'phase': os.environ.get('LEAPP_CURRENT_PHASE', 'NON-WORKFLOW-EXECUTION'),

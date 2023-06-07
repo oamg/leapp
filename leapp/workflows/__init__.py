@@ -338,8 +338,9 @@ class Workflow(with_metaclass(WorkflowMeta)):
                                      config_model=config_model, skip_dialogs=skip_dialogs)
                     try:
                         instance.run()
-                    except BaseException:
+                    except BaseException as exc:
                         self._unhandled_exception = True
+                        messaging.report_stacktrace(message=exc.message, trace=exc.exception_info, actorname=actor.name)
                         raise
 
                     self._stop_after_phase_requested = messaging.stop_after_phase or self._stop_after_phase_requested
