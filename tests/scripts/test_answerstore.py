@@ -53,6 +53,26 @@ class MockComponentKey2Bool(object):
     value = None
 
 
+class MockComponentTextListKey1(object):
+    value_type = list
+    key = 'key1'
+    label = 'label key1'
+    description = 'description key1'
+    reason = 'Unbelievable reason'
+    default = None
+    value = None
+
+
+class MockComponentTextListKey2(object):
+    value_type = list
+    key = 'key2'
+    label = 'label key2'
+    description = 'description key2'
+    reason = 'Unbelievable reason'
+    default = None
+    value = None
+
+
 class MockDialogScope1(object):
     scope = 'scope1'
     title = 'Mock Dialog scope1'
@@ -74,8 +94,15 @@ class MockDialogBoolScope(object):
     components = (MockComponentKey1Bool, MockComponentKey2Bool)
 
 
+class MockDialogTextListScope(object):
+    scope = 'textlistscope'
+    title = 'Mock Dialog textlistscope'
+    reason = 'Mock Test Data for textlistscope'
+    components = (MockComponentTextListKey1, MockComponentTextListKey2)
+
+
 class MockWorkflow(object):
-    dialogs = (MockDialogScope1, MockDialogScope2, MockDialogBoolScope)
+    dialogs = (MockDialogScope1, MockDialogScope2, MockDialogBoolScope, MockDialogTextListScope)
 
 
 @pytest.fixture(scope='function')
@@ -92,6 +119,13 @@ key2=scope2.key2
 [boolscope]
 key1=True
 Key2=False
+
+[textlistscope]
+key1= [
+  "key1.value1",
+  "key1.value2"
+  ]
+key2=["key2.value1", "key2.value2"]
     '''
 
 
@@ -120,16 +154,20 @@ def test_answerstore_answer():
     a.answer(scope='scope1', key='key2', value='scope1.key2')
     a.answer(scope='scope2', key='key1', value='scope2.key1')
     a.answer(scope='scope2', key='key2', value='scope2.key2')
+    a.answer(scope='textlistscope', key='key1', value=['key1.value1', 'key1.value2'])
     assert 'scope1' in store.keys()
     assert 'scope2' in store.keys()
+    assert 'textlistscope' in store.keys()
     assert 'key1' in store['scope1'].keys()
     assert 'key1' in store['scope1'].keys()
+    assert 'key1' in store['textlistscope'].keys()
     assert 'key1' in store['scope2']
     assert 'key2' in store['scope2']
     assert store['scope1']['key1'] == 'scope1.key1'
     assert store['scope1']['key2'] == 'scope1.key2'
     assert store['scope2']['key1'] == 'scope2.key1'
     assert store['scope2']['key2'] == 'scope2.key2'
+    assert store['textlistscope']['key1'] == ['key1.value1', 'key1.value2']
 
 
 def test_answerstore_update(answerfile, answerfile_data, tmpdir):
@@ -139,10 +177,16 @@ def test_answerstore_update(answerfile, answerfile_data, tmpdir):
     a.load(answerfile)
     assert store['boolscope']['key1'] == 'True'
     assert store['boolscope']['key2'] == 'False'
+    assert store['textlistscope']['key1'] == '[\n"key1.value1",\n"key1.value2"\n]'
+    assert store['textlistscope']['key2'] == '["key2.value1", "key2.value2"]'
     a.answer('boolscope', 'key1', False)
     a.answer('boolscope', 'key2', True)
+    a.answer('textlistscope', 'key1', ['key1.value1', 'key1.value2'])
+    a.answer('textlistscope', 'key2', ['key2.value1', 'key2.value2'])
     assert store['boolscope']['key1'] is False
     assert store['boolscope']['key2'] is True
+    assert store['textlistscope']['key1'] == ['key1.value1', 'key1.value2']
+    assert store['textlistscope']['key2'] == ['key2.value1', 'key2.value2']
     f = tmpdir.join('test_answerstore_update')
     f.write(answerfile_data)
     a.update(str(f))
@@ -155,6 +199,8 @@ def test_answerstore_update(answerfile, answerfile_data, tmpdir):
     assert store2['scope1']['key2'] == 'scope1.key2'
     assert store2['scope2']['key1'] == 'scope2.key1'
     assert store2['scope2']['key2'] == 'scope2.key2'
+    assert store2['textlistscope']['key1'] == '["key1.value1", "key1.value2"]'
+    assert store2['textlistscope']['key2'] == '["key2.value1", "key2.value2"]'
 
 
 def test_answerstore_load(answerfile):
@@ -177,6 +223,8 @@ def test_answerstore_load(answerfile):
     assert store['scope2']['key2'] == 'scope2.key2'
     assert store['boolscope']['key1'] == 'True'
     assert store['boolscope']['key2'] == 'False'
+    assert store['textlistscope']['key1'] == '[\n"key1.value1",\n"key1.value2"\n]'
+    assert store['textlistscope']['key2'] == '["key2.value1", "key2.value2"]'
 
 
 def test_answerstore_load_and_translate_for_workflow(answerfile):
@@ -190,6 +238,8 @@ def test_answerstore_load_and_translate_for_workflow(answerfile):
     assert store['scope1']['key2'] == 'scope1.key2'
     assert store['scope2']['key1'] == 'scope2.key1'
     assert store['scope2']['key2'] == 'scope2.key2'
+    assert store['textlistscope']['key1'] == ["key1.value1", "key1.value2"]
+    assert store['textlistscope']['key2'] == ["key2.value1", "key2.value2"]
 
 
 def test_answerfile_get(monkeypatch, answerfile):
@@ -247,6 +297,20 @@ def test_answerfile_get(monkeypatch, answerfile):
     assert entries_created[0][1]['answer']['key2'] == 'scope2.key2'
     entries_created.pop()
 
+    # Testing textlistscope
+    assert store['textlistscope']['key1'] == '[\n"key1.value1",\n"key1.value2"\n]'
+    assert store['textlistscope']['key2'] == '["key2.value1", "key2.value2"]'
+    result = a.get(scope='textlistscope', fallback='textlistscope')
+    assert result
+    assert result['key1'] == '[\n"key1.value1",\n"key1.value2"\n]'
+    assert result['key2'] == '["key2.value1", "key2.value2"]'
+    assert entries_created
+    assert entries_created[0][1]['scope'] == 'textlistscope'
+    assert entries_created[0][1]['fallback'] == 'textlistscope'
+    assert entries_created[0][1]['answer']['key1'] == '[\n"key1.value1",\n"key1.value2"\n]'
+    assert entries_created[0][1]['answer']['key2'] == '["key2.value1", "key2.value2"]'
+    entries_created.pop()
+
 
 def test_answerfile_translate_for_workflow(answerfile):
     m = MockManager()
@@ -259,6 +323,7 @@ def test_answerfile_translate_for_workflow(answerfile):
     assert store['scope1']['key2'] == 'scope1.key2'
     assert store['scope2']['key1'] == 'scope2.key1'
     assert store['scope2']['key2'] == 'scope2.key2'
+    assert store['textlistscope']['key1'] == '[\n"key1.value1",\n"key1.value2"\n]'
     a.translate_for_workflow(MockWorkflow)
     assert store['boolscope']['key1'] is True
     assert store['boolscope']['key2'] is False
@@ -266,6 +331,8 @@ def test_answerfile_translate_for_workflow(answerfile):
     assert store['scope1']['key2'] == 'scope1.key2'
     assert store['scope2']['key1'] == 'scope2.key1'
     assert store['scope2']['key2'] == 'scope2.key2'
+    assert store['textlistscope']['key1'] == ["key1.value1", "key1.value2"]
+    assert store['textlistscope']['key2'] == ["key2.value1", "key2.value2"]
 
 
 def test_answerfile_translate(answerfile):
@@ -280,12 +347,15 @@ def test_answerfile_translate(answerfile):
     assert store['scope2']['key1'] == 'scope2.key1'
     assert store['scope2']['key2'] == 'scope2.key2'
     a.translate(MockDialogBoolScope)
+    a.translate(MockDialogTextListScope)
     assert store['boolscope']['key1'] is True
     assert store['boolscope']['key2'] is False
     assert store['scope1']['key1'] == 'scope1.key1'
     assert store['scope1']['key2'] == 'scope1.key2'
     assert store['scope2']['key1'] == 'scope2.key1'
     assert store['scope2']['key2'] == 'scope2.key2'
+    assert store['textlistscope']['key1'] == ["key1.value1", "key1.value2"]
+    assert store['textlistscope']['key2'] == ["key2.value1", "key2.value2"]
 
 
 def test_answerfile_generate(tmpdir, answerfile):
@@ -300,6 +370,8 @@ def test_answerfile_generate(tmpdir, answerfile):
     assert store['scope2']['key2'] == 'scope2.key2'
     assert store['boolscope']['key1'] is True
     assert store['boolscope']['key2'] is False
+    assert store['textlistscope']['key1'] == ['key1.value1', 'key1.value2']
+    assert store['textlistscope']['key2'] == ['key2.value1', 'key2.value2']
     a.answer('scope1', 'key1', 'generate.scope1.key1')
     a.answer('scope1', 'key2', 'generate.scope1.key2')
     a.answer('scope2', 'key1', 'generate.scope2.key1')
@@ -316,6 +388,8 @@ def test_answerfile_generate(tmpdir, answerfile):
     assert store2['scope2']['key2'] == 'generate.scope2.key2'
     assert store2['boolscope']['key1'] is False
     assert store2['boolscope']['key2'] is True
+    assert store2['textlistscope']['key1'] == ['key1.value1', 'key1.value2']
+    assert store2['textlistscope']['key2'] == ['key2.value1', 'key2.value2']
 
 
 def test__comment_out():

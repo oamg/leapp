@@ -1,3 +1,4 @@
+import json
 import multiprocessing
 
 import six
@@ -72,6 +73,8 @@ class AnswerStore(object):
                 if section not in conf.sections() and allow_missing:
                     conf.add_section(section)
                 try:
+                    if isinstance(val, list):
+                        val = json.dumps(val)
                     conf.set(section, opt, str(val))
                 except configparser.NoSectionError:
                     not_updated.append("{sec}.{opt}={val}".format(sec=section, opt=opt, val=val))
@@ -151,6 +154,8 @@ class AnswerStore(object):
                     elif component.value_type is tuple:
                         elements = entry[component.key].split(';')
                         entry[component.key] = tuple(set(elements).intersection(component.choices))
+                    elif component.value_type is list:
+                        entry[component.key] = json.loads(entry[component.key])
                     elif hasattr(component, 'choices'):
                         value = entry[component.key]
                         entry[component.key] = value if value in component.choices else None
@@ -189,6 +194,8 @@ class AnswerStore(object):
                             answer = ';'.join(answer) if answer else answer
                             answer_entry = '#\n# Values are separated by semi-colon ";"\n'
                     if answer is not None:
+                        if isinstance(answer, list):
+                            answer = json.dumps(answer)
                         answer_entry += '{key} = {value}\n'.format(key=component.key, value=answer)
                     else:
                         answer_entry += '# Unanswered question. Uncomment the following line with your answer\n'

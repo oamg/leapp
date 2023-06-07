@@ -57,6 +57,17 @@ class TextComponent(Component):
         renderer.render_text_component(self, dialog=dialog)
 
 
+class TextListComponent(Component):
+    """
+    TextListComponent is a list of text input component.
+    """
+    value_type = list
+    min_count = 1
+
+    def dispatch(self, renderer, dialog):
+        renderer.render_text_list_component(self, dialog=dialog)
+
+
 class PasswordComponent(TextComponent):
     """
     PasswordComponent is a text input component which will use non echoing input when possible (see getpass).

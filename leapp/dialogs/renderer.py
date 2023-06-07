@@ -1,5 +1,6 @@
 from __future__ import print_function
 from getpass import getpass
+import json
 import six
 
 
@@ -199,6 +200,18 @@ class CommandlineRenderer(DialogRendererBase):
         """
         return self._render_text_component(component, dialog)
 
+    def render_text_list_component(self, component, dialog):
+        """
+        Renders the text component
+
+        :param component: The text component to render
+        :type component: leapp.dialogs.components.TextComponent
+        :param dialog: The dialog to render
+        :type dialog: leapp.dialogs.dialog.Dialog
+        :return: None
+        """
+        return self._render_text_component(component, dialog, result_hook=self._text_list_result_hook)
+
     def _render_text_component(self, component, dialog, result_hook=None, default_hint=None):
         """
         Performs the actual rendering of the text component.
@@ -364,3 +377,15 @@ class CommandlineRenderer(DialogRendererBase):
         if valid:
             dialog.answer(component, result in true_values)
         return valid
+
+    @staticmethod
+    def _text_list_result_hook(component, dialog, result):
+        # Lists take the form of a JSON array
+        try:
+            texts = json.loads(result)
+            if isinstance(texts, list) and len(texts) >= component.min_count:
+                dialog.answer(component, texts)
+                return True
+        except (ValueError, json.decoder.JSONDecodeError):
+            pass
+        return False

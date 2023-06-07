@@ -1,6 +1,6 @@
 from leapp.actors import Actor
 from leapp.dialogs import Dialog
-from leapp.dialogs.components import BooleanComponent, ChoiceComponent, NumberComponent, TextComponent
+from leapp.dialogs.components import BooleanComponent, ChoiceComponent, NumberComponent, TextComponent, TextListComponent
 from leapp.tags import ActorFileApiTag
 from leapp.models import ApiTestConsume, ApiTestProduce
 
@@ -37,6 +37,22 @@ class First(Actor):
                     description='need to choose one of these choices',
                     choices=('One', 'Two', 'Three', 'Four', 'Five'),
                 ),
+                TextListComponent(
+                    key='text-list-1',
+                    label='text-list-1',
+                    description='a list of texts is needed',
+                ),
+                TextListComponent(
+                    key='text-list-2',
+                    label='text-list-2',
+                    description='another list of texts is needed',
+                ),
+                TextListComponent(
+                    key='text-list-3',
+                    label='text-list-3',
+                    description='Empty list of texts is needed',
+                    default = [],
+                )
             ),
         ),
     )

@@ -183,6 +183,12 @@ def test_actor_get_answers(monkeypatch, leapp_forked, setup_database, repository
         'bool': ('Yes', True),
         'num': (42, 42),
         'choice': ("3", "Four"),
+        'text-list-1': ('''[
+        "expected_value_1",
+        "expected_value_2"
+        ]''', ["expected_value_1", "expected_value_2"]),
+        'text-list-2': ('["expected_value_3", "expected_value_4"]', ["expected_value_3", "expected_value_4"]),
+        'text-list-3': ('', []),
     }
 
     def mocked_input(title):
