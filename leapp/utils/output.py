@@ -107,7 +107,7 @@ def report_errors(errors):
 
 def report_info(report_paths, log_paths, answerfile=None, fail=False):
     report_paths = [report_paths] if not isinstance(report_paths, list) else report_paths
-    log_paths = [log_paths] if not isinstance(report_paths, list) else log_paths
+    log_paths = [log_paths] if not isinstance(log_paths, list) else log_paths
 
     if log_paths:
         sys.stdout.write("\n")
