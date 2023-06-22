@@ -340,7 +340,11 @@ class Workflow(with_metaclass(WorkflowMeta)):
                         instance.run()
                     except BaseException as exc:
                         self._unhandled_exception = True
-                        messaging.report_stacktrace(message=exc.message, trace=exc.exception_info, actorname=actor.name)
+                        messaging.report_stacktrace(message=exc.message,
+                                                    trace=exc.exception_info,
+                                                    actorname=actor.name)
+                        current_logger.error('Actor {actor} has crashed: {trace}'.format(actor=actor.name,
+                                                                                         trace=exc.exception_info))
                         raise
 
                     self._stop_after_phase_requested = messaging.stop_after_phase or self._stop_after_phase_requested
