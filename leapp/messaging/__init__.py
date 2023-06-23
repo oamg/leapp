@@ -147,8 +147,8 @@ class BaseMessaging(object):
         self._do_produce(model, actor, self._errors)
 
     def report_stacktrace(self, message, trace, actorname):
-        model = ErrorModel(message="{message}\n{trace}".format(message=message, trace=trace),
-                           actor=actorname, severity="fatal", time=datetime.datetime.now())
+        model = ErrorModel(message=message, details=trace, actor=actorname, severity="fatal",
+                           time=datetime.datetime.now())
         self._do_produce(model, actorname, self._errors)
 
     def request_stop_after_phase(self):
