@@ -3,11 +3,11 @@
 represents a location for functions that otherwise would be defined multiple times across leapp actors
 and at the same time, they are really useful for other actors.
 """
+import base64
 import logging
 import os
 import sys
 import uuid
-import base64
 
 from leapp.exceptions import LeappError
 from leapp.utils.audit import create_audit_entry
@@ -167,6 +167,10 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
     :type stdin: int, str
     :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
     :rtype: dict
+    :raises: OSError if an executable is missing or has wrong permissions
+    :raises: CalledProcessError if the cmd has non-zero exit code and `checked` is False
+    :raises: TypeError if any input parameters have an invalid type
+    :raises: valueError if any of input parameters have an invalid value
     """
     if not args:
         message = 'Command to call is missing.'
@@ -174,7 +178,7 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
         raise ValueError(message)
     api.current_logger().debug('External command has started: {0}'.format(str(args)))
     _id = str(uuid.uuid4())
-    result = None
+    result = {}
     try:
         create_audit_entry('process-start', {'id': _id, 'parameters': args, 'env': env})
         result = _call(args, callback_raw=callback_raw, callback_linebuffered=callback_linebuffered,
@@ -191,6 +195,12 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
             result.update({
                 'stdout': result['stdout'].splitlines()
             })
+    except OSError:
+        # NOTE: currently we expect the result to be always set
+        # let's copy bash a little bit and set ecode 127
+        result = {'exit_code': '127', 'stdout': '', 'signal': 0, 'pid': 0}
+        result['stderr'] = 'File not found or permission denied: {}'.format(args[0])
+        raise
     finally:
         audit_result = result
         if not encoding:
