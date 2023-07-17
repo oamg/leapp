@@ -1,7 +1,10 @@
 from __future__ import print_function
 
+from distutils.spawn import find_executable
 import codecs
+import errno
 import os
+import sys
 
 from leapp.compat import string_types
 from leapp.libraries.stdlib.eventloop import POLL_HUP, POLL_IN, POLL_OUT, POLL_PRI, EventLoop
@@ -107,6 +110,10 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         :type env: dict
         :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
         :rtype: dict
+        :raises: OSError if an executable is missing or has wrong permissions
+        :raises: CalledProcessError if the cmd has non-zero exit code and `checked` is False
+        :raises: TypeError if any input parameters have an invalid type
+        :raises: valueError if any of input parameters have an invalid value
     """
     if not isinstance(command, (list, tuple)):
         raise TypeError('command parameter has to be a list or tuple')
@@ -126,6 +133,17 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         if not isinstance(env, dict):
             raise TypeError('env parameter has to be a dictionary')
         environ.update(env)
+
+    _path = (env or {}).get('PATH', None)
+    # NOTE(pstodulk): the find_executable function is from the distutils
+    # module which is deprecated and it is going to be removed in Python 3.12.
+    # In future, we should use the shutil.which function, however that one is
+    # not available for Python2. We are going to address the problem in future
+    # (e.g. when we drop support for Python 2).
+    # https://peps.python.org/pep-0632/
+    if not find_executable(command[0], _path):
+        raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), command[0])
+
     # Create a separate pipe for stdout/stderr
     #
     # The parent process is going to use the read-end of the pipes for reading child's
@@ -214,4 +232,11 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         os.close(stderr)
         os.dup2(wstdout, STDOUT)
         os.dup2(wstderr, STDERR)
-        os.execvpe(command[0], command, env=environ)
+        try:
+            os.execvpe(command[0], command, env=environ)
+        except OSError as e:
+            # This is a seatbelt in case the execvpe cannot be performed
+            # (e.g. permission denied) and we didn't catch this prior the fork.
+            # See the PR for more details: https://github.com/oamg/leapp/pull/836
+            sys.stderr.write('Error: Cannot execute {}: {}\n'.format(command[0], str(e)))
+            os._exit(1)

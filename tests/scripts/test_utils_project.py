@@ -5,13 +5,13 @@ import pytest
 from helpers import TESTING_REPOSITORY_NAME
 from leapp.exceptions import CommandError
 from leapp.utils.repository import (
-    requires_repository,
-    to_snake_case,
+    find_repository_basedir,
+    get_repository_metadata,
+    get_repository_name,
     make_class_name,
     make_name,
-    find_repository_basedir,
-    get_repository_name,
-    get_repository_metadata,
+    requires_repository,
+    to_snake_case,
 )
 
 
