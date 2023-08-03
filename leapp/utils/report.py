@@ -7,6 +7,7 @@ import six
 
 from leapp.reporting import (
     _DEPRECATION_FLAGS,
+    _UPCOMING_DEPRECATION_FLAGS,
     Groups,
     Remediation,
     Severity,
@@ -51,7 +52,7 @@ def fetch_upgrade_report_messages(context_id):
     """
     :param context_id: ID to identify the needed messages
     :type context_id: str
-    :return: All upgrade messages of type "Report" withing the given context
+    :return: All upgrade messages of type "Report" within the given context
     """
     report_msgs = get_messages(names=['Report', 'ErrorModel'], context=context_id) or []
 
@@ -94,17 +95,22 @@ SEVERITY_LEVELS = {
 
 
 def is_inhibitor(message):
+    return has_flag_group(message, Groups.INHIBITOR)
+
+
+def has_flag_group(message, group):
     """
-    A helper function to check if a message is inhibiting upgrade.
-    It takes care of possible differences in report schema, like tags/flags -> groups merge in 1.2.0
+    A helper to check if a message has Group which would have been a Flag before the Tags/Flags merge in 1.2.0
     """
-    # NOTE(ivasilev) As groups and flags are mutual exclusive, let's not bother with report_schema version
+    # NOTE(borrowed from ivasilev) As groups and flags are mutual exclusive, let's not bother with report_schema version
     # and just check both fields for inhibitor presence
-    return Groups.INHIBITOR in message.get('groups', message.get('flags', []))
+    return group in message.get('groups', message.get('flags', []))
 
 
 def importance(message):
-    if is_inhibitor(message):
+    if has_flag_group(message, Groups._ERROR):
+        return -1
+    if has_flag_group(message, Groups.INHIBITOR):
         return 0
     return SEVERITY_LEVELS.get(message['severity'], 99)
 
@@ -115,8 +121,13 @@ def generate_report_file(messages_to_report, context, path, report_schema='1.1.0
     if path.endswith(".txt"):
         with io.open(path, 'w', encoding='utf-8') as f:
             for message in sorted(messages_to_report, key=importance):
-                f.write(u'Risk Factor: {}{}\n'.format(message['severity'],
-                                                      ' (inhibitor)' if is_inhibitor(message) else ''))
+                flag = ''
+                if has_flag_group(message, Groups._ERROR):
+                    flag = '(error)'
+                elif has_flag_group(message, Groups.INHIBITOR):
+                    flag = '(inhibitor)'
+
+                f.write(u'Risk Factor: {} {}\n'.format(message['severity'], flag))
                 f.write(u'Title: {}\n'.format(message['title']))
                 f.write(u'Summary: {}\n'.format(message['summary']))
                 remediation = Remediation.from_dict(message.get('detail', {}))
@@ -136,12 +147,13 @@ def generate_report_file(messages_to_report, context, path, report_schema='1.1.0
                 f.write(u'-' * 40 + '\n')
     elif path.endswith(".json"):
         with io.open(path, 'w', encoding='utf-8') as f:
-            # Here all possible convertions will take place
+            # Here all possible conversions will take place
             if report_schema_tuple < (1, 1, 0):
                 # report-schema 1.0.0 doesn't have a stable report key
                 # copy list of messages here not to mess the initial structure for possible further invocations
                 messages_to_report = list(messages_to_report)
                 for m in messages_to_report:
+                    # FIXME(mmatuska): This modifies the messages as list() does shallow copy, more occurrences below
                     m.pop('key')
             if report_schema_tuple < (1, 2, 0):
                 # groups were introduced in 1.2.0, before that there was a tags/flags split
@@ -149,7 +161,10 @@ def generate_report_file(messages_to_report, context, path, report_schema='1.1.0
                 for msg in messages_to_report:
                     groups = msg.pop('groups', [])
                     msg['flags'] = [g for g in groups if g in _DEPRECATION_FLAGS]
-                    msg['tags'] = [g for g in groups if g not in _DEPRECATION_FLAGS]
+                    msg['tags'] = [
+                        g for g in groups
+                        if g not in _DEPRECATION_FLAGS and g not in _UPCOMING_DEPRECATION_FLAGS
+                    ]
             if report_schema_tuple == (1, 2, 0):
                 # DEPRECATED: flags, tags
                 # NOTE(pstodulk): This is a temporary solution to ensure that
