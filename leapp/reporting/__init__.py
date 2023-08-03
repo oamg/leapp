@@ -125,6 +125,9 @@ class Groups(BaseListPrimitive):
     name = 'groups'
 
     INHIBITOR = 'inhibitor'
+    # This is used for framework error reports
+    # Reports indicating failure in actors should use the FAILURE group
+    ERROR = 'error'
     FAILURE = 'failure'
     ACCESSIBILITY = 'accessibility'
     AUTHENTICATION = 'authentication'
@@ -186,7 +189,7 @@ class Flags(Groups):
 
 # To allow backwards-compatibility with previous report-schema
 # Groups that match _DEPRECATION_FLAGS will be shown as flags, the rest as tags
-_DEPRECATION_FLAGS = [Groups.INHIBITOR, Groups.FAILURE]
+_DEPRECATION_FLAGS = [Groups.INHIBITOR, Groups.FAILURE, Groups.ERROR]
 
 
 class Key(BasePrimitive):
@@ -378,12 +381,22 @@ def _create_report_object(entries):
     _sanitize_entries(entries)
     for entry in entries:
         entry.apply(report)
+
     if Groups.INHIBITOR in report.get('groups', []):
+        if Groups.ERROR in report.get('groups', []):
+            # *error != inhibitor*
+            msg = ('Only one of Groups.ERROR and Groups.INHIBITOR can be set at once.'
+                   ' Maybe you were looking for Groups.FAILURE?')
+            raise ValueError(msg)
+
         # Before removing Flags, the original inhibitor detection worked
         # by checking the `flags` field; keep the `flags` field until we drop Flags completely
         # Currently we know that 'flags' does not exist otherwise so it's
         # safe to just set it
         report['flags'] = [Groups.INHIBITOR]
+    if Groups.ERROR in report.get('groups', []):
+        # see above for explanation
+        report['flags'] = [Groups.ERROR]
 
     return Report(report=report)
 
@@ -431,6 +444,12 @@ def create_report_from_error(error_dict):
     Convert error json to report json
     """
     error = ErrorModel.create(error_dict)
-    entries = [Title(error.message), Summary(error.details or ""), Severity('high'), Audience('sysadmin')]
+    entries = [
+        Title(error.message),
+        Summary(error.details or ""),
+        Severity('high'),
+        Audience('sysadmin'),
+        Groups([Groups.ERROR])
+    ]
     report = _create_report_object(entries)
     return json.loads(report.dump()['report'])

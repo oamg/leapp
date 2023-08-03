@@ -69,9 +69,9 @@ def _print_report_titles(reports):
 
 def report_inhibitors(context_id):
     # The following imports are required to be here to avoid import loop problems
-    from leapp.utils.report import fetch_upgrade_report_messages, is_inhibitor  # noqa; pylint: disable=import-outside-toplevel
+    from leapp.utils.report import fetch_upgrade_report_messages, Groups, has_flag_group  # noqa; pylint: disable=import-outside-toplevel
     reports = fetch_upgrade_report_messages(context_id)
-    inhibitors = [report for report in reports if is_inhibitor(report)]
+    inhibitors = [report for report in reports if has_flag_group(report, Groups.INHIBITOR)]
     if inhibitors:
         text = 'UPGRADE INHIBITED'
         with pretty_block(text=text, end_text=text, color=Color.red, target=sys.stdout):
@@ -110,25 +110,41 @@ def report_errors(errors):
                 print_error(error)
 
 
-def _filter_reports(reports, severity=None, is_inhibitor=False):
+def _filter_reports(reports, severity=None, has_flag=None):
     # The following imports are required to be here to avoid import loop problems
-    from leapp.utils.report import is_inhibitor as isinhibitor # noqa; pylint: disable=import-outside-toplevel
-    if not severity:
-        return [report for report in reports if isinhibitor(report) == is_inhibitor]
-    return [report for report in reports if report['severity'] == severity and isinhibitor(report) == is_inhibitor]
+    from leapp.reporting import Groups # noqa; pylint: disable=import-outside-toplevel
+    from leapp.utils.report import has_flag_group # noqa; pylint: disable=import-outside-toplevel
+
+    def is_ordinary_report(report):
+        return not has_flag_group(report, Groups.ERROR) and not has_flag_group(report, Groups.INHIBITOR)
+
+    result = reports
+    if has_flag is False:
+        result = [rep for rep in result if is_ordinary_report(rep)]
+    elif has_flag is not None:
+        result = [rep for rep in result if has_flag_group(rep, has_flag)]
+    if severity:
+        result = [rep for rep in result if rep['severity'] == severity]
+
+    return result
 
 
 def _print_reports_summary(reports):
     # The following imports are required to be here to avoid import loop problems
-    from leapp.reporting import Severity # noqa; pylint: disable=import-outside-toplevel
+    from leapp.reporting import Groups, Severity # noqa; pylint: disable=import-outside-toplevel
 
-    inhibitors = _filter_reports(reports, is_inhibitor=True)
-    high = _filter_reports(reports, Severity.HIGH)
-    medium = _filter_reports(reports, Severity.MEDIUM)
-    low = _filter_reports(reports, Severity.LOW)
-    info = _filter_reports(reports, Severity.INFO)
+    errors = _filter_reports(reports, has_flag=Groups.ERROR)
+    inhibitors = _filter_reports(reports, has_flag=Groups.INHIBITOR)
+
+    ordinary = _filter_reports(reports, has_flag=False)
+
+    high = _filter_reports(ordinary, Severity.HIGH)
+    medium = _filter_reports(ordinary, Severity.MEDIUM)
+    low = _filter_reports(ordinary, Severity.LOW)
+    info = _filter_reports(ordinary, Severity.INFO)
 
     print('Reports summary:')
+    print('    Errors:                  {:5}'.format(len(errors)))
     print('    Inhibitors:              {:5}'.format(len(inhibitors)))
     print('    HIGH severity reports:   {:5}'.format(len(high)))
     print('    MEDIUM severity reports: {:5}'.format(len(medium)))
@@ -151,21 +167,22 @@ def report_info(context_id, report_paths, log_paths, answerfile=None, fail=False
         from leapp.utils.report import fetch_upgrade_report_messages  # noqa; pylint: disable=import-outside-toplevel
         reports = fetch_upgrade_report_messages(context_id)
 
-        high = _filter_reports(reports, Severity.HIGH)
-        medium = _filter_reports(reports, Severity.MEDIUM)
+        ordinary = _filter_reports(reports, has_flag=False)
+        high = _filter_reports(ordinary, Severity.HIGH)
+        medium = _filter_reports(ordinary, Severity.MEDIUM)
 
         color = Color.green
         if medium or high:
             color = Color.yellow
         if fail:
-            color = Color.bold
+            color = Color.red
 
         with pretty_block("REPORT", target=sys.stdout, color=color):
             if high or medium:
                 print('HIGH and MEDIUM severity reports:')
                 _print_report_titles(high + medium)
+                sys.stdout.write('\n')
 
-            sys.stdout.write('\n')
             _print_reports_summary(reports)
 
             print(
