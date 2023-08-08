@@ -16,7 +16,7 @@ jobs:
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
-      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*8to9)(?!.*max_sst)"
+      tmt_plan_regex: "^(?!.*max_sst)(.*tier1)"
       pull_request_status_name: "7.9to8.8"
       variables: 'SOURCE_RELEASE=7.9;TARGET_RELEASE=8.8;LEAPPDATA_BRANCH=upstream'
     if: |
@@ -75,7 +75,7 @@ jobs:
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
-      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*max_sst)"
+      tmt_plan_regex: "^(?!.*max_sst)(.*tier1)"
       variables: 'SOURCE_RELEASE=8.6;TARGET_RELEASE=9.0;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms;LEAPPDATA_BRANCH=upstream'
       pull_request_status_name: "8.6to9.0"
     if: |
@@ -89,7 +89,7 @@ jobs:
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
-      tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*max_sst)"
+      tmt_plan_regex: "^(?!.*max_sst)(.*tier1)"
       variables: 'SOURCE_RELEASE=8.8;TARGET_RELEASE=9.2;LEAPP_DEVEL_TARGET_RELEASE=9.2;RHSM_REPOS=rhel-8-for-x86_64-appstream-beta-rpms,rhel-8-for-x86_64-baseos-beta-rpms;LEAPPDATA_BRANCH=upstream'
       compose: "RHEL-8.8.0-Nightly"
       pull_request_status_name: "8.8to9.2"
