@@ -46,7 +46,7 @@ class Field(object):
         self._nullable = False
         self._default = default
 
-        if type(self) == Field:
+        if type(self) is Field:
             raise ModelMisuseError("Do not use this type directly.")
 
     def _validate_model_value(self, value, name):
