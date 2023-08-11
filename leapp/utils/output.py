@@ -42,6 +42,19 @@ def pretty_block(text, target, end_text=None, color=Color.bold, width=60):
     target.write('\n')
 
 
+def _print_errors_summary(errors):
+    width = 4 + len(str(len(errors)))
+    for position, error in enumerate(errors, start=1):
+        model = ErrorModel.create(json.loads(error['message']['data']))
+
+        error_message = model.message
+        if six.PY2:
+            error_message = model.message.encode('utf-8', 'xmlcharrefreplace')
+
+        sys.stdout.write("{idx:{width}}. Actor: {actor}\n{spacer}  Message: {message}\n".format(
+            idx=position, width=width, spacer=" " * width, message=error_message, actor=model.actor))
+
+
 def print_error(error):
     model = ErrorModel.create(json.loads(error['message']['data']))
 
@@ -65,19 +78,6 @@ def _print_report_titles(reports):
     width = 4 + len(str(len(reports)))
     for position, report in enumerate(reports, start=1):
         print('{idx:{width}}. {title}'.format(idx=position, width=width, title=report['title']))
-
-
-def report_inhibitors(context_id):
-    # The following imports are required to be here to avoid import loop problems
-    from leapp.utils.report import fetch_upgrade_report_messages, Groups, has_flag_group  # noqa; pylint: disable=import-outside-toplevel
-    reports = fetch_upgrade_report_messages(context_id)
-    inhibitors = [report for report in reports if has_flag_group(report, Groups.INHIBITOR)]
-    if inhibitors:
-        text = 'UPGRADE INHIBITED'
-        with pretty_block(text=text, end_text=text, color=Color.red, target=sys.stdout):
-            print('Upgrade has been inhibited due to the following problems:')
-            _print_report_titles(inhibitors)
-            print('Consult the pre-upgrade report for details and possible remediation.')
 
 
 def report_deprecations(context_id, start=None):
@@ -152,20 +152,26 @@ def _print_reports_summary(reports):
     print('    INFO severity reports:   {:5}'.format(len(info)))
 
 
-def report_info(context_id, report_paths, log_paths, answerfile=None, fail=False):
+# NOTE(mmatuska): it would be nicer to get the errors from reports,
+# however the reports don't have the information about which actor raised the error :(
+def report_info(context_id, report_paths, log_paths, answerfile=None, fail=False, errors=None):
     report_paths = [report_paths] if not isinstance(report_paths, list) else report_paths
     log_paths = [log_paths] if not isinstance(log_paths, list) else log_paths
 
     if log_paths:
-        sys.stdout.write("\n")
+        if not errors:  # there is already a newline after the errors section
+            sys.stdout.write("\n")
         for log_path in log_paths:
             sys.stdout.write("Debug output written to {path}\n".format(path=log_path))
 
     if report_paths:
         # The following imports are required to be here to avoid import loop problems
         from leapp.reporting import Severity  # noqa; pylint: disable=import-outside-toplevel
-        from leapp.utils.report import fetch_upgrade_report_messages  # noqa; pylint: disable=import-outside-toplevel
+        from leapp.utils.report import fetch_upgrade_report_messages, Groups # noqa; pylint: disable=import-outside-toplevel
+
         reports = fetch_upgrade_report_messages(context_id)
+
+        inhibitors = _filter_reports(reports, has_flag=Groups.INHIBITOR)
 
         ordinary = _filter_reports(reports, has_flag=False)
         high = _filter_reports(ordinary, Severity.HIGH)
@@ -177,7 +183,17 @@ def report_info(context_id, report_paths, log_paths, answerfile=None, fail=False
         if fail:
             color = Color.red
 
-        with pretty_block("REPORT", target=sys.stdout, color=color):
+        with pretty_block("REPORT OVERVIEW", target=sys.stdout, color=color):
+            if errors:
+                print('Following errors occurred and the upgrade cannot continue:')
+                _print_errors_summary(errors)
+                sys.stdout.write('\n')
+
+            if inhibitors:
+                print('Upgrade has been inhibited due to the following problems:')
+                _print_report_titles(inhibitors)
+                sys.stdout.write('\n')
+
             if high or medium:
                 print('HIGH and MEDIUM severity reports:')
                 _print_report_titles(high + medium)
