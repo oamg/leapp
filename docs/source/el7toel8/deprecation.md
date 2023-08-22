@@ -14,6 +14,15 @@ framework, see [List of deprecated functionality in leapp](../deprecation.html#l
 
 - nothing yet...
 
+## v0.19.0 <span style="font-size:0.5em; font-weight:normal">(till March 2024)</span>
+
+- Models
+  - **InstalledTargetKernelVersion** - Deprecated as the new solution has been designed to be able to handle new changes in RHEL 9.3+ system. Use the `InstalledTargetKernelInfo` message instead.
+  - **GrubInfo.orig_device_name** - The `GrubInfo` message is still valid, but the `orig_device_name` field has been deprecated as multiple devices can exist on a system. Use `GrubInfo.orig_devices` instead.
+- Shared libraries
+  - **leapp.libraries.common.config.version.is_rhel_realtime()** - The function has been deprecated as the information cannot be easily determined based on the information inside `IPUConfig`. Use data in the `KernelInfo` message instead, the field `type`.
+  - **leapp.libraries.common.grub.get_grub_device()** - The function has been deprecated as multiple grub devices can exists on a system. Use the `leapp.libraries.common.grub.get_grub_devices()` function instead.
+
 ## v0.16.0 <span style="font-size:0.5em; font-weight:normal">(till September 2022)</span>
 
 - Shared libraries
