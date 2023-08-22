@@ -188,3 +188,7 @@ on the system. Currently it works only for the most simple configurations
 storage is not handled anyhow during the upgrade, so it's possible that the network
 based storage will not be correctly initialized and usable as expected).
 
+## LEAPP_DEVEL_KEEP_DISK_IMGS
+If set to 1, leapp will skip removal of disk images created for source OVLs.
+This is handy for debugging and investigations related to created containers
+(the scratch one and the target userspace container).
