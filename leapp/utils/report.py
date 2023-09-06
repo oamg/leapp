@@ -8,6 +8,7 @@ import six
 from leapp.reporting import (
     _DEPRECATION_FLAGS,
     _UPCOMING_DEPRECATION_FLAGS,
+    ExternalLink,
     Groups,
     Remediation,
     Severity,
@@ -115,6 +116,31 @@ def importance(message):
     return SEVERITY_LEVELS.get(message['severity'], 99)
 
 
+def _report_detail_to_string(report_detail):
+    detail = u''
+    external_links = report_detail[ExternalLink.name] if ExternalLink.name in report_detail.keys() else None
+    remediation = Remediation.from_dict(report_detail)
+
+    if external_links:
+        external_links_text = u'Related links:'
+        for link in external_links:
+            external_links_text += u'\n    - {}: {}'.format(link['title'], link['url'])
+        detail += external_links_text
+
+    if remediation:
+        # NOTE(ivasilev) Decoding is necessary in case of python2 as remediation is an encoded string,
+        # while io.open expects "true text" input. For python3 repr will return proper py3 str, no
+        # decoding will be needed.
+        # This hassle and clumsiness makes me sad, so suggestions are welcome.
+        remediation_text = '\nRemediation: {}\n'.format(remediation)
+        if isinstance(remediation_text, six.binary_type):
+            # This will be true for py2 where repr returns an encoded string
+            remediation_text = remediation_text.decode('utf-8')
+            detail += remediation_text
+
+    return detail
+
+
 def generate_report_file(messages_to_report, context, path, report_schema='1.1.0'):
     # NOTE(ivasilev) Int conversion should not break as only specific formats of report_schema versions are allowed
     report_schema_tuple = tuple(int(x) for x in report_schema.split('.'))
@@ -130,17 +156,9 @@ def generate_report_file(messages_to_report, context, path, report_schema='1.1.0
                 f.write(u'Risk Factor: {} {}\n'.format(message['severity'], flag))
                 f.write(u'Title: {}\n'.format(message['title']))
                 f.write(u'Summary: {}\n'.format(message['summary']))
-                remediation = Remediation.from_dict(message.get('detail', {}))
-                if remediation:
-                    # NOTE(ivasilev) Decoding is necessary in case of python2 as remediation is an encoded string,
-                    # while io.open expects "true text" input. For python3 repr will return proper py3 str, no
-                    # decoding will be needed.
-                    # This hassle and clumsiness makes me sad, so suggestions are welcome.
-                    remediation_text = 'Remediation: {}\n'.format(remediation)
-                    if isinstance(remediation_text, six.binary_type):
-                        # This will be true for py2 where repr returns an encoded string
-                        remediation_text = remediation_text.decode('utf-8')
-                    f.write(remediation_text)
+                report_detail = message.get('detail', {})
+                detail = _report_detail_to_string(report_detail)
+                f.write(detail)
                 if report_schema_tuple > (1, 0, 0):
                     # report-schema 1.0.0 doesn't have a stable report key
                     f.write(u'Key: {}\n'.format(message['key']))
