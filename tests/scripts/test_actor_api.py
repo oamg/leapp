@@ -188,7 +188,13 @@ def test_actor_get_answers(monkeypatch, leapp_forked, setup_database, repository
     def mocked_input(title):
         return user_responses[title.split()[0].split(':')[0].lower()][0]
 
+    def mocked_store_dialog(dialog, answer):
+        # Silence warnings
+        dialog = answer
+        answer = dialog
+
     monkeypatch.setattr('leapp.dialogs.renderer.input', mocked_input)
+    monkeypatch.setattr('leapp.actors.store_dialog', mocked_store_dialog)
 
     messaging = _TestableMessaging()
     with _with_loaded_actor(repository, actor_name, messaging) as (_unused, actor):

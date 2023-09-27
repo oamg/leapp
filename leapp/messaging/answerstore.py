@@ -117,6 +117,9 @@ class AnswerStore(object):
         # NOTE(ivasilev) self.storage.get() will return a DictProxy. To avoid TypeError during later
         # JSON serialization a copy() should be invoked to get a shallow copy of data
         answer = self._storage.get(scope, fallback).copy()
+
+        # NOTE(dkubek): It is possible that we do not need to save the 'answer'
+        # here as it is being stored with dialog question right after query
         create_audit_entry('dialog-answer', {'scope': scope, 'fallback': fallback, 'answer': answer})
         return answer
 
