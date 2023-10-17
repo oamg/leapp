@@ -3,7 +3,7 @@
 First, thank you for taking your time to contribute to the project.
 
 The following is a set of guidelines for contributing effectively to the Leapp-related repositories
-hosted under the `OS and Application Modernization Group organization <https://github.com/oamg/>`_
+hosted under the [OS and Application Modernization Group organization](https://github.com/oamg/)
 on GitHub.
 
 ## Code style guidelines
@@ -32,7 +32,7 @@ Before you submit your pull request, consider the following guidelines:
      ``git checkout -b bug/my-fix-branch master``
 
 * Include documentation that either describe a change to a behavior or the changed capability to an end user.
-* Commit your changes with message conforming to the `Git Commit Messages`_ guidelines.
+* Commit your changes with message conforming to the [Git Commit Messages](#git-commit-messages) guidelines.
 * Include tests for the capability you have implemented.
 * Make sure your tests pass. We use Jenkins CI for our automated testing.
 * Push your branch to GitHub:
@@ -65,7 +65,7 @@ Before you submit your pull request, consider the following guidelines:
 * Use the present tense ("Add feature" not "Added feature")
 * Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
 * If you are fixing a GitHub issue, include something like 'Closes issue #xyz'
-* For more best practices, read `How to Write a Git Commit Message <https://chris.beams.io/posts/git-commit/>`_
+* For more best practices, read [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/)
 
 ## Contact
 

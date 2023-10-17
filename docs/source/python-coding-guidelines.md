@@ -175,4 +175,13 @@ class MyActor(Actor):
 ### 13. Underscore usage
 
 For leapp and leapp-repository the `_` and `P_` is reserved for localization. Please don't use it for anything else like
-variable-to-be-discarded.
+variable-to-be-discarded.  Instead, use a variable name prefixed with `dummy_`.  What comes after
+the prefix should describe the data that is being discarded, like so:
+
+``` python
+dummy_scheme, netloc, path, dummy_params, query, fragment = urlparse("scheme://netloc/path;parameters?query#fragment")
+```
+
+Using an informative variable name for discarded values is helpful when a future developer modifies
+the code and needs the discarded information.  They can quickly see that the information is already
+available; they just need to rename the variable and start using it.
