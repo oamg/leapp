@@ -1,10 +1,17 @@
 from __future__ import print_function
 
-from distutils.spawn import find_executable
 import codecs
 import errno
 import os
 import sys
+try:
+    # shutil.which is available in Python 3.3 and above.
+    from shutil import which
+except ImportError:
+    # (pstodulk): find_executable() is from the distutils module which was
+    # removed in Python 3.12. We can get rid of this fallback when we drop
+    # support for Python 2. https://peps.python.org/pep-0632/
+    from distutils.spawn import find_executable as which
 
 from leapp.compat import string_types
 from leapp.libraries.stdlib.eventloop import POLL_HUP, POLL_IN, POLL_OUT, POLL_PRI, EventLoop
@@ -134,14 +141,9 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
             raise TypeError('env parameter has to be a dictionary')
         environ.update(env)
 
-    _path = (env or {}).get('PATH', None)
-    # NOTE(pstodulk): the find_executable function is from the distutils
-    # module which is deprecated and it is going to be removed in Python 3.12.
-    # In future, we should use the shutil.which function, however that one is
-    # not available for Python2. We are going to address the problem in future
-    # (e.g. when we drop support for Python 2).
-    # https://peps.python.org/pep-0632/
-    if not find_executable(command[0], _path):
+    _path = environ.get('PATH', None)
+
+    if not which(command[0], path=_path):
         raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), command[0])
 
     # Create a separate pipe for stdout/stderr
