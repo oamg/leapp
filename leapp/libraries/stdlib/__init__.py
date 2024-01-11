@@ -168,7 +168,7 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
     :return: {'stdout' : stdout, 'stderr': stderr, 'signal': signal, 'exit_code': exit_code, 'pid': pid}
     :rtype: dict
     :raises: OSError if an executable is missing or has wrong permissions
-    :raises: CalledProcessError if the cmd has non-zero exit code and `checked` is False
+    :raises: CalledProcessError if the cmd has non-zero exit code and `checked` is True
     :raises: TypeError if any input parameters have an invalid type
     :raises: valueError if any of input parameters have an invalid value
     """
