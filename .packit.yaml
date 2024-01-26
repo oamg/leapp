@@ -746,3 +746,75 @@ jobs:
     LEAPPDATA_BRANCH: "upstream"
     LEAPP_NO_RHSM: "1"
     USE_CUSTOM_REPOS: rhui
+
+- &sanity-88to92-aws
+  <<: *sanity-86to90-aws
+  targets:
+    epel-8-x86_64:
+      distros: [RHEL-8.8-rhui]
+  identifier: sanity-8.8to9.2-aws
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:upgrade_happy_path & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
+          packages:
+            - leapp-repository
+            - python3-leapp
+            - leapp-upgrade-el8toel9-deps
+          order: 40
+        tmt:
+          context:
+            distro: "rhel-8.8"
+        settings:
+          provisioning:
+            post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
+  env:
+    SOURCE_RELEASE: "8.8"
+    TARGET_RELEASE: "9.2"
+    RHSM_REPOS: "rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms"
+    RHUI: "aws"
+    LEAPPDATA_BRANCH: "upstream"
+    LEAPP_NO_RHSM: "1"
+    USE_CUSTOM_REPOS: rhui
+
+- &sanity-89to93-aws
+  <<: *sanity-86to90-aws
+  targets:
+    epel-8-x86_64:
+      distros: [RHEL-8.9-rhui]
+  identifier: sanity-8.9to9.3-aws
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:upgrade_happy_path & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
+          packages:
+            - leapp-repository
+            - python3-leapp
+            - leapp-upgrade-el8toel9-deps
+          order: 40
+        tmt:
+          context:
+            distro: "rhel-8.9"
+        settings:
+          provisioning:
+            post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
+  env:
+    SOURCE_RELEASE: "8.9"
+    TARGET_RELEASE: "9.3"
+    RHSM_REPOS: "rhel-8-for-x86_64-appstream-rpms,rhel-8-for-x86_64-baseos-rpms"
+    RHUI: "aws"
+    LEAPPDATA_BRANCH: "upstream"
+    LEAPP_NO_RHSM: "1"
+    USE_CUSTOM_REPOS: rhui
