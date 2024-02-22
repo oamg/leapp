@@ -40,6 +40,9 @@ _CONFIG_DEFAULTS = {
         'dir': '/var/log/leapp/',
         'files': ','.join(_FILES_TO_ARCHIVE),
     },
+    'lock': {
+        'path': '/var/run/leapp.pid'
+    },
     'logs': {
         'dir': '/var/log/leapp/',
         'files': ','.join(_LOGS),

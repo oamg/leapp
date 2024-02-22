@@ -148,3 +148,7 @@ class RequestStopAfterPhase(LeappError):
 
     def __init__(self):
         super(RequestStopAfterPhase, self).__init__('Stop after phase has been requested.')
+
+
+class ProcessLockError(LeappError):
+    """ This exception is used to represent an error within the process locking mechanism. """
