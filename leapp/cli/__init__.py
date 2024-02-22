@@ -2,12 +2,12 @@ import os
 import pkgutil
 import socket
 import sys
-import textwrap
 
 from leapp import VERSION
 from leapp.cli import commands
-from leapp.exceptions import UnknownCommandError
+from leapp.exceptions import UnknownCommandError, ProcessLockError
 from leapp.utils.clicmd import command
+from leapp.utils.lock import leapp_lock
 
 
 @command('')
@@ -42,7 +42,8 @@ def main():
     os.environ['LEAPP_HOSTNAME'] = socket.getfqdn()
     _load_commands(cli.command)
     try:
-        cli.command.execute('leapp version {}'.format(VERSION))
+        with leapp_lock():
+            cli.command.execute('leapp version {}'.format(VERSION))
     except UnknownCommandError as e:
         bad_cmd = (
             "Command \"{CMD}\" is unknown.\nMost likely there is a typo in the command or particular "
@@ -53,4 +54,7 @@ def main():
             # A quick ack not to confuse users with install a leapp-command(--some-wrong-argument) suggestion
             bad_cmd = "No such argument {CMD}"
         print(bad_cmd.format(CMD=e.requested))
+        sys.exit(1)
+    except ProcessLockError as e:
+        sys.stderr.write('{}\nAborting.\n'.format(e.message))
         sys.exit(1)
