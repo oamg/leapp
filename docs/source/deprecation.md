@@ -290,9 +290,8 @@ before the definition of the `produce_answer` function. But if we do the same
 for the test function, we will get an error (see that we have now just one
 deprecation warning now):
 
-```python
+```
 | 21:59:57 | conftest | INFO | conftest.py | Actor 'foo_producer' context teardown complete
-
 repos/system_upgrade/el7toel8/actors/fooproducer/tests/test_unit_fooproducer.py::test_process FAILED
 
 ====================================================== FAILURES ======================================================
