@@ -49,7 +49,7 @@ def test_actor_execution(current_actor_context):
     current_actor_context.run()
 ```
 
-This example makes use of the [current_actor_context](pydoc/leapp.html#leapp.snactor.fixture.current_actor_context)
+This example makes use of the [current_actor_context](#leapp.snactor.fixture.current_actor_context)
 fixture and will execute the `MyActor` actor.
 
 Now if you would want to check that it produced an imaginary model called
@@ -92,7 +92,7 @@ The unit testing support was first implemented with the help of
 [pytest fixtures](https://docs.pytest.org/en/latest/fixture.html).
 Nowadays, we encourage you to use only the `current_actor_context` fixture
 mentioned above. However the other fixtures have been preserved and are
-still possible to use - see their [documentation](pydoc/leapp.html#module-leapp.snactor.fixture).
+still possible to use - see their [documentation](#leapp.snactor.fixture).
 
 #### Testing actors that modify the OS
 

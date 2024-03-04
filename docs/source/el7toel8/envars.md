@@ -2,7 +2,7 @@
 
 Actors in the el7toel8 repository use environment variables specified below.
 All these envars use the suggested prefixes specified in
-[the best practices document](../best-practices#use-the-leapp-and-leapp-devel-prefixes-for-new-envars)
+[the best practices document](../best-practices.md#use-the-leapp-and-leapp_devel-prefixes-for-new-envars)
 for the leapp project to distinguish their purpose: _production_ or _devel_ use.
 
 If the argument for envars below is not specified, it is expected to set `0`
