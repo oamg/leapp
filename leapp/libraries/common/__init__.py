@@ -4,7 +4,7 @@ are placed in the repository's libraries folder.
 
 Example:
       If any of the repositories has a libraries folder with a module.py python module, import it
-      from the actor like this::
+      from the actor like this:
 
       from leapp.libraries.common import module
 

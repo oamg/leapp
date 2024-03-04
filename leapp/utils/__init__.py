@@ -13,8 +13,8 @@ def get_api_models(actor, what):
 
     :param what: A string which either is 'consumes' or 'produces'
     :type what: str
-    :param actor: Actor type/instance or ActorDefinition instance to retrieve the information from
-    :type actor: Actor or ActorDefinition
+    :param actor: type/instance or ActorDefinition instance to retrieve the information from
+    :type actor: leapp.actors.Actor or ActorDefinition
     :return: Tuple of all produced or consumed models as specified by actor and APIs used by the actor.
     """
 

@@ -11,7 +11,7 @@ impact on your code, we introduce the deprecation process described below.
 The following lists cover deprecated functionality in the leapp utility, snactor,
 the leapp standard library, etc. But don't cover deprecated functionalities
 from particular leapp repositories (e.g. the [elt7toel8](https://github.com/oamg/leapp-repository/tree/main/repos/system_upgrade/el7toel8) leapp repository). For
-such information, see [Deprecated functionality in the el7toel8 repository](el7toel8/deprecation.html#deprecated-functionality-in-the-el7toel8-repository).
+such information, see [Deprecated functionality in the el7toel8 repository](el7toel8/deprecation.md#deprecated-functionality-in-the-el7toel8-repository).
 
 ## current upstream development <span style="font-size:0.5em; font-weight:normal">(till the next release + 6months)</span>
 
@@ -106,7 +106,7 @@ the deprecation of derived classes.*
 In case of a class deprecation, all derived classes are considered to be deprecated
 as well. However, the current reporting could be a little bit confusing. To
 improve that, the `stack_level_offset` option can be specified.
-See [examples of the use of the @deprecated decorator for classes](deprecation.html#classes).
+See [examples of the use of the @deprecated decorator for classes](deprecation.md#classes).
 
 When you mark any entity as deprecated and this entity is then used
 in the code, users will be notified about that via a terminal and report
@@ -290,9 +290,8 @@ before the definition of the `produce_answer` function. But if we do the same
 for the test function, we will get an error (see that we have now just one
 deprecation warning now):
 
-```python
+```
 | 21:59:57 | conftest | INFO | conftest.py | Actor 'foo_producer' context teardown complete
-
 repos/system_upgrade/el7toel8/actors/fooproducer/tests/test_unit_fooproducer.py::test_process FAILED
 
 ====================================================== FAILURES ======================================================

@@ -30,10 +30,10 @@ See the [tutorial on basic usage of snactor](first-actor).
 Part of your actor's functionality might end up being rather generic or abstract. In that case, consider converting it
 to a shared library function. You can introduce it in one of these two places:
 
-- The [Leapp Standard Library](pydoc/leapp.libraries.stdlib)
+- The [Leapp Standard Library](leapp.libraries.stdlib)
 
   The most generic functionality which actors of any workflow can use, e.g. function for exectuting a shell command,
-  should go to the [Leapp Standard Library](pydoc/leapp.libraries.stdlib).
+  should go to the [Leapp Standard Library](leapp.libraries.stdlib).
   For that, please submit proposals through issues or pull requests under the
   [leapp GitHub repository](https://github.com/oamg/leapp/).
 
@@ -146,16 +146,16 @@ For more details about dependencies and how to modify them, see the [How to deal
 
 If you encounter unexpected input or any other error during execution of an actor and want to stop it, use these exceptions:
 
-- [StopActorExecution](pydoc/leapp.html#leapp.exceptions.StopActorExecution) - raising this exception is a convenient to stop actor's execution with no side effect - it has the same effect as returning `None` from the main `process()` method in the `actor.py`
-- [StopActorExecutionError](pydoc/leapp.html#leapp.exceptions.StopActorExecutionError) - raising this exception will stop actor's execution and notify the framework that an error has occurred and can influence the result of the workflow execution.
+- [StopActorExecution](leapp.exceptions.StopActorExecution) - raising this exception is a convenient to stop actor's execution with no side effect - it has the same effect as returning `None` from the main `process()` method in the `actor.py`
+- [StopActorExecutionError](leapp.exceptions.StopActorExecutionError) - raising this exception will stop actor's execution and notify the framework that an error has occurred and can influence the result of the workflow execution.
 
-In case of [StopActorExecutionError](pydoc/leapp.html#leapp.exceptions.StopActorExecutionError) the execution of the workflow will stop or not according to the [policy](pydoc/leapp.workflows.html?highlight=FailPhase#module-leapp.workflows.policies) defined in the workflow, there are three possibilities:
+In case of [StopActorExecutionError](leapp.exceptions.StopActorExecutionError) the execution of the workflow will stop or not according to the [policy](leapp.workflows.policies) defined in the workflow, there are three possibilities:
 
-- [FailImmediately](pydoc/leapp.workflows.html?highlight=FailPhase#leapp.workflows.policies.Policies.Errors.FailImmediately) - end the workflow execution right away
-- [FailPhase](pydoc/leapp.workflows.html?highlight=FailPhase#leapp.workflows.policies.Policies.Errors.FailPhase) - end the workflow execution after finishing the current phase
-- [ReportOnly](pydoc/leapp.workflows.html?highlight=FailPhase#leapp.workflows.policies.Policies.Errors.ReportOnly) - do not end the workflow execution at all and continue with logging the issue only
+- [FailImmediately](leapp.workflows.policies.Policies.Errors.FailImmediately) - end the workflow execution right away
+- [FailPhase](leapp.workflows.policies.Policies.Errors.FailPhase) - end the workflow execution after finishing the current phase
+- [ReportOnly](leapp.workflows.policies.Policies.Errors.ReportOnly) - do not end the workflow execution at all and continue with logging the issue only
 
-You can also use the [StopActorExecution](pydoc/leapp.html#leapp.exceptions.StopActorExecution) and [StopActorExecutionError](pydoc/leapp.html#leapp.exceptions.StopActorExecutionError) exceptions inside a private or shared library.
+You can also use the [StopActorExecution](leapp.exceptions.StopActorExecution) and [StopActorExecutionError](leapp.exceptions.StopActorExecutionError) exceptions inside a private or shared library.
 
 ## Use the LEAPP and LEAPP\_DEVEL prefixes for new envars
 

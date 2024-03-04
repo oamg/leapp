@@ -8,7 +8,7 @@ after which the related functionality can be removed at any time.
 
 *Note* The lists cover just the functionality provided inside the el7toel8
 repository only. For the functionality deprecated in the leapp
-framework, see [List of deprecated functionality in leapp](../deprecation.html#list-of-deprecated-functionality-in-leapp)
+framework, see [List of deprecated functionality in leapp](../deprecation.md#list-of-the-deprecated-functionality-in-leapp)
 
 ## current upstream development <span style="font-size:0.5em; font-weight:normal">(till the next release + 6months)</span>
 

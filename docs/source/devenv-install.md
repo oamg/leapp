@@ -49,7 +49,7 @@ $ pip install git+https://github.com/oamg/leapp
 ```
 
 Once the framework is installed, you can use the snactor tool.
-```shell
+```
 $ snactor --help
 usage: snactor [-h] [--version] [--logger-config LOGGER_CONFIG]
                [--config CONFIG] [--verbose] [--debug]
