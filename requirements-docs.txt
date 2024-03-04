@@ -4,6 +4,6 @@ sphinx_rtd_theme
 sphinxcontrib-jquery
 docutils
 CommonMark
-recommonmark>0.4.1
-sphinx==2.4.5
+myst-parser
+sphinx==3.5.4
 sphinx-autobuild
