@@ -1,7 +1,9 @@
 -r requirements-tests.txt
 
-CommonMark==0.7.5
-sphinx>=1.5,<1.6
 sphinx_rtd_theme
+sphinxcontrib-jquery
+docutils
+CommonMark
+recommonmark>0.4.1
+sphinx==2.4.5
 sphinx-autobuild
-git+https://github.com/leapp-to/recommonmark.git@master
