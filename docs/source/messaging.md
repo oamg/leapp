@@ -1,7 +1,7 @@
 ## Using messaging to send data between actors
 
 The Leapp framework uses messages to send data to other actors that are executed afterward.
-Messages are defined through the models declared [earlier](first-actor.html#creating-a-model). Actors can consume these messages and produce data based on their input.
+Messages are defined through the models declared [earlier](first-actor.md#creating-a-model). Actors can consume these messages and produce data based on their input.
 
 As an example, the actors consume Hostname messages, resolve IPs for those
 hostnames, and create the ResolvedHostname model to send a new type of message.
