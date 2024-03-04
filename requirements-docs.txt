@@ -5,5 +5,5 @@ sphinxcontrib-jquery
 docutils
 CommonMark
 myst-parser
-sphinx==3.5.4
+sphinx==4.5.0
 sphinx-autobuild

@@ -183,6 +183,6 @@ def filter_unwanted_leapp_types(app, what, name, obj, skip, options):
 
 def setup(app):
     app.connect('autodoc-skip-member', filter_unwanted_leapp_types)
-    app.add_stylesheet('css/asciinema-player.css')
-    app.add_stylesheet('css/custom.css')
-    app.add_javascript('js/asciinema-player.js')
+    app.add_css_file('css/asciinema-player.css')
+    app.add_css_file('css/custom.css')
+    app.add_js_file('js/asciinema-player.js')
