@@ -51,6 +51,9 @@ templates_path = ['_templates']
 source_suffix = ['.md', '.rst']
 # source_suffix = '.rst'
 
+# how many level of headings in markdown should linkable anchors be generated for
+myst_heading_anchors = 3
+
 # The master toctree document.
 master_doc = 'index'
 
