@@ -114,4 +114,5 @@ class Dialog(object):
             self._store = store
             renderer.render(self)
             self._store = None
+
         return store.get(self.scope, {})

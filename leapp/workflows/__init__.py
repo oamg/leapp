@@ -11,7 +11,7 @@ from leapp.messaging.inprocess import InProcessMessaging
 from leapp.messaging.commands import SkipPhasesUntilCommand
 from leapp.tags import ExperimentalTag
 from leapp.utils import reboot_system
-from leapp.utils.audit import checkpoint, get_errors
+from leapp.utils.audit import checkpoint, get_errors, create_audit_entry, store_workflow_metadata, store_actor_metadata
 from leapp.utils.meta import with_metaclass, get_flattened_subclasses
 from leapp.utils.output import display_status_current_phase, display_status_current_actor
 from leapp.workflows.phases import Phase
@@ -165,7 +165,7 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self.description = self.description or type(self).__doc__
 
         for phase in self.phases:
-            phase.filter.tags += (self.tag,)
+            phase.filter.tags += (self.tag,) if self.tag not in phase.filter.tags else ()
             self._phase_actors.append((
                 phase,
                 # filters all actors with the give tags
@@ -279,6 +279,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
         self.log.info('Starting workflow execution: {name} - ID: {id}'.format(
             name=self.name, id=os.environ['LEAPP_EXECUTION_ID']))
 
+        store_workflow_metadata(self)
+
         skip_phases_until = (skip_phases_until or '').lower()
         needle_phase = until_phase or ''
         needle_stage = None
@@ -294,6 +296,12 @@ class Workflow(with_metaclass(WorkflowMeta)):
         for phase in skip_phases_until, needle_phase:
             if phase and not self.is_valid_phase(phase):
                 raise CommandError('Phase {phase} does not exist in the workflow'.format(phase=phase))
+
+        # Save metadata of all discovered actors
+        for phase in self._phase_actors:
+            for stage in phase[1:]:
+                for actor in stage.actors:
+                    store_actor_metadata(actor, phase[0].name)
 
         self._stop_after_phase_requested = False
         for phase in self._phase_actors:
@@ -332,10 +340,12 @@ class Workflow(with_metaclass(WorkflowMeta)):
                     display_status_current_actor(actor, designation=designation)
                     current_logger.info("Executing actor {actor} {designation}".format(designation=designation,
                                                                                        actor=actor.name))
+
                     messaging = InProcessMessaging(config_model=config_model, answer_store=self._answer_store)
                     messaging.load(actor.consumes)
                     instance = actor(logger=current_logger, messaging=messaging,
                                      config_model=config_model, skip_dialogs=skip_dialogs)
+
                     try:
                         instance.run()
                     except BaseException as exc:
@@ -346,6 +356,14 @@ class Workflow(with_metaclass(WorkflowMeta)):
                         current_logger.error('Actor {actor} has crashed: {trace}'.format(actor=actor.name,
                                                                                          trace=exc.exception_info))
                         raise
+                    finally:
+                        # Set and unset the enviromental variable so that audit
+                        # associates the entry with the correct data source
+                        os.environ['LEAPP_CURRENT_ACTOR'] = actor.name
+                        create_audit_entry(
+                            event='actor-exit-status',
+                            data={'exit_status': 1 if self._unhandled_exception else 0})
+                        os.environ.pop('LEAPP_CURRENT_ACTOR')
 
                     self._stop_after_phase_requested = messaging.stop_after_phase or self._stop_after_phase_requested
 

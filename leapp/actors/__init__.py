@@ -10,6 +10,7 @@ from leapp.models import DialogModel, Model
 from leapp.models.error_severity import ErrorSeverity
 from leapp.tags import Tag
 from leapp.utils import get_api_models, path
+from leapp.utils.audit import store_dialog
 from leapp.utils.i18n import install_translation_for_actor
 from leapp.utils.meta import get_flattened_subclasses
 from leapp.workflows.api import WorkflowAPI
@@ -122,12 +123,17 @@ class Actor(object):
         :return: dictionary with the requested answers, None if not a defined dialog
         """
         self._messaging.register_dialog(dialog, self)
+        answer = None
         if dialog in type(self).dialogs:
             if self.skip_dialogs:
                 # non-interactive mode of operation
-                return self._messaging.get_answers(dialog)
-            return self._messaging.request_answers(dialog)
-        return None
+                answer = self._messaging.get_answers(dialog)
+            else:
+                answer = self._messaging.request_answers(dialog)
+
+        store_dialog(dialog, answer)
+
+        return answer
 
     def show_message(self, message):
         """
@@ -285,6 +291,7 @@ class Actor(object):
     def run(self, *args):
         """ Runs the actor calling the method :py:func:`process`. """
         os.environ['LEAPP_CURRENT_ACTOR'] = self.name
+
         try:
             self.process(*args)
         except StopActorExecution:
