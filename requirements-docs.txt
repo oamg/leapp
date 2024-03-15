@@ -1,9 +1,9 @@
 -r requirements-tests.txt
 
+sphinx==7.2.6
 sphinx_rtd_theme
 sphinxcontrib-jquery
 docutils
 CommonMark
 myst-parser
-sphinx==6.2.1
 sphinx-autobuild
