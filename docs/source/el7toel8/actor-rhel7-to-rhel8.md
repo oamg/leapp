@@ -420,7 +420,7 @@ The process of inhibiting the upgrade is done by the VerifyCheckResult actor, ex
 
 ### How to stop execution of my actor in case of an unexpected error?
 
-It’s good practice to code defensively so the code is robust. The actor should detect unexpected input or result of some operation and exit gracefully instead of tracebacking. In case you detect an unexpected behavior, let the framework know about it by raising [StopActorExecutionError](pydoc/leapp.html#leapp.exceptions.StopActorExecutionError). Framework will act based on the [setting of the upgrade workflow](pydoc/leapp.workflows.html?highlight=FailPhase#module-leapp.workflows.policies) in one of the following three ways:
+It’s good practice to code defensively so the code is robust. The actor should detect unexpected input or result of some operation and exit gracefully instead of tracebacking. In case you detect an unexpected behavior, let the framework know about it by raising [StopActorExecutionError](leapp.exceptions.StopActorExecutionError). Framework will act based on the [setting of the upgrade workflow](leapp.workflows.policies) in one of the following three ways:
 
 - end the upgrade process right away, or
 - end the upgrade process after finishing the current phase, or
