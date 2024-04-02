@@ -4,6 +4,8 @@ import os
 import sqlite3
 import uuid
 
+import pytest
+
 from leapp.utils.audit import get_connection, Execution, Host, MessageData, \
     DataSource, Message, Audit, get_messages, checkpoint, get_checkpoints, create_audit_entry, get_audit_entry
 from leapp.config import get_config
@@ -95,8 +97,12 @@ def setup_module():
     get_config().set('database', 'path', '/tmp/leapp-test.db')
 
 
+@pytest.fixture(autouse=True)
 def setup():
     path = get_config().get('database', 'path')
+    if os.path.isfile(path):
+        os.unlink(path)
+    yield
     if os.path.isfile(path):
         os.unlink(path)
 

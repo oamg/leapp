@@ -29,8 +29,12 @@ def setup_module():
     get_config().set('database', 'path', '/tmp/leapp-test.db')
 
 
+@pytest.fixture(autouse=True)
 def setup():
     path = get_config().get('database', 'path')
+    if os.path.isfile(path):
+        os.unlink(path)
+    yield
     if os.path.isfile(path):
         os.unlink(path)
 

@@ -14,6 +14,7 @@ jobs:
     targets:
     - epel-7-x86_64
     - epel-8-x86_64
+    - epel-9-x86_64
     - fedora-all-aarch64
     - fedora-all-x86_64
   actions:
@@ -32,6 +33,7 @@ jobs:
     targets:
     - epel-7-x86_64
     - epel-8-x86_64
+    - epel-9-x86_64
     - fedora-all-aarch64
     - fedora-all-x86_64
   actions:
