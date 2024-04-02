@@ -157,6 +157,9 @@ build_container:
 	el8) \
 		_CONT_FILE="Containerfile.ubi8"; \
 		;; \
+	el9) \
+		_CONT_FILE="Containerfile.ubi9"; \
+		;; \
 	f3[56]|rawhide) \
 		[ $$BUILD_CONTAINER = rawhide ] && VERSION=latest || VERSION=$${BUILD_CONTAINER: -2}; \
 		_CONT_FILE=".Containerfile.$${BUILD_CONTAINER}"; \
@@ -168,7 +171,7 @@ build_container:
 		exit 1; \
 		;; \
 	*) \
-		echo "Available containers are el7, el8, f35, f36, rawhide"; \
+		echo "Available containers are el7, el8, el9, f35, f36, rawhide"; \
 		exit 1; \
 		;; \
 	esac && \
@@ -204,6 +207,7 @@ test:   lint
 	@ $(ENTER_VENV) \
 	pytest -vv --cov-report term-missing --cov=leapp tests/scripts
 
+# TODO(pstodulk): create ticket to add rhel10 for testing.... py: 3.12
 test_container:
 	@case $(_TEST_CONTAINER) in \
 		rhel7) \
@@ -234,7 +238,7 @@ test_container_all:
 	done
 
 clean_containers:
-	@for i in "leapp-build-"{el7,el8,f35,f36,rawhide} "leapp-tests-rhel"{7,8,9}; do \
+	@for i in "leapp-build-"{el7,el8,el9,f35,f36,rawhide} "leapp-tests-rhel"{7,8,9}; do \
 		[ -z $$($(_CONTAINER_TOOL) images -q "$$i") ] || \
 		$(_CONTAINER_TOOL) rmi "$$i" > /dev/null 2>&1 || :; \
 	done
