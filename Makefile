@@ -25,7 +25,7 @@ _TEST_CONTAINER=$${TEST_CONTAINER:-rhel8}
 # someone will call copr_build without additional parameters
 MASTER_BRANCH=master
 
-# In case the PR or MR is defined or in case build is not comming from the
+# In case the PR or MR is defined or in case build is not coming from the
 # MATER_BRANCH branch, N_REL=0; (so build is not update of the approved
 # upstream solution). For upstream builds N_REL=100;
 N_REL=`_NR=$${PR:+0}; if test "$${_NR:-100}" == "100"; then _NR=$${MR:+0}; fi; git rev-parse --abbrev-ref HEAD | grep -q "^$(MASTER_BRANCH)$$" || _NR=0;  echo $${_NR:-100}`
@@ -76,13 +76,13 @@ help:
 	@echo "  test_container         runs linter and unit tests in a container"
 	@echo "                         - by default rhel8 container is used"
 	@echo "                         - can be changed by setting TEST_CONTAINER env variable"
-	@echo "                         - available containers are: rhel7, rhel8, rhel9"
+	@echo "                         - available containers are:" rhel{7..10}
 	@echo "  test_container_all     runs linter and tests in all available containers"
 	@echo "  lint                   runs just the linter"
 	@echo "  build                  create the RPM"
 	@echo "  build_container        create the RPM in container"
 	@echo "                         - set BUILD_CONTAINER to select the container"
-	@echo "                         - available containers are: el7, el8, f35, f36, rawhide"
+	@echo "                         - available containers are:" el{7..9} f{35..40} rawhide
 	@echo "                         - this can't be used to build in parallel,"
 	@echo "                           as build containers operate on the same files"
 	@echo "  clean_containers      clean container images used for building"
@@ -154,10 +154,10 @@ build_container:
 	el7) \
 		_CONT_FILE="Containerfile.centos7"; \
 		;; \
-	el8) \
-		_CONT_FILE="Containerfile.ubi8"; \
+	el[8-9]) \
+		_CONT_FILE="Containerfile.ubi"$${BUILD_CONTAINER: -1}; \
 		;; \
-	f3[56]|rawhide) \
+	f3[5-9]|f40|rawhide) \
 		[ $$BUILD_CONTAINER = rawhide ] && VERSION=latest || VERSION=$${BUILD_CONTAINER: -2}; \
 		_CONT_FILE=".Containerfile.$${BUILD_CONTAINER}"; \
 		cp res/container-builds/Containerfile.fedora_generic res/container-builds/$$_CONT_FILE && \
@@ -168,7 +168,7 @@ build_container:
 		exit 1; \
 		;; \
 	*) \
-		echo "Available containers are el7, el8, f35, f36, rawhide"; \
+		echo "Available containers are: el{7..9} f{35..40} rawhide"; \
 		exit 1; \
 		;; \
 	esac && \
@@ -182,6 +182,7 @@ print_release:
 	@echo $(RELEASE)
 
 install-deps:
+	@ $(ENTER_VENV) \
 	pip install -r requirements.txt
 
 install:
@@ -200,10 +201,11 @@ else
 	pip install -r requirements-tests.txt
 endif
 
-test:   lint
+test: lint
 	@ $(ENTER_VENV) \
 	pytest -vv --cov-report term-missing --cov=leapp tests/scripts
 
+# TODO(pstodulk): create ticket to add rhel10 for testing.... py: 3.12
 test_container:
 	@case $(_TEST_CONTAINER) in \
 		rhel7) \
@@ -218,8 +220,13 @@ test_container:
 			export _VENV=python3.9; \
 			export _CONT_FILE="res/container-tests/Containerfile.ubi9"; \
 			;; \
+		# TODO the container is currently built on top of RHEL 9 UBI with python3.12 virtualenv \
+		rhel10) \
+			export _VENV=python3.12; \
+			export _CONT_FILE="res/container-tests/Containerfile.ubi10"; \
+			;; \
 		*) \
-			echo "Available test containers are rhel7, rhel8, rhel9"; \
+			echo "Available test containers are: rhel{7..10}"; \
 			exit 1; \
 			;; \
 	esac; \
@@ -229,12 +236,12 @@ test_container:
 	$(_CONTAINER_TOOL) run --rm -v $${PWD}:/payload:Z -e PYTHON_VENV=$$_VENV $$TEST_IMAGE
 
 test_container_all:
-	@for container in "rhel"{7,8,9}; do \
+	@for container in "rhel"{7..10}; do \
 		TEST_CONTAINER=$$container $(MAKE) test_container; \
 	done
 
 clean_containers:
-	@for i in "leapp-build-"{el7,el8,f35,f36,rawhide} "leapp-tests-rhel"{7,8,9}; do \
+	@for i in "leapp-build-"{el7,el8,el9,f35,f36,rawhide} "leapp-tests-rhel"{7..10}; do \
 		[ -z $$($(_CONTAINER_TOOL) images -q "$$i") ] || \
 		$(_CONTAINER_TOOL) rmi "$$i" > /dev/null 2>&1 || :; \
 	done

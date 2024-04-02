@@ -3,7 +3,7 @@ FROM registry.access.redhat.com/ubi9/ubi:latest
 VOLUME /payload
 
 RUN dnf update -y && \
-    dnf install python3 python39 make python3-pip -y && \
+    dnf install python3 python312 python3-pip make -y && \
     python3 -m pip install --upgrade pip==20.3.4
 
 RUN pip install virtualenv
@@ -14,6 +14,8 @@ ENTRYPOINT virtualenv testenv -p "/usr/bin/$PYTHON_VENV" && \
     pip install -U setuptools && \
     pip install -U funcsigs && \
     pip install -U -r requirements-tests.txt && \
+    pip install -U pytest && \
+    pip install -U six && \
     pip install -U . && \
     export LINTABLES=$(find . -name '*.py' | grep -E -e '^\./leapp\/' -e '^\./tests/scripts/' | sort -u ) && \
     echo '==================================================' && \
