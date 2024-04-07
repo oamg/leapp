@@ -2,6 +2,7 @@ import os
 import pkgutil
 import socket
 
+from leapp.compat import load_module
 from leapp.utils.i18n import _  # noqa; pylint: disable=redefined-builtin
 from leapp.snactor import commands
 from leapp.snactor.commands import workflow
@@ -30,7 +31,7 @@ def _load_commands_from(path):
     for importer, name, is_pkg in pkgutil.iter_modules([pkg_path]):
         if is_pkg:
             continue
-        mod = importer.find_module(name).load_module(name)
+        mod = load_module(importer, name)
         if hasattr(mod.cli, 'command'):
             if not mod.cli.command.parent:
                 cli.command.add_sub(mod.cli.command)
