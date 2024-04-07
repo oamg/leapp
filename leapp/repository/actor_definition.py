@@ -1,4 +1,5 @@
 import contextlib
+import importlib.util
 import linecache
 import logging
 import os
@@ -193,7 +194,10 @@ class ActorDefinition(object):
                 path = os.path.abspath(os.path.join(self._repo_dir, self.directory))
                 for importer, name, is_pkg in pkgutil.iter_modules((path,)):
                     if not is_pkg:
-                        self._module = importer.find_module(name).load_module(name)
+                        spec = importer.find_spec(name)
+                        module = importlib.util.module_from_spec(spec)
+                        sys.modules[name] = module
+                        spec.loader.exec_module(module)
                         break
 
     def discover(self):

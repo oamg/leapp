@@ -2,6 +2,7 @@ from logging import getLogger
 import os
 import pkgutil
 import sys
+import importlib.util
 
 from leapp.exceptions import RepoItemPathDoesNotExistError, UnsupportedDefinitionKindError
 from leapp.models import get_models, resolve_model_references
@@ -166,7 +167,10 @@ class Repository(object):
         directories = [os.path.join(self._repo_dir, os.path.dirname(module)) for module in modules]
         prefix = prefix + '.' if not prefix.endswith('.') else prefix
         for importer, name, ispkg in pkgutil.iter_modules(directories, prefix=prefix):
-            importer.find_module(name).load_module(name)
+            spec = importer.find_spec(name)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[name] = module
+            spec.loader.exec_module(module)
 
     def serialize(self):
         """
