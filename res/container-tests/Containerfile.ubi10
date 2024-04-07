@@ -14,6 +14,9 @@ ENTRYPOINT virtualenv testenv -p "/usr/bin/$PYTHON_VENV" && \
     pip install -U setuptools && \
     pip install -U funcsigs && \
     pip install -U -r requirements-tests.txt && \
+    # NOTE(mmatuska): The pytest ver defined in requirements-tests is too old \
+    # for Python 3.12 (missing imp module), there do an update here until we \
+    # bump that. Similarly for six. \
     pip install -U pytest && \
     pip install -U six && \
     pip install -U . && \
