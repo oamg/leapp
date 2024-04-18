@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import hashlib
 
 import mock
 import py
@@ -8,7 +9,8 @@ import pytest
 
 from leapp.repository.scan import scan_repo
 from leapp.repository.actor_definition import ActorDefinition
-from leapp.utils.audit import get_connection, dict_factory, Metadata, store_actor_metadata, store_workflow_metadata
+from leapp.utils.audit import (get_connection, dict_factory, Metadata, Entity, store_actor_metadata,
+                               store_workflow_metadata)
 from leapp.config import get_config
 
 _HOSTNAME = 'test-host.example.com'
@@ -94,21 +96,38 @@ def setup():
 
 
 def test_save_empty_metadata():
-    e = Metadata(
+    hash_id = hashlib.sha256('test-empty-metadata'.encode('utf-8')).hexdigest()
+    md = Metadata(hash_id=hash_id, metadata='')
+    md.store()
+
+    entry = None
+    with get_connection(None) as conn:
+        cursor = conn.execute('SELECT * FROM metadata WHERE hash = ?;', (hash_id,))
+        cursor.row_factory = dict_factory
+        entry = cursor.fetchone()
+
+    assert entry is not None
+    assert entry['metadata'] == ''
+
+
+def test_save_empty_entity():
+    hash_id = hashlib.sha256('test-empty-entity'.encode('utf-8')).hexdigest()
+    md = Metadata(hash_id=hash_id, metadata='')
+    e = Entity(
         name='test-name',
-        metadata=None,
+        metadata=md,
         kind='test-kind',
         context=_CONTEXT_NAME,
         hostname=_HOSTNAME,
     )
     e.store()
 
-    assert e.metadata_id
+    assert e.entity_id
     assert e.host_id
 
     entry = None
     with get_connection(None) as conn:
-        cursor = conn.execute('SELECT * FROM metadata WHERE id = ?;', (e.metadata_id,))
+        cursor = conn.execute('SELECT * FROM entity WHERE id = ?;', (e.entity_id,))
         cursor.row_factory = dict_factory
         entry = cursor.fetchone()
 
@@ -116,7 +135,7 @@ def test_save_empty_metadata():
     assert entry['kind'] == 'test-kind'
     assert entry['name'] == 'test-name'
     assert entry['context'] == _CONTEXT_NAME
-    assert entry['metadata'] == 'null'
+    assert entry['metadata_hash'] == hash_id
 
 
 def test_store_actor_metadata(monkeypatch, repository_dir):
@@ -142,7 +161,11 @@ def test_store_actor_metadata(monkeypatch, repository_dir):
     # ---
     entry = None
     with get_connection(None) as conn:
-        cursor = conn.execute('SELECT * FROM metadata WHERE name="test-actor";')
+        cursor = conn.execute('SELECT * '
+                              'FROM entity '
+                              'JOIN metadata '
+                              'ON entity.metadata_hash = metadata.hash '
+                              'WHERE name="test-actor";')
         cursor.row_factory = dict_factory
         entry = cursor.fetchone()
 
@@ -180,8 +203,13 @@ def test_workflow_metadata(monkeypatch, repository):
     entry = None
     with get_connection(None) as conn:
         cursor = conn.execute(
-            'SELECT * FROM metadata WHERE kind == "workflow" AND context = ? ORDER BY id DESC LIMIT 1;',
-            (_CONTEXT_NAME,))
+            'SELECT * '
+            'FROM entity '
+            'JOIN metadata '
+            'ON entity.metadata_hash = metadata.hash '
+            'WHERE kind == "workflow" AND context = ? '
+            'ORDER BY id DESC '
+            'LIMIT 1;', (_CONTEXT_NAME,))
         cursor.row_factory = dict_factory
         entry = cursor.fetchone()
 

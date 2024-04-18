@@ -42,13 +42,17 @@ CREATE TABLE IF NOT EXISTS message (
   message_data_hash VARCHAR(64)         NOT NULL REFERENCES message_data (hash)
 );
 
-
 CREATE TABLE IF NOT EXISTS metadata (
+  hash              VARCHAR(64) PRIMARY KEY NOT NULL,
+  metadata          TEXT
+);
+
+CREATE TABLE IF NOT EXISTS entity (
   id                INTEGER PRIMARY KEY NOT NULL,
   context           VARCHAR(36)         NOT NULL REFERENCES execution (context),
   kind              VARCHAR(256)        NOT NULL DEFAULT '',
   name              VARCHAR(1024)       NOT NULL DEFAULT '',
-  metadata          TEXT                         DEFAULT NULL,
+  metadata_hash     VARCHAR(64)         NOT NULL REFERENCES metadata (hash),
   UNIQUE (context, kind, name)
 );
 

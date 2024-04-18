@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import sqlite3
+import hashlib
 
 from leapp.config import get_config
 from leapp.compat import string_types
@@ -221,9 +222,31 @@ class DataSource(Host):
         self._data_source_id = cursor.fetchone()[0]
 
 
-class Metadata(Host):
+class Metadata(Storable):
     """
-    Metadata of an entity (e.g. actor, workflow)
+    Metadata of an Entity
+    """
+
+    def __init__(self, metadata=None, hash_id=None):
+        """
+        :param metadata: Entity metadata
+        :type metadata: str
+        :param hash_id: SHA256 hash in hexadecimal representation of data
+        :type hash_id: str
+        """
+        super(Metadata, self).__init__()
+        self.metadata = metadata
+        self.hash_id = hash_id
+
+    def do_store(self, connection):
+        super(Metadata, self).do_store(connection)
+        connection.execute('INSERT OR IGNORE INTO metadata (hash, metadata) VALUES(?, ?)',
+                           (self.hash_id, self.metadata))
+
+
+class Entity(Host):
+    """
+    Leapp framework entity (e.g. actor, workflow)
     """
 
     def __init__(self, context=None, hostname=None, kind=None, metadata=None, name=None):
@@ -234,34 +257,35 @@ class Metadata(Host):
         :type hostname: str
         :param kind: Kind of the entity for which metadata is stored
         :type kind: str
-        :param metadata: Actual metadata
-        :type metadata: dict
+        :param metadata: Entity metadata
+        :type metadata: :py:class:`leapp.utils.audit.Metadata`
         :param name: Name of the entity
         :type name: str
         """
-        super(Metadata, self).__init__(context=context, hostname=hostname)
+        super(Entity, self).__init__(context=context, hostname=hostname)
         self.kind = kind
         self.name = name
         self.metadata = metadata
-        self._metadata_id = None
+        self._entity_id = None
 
     @property
-    def metadata_id(self):
+    def entity_id(self):
         """
         Returns the id of the entry, which is only set when already stored.
         :return: Integer id or None
         """
-        return self._metadata_id
+        return self._entity_id
 
     def do_store(self, connection):
-        super(Metadata, self).do_store(connection)
+        super(Entity, self).do_store(connection)
+        self.metadata.do_store(connection)
         connection.execute(
-            'INSERT OR IGNORE INTO metadata (context, kind, name, metadata) VALUES(?, ?, ?, ?)',
-            (self.context, self.kind, self.name, json.dumps(self.metadata)))
+            'INSERT OR IGNORE INTO entity (context, kind, name, metadata_hash) VALUES(?, ?, ?, ?)',
+            (self.context, self.kind, self.name, self.metadata.hash_id))
         cursor = connection.execute(
-            'SELECT id FROM metadata WHERE context = ? AND kind = ? AND name = ?',
+            'SELECT id FROM entity WHERE context = ? AND kind = ? AND name = ?',
             (self.context, self.kind, self.name))
-        self._metadata_id = cursor.fetchone()[0]
+        self._entity_id = cursor.fetchone()[0]
 
 
 class Message(DataSource):
@@ -601,10 +625,16 @@ def store_workflow_metadata(workflow):
     :type workflow: :py:class:`leapp.workflows.Workflow`
     """
 
-    metadata = type(workflow).serialize()
-    md = Metadata(kind='workflow', name=workflow.name, context=os.environ['LEAPP_EXECUTION_ID'],
-                  hostname=os.environ['LEAPP_HOSTNAME'], metadata=metadata)
-    md.store()
+    metadata = json.dumps(type(workflow).serialize(), sort_keys=True)
+    metadata_hash_id = hashlib.sha256(metadata.encode('utf-8')).hexdigest()
+
+    md = Metadata(metadata=metadata, hash_id=metadata_hash_id)
+    ent = Entity(kind='workflow',
+                 name=workflow.name,
+                 context=os.environ['LEAPP_EXECUTION_ID'],
+                 hostname=os.environ['LEAPP_HOSTNAME'],
+                 metadata=md)
+    ent.store()
 
 
 def store_actor_metadata(actor_definition, phase):
@@ -616,19 +646,22 @@ def store_actor_metadata(actor_definition, phase):
     :type actor_definition: :py:class:`leapp.repository.actor_definition.ActorDefinition`
     """
 
-    metadata = dict(actor_definition.discover())
-    metadata.update({
-        'consumes': [model.__name__ for model in metadata.get('consumes', ())],
-        'produces': [model.__name__ for model in metadata.get('produces', ())],
-        'tags': [tag.__name__ for tag in metadata.get('tags', ())],
+    _metadata = dict(actor_definition.discover())
+    _metadata.update({
+        'consumes': sorted(model.__name__ for model in _metadata.get('consumes', ())),
+        'produces': sorted(model.__name__ for model in _metadata.get('produces', ())),
+        'tags': sorted(tag.__name__ for tag in _metadata.get('tags', ())),
     })
-    metadata['phase'] = phase
+    _metadata['phase'] = phase
 
-    actor_metadata_fields = (
-        'class_name', 'name', 'description', 'phase', 'tags', 'consumes', 'produces', 'path'
-    )
-    md = Metadata(kind='actor', name=actor_definition.name,
-                  context=os.environ['LEAPP_EXECUTION_ID'],
-                  hostname=os.environ['LEAPP_HOSTNAME'],
-                  metadata={field: metadata[field] for field in actor_metadata_fields})
-    md.store()
+    actor_metadata_fields = ('class_name', 'name', 'description', 'phase', 'tags', 'consumes', 'produces', 'path')
+    metadata = json.dumps({field: _metadata[field] for field in actor_metadata_fields}, sort_keys=True)
+    metadata_hash_id = hashlib.sha256(metadata.encode('utf-8')).hexdigest()
+
+    md = Metadata(metadata=metadata, hash_id=metadata_hash_id)
+    ent = Entity(kind='actor',
+                 name=actor_definition.name,
+                 context=os.environ['LEAPP_EXECUTION_ID'],
+                 hostname=os.environ['LEAPP_HOSTNAME'],
+                 metadata=md)
+    ent.store()
