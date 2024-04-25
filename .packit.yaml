@@ -73,7 +73,7 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-        plan_filter: 'tag:sanity & enabled:true'
+        plan_filter: 'tag:tier0 & enabled:true'
     environments:
       - artifacts:
         - type: "repository"
@@ -309,7 +309,7 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-        plan_filter: 'tag:sanity & tag:8to9 & enabled:true'
+        plan_filter: 'tag:tier0 & tag:8to9 & enabled:true'
     environments:
       - artifacts:
         - type: "repository"
@@ -418,7 +418,7 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-        plan_filter: 'tag:sanity & tag:8to9 & enabled:true'
+        plan_filter: 'tag:tier0 & tag:8to9 & enabled:true'
     environments:
       - artifacts:
         - type: "repository"
