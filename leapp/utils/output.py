@@ -202,10 +202,12 @@ def report_info(context_id, report_paths, log_paths, answerfile=None, fail=False
             _print_reports_summary(reports)
 
             print(
-                '\n{bold}Before continuing consult the full report:{reset}'
+                '\n{bold}Before continuing, review the full report below for details'
+                ' about discovered problems and possible remediation instructions:{reset}'
                 .format(bold=Color.bold, reset=Color.reset)
             )
-            for report_path in report_paths:
+            for report_path in sorted(report_paths, reverse=True):
+                # NOTE: sort hack -> print .txt first
                 sys.stdout.write("    A report has been generated at {path}\n".format(path=report_path))
 
     if answerfile:
