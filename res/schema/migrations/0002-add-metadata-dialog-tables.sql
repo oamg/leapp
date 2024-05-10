@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS entity (
   UNIQUE (context, kind, name)
 );
 
-CREATE TABLE dialog (
+CREATE TABLE IF NOT EXISTS dialog (
   id                INTEGER PRIMARY KEY NOT NULL,
   context           VARCHAR(36)         NOT NULL REFERENCES execution (context),
   scope             VARCHAR(1024)       NOT NULL DEFAULT '',
