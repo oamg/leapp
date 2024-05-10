@@ -43,7 +43,7 @@ jobs:
   reusable_workflow_job:
     # This job only runs for '/rerun' pull request comments by owner, member, or collaborator of the repo/organization.
     name: Schedule regression tests on Testing Farm
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Schedule regression testing for 8to9
         id: run_test_8to9
