@@ -3,6 +3,7 @@ import datetime
 import json
 import os
 import sqlite3
+import hashlib
 
 from leapp.config import get_config
 from leapp.compat import string_types
@@ -221,6 +222,72 @@ class DataSource(Host):
         self._data_source_id = cursor.fetchone()[0]
 
 
+class Metadata(Storable):
+    """
+    Metadata of an Entity
+    """
+
+    def __init__(self, metadata=None, hash_id=None):
+        """
+        :param metadata: Entity metadata
+        :type metadata: str
+        :param hash_id: SHA256 hash in hexadecimal representation of data
+        :type hash_id: str
+        """
+        super(Metadata, self).__init__()
+        self.metadata = metadata
+        self.hash_id = hash_id
+
+    def do_store(self, connection):
+        super(Metadata, self).do_store(connection)
+        connection.execute('INSERT OR IGNORE INTO metadata (hash, metadata) VALUES(?, ?)',
+                           (self.hash_id, self.metadata))
+
+
+class Entity(Host):
+    """
+    Leapp framework entity (e.g. actor, workflow)
+    """
+
+    def __init__(self, context=None, hostname=None, kind=None, metadata=None, name=None):
+        """
+        :param context: The execution context
+        :type context: str
+        :param hostname: Hostname of the system that produced the entry
+        :type hostname: str
+        :param kind: Kind of the entity for which metadata is stored
+        :type kind: str
+        :param metadata: Entity metadata
+        :type metadata: :py:class:`leapp.utils.audit.Metadata`
+        :param name: Name of the entity
+        :type name: str
+        """
+        super(Entity, self).__init__(context=context, hostname=hostname)
+        self.kind = kind
+        self.name = name
+        self.metadata = metadata
+        self._entity_id = None
+
+    @property
+    def entity_id(self):
+        """
+        Returns the id of the entry, which is only set when already stored.
+        :return: Integer id or None
+        """
+        return self._entity_id
+
+    def do_store(self, connection):
+        super(Entity, self).do_store(connection)
+        self.metadata.do_store(connection)
+        connection.execute(
+            'INSERT OR IGNORE INTO entity (context, kind, name, metadata_hash) VALUES(?, ?, ?, ?)',
+            (self.context, self.kind, self.name, self.metadata.hash_id))
+        cursor = connection.execute(
+            'SELECT id FROM entity WHERE context = ? AND kind = ? AND name = ?',
+            (self.context, self.kind, self.name))
+        self._entity_id = cursor.fetchone()[0]
+
+
 class Message(DataSource):
     def __init__(self, stamp=None, msg_type=None, topic=None, data=None, actor=None, phase=None,
                  hostname=None, context=None):
@@ -267,6 +334,47 @@ class Message(DataSource):
         self._message_id = cursor.lastrowid
 
 
+class Dialog(DataSource):
+    """
+    Stores information about dialog questions and their answers
+    """
+
+    def __init__(self, scope=None, data=None, actor=None, phase=None, hostname=None, context=None):
+        """
+        :param scope: Dialog scope
+        :type scope: str
+        :param data: Payload data
+        :type data: dict
+        :param actor: Name of the actor that triggered the entry
+        :type actor: str
+        :param phase: In which phase of the workflow execution the dialog was triggered
+        :type phase: str
+        :param hostname: Hostname of the system that produced the message
+        :type hostname: str
+        :param context: The execution context
+        :type context: str
+        """
+        super(Dialog, self).__init__(actor=actor, phase=phase, hostname=hostname, context=context)
+        self.scope = scope or ''
+        self.data = data
+        self._dialog_id = None
+
+    @property
+    def dialog_id(self):
+        """
+        Returns the id of the entry, which is only set when already stored.
+        :return: Integer id or None
+        """
+        return self._dialog_id
+
+    def do_store(self, connection):
+        super(Dialog, self).do_store(connection)
+        cursor = connection.execute(
+            'INSERT OR IGNORE INTO dialog (context, scope, data, data_source_id) VALUES(?, ?, ?, ?)',
+            (self.context, self.scope, json.dumps(self.data), self.data_source_id))
+        self._dialog_id = cursor.lastrowid
+
+
 def create_audit_entry(event, data, message=None):
     """
     Create an audit entry
@@ -291,10 +399,10 @@ def get_audit_entry(event, context):
     """
     Retrieve audit entries stored in the database for the given context
 
-    :param context: The execution context
-    :type context: str
     :param event: Event type identifier
     :type event: str
+    :param context: The execution context
+    :type context: str
     :return: list of dicts with id, time stamp, actor and phase fields
     """
     with get_connection(None) as conn:
@@ -470,3 +578,90 @@ def get_checkpoints(context):
         ''', (context, _AUDIT_CHECKPOINT_EVENT))
         cursor.row_factory = dict_factory
         return cursor.fetchall()
+
+
+def store_dialog(dialog, answer):
+    """
+    Store ``dialog`` with accompanying ``answer``.
+
+    :param dialog: instance of a workflow to store.
+    :type dialog: :py:class:`leapp.dialogs.Dialog`
+    :param answer: Answer to for each component of the dialog
+    :type answer: dict
+    """
+
+    component_keys = ('key', 'label', 'description', 'default', 'value', 'reason')
+    dialog_keys = ('title', 'reason')  # + 'components'
+
+    tmp = dialog.serialize()
+    data = {
+        'components': [dict((key, component[key]) for key in component_keys) for component in tmp['components']],
+
+        # NOTE(dkubek): Storing answer here is redundant as it is already
+        # being stored in audit when we query from the answerstore, however,
+        # this keeps the information coupled with the question more closely
+        'answer': answer
+    }
+    data.update((key, tmp[key]) for key in dialog_keys)
+
+    e = Dialog(
+        scope=dialog.scope,
+        data=data,
+        context=os.environ['LEAPP_EXECUTION_ID'],
+        actor=os.environ['LEAPP_CURRENT_ACTOR'],
+        phase=os.environ['LEAPP_CURRENT_PHASE'],
+        hostname=os.environ['LEAPP_HOSTNAME'],
+    )
+    e.store()
+
+    return e
+
+
+def store_workflow_metadata(workflow):
+    """
+    Store the metadata of the given ``workflow`` into the database.
+
+    :param workflow: Workflow to store.
+    :type workflow: :py:class:`leapp.workflows.Workflow`
+    """
+
+    metadata = json.dumps(type(workflow).serialize(), sort_keys=True)
+    metadata_hash_id = hashlib.sha256(metadata.encode('utf-8')).hexdigest()
+
+    md = Metadata(metadata=metadata, hash_id=metadata_hash_id)
+    ent = Entity(kind='workflow',
+                 name=workflow.name,
+                 context=os.environ['LEAPP_EXECUTION_ID'],
+                 hostname=os.environ['LEAPP_HOSTNAME'],
+                 metadata=md)
+    ent.store()
+
+
+def store_actor_metadata(actor_definition, phase):
+    """
+    Store the metadata of the given actor given as an ``actor_definition``
+    object into the database.
+
+    :param actor_definition: Actor to store
+    :type actor_definition: :py:class:`leapp.repository.actor_definition.ActorDefinition`
+    """
+
+    _metadata = dict(actor_definition.discover())
+    _metadata.update({
+        'consumes': sorted(model.__name__ for model in _metadata.get('consumes', ())),
+        'produces': sorted(model.__name__ for model in _metadata.get('produces', ())),
+        'tags': sorted(tag.__name__ for tag in _metadata.get('tags', ())),
+    })
+    _metadata['phase'] = phase
+
+    actor_metadata_fields = ('class_name', 'name', 'description', 'phase', 'tags', 'consumes', 'produces', 'path')
+    metadata = json.dumps({field: _metadata[field] for field in actor_metadata_fields}, sort_keys=True)
+    metadata_hash_id = hashlib.sha256(metadata.encode('utf-8')).hexdigest()
+
+    md = Metadata(metadata=metadata, hash_id=metadata_hash_id)
+    ent = Entity(kind='actor',
+                 name=actor_definition.name,
+                 context=os.environ['LEAPP_EXECUTION_ID'],
+                 hostname=os.environ['LEAPP_HOSTNAME'],
+                 metadata=md)
+    ent.store()
