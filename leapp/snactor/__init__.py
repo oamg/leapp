@@ -2,6 +2,7 @@ import importlib
 import os
 import pkgutil
 import socket
+import sys
 
 from leapp.utils.i18n import _  # noqa; pylint: disable=redefined-builtin
 from leapp.snactor import commands
@@ -33,7 +34,9 @@ def _load_commands_from(path):
             continue
         spec = importer.find_spec(name)
         mod = importlib.util.module_from_spec(spec)
-        # sys.modules[name] = module
+        sys.modules[name] = mod
+        spec.loader.exec_module(mod)
+
         if hasattr(mod.cli, 'command'):
             if not mod.cli.command.parent:
                 cli.command.add_sub(mod.cli.command)
