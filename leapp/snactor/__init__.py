@@ -1,3 +1,4 @@
+import importlib
 import os
 import pkgutil
 import socket
@@ -30,7 +31,9 @@ def _load_commands_from(path):
     for importer, name, is_pkg in pkgutil.iter_modules([pkg_path]):
         if is_pkg:
             continue
-        mod = importer.find_module(name).load_module(name)
+        spec = importer.find_spec(name)
+        mod = importlib.util.module_from_spec(spec)
+        # sys.modules[name] = module
         if hasattr(mod.cli, 'command'):
             if not mod.cli.command.parent:
                 cli.command.add_sub(mod.cli.command)
