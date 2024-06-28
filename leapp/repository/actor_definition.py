@@ -1,5 +1,4 @@
 import contextlib
-import importlib.util
 import linecache
 import logging
 import os
@@ -12,6 +11,7 @@ from multiprocessing import Process, Queue, Pipe
 
 import leapp.libraries.actor  # noqa # pylint: disable=unused-import
 from leapp.actors import get_actor_metadata, get_actors
+from leapp.compat import load_module
 from leapp.exceptions import (ActorInspectionFailedError, LeappRuntimeError, MultipleActorsError,
                               UnsupportedDefinitionKindError)
 from leapp.repository.definition import DefinitionKind
@@ -194,10 +194,7 @@ class ActorDefinition(object):
                 path = os.path.abspath(os.path.join(self._repo_dir, self.directory))
                 for importer, name, is_pkg in pkgutil.iter_modules((path,)):
                     if not is_pkg:
-                        spec = importer.find_spec(name)
-                        module = importlib.util.module_from_spec(spec)
-                        sys.modules[name] = module
-                        spec.loader.exec_module(module)
+                        self._module = load_module(importer, name)
                         break
 
     def discover(self):
