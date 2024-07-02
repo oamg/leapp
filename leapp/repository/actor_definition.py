@@ -278,6 +278,13 @@ class ActorDefinition(object):
         """
         return self.discover()['description']
 
+    @property
+    def configuration(self):
+        """
+        :return: Actor configurations
+        """
+        return self.discover()['configuration']
+
     @contextlib.contextmanager
     def injected_context(self):
         """

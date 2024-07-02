@@ -2,6 +2,12 @@ import base64
 import copy
 import datetime
 import json
+try:
+    # Python 3
+    from collections.abc import Sequence
+except ImportError:
+    # Python 2.7
+    from collections import Sequence
 
 import six
 
@@ -185,15 +191,16 @@ class BuiltinField(Field):
         self._validate(value=value, name=name, expected_type=self._builtin_type)
 
     def _validate(self, value, name, expected_type):
-        if not isinstance(expected_type, tuple):
+        if not isinstance(expected_type, Sequence):
             expected_type = (expected_type,)
+
         if value is None and self._nullable:
             return
-        if not any(isinstance(value, t) for t in expected_type):
+
+        if not isinstance(value, expected_type):
             names = ', '.join(['{}'.format(t.__name__) for t in expected_type])
             raise ModelViolationError("Fields {} is of type: {} expected: {}".format(name, type(value).__name__,
                                                                                      names))
-
 
 class Boolean(BuiltinField):
     """

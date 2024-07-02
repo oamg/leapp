@@ -470,6 +470,8 @@ def get_actor_metadata(actor):
         _get_attribute(actor, 'dialogs', _is_dialog_tuple, required=False, default_value=()),
         _get_attribute(actor, 'description', _is_type(string_types), required=False,
                        default_value=actor.__doc__ or 'There has been no description provided for this actor.'),
+        _get_attribute(actor, 'configuration', _is_type(string_types), required=False,
+                       default_value=actor.__doc__ or 'There has been no description provided for this actor.')
         _get_attribute(actor, 'apis', _is_api_tuple, required=False, default_value=())
     ])
 
