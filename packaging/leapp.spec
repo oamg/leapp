@@ -134,6 +134,7 @@ Provides: leapp-framework-dependencies = %{framework_dependencies}
 Requires: python-six
 Requires: python-setuptools
 Requires: python-requests
+Requires: PyYAML
 %else # <> rhel 7
 # for Fedora & RHEL 8+ deliver just python3 stuff
 # NOTE: requirement on python3 refers to the general version of Python
@@ -144,6 +145,7 @@ Requires: python3
 Requires: python3-six
 Requires: python3-setuptools
 Requires: python3-requests
+Requires: python3-PyYAML
 %endif
 Requires: findutils
 ##################################################

@@ -175,6 +175,7 @@ class ActorDefinition(object):
             'class_name': self.class_name,
             'description': self.description,
             'tags': self.tags,
+            'config_schemas': self.config_schemas,
             'consumes': self.consumes,
             'produces': self.produces,
             'apis': self.apis,
@@ -279,6 +280,13 @@ class ActorDefinition(object):
         """
         return self.discover()['description']
 
+    @property
+    def config_schemas(self):
+        """
+        :return: Actor config_schemas
+        """
+        return self.discover()['config_schemas']
+
     @contextlib.contextmanager
     def injected_context(self):
         """
@@ -360,6 +368,13 @@ class ActorDefinition(object):
         :return: Tuple with path to the files folder of the actor, empty tuple if none
         """
         return tuple(self._definitions.get(DefinitionKind.FILES, ()))
+
+    @property
+    def configs(self):
+        """
+        :return: Tuple with path to the configs folder of the actor, empty tuple if none
+        """
+        return tuple(self._definitions.get(DefinitionKind.CONFIGS, ()))
 
     @property
     def tests(self):

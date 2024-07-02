@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 
+from leapp.actors.config import Config, retrieve_config
 from leapp.compat import string_types
 from leapp.dialogs import Dialog
 from leapp.exceptions import (MissingActorAttributeError, RequestStopAfterPhase, StopActorExecution,
@@ -39,6 +40,11 @@ class Actor(object):
     """
     .. deprecated:: 0.5.0
        Write the actor's description as a docstring.
+    """
+
+    config_schemas = ()
+    """
+    Defines the structure of the configuration that the actor uses.
     """
 
     consumes = ()
@@ -86,6 +92,7 @@ class Actor(object):
             'path': os.path.dirname(sys.modules[type(self).__module__].__file__),
             'class_name': type(self).__name__,
             'description': self.description or type(self).__doc__,
+            'config_schemas': [c.__name__ for c in self.config_schemas],
             'consumes': [c.__name__ for c in self.consumes],
             'produces': [p.__name__ for p in self.produces],
             'tags': [t.__name__ for t in self.tags],
@@ -100,6 +107,7 @@ class Actor(object):
         This depends on the definition of such a configuration model being defined by the workflow
         and an actor that provides such a message.
         """
+
         Actor.current_instance = self
         install_translation_for_actor(type(self))
         self._messaging = messaging
@@ -107,8 +115,12 @@ class Actor(object):
         self.skip_dialogs = skip_dialogs
         """ A configured logger instance for the current actor. """
 
+        # self._configuration is the workflow configuration.
+        # self.config_schemas is the actor defined configuration.
+        # self.config is the actual actor configuration
         if config_model:
             self._configuration = next(self.consume(config_model), None)
+        self.config = retrieve_config(self.config_schemas)
 
         self._path = path
 
@@ -470,6 +482,8 @@ def get_actor_metadata(actor):
         _get_attribute(actor, 'dialogs', _is_dialog_tuple, required=False, default_value=()),
         _get_attribute(actor, 'description', _is_type(string_types), required=False,
                        default_value=actor.__doc__ or 'There has been no description provided for this actor.'),
+        _get_attribute(actor, 'config_schemas', _is_type(Config), required=False,
+                       default_value=actor.__doc__ or 'Description of the configuration used by this actor.'),
         _get_attribute(actor, 'apis', _is_api_tuple, required=False, default_value=())
     ])
 
