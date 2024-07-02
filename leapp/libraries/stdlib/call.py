@@ -11,7 +11,7 @@ except ImportError:
     # (pstodulk): find_executable() is from the distutils module which was
     # removed in Python 3.12. We can get rid of this fallback when we drop
     # support for Python 2. https://peps.python.org/pep-0632/
-    from distutils.spawn import find_executable as which
+    from distutils.spawn import find_executable as which  # pylint: disable=deprecated-module
 
 from leapp.compat import string_types
 from leapp.libraries.stdlib.eventloop import POLL_HUP, POLL_IN, POLL_OUT, POLL_PRI, EventLoop
