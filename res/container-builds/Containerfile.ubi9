@@ -1,8 +1,8 @@
-FROM registry.access.redhat.com/ubi8/ubi:latest
+FROM registry.access.redhat.com/ubi9/ubi:latest
 
 VOLUME /payload
 
-ENV DIST_VERSION 8
+ENV DIST_VERSION 9
 
 RUN dnf update -y && \
     dnf install -y python3 make git rpm-build python3-devel
