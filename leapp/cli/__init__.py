@@ -1,3 +1,4 @@
+import importlib
 import os
 import pkgutil
 import socket
@@ -24,7 +25,11 @@ def _load_commands(base_command):
         if os.path.isdir(entry_path) and os.path.isfile(os.path.join(entry_path, '__init__.py')):
             # We found a package - We will import it and get the `register` symbol and check if it is callable.
             package_name = 'leapp.cli.commands.{}'.format(entry)
-            package = pkgutil.get_loader(package_name).load_module(package_name)
+            if sys.version_info < (3, 12):
+                # get_loader and load_module are deprecated since 3.12
+                package = pkgutil.get_loader(package_name).load_module(package_name)  # noqa: E501, pylint: disable=deprecated-method
+            else:
+                package = importlib.import_module(package_name)
             register = getattr(package, 'register', None)
             if callable(register):
                 register(base_command)

@@ -1,4 +1,5 @@
 import multiprocessing
+import sys
 
 import six
 from six.moves import configparser
@@ -46,10 +47,14 @@ class AnswerStore(object):
         Loads an ini config file from the given location.
 
         :param inifile: Path to the answer file to load.
-        :return: configparser.SafeConfigParser object
+        :return: configparser.ConfigParser object
         :raises CommandError if any of the values are not in key=value format
         """
-        conf = configparser.SafeConfigParser(allow_no_value=False)
+        if sys.version_info < (3, 2):
+            conf = configparser.SafeConfigParser(allow_no_value=False)
+        else:
+            conf = configparser.ConfigParser(allow_no_value=False)
+
         try:
             conf.read(inifile)
             return conf

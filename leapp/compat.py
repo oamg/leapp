@@ -1,4 +1,5 @@
 import gettext  # noqa: F401; pylint: disable=unused-import
+import importlib
 import locale
 import sys
 
@@ -66,3 +67,21 @@ else:
         :return: Nothing
         """
         raise exc.with_traceback(tb)
+
+
+def load_module(importer, name):
+    """
+    Loads a module using the given importer and module name
+
+    :param importer: A finder implementation (returned by e.g. pkgutils.iter_modules)
+    :param name: Module name
+    :return: The loaded module
+    """
+    if sys.version_info < (3, 4):
+        return importer.find_module(name).load_module(name)
+
+    spec = importer.find_spec(name)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
