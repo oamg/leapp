@@ -12,7 +12,6 @@ jobs:
     owner: "@oamg"
     project: leapp
     targets:
-    - epel-7-ppc64le
     - epel-7-x86_64
     - epel-8-x86_64
     - fedora-all-aarch64
@@ -31,7 +30,6 @@ jobs:
     owner: "@oamg"
     project: leapp
     targets:
-    - epel-7-ppc64le
     - epel-7-x86_64
     - epel-8-x86_64
     - fedora-all-aarch64
