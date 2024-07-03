@@ -28,6 +28,8 @@ def last_snactor_context(connection=None):
 def with_snactor_context(f):
     @command_aware_wraps(f)
     def wrapper(*args, **kwargs):
-        os.environ["LEAPP_EXECUTION_ID"] = last_snactor_context()
+        # To preserve context, one needs to LEAPP_DEBUG_PRESERVE_CONTEXT=1 and have LEAPP_EXECUTION_ID=<id> set.
+        if not (os.environ.get('LEAPP_DEBUG_PRESERVE_CONTEXT', '0') == '1' and os.environ.get('LEAPP_EXECUTION_ID')):
+            os.environ["LEAPP_EXECUTION_ID"] = last_snactor_context()
         return f(*args, **kwargs)
     return wrapper
