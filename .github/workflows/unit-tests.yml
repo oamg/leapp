@@ -16,8 +16,9 @@ jobs:
       matrix:
         scenarios:
           - name: Run unit tests with python3.9 on el8
+          - name: Run unit tests with python3.9 on el9
             python: python3.9
-            container: ubi8
+            container: ubi9
           - name: Run unit tests with python 3.6 on el8
             python: python3.6
             container: ubi8
