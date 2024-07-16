@@ -45,7 +45,8 @@ jobs:
 
 # NOTE: to see what envars, targets, .. can be set in tests, see
 # the configuration of tests here:
-#   https://gitlab.cee.redhat.com/oamg/leapp-tests/-/blob/main/config.yaml
+#  7toX path https://gitlab.cee.redhat.com/oamg/leapp-tests/-/blob/rhel7/config.yaml
+# >7tox path https://gitlab.cee.redhat.com/oamg/leapp-tests/-/blob/main/config.yaml
 # Available only to RH Employees.
 
 # ###################################################################### #
@@ -59,7 +60,7 @@ jobs:
   job: tests
   trigger: ignore
   fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
-  fmf_ref: "main"
+  fmf_ref: "rhel7"
   use_internal_tf: True
   labels:
     - sanity
@@ -68,26 +69,6 @@ jobs:
       distros: [RHEL-7.9-ZStream]
   identifier: sanity-abstract-7to8
   tmt_plan: ""
-  tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:tier0 & enabled:true'
-    environments:
-      - artifacts:
-        - type: "repository"
-          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-7-x86_64/"
-          packages:
-            - leapp-repository
-            - python2-leapp
-            - leapp-upgrade-el7toel8-deps
-          order: 40
-        tmt:
-          context:
-            distro: "rhel-7.9"
-        settings:
-          provisioning:
-            tags:
-              BusinessUnit: sst_upgrades@leapp_upstream_test
 
 - &sanity-abstract-7to8-aws
   <<: *sanity-abstract-7to8
@@ -98,29 +79,6 @@ jobs:
     epel-7-x86_64:
       distros: [RHEL-7.9-rhui]
   identifier: sanity-abstract-7to8-aws
-  # NOTE(ivasilev) Unfortunately to use yaml templates we need to rewrite the whole tf_extra_params dict
-  # to use plan_filter (can't just specify one section test.tmt.plan_filter, need to specify environments.* as well)
-  tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:upgrade_happy_path & enabled:true'
-    environments:
-      - artifacts:
-        - type: "repository"
-          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-7-x86_64/"
-          packages:
-            - leapp-repository
-            - python2-leapp
-            - leapp-upgrade-el7toel8-deps
-          order: 40
-        tmt:
-          context:
-            distro: "rhel-7.9"
-        settings:
-          provisioning:
-            post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys; yum-config-manager --enable rhel-7-server-rhui-optional-rpms"
-            tags:
-              BusinessUnit: sst_upgrades@leapp_upstream_test
 
 # On-demand minimal beaker tests
 - &beaker-minimal-7to8-abstract-ondemand
@@ -129,26 +87,6 @@ jobs:
   labels:
     - beaker-minimal
   identifier: beaker-minimal-7to8-abstract-ondemand
-  tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:partitioning & tag:7to8 & enabled:true'
-    environments:
-      - artifacts:
-        - type: "repository"
-          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-7-x86_64/"
-          packages:
-            - leapp-repository
-            - python2-leapp
-            - leapp-upgrade-el7toel8-deps
-          order: 40
-        tmt:
-          context:
-            distro: "rhel-7.9"
-        settings:
-          provisioning:
-            tags:
-              BusinessUnit: sst_upgrades@leapp_upstream_test
 
 # On-demand kernel-rt tests
 - &kernel-rt-abstract-7to8-ondemand
@@ -156,27 +94,6 @@ jobs:
   labels:
     - kernel-rt
   identifier: sanity-7to8-kernel-rt-abstract-ondemand
-  tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:kernel-rt & tag:7to8 & enabled:true'
-    environments:
-      - artifacts:
-        - type: "repository"
-          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-7-x86_64/"
-          packages:
-            - leapp-repository
-            - python2-leapp
-            - leapp-upgrade-el7toel8-deps
-          order: 40
-        tmt:
-          context:
-            distro: "rhel-7.9"
-        settings:
-          provisioning:
-            tags:
-              BusinessUnit: sst_upgrades@leapp_upstream_test
-
 
 # ###################################################################### #
 # ######################### Individual tests ########################### #
@@ -187,6 +104,28 @@ jobs:
   <<: *sanity-abstract-7to8-aws
   trigger: pull_request
   identifier: sanity-7.9to8.8-aws
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:7to8 & tag:upgrade_happy_path & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-7-x86_64/"
+          packages:
+            - leapp-repository
+            - python2-leapp
+            - leapp-upgrade-el7toel8-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-7.9"
+            distro_target: "rhel-8.8"
+        settings:
+          provisioning:
+            post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
     SOURCE_RELEASE: "7.9"
     TARGET_RELEASE: "8.8"
@@ -199,10 +138,30 @@ jobs:
   <<: *sanity-abstract-7to8
   trigger: pull_request
   identifier: sanity-7.9to8.8
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:7to8 & tag:sanity & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-7-x86_64/"
+          packages:
+            - leapp-repository
+            - python2-leapp
+            - leapp-upgrade-el7toel8-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-7.9"
+            distro_target: "rhel-8.8"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
     SOURCE_RELEASE: "7.9"
     TARGET_RELEASE: "8.8"
-    LEAPPDATA_BRANCH: "upstream"
 
 - &beaker-minimal-79to88
   <<: *beaker-minimal-7to8-abstract-ondemand
@@ -212,10 +171,30 @@ jobs:
     - beaker-minimal-7.9to8.8
     - 7.9to8.8
   identifier: sanity-7.9to8.8-beaker-minimal-ondemand
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:7to8 & tag:partitioning & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-7-x86_64/"
+          packages:
+            - leapp-repository
+            - python2-leapp
+            - leapp-upgrade-el7toel8-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-7.9"
+            distro_target: "rhel-8.8"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
     SOURCE_RELEASE: "7.9"
     TARGET_RELEASE: "8.8"
-    LEAPPDATA_BRANCH: "upstream"
 
 - &kernel-rt-79to88
   <<: *kernel-rt-abstract-7to8-ondemand
@@ -225,33 +204,94 @@ jobs:
     - kernel-rt-7.9to8.8
     - 7.9to8.8
   identifier: sanity-7.9to8.8-kernel-rt-ondemand
+  tf_extra_params:
+    test:
+      tmt:
+         plan_filter: 'tag:7to8 & tag:kernel-rt & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-7-x86_64/"
+          packages:
+            - leapp-repository
+            - python2-leapp
+            - leapp-upgrade-el7toel8-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-7.9"
+            distro_target: "rhel-8.8"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
     SOURCE_RELEASE: "7.9"
     TARGET_RELEASE: "8.8"
-    LEAPPDATA_BRANCH: "upstream"
 
 # Tests: 7.9 -> 8.10
 - &sanity-79to810
   <<: *sanity-abstract-7to8
   trigger: pull_request
   identifier: sanity-7.9to8.10
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:7to8 & tag:sanity & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-7-x86_64/"
+          packages:
+            - leapp-repository
+            - python2-leapp
+            - leapp-upgrade-el7toel8-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-7.9"
+            distro_target: "rhel-8.10"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
     SOURCE_RELEASE: "7.9"
     TARGET_RELEASE: "8.10"
-    LEAPPDATA_BRANCH: "upstream"
 
-# NOTE(mkluson) RHEL 8.10 content is not publicly available (via RHUI)
-#- &sanity-79to810-aws
-#  <<: *sanity-abstract-7to8-aws
-#  trigger: pull_request
-#  identifier: sanity-7.9to8.10-aws
-#  env:
-#    SOURCE_RELEASE: "7.9"
-#    TARGET_RELEASE: "8.10"
-#    RHUI: "aws"
-#    LEAPPDATA_BRANCH: "upstream"
-#    LEAPP_NO_RHSM: "1"
-#    USE_CUSTOM_REPOS: rhui
+- &sanity-79to810-aws
+  <<: *sanity-abstract-7to8-aws
+  trigger: pull_request
+  identifier: sanity-7.9to8.10-aws
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:7to8 & tag:upgrade_happy_path & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-7-x86_64/"
+          packages:
+            - leapp-repository
+            - python2-leapp
+            - leapp-upgrade-el7toel8-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-7.9"
+            distro_target: "rhel-8.10"
+        settings:
+          provisioning:
+            post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
+  env:
+    SOURCE_RELEASE: "7.9"
+    TARGET_RELEASE: "8.10"
+    RHUI: "aws"
+    LEAPPDATA_BRANCH: "upstream"
+    LEAPP_NO_RHSM: "1"
+    USE_CUSTOM_REPOS: rhui
 
 - &beaker-minimal-79to810
   <<: *beaker-minimal-7to8-abstract-ondemand
@@ -261,10 +301,30 @@ jobs:
     - beaker-minimal-7.9to8.10
     - 7.9to8.10
   identifier: sanity-7.9to8.10-beaker-minimal-ondemand
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:7to8 & tag:partitioning & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-7-x86_64/"
+          packages:
+            - leapp-repository
+            - python2-leapp
+            - leapp-upgrade-el7toel8-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-7.9"
+            distro_target: "rhel-8.10"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
     SOURCE_RELEASE: "7.9"
     TARGET_RELEASE: "8.10"
-    LEAPPDATA_BRANCH: "upstream"
 
 - &kernel-rt-79to810
   <<: *kernel-rt-abstract-7to8-ondemand
@@ -274,14 +334,34 @@ jobs:
     - kernel-rt-7.9to8.10
     - 7.9to8.10
   identifier: sanity-7.9to8.10-kernel-rt-ondemand
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:7to8 & tag:kernel-rt & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-7-x86_64/"
+          packages:
+            - leapp-repository
+            - python2-leapp
+            - leapp-upgrade-el7toel8-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-7.9"
+            distro_target: "rhel-8.10"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
     SOURCE_RELEASE: "7.9"
     TARGET_RELEASE: "8.10"
-    LEAPPDATA_BRANCH: "upstream"
 
 
 # ###################################################################### #
-# ############################## 8 TO 10 ############################### #
+# ############################## 8 TO 9 ################################ #
 # ###################################################################### #
 
 # ###################################################################### #
@@ -304,26 +384,6 @@ jobs:
     epel-8-x86_64:
       distros: [RHEL-8.10.0-Nightly]
   identifier: sanity-abstract-8to9
-  tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:tier0 & tag:8to9 & enabled:true'
-    environments:
-      - artifacts:
-        - type: "repository"
-          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
-          packages:
-            - leapp-repository
-            - python3-leapp
-            - leapp-upgrade-el8toel9-deps
-          order: 40
-        tmt:
-          context:
-            distro: "rhel-8.10"
-        settings:
-          provisioning:
-            tags:
-              BusinessUnit: sst_upgrades@leapp_upstream_test
 
 - &sanity-abstract-8to9-aws
   <<: *sanity-abstract-8to9
@@ -334,27 +394,6 @@ jobs:
     epel-8-x86_64:
       distros: [RHEL-8.10-rhui]
   identifier: sanity-abstract-8to9-aws
-  tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:upgrade_happy_path & enabled:true'
-    environments:
-      - artifacts:
-        - type: "repository"
-          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
-          packages:
-            - leapp-repository
-            - python3-leapp
-            - leapp-upgrade-el8toel9-deps
-          order: 40
-        tmt:
-          context:
-            distro: "rhel-8.10"
-        settings:
-          provisioning:
-            post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
-            tags:
-              BusinessUnit: sst_upgrades@leapp_upstream_test
 
 - &beaker-minimal-8to9-abstract-ondemand
   <<: *sanity-abstract-8to9
@@ -365,45 +404,16 @@ jobs:
     epel-8-x86_64:
       distros: [RHEL-8.10.0-Nightly]
   identifier: beaker-minimal-8to9-abstract-ondemand
-  tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:partitioning & tag:8to9 & enabled:true'
-    environments:
-      - artifacts:
-        - type: "repository"
-          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
-          packages:
-            - leapp-repository
-            - python3-leapp
-            - leapp-upgrade-el8toel9-deps
-          order: 40
-        tmt:
-          context:
-            distro: "rhel-8.10"
-        settings:
-          provisioning:
-            tags:
-              BusinessUnit: sst_upgrades@leapp_upstream_test
-
 
 - &kernel-rt-abstract-8to9-ondemand
   <<: *beaker-minimal-8to9-abstract-ondemand
   labels:
     - kernel-rt
   identifier: sanity-8to9-kernel-rt-abstract-ondemand
-  tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:kernel-rt & tag:8to9 & enabled:true'
-    environments:
-      - tmt:
-          context:
-            distro: "rhel-8.10"
-        settings:
-          provisioning:
-            tags:
-              BusinessUnit: sst_upgrades@leapp_upstream_test
+
+# ###################################################################### #
+# ######################### Individual tests ########################### #
+# ###################################################################### #
 
 # Tests: 8.8 -> 9.2
 - &sanity-88to92
@@ -416,7 +426,7 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-        plan_filter: 'tag:tier0 & tag:8to9 & enabled:true'
+        plan_filter: 'tag:8to9 & tag:tier0 & enabled:true'
     environments:
       - artifacts:
         - type: "repository"
@@ -429,6 +439,7 @@ jobs:
         tmt:
           context:
             distro: "rhel-8.8"
+            distro_target: "rhel-9.2"
         settings:
           provisioning:
             tags:
@@ -437,8 +448,6 @@ jobs:
     SOURCE_RELEASE: "8.8"
     TARGET_RELEASE: "9.2"
     RHSM_REPOS_EUS: "eus"
-    LEAPPDATA_BRANCH: "upstream"
-    LEAPP_DEVEL_TARGET_RELEASE: "9.2"
 
 - &sanity-88to92-aws
   <<: *sanity-abstract-8to9-aws
@@ -447,11 +456,10 @@ jobs:
     epel-8-x86_64:
       distros: [RHEL-8.8-rhui]
   identifier: sanity-8.8to9.2-aws
-  # NOTE(mkluson) Unfortunately to use yaml templates we need to rewrite the whole tf_extra_params dict
   tf_extra_params:
     test:
       tmt:
-        plan_filter: 'tag:upgrade_happy_path & enabled:true'
+        plan_filter: 'tag:8to9 & tag:rhui-tier[0] & enabled:true'
     environments:
       - artifacts:
         - type: "repository"
@@ -464,6 +472,7 @@ jobs:
         tmt:
           context:
             distro: "rhel-8.8"
+            distro_target: "rhel-9.2"
         settings:
           provisioning:
             post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
@@ -472,11 +481,7 @@ jobs:
   env:
     SOURCE_RELEASE: "8.8"
     TARGET_RELEASE: "9.2"
-    RHSM_REPOS: "rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms"
-    RHUI: "aws"
-    LEAPPDATA_BRANCH: "upstream"
-    LEAPP_NO_RHSM: "1"
-    USE_CUSTOM_REPOS: rhui
+    RHUI_HYPERSCALER: aws
 
 - &beaker-minimal-88to92
   <<: *beaker-minimal-8to9-abstract-ondemand
@@ -492,7 +497,7 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-        plan_filter: 'tag:partitioning & tag:8to9 & enabled:true'
+        plan_filter: 'tag:8to9 &tag:partitioning & enabled:true'
     environments:
       - artifacts:
         - type: "repository"
@@ -505,6 +510,7 @@ jobs:
         tmt:
           context:
             distro: "rhel-8.8"
+            distro_target: "rhel-9.2"
         settings:
           provisioning:
             post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
@@ -513,8 +519,7 @@ jobs:
   env:
     SOURCE_RELEASE: "8.8"
     TARGET_RELEASE: "9.2"
-    LEAPPDATA_BRANCH: "upstream"
-    LEAPP_DEVEL_TARGET_RELEASE: "9.2"
+    RHSM_REPOS_EUS: "eus"
 
 - &kernel-rt-88to92
   <<: *kernel-rt-abstract-8to9-ondemand
@@ -530,7 +535,7 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-        plan_filter: 'tag:kernel-rt & tag:8to9 & enabled:true'
+        plan_filter: 'tag:8to9 & tag:kernel-rt & enabled:true'
     environments:
       - artifacts:
         - type: "repository"
@@ -543,6 +548,7 @@ jobs:
         tmt:
           context:
             distro: "rhel-8.8"
+            distro_target: "rhel-9.2"
         settings:
           provisioning:
             tags:
@@ -550,8 +556,7 @@ jobs:
   env:
     SOURCE_RELEASE: "8.8"
     TARGET_RELEASE: "9.2"
-    LEAPPDATA_BRANCH: "upstream"
-    LEAPP_DEVEL_TARGET_RELEASE: "9.2"
+    RHSM_REPOS_EUS: "eus"
 
 
 # Tests: 8.10 -> 9.4
@@ -559,11 +564,30 @@ jobs:
   <<: *sanity-abstract-8to9
   trigger: pull_request
   identifier: sanity-8.10to9.4
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:8to9 & tag:tier0 & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
+          packages:
+            - leapp-repository
+            - python3-leapp
+            - leapp-upgrade-el8toel9-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-8.10"
+            distro_target: "rhel-9.4"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
     SOURCE_RELEASE: "8.10"
     TARGET_RELEASE: "9.4"
-    RHSM_REPOS: "rhel-8-for-x86_64-appstream-beta-rpms,rhel-8-for-x86_64-baseos-beta-rpms"
-    LEAPPDATA_BRANCH: "upstream"
 
 # On-demand minimal beaker tests
 - &beaker-minimal-810to94
@@ -574,10 +598,30 @@ jobs:
     - beaker-minimal-8.10to9.4
     - 8.10to9.4
   identifier: sanity-8.10to9.4-beaker-minimal-ondemand
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:8to9 & tag:partitioning & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
+          packages:
+            - leapp-repository
+            - python3-leapp
+            - leapp-upgrade-el8toel9-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-8.10"
+            distro_target: "rhel-9.4"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
     SOURCE_RELEASE: "8.10"
     TARGET_RELEASE: "9.4"
-    LEAPPDATA_BRANCH: "upstream"
 
 # On-demand kernel-rt tests
 - &kernel-rt-810to94
@@ -588,8 +632,126 @@ jobs:
     - kernel-rt-8.10to9.4
     - 8.10to9.4
   identifier: sanity-8.10to9.4-kernel-rt-ondemand
+  tf_extra_params:
+    test:
+      tmt:
+         plan_filter: 'tag:8to9 & tag:kernel-rt & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
+          packages:
+            - leapp-repository
+            - python3-leapp
+            - leapp-upgrade-el8toel9-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-8.10"
+            distro_target: "rhel-9.4"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
     SOURCE_RELEASE: "8.10"
     TARGET_RELEASE: "9.4"
-    RHSM_REPOS: "rhel-8-for-x86_64-appstream-beta-rpms,rhel-8-for-x86_64-baseos-beta-rpms"
-    LEAPPDATA_BRANCH: "upstream"
+
+
+# Tests: 8.10 -> 9.5
+- &sanity-810to95
+  <<: *sanity-abstract-8to9
+  trigger: pull_request
+  identifier: sanity-8.10to9.5
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:8to9 & tag:tier0 & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
+          packages:
+            - leapp-repository
+            - python3-leapp
+            - leapp-upgrade-el8toel9-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-8.10"
+            distro_target: "rhel-9.5"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
+  env:
+    SOURCE_RELEASE: "8.10"
+    TARGET_RELEASE: "9.5"
+
+# On-demand minimal beaker tests
+- &beaker-minimal-810to95
+  <<: *beaker-minimal-8to9-abstract-ondemand
+  trigger: pull_request
+  labels:
+    - beaker-minimal
+    - beaker-minimal-8.10to9.5
+    - 8.10to9.5
+  identifier: sanity-8.10to9.5-beaker-minimal-ondemand
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:8to9 & tag:partitioning & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
+          packages:
+            - leapp-repository
+            - python3-leapp
+            - leapp-upgrade-el8toel9-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-8.10"
+            distro_target: "rhel-9.5"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
+  env:
+    SOURCE_RELEASE: "8.10"
+    TARGET_RELEASE: "9.5"
+
+# On-demand kernel-rt tests
+- &kernel-rt-810to95
+  <<: *kernel-rt-abstract-8to9-ondemand
+  trigger: pull_request
+  labels:
+    - kernel-rt
+    - kernel-rt-8.10to9.5
+    - 8.10to9.5
+  identifier: sanity-8.10to9.5-kernel-rt-ondemand
+  tf_extra_params:
+    test:
+      tmt:
+         plan_filter: 'tag:8to9 & tag:kernel-rt & enabled:true'
+    environments:
+      - artifacts:
+        - type: "repository"
+          id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
+          packages:
+            - leapp-repository
+            - python3-leapp
+            - leapp-upgrade-el8toel9-deps
+          order: 40
+      - tmt:
+          context:
+            distro: "rhel-8.10"
+            distro_target: "rhel-9.5"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
+  env:
+    SOURCE_RELEASE: "8.10"
+    TARGET_RELEASE: "9.5"
