@@ -2,6 +2,6 @@
 
 CommonMark==0.7.5
 sphinx>=1.5,<1.6
-sphinx_rtd_theme
+sphinx_rtd_theme==0.4.3
 sphinx-autobuild
 git+https://github.com/leapp-to/recommonmark.git@master
