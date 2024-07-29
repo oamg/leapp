@@ -42,14 +42,14 @@ Source: [How to create a Leapp actor for RHEL 7 to 8 upgrade](el7toel8/actor-rhe
 
 ## What do I have to do in order to execute actor I just wrote?
 
-If you want to execute just a single actor when developing it, then use the snactor tool. [Here's a tutorial](first-actor) on how to use it.
+If you want to execute just a single actor when developing it, then use the snactor tool. [Here's a tutorial](tutorials/first-actor) on how to use it.
 If you want to add your actor to an existing workflow, for example the RHEL 7 to 8 upgrade workflow, then tag your actor with appropriate workflow and phase tags.
 Source: [How to create a Leapp actor for RHEL 7 to 8 upgrade](el7toel8/actor-rhel7-to-rhel8)
 
 ## What should I do if I need to execute multiple actors? Can I somehow ensure the dependencies between them?
 
 To be sure that your ActorA runs before your ActorB, produce a specific message in ActorA and let ActorB consume it. By doing this you create a dependency of ActorB on ActorA.
-To run just your actors during development, use snactor run --save-output ActorA to save the message of ActorA to the Leapp repository database and then snactor run ActorB. This way, the ActorB will be able to consume the ActorA's saved message. Read more about that in the [tutorial about messaging](messaging.md).
+To run just your actors during development, use snactor run --save-output ActorA to save the message of ActorA to the Leapp repository database and then snactor run ActorB. This way, the ActorB will be able to consume the ActorA's saved message. Read more about that in the [tutorial about messaging](tutorials/messaging.md).
 
 ## How can I specify what run time dependencies will my actor have?
 
@@ -79,7 +79,7 @@ It should follow the [Contribution guidelines](contributing) and the [Best pract
 
 ## How can I debug my actor? Is there a standard/supported way how to log and get logs from actors/channels?
 
-You can run your actor using the snactor tool and printing the output. [See the tutorial](first-actor) on how to use snactor.
+You can run your actor using the snactor tool and printing the output. [See the tutorial](tutorials/first-actor) on how to use snactor.
 Source: [How to create a Leapp actor for RHEL 7 to 8 upgrade](el7toel8/actor-rhel7-to-rhel8)
 
 ## Are there some technical limitations for an actor? E.g. maximum time execution, size of the input/output, libraries I can use... In case there are, is it possible to specify that the actor needs e.g. longer time for execution?
