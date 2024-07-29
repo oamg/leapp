@@ -1,5 +1,5 @@
-Infrastructure
-==============
+Packaging and dependencies
+==========================
 Here you can find documentation related to our CI/CD, packaging, etc.
 
 
