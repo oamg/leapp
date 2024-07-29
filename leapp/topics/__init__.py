@@ -17,7 +17,7 @@ class TopicMeta(type):
 
 
 class Topic(with_metaclass(TopicMeta)):
-    """ Base class for all :ref:`topics <terminology:topic>`"""
+    """ Base class for all :ref:`topics <building-blocks-and-architecture:topic>`"""
 
     name = None
     """ Name of the topic in snake case """
