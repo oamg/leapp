@@ -9,7 +9,7 @@ Welcome to developer documentation for Leapp!
     :glob:
 
     terminology
-    tutorials
+    tutorials/index
     leapp-repositories
     infrastructure
     best-practices
