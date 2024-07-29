@@ -10,8 +10,10 @@ impact on your code, we introduce the deprecation process described below.
 
 The following lists cover deprecated functionality in the leapp utility, snactor,
 the leapp standard library, etc. But don't cover deprecated functionalities
-from particular leapp repositories (e.g. the [elt7toel8](https://github.com/oamg/leapp-repository/tree/master/repos/system_upgrade/el7toel8) leapp repository). For
-such information, see [Deprecated functionality in the el7toel8 repository](../el7toel8/deprecation.md#deprecated-functionality-in-the-el7toel8-repository).
+from particular leapp repositories (e.g. the [RHEL in-place
+upgrade](https://github.com/oamg/leapp-repository/tree/master/repos/system_upgrade/)
+leapp repositories), these should be covered by the documentation of the
+repositories.
 
 ### current upstream development <span style="font-size:0.5em; font-weight:normal">(till the next release + 6months)</span>
 
