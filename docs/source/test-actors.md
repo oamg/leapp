@@ -6,7 +6,7 @@ The Leapp actors are covered by three types of tests - unit, component and e2e.
 
 - Both unit and component tests are to be placed in the actor's _tests_ folder.
 - Unit and component tests modules should have unique names
-- Tutorial on [How to write unit and component tests](unit-testing)
+- Tutorial on [How to write unit and component tests](tutorials/unit-testing)
 
 ## Naming conventions
 

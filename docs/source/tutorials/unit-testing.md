@@ -2,7 +2,7 @@
 
 The Leapp framework provides support for easily writing unit and component
 tests for actors and also allows easy execution of the whole actors within
-those tests. See [this document](test-actors)
+those tests. See [this document](../test-actors)
 to find out what is the difference between unit and component tests.
 
 ## Getting started with writing tests
@@ -161,7 +161,7 @@ shared libraries, models, etc.
 ### Actors's test dependencies
 
 If your **actor's tests** require a special package for their execution, create a
-Makefile in the [actor's root directory](repository-dir-layout) with an
+Makefile in the [actor's root directory](../repository-dir-layout) with an
 `install-deps` target calling `yum install -y`.
 
 ```sh
