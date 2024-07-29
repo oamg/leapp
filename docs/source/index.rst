@@ -8,13 +8,12 @@ Welcome to developer documentation for Leapp!
     :caption: Contents:
     :glob:
 
-    terminology
+    building-blocks-and-architecture
     tutorials/index
     leapp-repositories
     infrastructure
     best-practices
     test-actors
-    architecture
     inplace-upgrade-workflow
     contributing
     python-coding-guidelines
