@@ -68,7 +68,7 @@ class _ConfigPhase(Phase):
 
 class Workflow(with_metaclass(WorkflowMeta)):
     """
-    Workflow is the base class for all :ref:`workflow <terminology:workflow>` definitions.
+    Workflow is the base class for all :ref:`workflow <building-blocks-and-architecture:workflow>` definitions.
     """
 
     name = None
