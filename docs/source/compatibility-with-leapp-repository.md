@@ -2,7 +2,7 @@
 
 There is a hidden dragon in the split of leapp framework and leapp repositories
 projects. The development of features and incompatible changes has different
-speed in both projects. We want to release our projects using semantic
+pace in both projects. We want to release our projects using semantic
 versioning and, at the same time, we do not want to release a new version of
 the project after each merge of a new feature or incompatible change.
 We rather prefer releasing new versions with changelogs and everything
@@ -13,13 +13,13 @@ provide new functionality in the upstream (main) branch without the need
 of immediate release of the new version of leapp. For these purposes the
 `leapp-framework` capability is provided in the framework (python[23]-leapp) rpms.
 
-## When and how change the capability
+## When and how to change the capability
 
 The `leapp-framework` capability has to be changed in case of any change of
 provided API (e.g. change in the leapp standard library) or functionality that
 could affect actors in leapp repositories. That includes new features as well
-as an actor may depend on that in future, and the leapp-repository package
-should be able to specify correct framework version that is needed.
+as an actor may depend on that in future, and packages providing leapp repositories
+should be able to specify correct framework version that is required.
 
 The `leapp-framework` capability uses just `X.Y` versioning:
 
