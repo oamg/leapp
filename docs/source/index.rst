@@ -9,6 +9,7 @@ Welcome to developer documentation for Leapp!
     :glob:
 
     building-blocks-and-architecture
+    devenv-install
     tutorials/index
     best-practices
     test-actors
