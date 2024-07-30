@@ -1,4 +1,4 @@
-# Installing the development environment
+# Installation
 
 ## RPM packages installation
 
