@@ -1,4 +1,4 @@
-## Using messaging to send data between actors
+# Using messaging to send data between actors
 
 The Leapp framework uses messages to send data to other actors that are executed afterward.
 Messages are defined through the models declared [earlier](first-actor.md#creating-a-model). Actors can consume these messages and produce data based on their input.
@@ -6,7 +6,7 @@ Messages are defined through the models declared [earlier](first-actor.md#creati
 As an example, the actors consume Hostname messages, resolve IPs for those
 hostnames, and create the ResolvedHostname model to send a new type of message.
 
-### Creating the ResolvedHostname model
+## Creating the ResolvedHostname model
 
 Create the ResolvedHostname model by using the snactor tool.
 
@@ -39,7 +39,7 @@ fields.Nullable(fields.String())
 are required.
 
 
-### Creating a message consuming actor
+## Creating a message consuming actor
 
 Create a new actor that resolves the IPs for the hostnames:
 
@@ -96,7 +96,7 @@ class IpResolver(Actor):
             self.produce(ResolvedHostname(name=hostname.name, ips=ips))
 ```
 
-### Storing messages in the repository data for reuse
+## Storing messages in the repository data for reuse
 
 The `snactor` framework tool saves the output of actors as locally stored messages,
 so that they can be consumed by other actors that are being developed.
@@ -110,7 +110,7 @@ $ snactor run --save-output HostnameScanner
 The output of the actor is stored in the local repository data file, and it can be used
 by other actors. To flush all saved messages from the repository database, run `snactor messages clear`.
 
-### Testing the new actor
+## Testing the new actor
 
 With the input messages available and stored, the actor can be tested.
 
@@ -136,6 +136,6 @@ $ snactor run --print-output IpResolver
 ]
 ```
 
-#### Screencast
+### Screencast
 
 <asciinema-player src="_static/screencasts/messaging.json"></ascinema-player>
