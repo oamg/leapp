@@ -15,7 +15,6 @@ Welcome to developer documentation for Leapp!
     libraries-and-api
     packaging-and-dependencies
     contributing
-    python-coding-guidelines
     faq
     pydoc/leapp
 
