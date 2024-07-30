@@ -10,10 +10,9 @@ Welcome to developer documentation for Leapp!
 
     building-blocks-and-architecture
     tutorials/index
-    leapp-repositories
     best-practices
     test-actors
-    inplace-upgrade-workflow
+    libraries-and-api
     packaging-and-dependencies
     contributing
     python-coding-guidelines
