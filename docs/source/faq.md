@@ -8,12 +8,12 @@
 - [What do I have to do in order to execute actor I just wrote?](#what-do-i-have-to-do-in-order-to-execute-actor-i-just-wrote)
 - [What should I do if I need to execute multiple actors? Can I somehow ensure the dependencies between them?](#what-should-i-do-if-i-need-to-execute-multiple-actors-can-i-somehow-ensure-the-dependencies-between-them)
 - [How can I specify what run time dependencies will my actor have?](#how-can-i-specify-what-run-time-dependencies-will-my-actor-have)
-- [How can I distinguish between actors that I depend on directly (I need to consume their output) and indirectly (I just need them to be executed as part of the upgrade as I don’t handle the upgrade of that specific piece; think PHP vs. Apache - upgrade of Apache is independent of the upgrade of PHP but it needs to be done to enable its upgrade)?](#how-can-i-distinguish-between-actors-that-i-depend-on-directly-i-need-to-consume-their-output-and-indirectly-i-just-need-them-to-be-executed-as-part-of-the-upgrade-as-i-don-t-handle-the-upgrade-of-that-specific-piece-think-php-vs-apache-upgrade-of-apache-is-independent-of-the-upgrade-of-php-but-it-needs-to-be-done-to-enable-its-upgrade)
+- [How can I distinguish between actors that I depend on directly (I need to consume their output) and indirectly (I just need them to be executed as part of the upgrade as I don’t handle the upgrade of that specific piece; think PHP vs. Apache - upgrade of Apache is independent of the upgrade of PHP but it needs to be done to enable its upgrade)?](#how-can-i-distinguish-between-actors-that-i-depend-on-directly-i-need-to-consume-their-output-and-indirectly-i-just-need-them-to-be-executed-as-part-of-the-upgrade-as-i-dont-handle-the-upgrade-of-that-specific-piece)
 - [Once I write an actor that consumes data from some other actors, how can I be sure that the format will not change on the producing side in the future?](#once-i-write-an-actor-that-consumes-data-from-some-other-actors-how-can-i-be-sure-that-the-format-will-not-change-on-the-producing-side-in-the-future)
 - [What are the best practices for writing actors?](#what-are-the-best-practices-for-writing-actors)
 - [What are the requirements for actors to be accepted by upstream?](#what-are-the-requirements-for-actors-to-be-accepted-by-upstream)
 - [How can I debug my actor? Is there a standard/supported way how to log and get logs from actors/channels?](#what-are-the-requirements-for-actors-to-be-accepted-by-upstream)
-- [Are there some technical limitations for an actor? E.g. maximum time execution, size of the input/output, libraries I can use… In case there are, is it possible to specify that the actor needs e.g. longer time for execution?](#are-there-some-technical-limitations-for-an-actor-e-g-maximum-time-execution-size-of-the-input-output-libraries-i-can-use-in-case-there-are-is-it-possible-to-specify-that-the-actor-needs-e-g-longer-time-for-execution)
+- [Are there some technical limitations for an actor? E.g. maximum time execution, size of the input/output, libraries I can use… In case there are, is it possible to specify that the actor needs e.g. longer time for execution?](#are-there-some-technical-limitations-for-an-actor-eg-maximum-time-execution-size-of-the-inputoutput-libraries-i-can-use-in-case-there-are-is-it-possible-to-specify-that-the-actor-needs-eg-longer-time-for-execution)
 - [Are there some actions that are either forbidden or not recommended to be done in actors?](#are-there-some-actions-that-are-either-forbidden-or-not-recommended-to-be-done-in-actors)
 - [I got an error about PES data/ Repositories mapping where I find such files?](#i-got-an-error-about-pes-data-repositories-mapping-where-i-find-such-files)
 
@@ -49,19 +49,21 @@ Source: [How to create a Leapp actor for RHEL 7 to 8 upgrade](el7toel8/actor-rhe
 ## What should I do if I need to execute multiple actors? Can I somehow ensure the dependencies between them?
 
 To be sure that your ActorA runs before your ActorB, produce a specific message in ActorA and let ActorB consume it. By doing this you create a dependency of ActorB on ActorA.
-To run just your actors during development, use snactor run --save-output ActorA to save the message of ActorA to the Leapp repository database and then snactor run ActorB. This way, the ActorB will be able to consume the ActorA's saved message. Read more about that in the [tutorial about messaging](messaging).
+To run just your actors during development, use snactor run --save-output ActorA to save the message of ActorA to the Leapp repository database and then snactor run ActorB. This way, the ActorB will be able to consume the ActorA's saved message. Read more about that in the [tutorial about messaging](messaging.md).
 
 ## How can I specify what run time dependencies will my actor have?
 
-See the section about dependencies in the [Best practices document](best-practices.html#do-not-introduce-new-dependencies)
+See the section about dependencies in the [Best practices document](best-practices.md#do-not-introduce-new-dependencies)
 
-## How can I distinguish between actors that I depend on directly (I need to consume their output) and indirectly (I just need them to be executed as part of the upgrade as I don't handle the upgrade of that specific piece; think PHP vs. Apache - upgrade of Apache is independent of the upgrade of PHP but it needs to be done to enable its upgrade)?
+## How can I distinguish between actors that I depend on directly (I need to consume their output) and indirectly (I just need them to be executed as part of the upgrade as I don't handle the upgrade of that specific piece)?
+
+An example of this is PHP vs. Apache - upgrade of Apache is independent of the upgrade of PHP but it needs to be done to enable its upgrade.
 
 In the case of actors you depend on directly because you consume their message, you don't need to do anything extra, the Leapp framework will make sure that the actors that produce the messages you consume are executed before your actor.
 In case of the actors you depend on indirectly you may approach it in various ways:
 
 - Talk to the developers of the actors you depend on indirectly and agree on sending a message between their actors and your actor. This will cause a direct dependency described above.
-- Talk to the [Engineering Lead](contributing.html#contact) of the OS and Application Modernization group and tell them to coordinate development, testing and release of your actor and the actors you depend on indirectly, targeting the same milestone.
+- Talk to the [Engineering Lead](contributing.md#contact) of the OS and Application Modernization group and tell them to coordinate development, testing and release of your actor and the actors you depend on indirectly, targeting the same milestone.
 
 ## Once I write an actor that consumes data from some other actors, how can I be sure that the format will not change on the producing side in the future?
 
@@ -85,7 +87,7 @@ Source: [How to create a Leapp actor for RHEL 7 to 8 upgrade](el7toel8/actor-rhe
 There are no technical limitations but rather conceptual:
 
 - Libraries to use:
-  - See the section about actor dependencies in the [Best practices document](best-practices.html#do-not-introduce-new-dependencies)
+  - See the section about actor dependencies in the [Best practices document](best-practices.md#do-not-introduce-new-dependencies)
 
 Execution time:
 

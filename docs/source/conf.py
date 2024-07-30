@@ -25,8 +25,6 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirna
 
 import sphinx_rtd_theme  # noqa
 import leapp  # noqa
-from recommonmark.parser import CommonMarkParser  # noqa
-from recommonmark.transform import AutoStructify  # noqa
 
 # -- General configuration ------------------------------------------------
 
@@ -37,9 +35,12 @@ from recommonmark.transform import AutoStructify  # noqa
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.githubpages',
-              'autosectionlabelext']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.githubpages',
+    'autosectionlabelext',
+    'myst_parser',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -49,6 +50,9 @@ templates_path = ['_templates']
 #
 source_suffix = ['.md', '.rst']
 # source_suffix = '.rst'
+
+# how many level of headings in markdown should linkable anchors be generated for
+myst_heading_anchors = 3
 
 # The master toctree document.
 master_doc = 'index'
@@ -72,7 +76,8 @@ release = leapp.FULL_VERSION
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
+# highlight_language = "python"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -165,11 +170,6 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-
-source_parsers = {
-    '.md': CommonMarkParser,
-}
-
 autoclass_content = 'both'
 autodoc_default_flags = ['members', 'undoc-members', 'inherited-members', 'show-inheritance']
 
@@ -185,9 +185,7 @@ def filter_unwanted_leapp_types(app, what, name, obj, skip, options):
 
 
 def setup(app):
-    app.add_config_value('recommonmark_config', {}, True)
-    app.add_transform(AutoStructify)
     app.connect('autodoc-skip-member', filter_unwanted_leapp_types)
-    app.add_stylesheet('css/asciinema-player.css')
-    app.add_stylesheet('css/custom.css')
-    app.add_javascript('js/asciinema-player.js')
+    app.add_css_file('css/asciinema-player.css')
+    app.add_css_file('css/custom.css')
+    app.add_js_file('js/asciinema-player.js')

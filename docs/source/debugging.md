@@ -4,7 +4,7 @@
 
 The snactor tool is used to debug your actors. You can execute actors
 and save their output, so that it can be consumed by other actors.
-See [Storing messages in the repository data for reuse](messaging.html#storing-messages-in-the-repository-data-for-reuse).
+See [Storing messages in the repository data for reuse](messaging.md#storing-messages-in-the-repository-data-for-reuse).
 
 Snactor checks for the `LEAPP_DEBUG` environment variable and has also
 the --debug parameter which sets the environment variable to '1' when it is
