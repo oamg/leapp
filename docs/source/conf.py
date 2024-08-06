@@ -20,7 +20,6 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
 
 import sphinx_rtd_theme  # noqa
@@ -38,9 +37,10 @@ import leapp  # noqa
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.githubpages',
-    'autosectionlabelext',
+    'sphinx.ext.autosectionlabel',
     'myst_parser',
 ]
+autosectionlabel_prefix_document = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
