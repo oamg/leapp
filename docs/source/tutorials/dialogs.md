@@ -4,13 +4,13 @@ Leapp framework uses dialogs to ask user for any additional information an actor
 automatically.
 Dialogs contain Components which represent individual questions.
 Complete list of component types can be found in
-[documentation](pydoc/leapp.dialogs.html#module-leapp.dialogs.components).
+[documentation](leapp.dialogs.components).
 
-As an example we will change [IpResolver](messaging.html#creating-a-message-consuming-actor) actor in a way that user
+As an example we will change [IpResolver](messaging.md#creating-a-message-consuming-actor) actor in a way that user
 will decide which hostnames will be resolved.
 
 
-### Creating the dialog
+## Creating the dialog
 
 Import Dialog and MultipleChoiceComponent from leapp.dialog and leapp.dialog.components respectively.
 Create an instance of Dialog, specifying scope which is used to identify data in the answer file,
@@ -38,7 +38,7 @@ class IpResolver(Actor):
                                 description='No description'),)),)
 ```
 
-### Using the dialog and the answers
+## Using the dialog and the answers
 
 To pose a question that needs to be answered use get_answers method and pass the dialog containing the question.
 
@@ -70,7 +70,7 @@ def process(self):
         self.produce(ResolvedHostname(name=hostname, ips=ips))
 ```
 
-### Explaining the dialogs processing mechanism during the upgrade
+## Explaining the dialogs processing mechanism during the upgrade
 
 The upgrade itself, from the operator's point of view, consists of 3 distinct stages: preupgrade, remediate and upgrade.
 

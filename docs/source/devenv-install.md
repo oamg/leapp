@@ -1,4 +1,4 @@
-# Installing the development environment
+# Installation
 
 ## RPM packages installation
 
@@ -49,7 +49,7 @@ $ pip install git+https://github.com/oamg/leapp
 ```
 
 Once the framework is installed, you can use the snactor tool.
-```shell
+```
 $ snactor --help
 usage: snactor [-h] [--version] [--logger-config LOGGER_CONFIG]
                [--config CONFIG] [--verbose] [--debug]
@@ -65,7 +65,7 @@ Optional arguments:
   --debug               Enables debug mode
 
 Main commands:
-  
+
     new-tag             Create a new tag
     new-model           Creates a new model
     run                 Execute the given actor
