@@ -202,6 +202,8 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
         # Wait for the child to finish
         pid, status = os.wait()
         ep.close()
+        os.close(stdout)
+        os.close(stderr)
 
         # The status variable is a 16 bit value, where the lower octet describes
         # the signal which killed the process, and the upper octet is the exit code
