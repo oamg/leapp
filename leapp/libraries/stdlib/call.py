@@ -171,9 +171,9 @@ def _call(command, callback_raw=lambda fd, value: None, callback_linebuffered=la
     elif stdin is not None:
         raise TypeError('stdin has to be either a file descriptor or string, not "{!s}"'.format(type(stdin)))
 
-    ep = EventLoop()
     pid = os.fork()
     if pid > 0:
+        ep = EventLoop()
         # Since pid > 0, we are in the parent process, so we have to close the write-end
         # file descriptors
         os.close(wstdout)
