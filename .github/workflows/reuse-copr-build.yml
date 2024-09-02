@@ -59,7 +59,7 @@ jobs:
           echo "::set-output name=sha::$(git rev-parse --short HEAD)"
           echo "::set-output name=ref::refs/pull/${{ steps.pr_nr.outputs.pr_nr }}/head"
 
-      - name: Get latest leapp-repository master copr build id
+      - name: Get latest leapp-repository main copr build id
         id: get_latest_lpr_copr_build_id
         if: ${{ steps.leapp_repository_pr_regex_match.outputs.match == '' }}
         run: |
@@ -73,7 +73,7 @@ jobs:
           EOF
 
           pip install copr-cli
-          REGEX='leapp-repository.*master.*' COPR_REPO='@oamg/leapp' _COPR_CONFIG=copr_fedora.conf python ${{ github.workspace }}/utils/get_latest_copr_build > latest_lpr
+          REGEX='leapp-repository.*main.*' COPR_REPO='@oamg/leapp' _COPR_CONFIG=copr_fedora.conf python ${{ github.workspace }}/utils/get_latest_copr_build > latest_lpr
           COPR_ID=$(cat latest_lpr)
           echo "::set-output name=copr_id::${COPR_ID##*/}"
 

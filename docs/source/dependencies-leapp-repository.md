@@ -14,11 +14,11 @@ this document focuses on the leapp-repository specifics only.
 Currently there are two SPEC files for leapp-repository:
 
 - The
-[leapp-repository.spec](https://github.com/oamg/leapp-repository/blob/master/packaging/leapp-repository.spec)
+[leapp-repository.spec](https://github.com/oamg/leapp-repository/blob/main/packaging/leapp-repository.spec)
 file is used to build leapp-repository packages and their dependency
 metapackage _leapp-repository-deps_ **for RHEL 7**.
 - The
-[leapp-el7toel8-deps.spec](https://github.com/oamg/leapp-repository/blob/master/packaging/leapp-el7toel8-deps.spec)
+[leapp-el7toel8-deps.spec](https://github.com/oamg/leapp-repository/blob/main/packaging/leapp-el7toel8-deps.spec)
 file is used to build dependency metapackages _leapp-deps-el8_ and
 _leapp-repository-deps-el8_ **for RHEL 8** whose purpose is to replace the
 RHEL 7 dependency metapackages _leapp-deps_ and _leapp-repository-deps_ during
@@ -27,10 +27,10 @@ the upgrade.
 ## What to do in leapp-repository when dependencies of leapp change?
 
 Go to the section below the line `%package -n %{ldname}` in the
-[leapp-el7toel8-deps.spec](https://github.com/oamg/leapp-repository/blob/master/packaging/leapp-el7toel8-deps.spec).
+[leapp-el7toel8-deps.spec](https://github.com/oamg/leapp-repository/blob/main/packaging/leapp-el7toel8-deps.spec).
 This section creates the RHEL 8 _leapp-deps-el8_ metapackage that replaces the
 RHEL7 _leapp-deps_ metapackage. So when the leapp package dependencies change
-in the [leapp.spec](https://github.com/oamg/leapp/blob/master/packaging/leapp.spec)
+in the [leapp.spec](https://github.com/oamg/leapp/blob/main/packaging/leapp.spec)
 together with incrementing version of the **leapp-framework-dependencies**
 capability, it's necessary to:
 

@@ -21,7 +21,7 @@ The leapp framework provides the libraries required to be imported by any actor 
 
 Separate tool provided by Leapp to help the process of creating and executing an actor.
 
-You can see _snactor_ source code [here](https://github.com/oamg/leapp/tree/master/leapp/snactor).
+You can see _snactor_ source code [here](https://github.com/oamg/leapp/tree/main/leapp/snactor).
 
 ## Creating an actor
 
@@ -62,7 +62,7 @@ For further information about how create an actor read this [document](../first-
 
 Until now, you have created boilerplate of a new actor and made it visible to Leapp. But, Leapp needs some more information about what to do with the actor. Specifically, in which **“workflow”** and in which **“phase”** the actor should be executed. A workflow is a sequence of phases. The only workflow available now is the one solving the upgrade of RHEL 7 to RHEL 8. Each phase is a set of actors that will be executed one after another before the next phase starts. To find out in which workflow and phase should the actor be executed, Leapp looks for **“tags”**. To be part of RHEL 7 to RHEL 8 upgrade workflow, an actor needs to be tagged with **IPUWorkflowTag**.
 
-The phases of the IPUWorkflow (in order) are: **Facts Collection, Checks, Report, Download, Upgrade RamDisk Preparation, Upgrade RamDisk Start, Late Tests, Preparation, RPM Upgrade, Application Upgrade, Third Party Applications, Finalization** and **First Boot**. Each phase has a specific tag that marks an actor as being part of that phase. You can find descriptions of all the phases and their tags [here](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/common/workflows/inplace_upgrade.py) and workflow diagram [here](../inplace-upgrade-workflow).
+The phases of the IPUWorkflow (in order) are: **Facts Collection, Checks, Report, Download, Upgrade RamDisk Preparation, Upgrade RamDisk Start, Late Tests, Preparation, RPM Upgrade, Application Upgrade, Third Party Applications, Finalization** and **First Boot**. Each phase has a specific tag that marks an actor as being part of that phase. You can find descriptions of all the phases and their tags [here](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/common/workflows/inplace_upgrade.py) and workflow diagram [here](../inplace-upgrade-workflow).
 
 For example, if an actor is to be executed within the Checks phase, it needs to be tagged both with IPUWorkflowTag and ChecksPhaseTag. The result after updating the boilerplate would be:
 
@@ -90,7 +90,7 @@ All communication between actors in Leapp is carried out using **“messages”*
 
 For further information about messaging see [document](../messaging).
 
-One of the existing models in Leapp is [ActiveKernelModulesFacts](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/models/activekernelmodulesfacts.py). Messages from this model contain data about the system on which Leapp has been started. For example, it contains installed kernel modules. If an actor wants to perform some action based on existing kernel modules on the system, the actor can get list of these modules by consuming the _ActiveKernelModulesFacts_ messages. By extending the boilerplate, the code could look like this:
+One of the existing models in Leapp is [ActiveKernelModulesFacts](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/el7toel8/models/activekernelmodulesfacts.py). Messages from this model contain data about the system on which Leapp has been started. For example, it contains installed kernel modules. If an actor wants to perform some action based on existing kernel modules on the system, the actor can get list of these modules by consuming the _ActiveKernelModulesFacts_ messages. By extending the boilerplate, the code could look like this:
 
 ```python
 from leapp.actors import Actor
@@ -280,7 +280,7 @@ During development of your new actor, it is expected that you will test your wor
 
 ### Executing a single actor
 
-You should use snactor tool to run a single actor and verify its output. Assuming that there are no errors, the actor was placed inside a valid leapp repository and snactor tool is aware of such repository, you can call snactor run to execute it. Below we are executing the existing [OSReleaseCollector](https://github.com/oamg/leapp-repository/tree/master/repos/system_upgrade/el7toel8/actors/osreleasecollector) actor that provides information about operating system release from target system. For the `snactor run` command you can use either the actor’s folder name (osreleasecollector), the actor’s class name (OSReleaseCollector) or the value of the name attribute of the actor’s class (os_release_collector).
+You should use snactor tool to run a single actor and verify its output. Assuming that there are no errors, the actor was placed inside a valid leapp repository and snactor tool is aware of such repository, you can call snactor run to execute it. Below we are executing the existing [OSReleaseCollector](https://github.com/oamg/leapp-repository/tree/main/repos/system_upgrade/el7toel8/actors/osreleasecollector) actor that provides information about operating system release from target system. For the `snactor run` command you can use either the actor’s folder name (osreleasecollector), the actor’s class name (OSReleaseCollector) or the value of the name attribute of the actor’s class (os_release_collector).
 
 ```shell
 # pwd
@@ -350,7 +350,7 @@ Finally, you can make your actor part of the “leapp upgrade” process and che
 
 ### Verifying correct communication between actors
 
-Leapp provides another actor, named [CheckOSRelease](https://github.com/oamg/leapp-repository/tree/master/repos/system_upgrade/el7toel8/actors/checkosrelease), that consumes messages from model _OSReleaseFacts_ and produces an error message in case system OS Release is not supported by Leapp upgrade process. In order to consume such message, _OSReleaseCollector_ actor needs to be executed before _CheckOSRelease_ and its message needs to be stored inside Leapp database. This process is controlled by the framework during the execution of “leapp upgrade” command.
+Leapp provides another actor, named [CheckOSRelease](https://github.com/oamg/leapp-repository/tree/main/repos/system_upgrade/el7toel8/actors/checkosrelease), that consumes messages from model _OSReleaseFacts_ and produces an error message in case system OS Release is not supported by Leapp upgrade process. In order to consume such message, _OSReleaseCollector_ actor needs to be executed before _CheckOSRelease_ and its message needs to be stored inside Leapp database. This process is controlled by the framework during the execution of “leapp upgrade” command.
 
 But, if you want to execute it manually, for test purposes, you can also use snactor for it. First we need to make sure that all messages that will be consumed are generated and stored. For this example, this means running _OSReleaseCollector_ actor with the _--save-output_ option of snactor:
 
@@ -412,7 +412,7 @@ This [pull request](https://github.com/oamg/leapp-repository/pull/186) gives a g
 
 ### In which existing workflow phase should I place my new actor?
 
-You can decide that based on the description of the phases this information is available in the [code](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/workflows/inplace_upgrade.py) and diagram [here](../inplace-upgrade-workflow). Please note that if your actor depends on some message generated by another actor, it cannot be executed in a phase before the phase of such actor. In a similar way, if your actor produces data, it needs to be executed before the actor consuming the data.
+You can decide that based on the description of the phases this information is available in the [code](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/el7toel8/workflows/inplace_upgrade.py) and diagram [here](../inplace-upgrade-workflow). Please note that if your actor depends on some message generated by another actor, it cannot be executed in a phase before the phase of such actor. In a similar way, if your actor produces data, it needs to be executed before the actor consuming the data.
 
 ### How to stop the upgrade in case my actor finds a problem with the system setup?
 

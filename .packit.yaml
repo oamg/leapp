@@ -19,7 +19,7 @@ jobs:
     - fedora-all-x86_64
   actions:
     post-upstream-clone:
-    # builds from PRs should have lower NVR than those from master branch
+    # builds from PRs should have lower NVR than those from main branch
     - sed -i "s/1%{?dist}/0%{?dist}/g" packaging/leapp.spec
     get-current-version:
     # get version from spec file instead from git tag
@@ -27,7 +27,7 @@ jobs:
 - job: copr_build
   trigger: commit
   metadata:
-    branch: master
+    branch: main
     owner: "@oamg"
     project: leapp
     targets:
@@ -38,7 +38,7 @@ jobs:
     - fedora-all-x86_64
   actions:
     post-upstream-clone:
-    # builds from master branch should have the highest NVR
+    # builds from main branch should have the highest NVR
     - sed -i "s/1%{?dist}/100%{?dist}/g" packaging/leapp.spec
     get-current-version:
     # get version from spec file instead from git tag

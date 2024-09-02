@@ -29,7 +29,7 @@ Before you submit your pull request, consider the following guidelines:
 * Fork the repository and clone your fork.
 * Make your changes in a new git branch:
 
-     ``git checkout -b bug/my-fix-branch master``
+     ``git checkout -b bug/my-fix-branch main``
 
 * Include documentation that either describe a change to a behavior or the changed capability to an end user.
 * Commit your changes with message conforming to the [Git Commit Messages](#git-commit-messages) guidelines.
@@ -39,7 +39,7 @@ Before you submit your pull request, consider the following guidelines:
 
     ``git push --set-upstream origin bug/my-fix-branch``
 
-* When opening a pull request, select the `master` branch as a base.
+* When opening a pull request, select the `main` branch as a base.
 * Mark your pull request with **[WIP]** (Work In Progress) to get feedback, but prevent merging (for example,
   [WIP] Update CONTRIBUTING.rst).
 * If you are fixing a GitHub issue, include the issue number you are fixing, e.g. 'Closes issue #xyz'.
@@ -51,7 +51,7 @@ Before you submit your pull request, consider the following guidelines:
 * Push changes to git (this will update your pull request). For that you can add a new commit or rebase your branch
   and force push to your GitHub repository like this: ::
 
-    git rebase -i master
+    git rebase -i main
     git push -f origin bug/my-fix-branch
 
 ### Merge Rules

@@ -9,7 +9,7 @@ We rather prefer releasing new versions with changelogs and everything
 when we agree it's worthwhile.
 
 But we need a mechanism to be able to synchronize with other projects, when we
-provide new functionality in the upstream (master) branch without the need
+provide new functionality in the upstream (main) branch without the need
 of immediate release of the new version of leapp. For these purposes the
 `leapp-framework` capability is provided in the framework (python[23]-leapp) rpms.
 

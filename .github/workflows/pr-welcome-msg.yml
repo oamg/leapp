@@ -25,9 +25,9 @@ jobs:
             - **/packit copr-build** to submit a public copr build using packit
 
             To launch regression testing public members of oamg organization can leave the following comment:
-            - **/rerun** to schedule basic regression tests using this pr build and leapp-repository\*master\* as artifacts
+            - **/rerun** to schedule basic regression tests using this pr build and leapp-repository\*main\* as artifacts
             - **/rerun 42** to schedule basic regression tests using this pr build and leapp-repository\*PR42\* as artifacts
-            - **/rerun-sst** to schedule sst tests using this pr build and leapp-repository\*master\* as artifacts
+            - **/rerun-sst** to schedule sst tests using this pr build and leapp-repository\*main\* as artifacts
             - **/rerun-sst 42** to schedule sst tests using this pr build and leapp-repository\*PR42\* as artifacts
 
             Please [open ticket](https://url.corp.redhat.com/oamg-ci-issue) in case you experience technical problem with the CI. (RH internal only)

@@ -4,7 +4,7 @@ All projects under the OAMG should use the same schema for names of RPM builds,
 to be able to simply and fast find specific builds. The schema itself looks
 like that (NVR without %{dist}):
 
-- for builds made from the master branch:
+- for builds made from the main branch:
 ```
 <name>-<version>-100.<timestamp>.<short-hash>.<branch>
 ```

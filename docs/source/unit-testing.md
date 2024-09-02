@@ -11,7 +11,7 @@ Tests are considered being part of the actor and we do not only encourage but
 basically require you to write tests if you want the actors to be accepted into
 the git repository. To read more about what we ask from you when submitting
 your work for our review, see
-[Contributing guidelines for writing actors](https://github.com/oamg/leapp-repository/blob/master/CONTRIBUTING.md).
+[Contributing guidelines for writing actors](https://github.com/oamg/leapp-repository/blob/main/CONTRIBUTING.md).
 
 Tests for an actor are to be placed within the actor's directory, in a
 subdirectory called `tests`. The layout for an actor `MyActor` in the
@@ -111,7 +111,7 @@ supposed to be unit tested is necessary to move into the actor's private
 library. Modules from the private library can then be imported not only from
 the `actor.py` but also from the test modules.
 
-Let's assume your actor has a private library module called 
+Let's assume your actor has a private library module called
 `private_{actor_name}.py`.
 
 ```
@@ -173,7 +173,7 @@ install-deps:
 Note: Dependencies defined the way mentioned above is for test execution only.
 If your actor requires any package when executed as part of a workflow, it
 needs to be specified in a
-[leapp-repository specfile](https://github.com/oamg/leapp-repository/blob/master/packaging/leapp-repository.spec).
+[leapp-repository specfile](https://github.com/oamg/leapp-repository/blob/main/packaging/leapp-repository.spec).
 
 ## Running the tests
 
@@ -209,7 +209,7 @@ It is also possible to run only selected tests based on their name:
 pytest -k "vim"    # to run all tests contains vim in name
 pytest -k "not vim"    # to run all tests, which not contains vim in name
 ```
-More examples could be found in the 
+More examples could be found in the
 [pytest documentation](https://docs.pytest.org/en/latest/example/markers.html#using-k-expr-to-select-tests-based-on-their-name)
 
 ### Shared libraries' tests
