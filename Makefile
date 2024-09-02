@@ -23,7 +23,7 @@ _TEST_CONTAINER=$${TEST_CONTAINER:-rhel8}
 
 # just to reduce number of unwanted builds mark as the upstream one when
 # someone will call copr_build without additional parameters
-MASTER_BRANCH=master
+MASTER_BRANCH=main
 
 # In case the PR or MR is defined or in case build is not coming from the
 # MATER_BRANCH branch, N_REL=0; (so build is not update of the approved
@@ -44,14 +44,14 @@ REQUEST=`if test -n "$$PR"; then echo ".PR$${PR}"; elif test -n "$$MR"; then ech
 # Examples:
 #    0.201810080027Z.4078402.packaging.PR2
 #    0.201810080027Z.4078402.packaging
-#    0.201810080027Z.4078402.master.MR2
-#    1.201810080027Z.4078402.master
+#    0.201810080027Z.4078402.main.MR2
+#    1.201810080027Z.4078402.main
 RELEASE="$(N_REL).$(TIMESTAMP).$(SHORT_SHA).$(BRANCH)$(REQUEST)$(_SUFFIX)"
 
 ifneq ($(shell id -u),0)
 	ENTER_VENV := . $(VENVNAME)/bin/activate;
 else
-	ENTER_VENV := 
+	ENTER_VENV :=
 endif
 
 all: help

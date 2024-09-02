@@ -1,9 +1,9 @@
 # IMPORTANT:
 # Please read the documentation on how to deal with dependencies before adding a new one.
-# https://github.com/oamg/leapp/blob/master/docs/source/dependencies.md
+# https://github.com/oamg/leapp/blob/main/docs/source/dependencies.md
 
 %global debug_package %{nil}
-%global gittag master
+%global gittag main
 
 # IMPORTANT: this is for the leapp-framework capability (it's not the real
 # version of the leapp). The capability reflects changes in api and whatever

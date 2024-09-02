@@ -21,13 +21,13 @@ Test module names should match the following regex:
 - These tests deal with individual actor's functions/methods.
 - It's not possible to unit test any method/function within the *actor.py*. You can write unit tests only for functions/methods within the actor's libraries.
 - Thus, to be able to write unit tests for an actor, ideally the only thing in the _actor.py_'s _process()_ method is calling the entry-point function of the actor's library python module.
-- [Example of unit tests](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/actors/checkbootavailspace/tests/unit_test_checkbootavailspace.py)
+- [Example of unit tests](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/el7toel8/actors/checkbootavailspace/tests/unit_test_checkbootavailspace.py)
 
 ### Component tests
 
 - These tests provide fabricated input messages for the actor, check the outputs stated in the actor's description.
 - These tests should not be written based on the actor's code but rather based on the behavior stated in the actor's description. They could be written by somebody who didn't write the code.
-- [Example of component tests](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/actors/checknfs/tests/test_checknfs.py)
+- [Example of component tests](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/el7toel8/actors/checknfs/tests/test_checknfs.py)
 
 ## End to end (e2e) tests
 

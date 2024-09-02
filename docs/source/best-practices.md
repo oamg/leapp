@@ -43,17 +43,17 @@ to a shared library function. You can introduce it in one of these two places:
   writing your actor for, e.g. for an OS in-place upgrade workflow, should go to the `<Leapp repository>/libraries`
   folder. In this case, we welcome your proposals under the
   [leapp-repository on GitHub](https://github.com/oamg/leapp-repository).
-  
+
   Please note that the name of the library module in this case should be unique and contain
   the actor name. For example:
   `repos/system_upgrade/el7toel8/actors/vimmigrate/libraries/vimmigrate.py`
- 
+
 
 ## Discover standard library functions
 
 Before implementing functionality for your actor, browse through the available functionality provided by:
 
-- the [Leapp Standard Library](https://github.com/oamg/leapp/tree/master/leapp/libraries/stdlib/),
+- the [Leapp Standard Library](https://github.com/oamg/leapp/tree/main/leapp/libraries/stdlib/),
 - the shared library of your Leapp repository (`<Leapp repository>/libraries` folder).
 
 These libraries contain functions that may satisfy your needs. Using them can save you time, lower code complexity and
@@ -63,7 +63,7 @@ help avoiding duplicate code. Improvement proposals for the library functions ar
 
 Sources of external functionality to be used in your actor in order of preference:
 
-1. the [Leapp Standard Library](https://github.com/oamg/leapp/tree/master/leapp/libraries/stdlib/)
+1. the [Leapp Standard Library](https://github.com/oamg/leapp/tree/main/leapp/libraries/stdlib/)
 2. the [Python Standard Library](https://docs.python.org/3/library/index.html)
 3. shell commands
 
@@ -81,13 +81,13 @@ As with the Leapp Standard Library mentioned above, it may be beneficial for you
 place in the [leapp-repository](https://github.com/oamg/leapp-repository). You might be interested in the messages they
 produce, for example:
 
-- [SystemFactsActor](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/actors/systemfacts/actor.py) -
+- [SystemFactsActor](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/el7toel8/actors/systemfacts/actor.py) -
   information about kernel modules, yum repos, sysctl variables, users, firewall, SELinux, etc.
-- [OSReleaseCollector](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/actors/osreleasecollector/actor.py) -
+- [OSReleaseCollector](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/el7toel8/actors/osreleasecollector/actor.py) -
   system release information
-- [RpmScanner](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/actors/rpmscanner/actor.py) -
+- [RpmScanner](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/el7toel8/actors/rpmscanner/actor.py) -
   list of installed packages
-- [StorageScanner](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/el7toel8/actors/storagescanner/actor.py) -
+- [StorageScanner](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/el7toel8/actors/storagescanner/actor.py) -
   storage information
 
 In case you find any message of the existing actors to be incorrect, incomplete or misleading, we encourage you to
@@ -123,8 +123,8 @@ For more about unit testing, see the [tutorial](unit-testing).
 ## Do not introduce new dependencies
 
 Ideally, actors shouldn't require any additional dependency on top of the dependencies already in the
-[leapp](https://github.com/oamg/leapp/blob/master/packaging/leapp.spec) and
-[leapp-repository](https://github.com/oamg/leapp-repository/blob/master/packaging/leapp-repository.spec) spec files,
+[leapp](https://github.com/oamg/leapp/blob/main/packaging/leapp.spec) and
+[leapp-repository](https://github.com/oamg/leapp-repository/blob/main/packaging/leapp-repository.spec) spec files,
 which are, as of December 2018, just these:
 
 - dnf

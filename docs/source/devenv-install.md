@@ -4,7 +4,7 @@
 
 If you do not want to modify the framework itself, install it from
 the RPM packages provided by the [Copr](https://copr.fedorainfracloud.org/coprs/g/oamg/leapp/)
-build system, which automatically builds packages with every commit merged into master.
+build system, which automatically builds packages with every commit merged into main.
 Packages are built for EPEL and Fedora.
 
 * On CentOS/RHEL:
@@ -65,7 +65,7 @@ Optional arguments:
   --debug               Enables debug mode
 
 Main commands:
-  
+
     new-tag             Create a new tag
     new-model           Creates a new model
     run                 Execute the given actor

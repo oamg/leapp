@@ -40,7 +40,7 @@ As a solution, we are using the metapackage that contains those dependencies.
 ## What to do when dependencies needs to be changed
 
 It's easy to change *outer dependencies* for Leapp. Open the
-[packaging/leapp.spec](https://github.com/oamg/leapp/blob/master/packaging/leapp.spec) file and change the dependencies as needed under
+[packaging/leapp.spec](https://github.com/oamg/leapp/blob/main/packaging/leapp.spec) file and change the dependencies as needed under
 `%package deps`. The right place is pretty highlighted (you cannot miss it):
 
 ```spec
