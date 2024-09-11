@@ -23,7 +23,7 @@ The snactor tool helps you with creating the base layout of a new Leapp reposito
 the repository artifacts like actors, models, tags, topics, and workflows. It also helps you with debugging as it is
 able to execute individual actors.
 
-See the [tutorial on basic usage of snactor](first-actor).
+See the [tutorial on basic usage of snactor](tutorials/first-actor).
 
 ## Move generic functionality to libraries
 
@@ -118,7 +118,7 @@ def do_the_actor_thingy(actor):
     actor.log.debug("All the actor’s logic shall be outside actor.py")
 ```
 
-For more about unit testing, see the [tutorial](unit-testing).
+For more about unit testing, see the [tutorial](tutorials/unit-testing).
 
 ## Do not introduce new dependencies
 

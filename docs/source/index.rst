@@ -8,16 +8,14 @@ Welcome to developer documentation for Leapp!
     :caption: Contents:
     :glob:
 
-    terminology
-    tutorials
-    leapp-repositories
-    infrastructure
+    building-blocks-and-architecture
+    devenv-install
+    tutorials/index
     best-practices
     test-actors
-    architecture
-    inplace-upgrade-workflow
+    libraries-and-api
+    packaging-and-dependencies
     contributing
-    python-coding-guidelines
     faq
     pydoc/leapp
 
