@@ -175,6 +175,7 @@ class ActorDefinition(object):
             'class_name': self.class_name,
             'description': self.description,
             'tags': self.tags,
+            'config_schemas': self.config_schemas,
             'consumes': self.consumes,
             'produces': self.produces,
             'apis': self.apis,
@@ -182,6 +183,7 @@ class ActorDefinition(object):
             'tools': self.tools,
             'files': self.files,
             'libraries': self.libraries,
+            'configs': self.configs,
             'tests': self.tests
         }
 
@@ -212,7 +214,21 @@ class ActorDefinition(object):
             if p.exitcode != 0:
                 self.log.error("Process inspecting actor in %s failed with %d", self.directory, p.exitcode)
                 raise ActorInspectionFailedError('Inspection of actor in {path} failed'.format(path=self.directory))
-            result = q.get()
+
+            # Note (dkubek): The use of injected_context() here is necessary
+            # when retrieving the discovered actor. This is because
+            # configuration schemas are defined within the actor's scope, and
+            # how Leapp manages imports. Configuration schemas, being scoped
+            # within each actor, are accessible internally by the actor itself.
+            # However, attempting to return a configuration schema outside this
+            # scope results in an error. This occurs because the schema class
+            # definition is no longer accessible in the path, making it
+            # unavailable for importint. The injected_context() here ensures
+            # the path to the actor level code remains in scope while accessing
+            # it.
+            with self.injected_context():
+                result = q.get()
+
             if not result:
                 self.log.error("Process inspecting actor in %s returned no result", self.directory)
                 raise ActorInspectionFailedError(
@@ -279,6 +295,13 @@ class ActorDefinition(object):
         """
         return self.discover()['description']
 
+    @property
+    def config_schemas(self):
+        """
+        :return: Actor config_schemas
+        """
+        return self.discover()['config_schemas']
+
     @contextlib.contextmanager
     def injected_context(self):
         """
@@ -301,10 +324,17 @@ class ActorDefinition(object):
         if self.tools:
             os.environ['LEAPP_TOOLS'] = os.path.join(self._repo_dir, self._directory, self.tools[0])
 
+        meta_path_backup = sys.meta_path[:]
+
         sys.meta_path.append(
             LeappLibrariesFinder(
                 module_prefix='leapp.libraries.actor',
                 paths=[os.path.join(self._repo_dir, self.directory, x) for x in self.libraries]))
+
+        sys.meta_path.append(
+            LeappLibrariesFinder(
+                module_prefix='leapp.configs.actor',
+                paths=[os.path.join(self._repo_dir, self.directory, x) for x in self.configs]))
 
         previous_path = os.getcwd()
         os.chdir(os.path.join(self._repo_dir, self._directory))
@@ -325,6 +355,8 @@ class ActorDefinition(object):
                 os.environ['LEAPP_TOOLS'] = tools_backup
             else:
                 os.environ.pop('LEAPP_TOOLS', None)
+
+            sys.meta_path = meta_path_backup
 
     @property
     def apis(self):
@@ -360,6 +392,13 @@ class ActorDefinition(object):
         :return: Tuple with path to the files folder of the actor, empty tuple if none
         """
         return tuple(self._definitions.get(DefinitionKind.FILES, ()))
+
+    @property
+    def configs(self):
+        """
+        :return: Tuple with path to the configs folder of the actor, empty tuple if none
+        """
+        return tuple(self._definitions.get(DefinitionKind.CONFIGS, ()))
 
     @property
     def tests(self):

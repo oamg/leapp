@@ -20,9 +20,16 @@ ENTRYPOINT virtualenv testenv -p "/usr/bin/$PYTHON_VENV" && \
     pip install -U pytest && \
     pip install -U six && \
     pip install -U . && \
+    export LINTABLES=$(find . -name '*.py' | grep -E -e '^\./leapp\/' -e '^\./tests/scripts/' | sort -u ) && \
     echo '==================================================' && \
     echo '==================================================' && \
-    echo '===============   Running  tests   ===============' && \
+    echo '===============   Running pylint   ===============' && \
     echo '==================================================' && \
     echo '==================================================' && \
-    py.test -vv --cov-report term-missing --cov=leapp tests/scripts/*.py
+    echo $LINTABLES | xargs pylint && echo '===> pylint PASSED' && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+    echo '===============   Running flake8   ===============' && \
+    echo '==================================================' && \
+    echo '==================================================' && \
+	flake8 $LINTABLES && echo '===> flake8 PASSED'

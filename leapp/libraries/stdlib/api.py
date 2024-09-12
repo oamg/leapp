@@ -228,3 +228,10 @@ def get_actor_tool_path(name):
     :rtype: str or None
     """
     return current_actor().get_actor_tool_path(name)
+
+
+def retrieve_config():
+    """
+    Retrieve the configuration specific to the specified schema.
+    """
+    return current_actor().retrieve_config()

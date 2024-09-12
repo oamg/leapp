@@ -1,6 +1,6 @@
 BEGIN;
 
-PRAGMA user_version = 3;
+PRAGMA user_version = 4;
 
 CREATE TABLE IF NOT EXISTS execution (
   id            INTEGER PRIMARY KEY NOT NULL,
@@ -45,6 +45,17 @@ CREATE TABLE IF NOT EXISTS message (
 CREATE TABLE IF NOT EXISTS metadata (
   hash              VARCHAR(64) PRIMARY KEY NOT NULL,
   metadata          TEXT
+);
+
+CREATE TABLE IF NOT EXISTS actor_config (
+  id                INTEGER PRIMARY KEY NOT NULL,
+  context           VARCHAR(36)         NOT NULL REFERENCES execution (context),
+  actor_config_hash VARCHAR(64)         NOT NULL REFERENCES actor_config_data (hash)
+);
+
+CREATE TABLE IF NOT EXISTS actor_config_data (
+  hash    VARCHAR(64) PRIMARY KEY NOT NULL,
+  config  TEXT
 );
 
 CREATE TABLE IF NOT EXISTS entity (

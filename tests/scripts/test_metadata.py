@@ -20,7 +20,8 @@ _PHASE_NAME = 'test-phase-name'
 _DIALOG_SCOPE = 'test-dialog'
 
 _WORKFLOW_METADATA_FIELDS = ('description', 'name', 'phases', 'short_name', 'tag')
-_ACTOR_METADATA_FIELDS = ('class_name', 'name', 'description', 'phase', 'tags', 'consumes', 'produces', 'path')
+_ACTOR_METADATA_FIELDS = ('class_name', 'config_schemas', 'name', 'description',
+                          'phase', 'tags', 'consumes', 'produces', 'path')
 
 _TEST_WORKFLOW_METADATA = {
     'description': 'No description has been provided for the UnitTest workflow.',
@@ -144,7 +145,7 @@ def test_store_actor_metadata(monkeypatch, repository_dir):
     # ---
     with repository_dir.as_cwd():
         logger = logging.getLogger('leapp.actor.test')
-        with mock.patch.object(logger, 'log') as log_mock:
+        with mock.patch.object(logger, 'log') as log_mock, mock.patch('os.chdir'):
             definition = ActorDefinition('actors/test', '.', log=log_mock)
             with mock.patch('leapp.repository.actor_definition.get_actor_metadata', return_value=_TEST_ACTOR_METADATA):
                 with mock.patch('leapp.repository.actor_definition.get_actors', return_value=[True]):

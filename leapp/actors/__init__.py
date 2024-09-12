@@ -1,7 +1,16 @@
+import functools
 import logging
 import os
 import sys
 
+try:
+    # Python 3.3+
+    from collections.abc import Sequence
+except ImportError:
+    # Python 2.6 through 3.2
+    from collections import Sequence
+
+from leapp.actors.config import Config, retrieve_config
 from leapp.compat import string_types
 from leapp.dialogs import Dialog
 from leapp.exceptions import (MissingActorAttributeError, RequestStopAfterPhase, StopActorExecution,
@@ -39,6 +48,11 @@ class Actor(object):
     """
     .. deprecated:: 0.5.0
        Write the actor's description as a docstring.
+    """
+
+    config_schemas = ()
+    """
+    Defines the structure of the configuration that the actor uses.
     """
 
     consumes = ()
@@ -86,6 +100,7 @@ class Actor(object):
             'path': os.path.dirname(sys.modules[type(self).__module__].__file__),
             'class_name': type(self).__name__,
             'description': self.description or type(self).__doc__,
+            'config_schemas': [c.__name__ for c in self.config_schemas],
             'consumes': [c.__name__ for c in self.consumes],
             'produces': [p.__name__ for p in self.produces],
             'tags': [t.__name__ for t in self.tags],
@@ -100,6 +115,7 @@ class Actor(object):
         This depends on the definition of such a configuration model being defined by the workflow
         and an actor that provides such a message.
         """
+
         Actor.current_instance = self
         install_translation_for_actor(type(self))
         self._messaging = messaging
@@ -107,8 +123,12 @@ class Actor(object):
         self.skip_dialogs = skip_dialogs
         """ A configured logger instance for the current actor. """
 
+        # self._configuration is the workflow configuration.
+        # self.config_schemas is the actor defined configuration.
+        # self.config is the actual actor configuration
         if config_model:
             self._configuration = next(self.consume(config_model), None)
+        self.config = retrieve_config(self.config_schemas)
 
         self._path = path
 
@@ -359,6 +379,15 @@ class Actor(object):
                 actor=self,
                 details=details)
 
+    def retrieve_config(self):
+        """
+        Retrieve the configuration described by self.config_schema.
+
+        :return: Dictionary containing requested configuration.
+        :rtype: dict
+        """
+        return retrieve_config(self.config_schema)
+
 
 def _is_type(value_type):
     def validate(actor, name, value):
@@ -390,15 +419,21 @@ def _lint_warn(actor, name, type_name):
         logging.getLogger("leapp.linter").warning("Actor %s field %s should be a tuple of %s", actor, name, type_name)
 
 
-def _is_model_tuple(actor, name, value):
-    if isinstance(value, type) and issubclass(value, Model):
-        _lint_warn(actor, name, "Models")
+def _is_foo_sequence(cls, cls_name, actor, name, value):
+    if isinstance(value, type) and issubclass(value, cls):
+        _lint_warn(actor, name, cls_name)
         value = (value,)
-    _is_type(tuple)(actor, name, value)
-    if not all([True] + [isinstance(item, type) and issubclass(item, Model) for item in value]):
+    _is_type(Sequence)(actor, name, value)
+    if not all(isinstance(item, type) and issubclass(item, cls) for item in value):
         raise WrongAttributeTypeError(
-            'Actor {} attribute {} should contain only Models'.format(actor, name))
+            'Actor {} attribute {} should contain only {}'.format(actor, name, cls_name))
     return value
+
+
+_is_config_sequence = functools.partial(_is_foo_sequence, Config, "Configs")
+_is_model_sequence = functools.partial(_is_foo_sequence, Model, "Models")
+_is_tag_sequence = functools.partial(_is_foo_sequence, Tag, "Tags")
+_is_api_sequence = functools.partial(_is_foo_sequence, WorkflowAPI, "WorkflowAPIs")
 
 
 def _is_dialog_tuple(actor, name, value):
@@ -409,28 +444,6 @@ def _is_dialog_tuple(actor, name, value):
     if not all([True] + [isinstance(item, Dialog) for item in value]):
         raise WrongAttributeTypeError(
             'Actor {} attribute {} should contain only Dialogs'.format(actor, name))
-    return value
-
-
-def _is_tag_tuple(actor, name, value):
-    if isinstance(value, type) and issubclass(value, Tag):
-        _lint_warn(actor, name, "Tags")
-        value = (value,)
-    _is_type(tuple)(actor, name, value)
-    if not all([True] + [isinstance(item, type) and issubclass(item, Tag) for item in value]):
-        raise WrongAttributeTypeError(
-            'Actor {} attribute {} should contain only Tags'.format(actor, name))
-    return value
-
-
-def _is_api_tuple(actor, name, value):
-    if isinstance(value, type) and issubclass(value, WorkflowAPI):
-        _lint_warn(actor, name, "Apis")
-        value = (value,)
-    _is_type(tuple)(actor, name, value)
-    if not all([True] + [isinstance(item, type) and issubclass(item, WorkflowAPI) for item in value]):
-        raise WrongAttributeTypeError(
-            'Actor {} attribute {} should contain only WorkflowAPIs'.format(actor, name))
     return value
 
 
@@ -464,13 +477,14 @@ def get_actor_metadata(actor):
         # # if path is not transformed into the realpath.
         ('path', os.path.dirname(os.path.realpath(sys.modules[actor.__module__].__file__))),
         _get_attribute(actor, 'name', _is_type(string_types), required=True),
-        _get_attribute(actor, 'tags', _is_tag_tuple, required=True, additional_info=additional_tag_info),
-        _get_attribute(actor, 'consumes', _is_model_tuple, required=False, default_value=(), resolve=get_api_models),
-        _get_attribute(actor, 'produces', _is_model_tuple, required=False, default_value=(), resolve=get_api_models),
+        _get_attribute(actor, 'tags', _is_tag_sequence, required=True, additional_info=additional_tag_info),
+        _get_attribute(actor, 'consumes', _is_model_sequence, required=False, default_value=(), resolve=get_api_models),
+        _get_attribute(actor, 'produces', _is_model_sequence, required=False, default_value=(), resolve=get_api_models),
         _get_attribute(actor, 'dialogs', _is_dialog_tuple, required=False, default_value=()),
         _get_attribute(actor, 'description', _is_type(string_types), required=False,
                        default_value=actor.__doc__ or 'There has been no description provided for this actor.'),
-        _get_attribute(actor, 'apis', _is_api_tuple, required=False, default_value=())
+        _get_attribute(actor, 'config_schemas', _is_config_sequence, required=False, default_value=()),
+        _get_attribute(actor, 'apis', _is_api_sequence, required=False, default_value=())
     ])
 
 

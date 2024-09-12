@@ -222,6 +222,67 @@ class DataSource(Host):
         self._data_source_id = cursor.fetchone()[0]
 
 
+class ActorConfigData(Storable):
+    """
+    Actor configuration data
+    """
+
+    def __init__(self, config=None, hash_id=None):
+        """
+        :param config: Actor configuration
+        :type config: str
+        :param hash_id: SHA256 hash in hexadecimal representation of config
+        :type hash_id: str
+        """
+        super(ActorConfigData, self).__init__()
+        self.config = config
+        self.hash_id = hash_id
+
+    def do_store(self, connection):
+        super(ActorConfigData, self).do_store(connection)
+        connection.execute(
+            'INSERT OR IGNORE INTO actor_config_data (hash, config) VALUES(?, ?)',
+            (self.hash_id, self.config)
+        )
+
+
+class ActorConfig(Storable):
+    """
+    Actor configuration
+    """
+
+    def __init__(self, context=None, config=None):
+        """
+        :param context: The execution context
+        :type context: str
+        :param config: Actor configuration
+        :type config: :py:class:`leapp.utils.audit.ActorConfigData`
+        """
+        super(ActorConfig, self).__init__()
+        self.context = context
+        self.config = config
+        self._actor_config_id = None
+
+    @property
+    def actor_config_id(self):
+        """
+        Returns the id of the entry, which is only set when already stored.
+        :return: Integer id or None
+        """
+        return self._actor_config_id
+
+    def do_store(self, connection):
+        super(ActorConfig, self).do_store(connection)
+        self.config.do_store(connection)
+        connection.execute(
+            'INSERT OR IGNORE INTO actor_config (context, actor_config_hash) VALUES(?, ?)',
+            (self.context, self.config.hash_id))
+        cursor = connection.execute(
+            'SELECT id FROM actor_config WHERE context = ? AND actor_config_hash = ?',
+            (self.context, self.config.hash_id))
+        self._actor_config_id = cursor.fetchone()[0]
+
+
 class Metadata(Storable):
     """
     Metadata of an Entity
@@ -651,10 +712,12 @@ def store_actor_metadata(actor_definition, phase):
         'consumes': sorted(model.__name__ for model in _metadata.get('consumes', ())),
         'produces': sorted(model.__name__ for model in _metadata.get('produces', ())),
         'tags': sorted(tag.__name__ for tag in _metadata.get('tags', ())),
+        'config_schemas': [field.serialize() for field in _metadata.get('config_schemas', ())],
     })
     _metadata['phase'] = phase
 
-    actor_metadata_fields = ('class_name', 'name', 'description', 'phase', 'tags', 'consumes', 'produces', 'path')
+    actor_metadata_fields = ('class_name', 'name', 'description', 'phase',
+                             'tags', 'consumes', 'produces', 'config_schemas', 'path')
     metadata = json.dumps({field: _metadata[field] for field in actor_metadata_fields}, sort_keys=True)
     metadata_hash_id = hashlib.sha256(metadata.encode('utf-8')).hexdigest()
 
