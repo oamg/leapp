@@ -4,6 +4,7 @@ import socket
 import sys
 import uuid
 
+from leapp.actors.config import retrieve_config
 from leapp.dialogs import RawMessageDialog
 from leapp.exceptions import CommandError, MultipleConfigActorsError, WorkflowConfigNotAvailable
 from leapp.messaging.answerstore import AnswerStore

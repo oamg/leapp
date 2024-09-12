@@ -89,6 +89,7 @@ def scan(repository, path):
         ('workflows', scan_workflows),
         ('files', scan_files),
         ('libraries', scan_libraries),
+        ('configs', scan_configs),
         ('tests', scan_tests),
         ('tools', scan_tools),
         ('apis', scan_apis))
@@ -222,6 +223,21 @@ def scan_libraries(repo, path, repo_path):
     """
     if os.listdir(path):
         repo.add(DefinitionKind.LIBRARIES, os.path.relpath(path, repo_path))
+
+
+def scan_configs(repo, path, repo_path):
+    """
+    Scans configs and adds them to the repository.
+
+    :param repo: Instance of the repository
+    :type repo: :py:class:`leapp.repository.Repository`
+    :param path: path to the configs
+    :type path: str
+    :param repo_path: path to the repository
+    :type repo_path: str
+    """
+    if os.listdir(path):
+        repo.add(DefinitionKind.CONFIGS, os.path.relpath(path, repo_path))
 
 
 def scan_tools(repo, path, repo_path):
