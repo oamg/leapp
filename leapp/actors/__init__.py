@@ -1,6 +1,8 @@
+import functools
 import logging
 import os
 import sys
+from collections.abc import Sequence
 
 from leapp.actors.config import Config, retrieve_config
 from leapp.compat import string_types
@@ -402,6 +404,22 @@ def _lint_warn(actor, name, type_name):
         logging.getLogger("leapp.linter").warning("Actor %s field %s should be a tuple of %s", actor, name, type_name)
 
 
+def _is_foo_sequence(cls, cls_name, actor, name, value):
+    if isinstance(value, type) and issubclass(value, cls):
+        _lint_warn(actor, name, cls_name)
+        value = (value,)
+    _is_type(Sequence)(actor, name, value)
+    if not all([True] + [isinstance(item, type) and issubclass(item, cls) for item in value]):
+        raise WrongAttributeTypeError(
+            'Actor {} attribute {} should contain only {}'.format(actor, name, cls_name))
+    return value
+
+
+_is_config_sequence = functools.partial(_is_foo_sequence, Config, "Config")
+
+
+# TODO: model, tag, and api_tuple can be migrated to use _is_foo_sequence.
+
 def _is_model_tuple(actor, name, value):
     if isinstance(value, type) and issubclass(value, Model):
         _lint_warn(actor, name, "Models")
@@ -410,17 +428,6 @@ def _is_model_tuple(actor, name, value):
     if not all([True] + [isinstance(item, type) and issubclass(item, Model) for item in value]):
         raise WrongAttributeTypeError(
             'Actor {} attribute {} should contain only Models'.format(actor, name))
-    return value
-
-
-def _is_dialog_tuple(actor, name, value):
-    if isinstance(value, Dialog):
-        _lint_warn(actor, name, "Dialogs")
-        value = (value,)
-    _is_type(tuple)(actor, name, value)
-    if not all([True] + [isinstance(item, Dialog) for item in value]):
-        raise WrongAttributeTypeError(
-            'Actor {} attribute {} should contain only Dialogs'.format(actor, name))
     return value
 
 
@@ -443,6 +450,17 @@ def _is_api_tuple(actor, name, value):
     if not all([True] + [isinstance(item, type) and issubclass(item, WorkflowAPI) for item in value]):
         raise WrongAttributeTypeError(
             'Actor {} attribute {} should contain only WorkflowAPIs'.format(actor, name))
+    return value
+
+
+def _is_dialog_tuple(actor, name, value):
+    if isinstance(value, Dialog):
+        _lint_warn(actor, name, "Dialogs")
+        value = (value,)
+    _is_type(tuple)(actor, name, value)
+    if not all([True] + [isinstance(item, Dialog) for item in value]):
+        raise WrongAttributeTypeError(
+            'Actor {} attribute {} should contain only Dialogs'.format(actor, name))
     return value
 
 
@@ -482,7 +500,7 @@ def get_actor_metadata(actor):
         _get_attribute(actor, 'dialogs', _is_dialog_tuple, required=False, default_value=()),
         _get_attribute(actor, 'description', _is_type(string_types), required=False,
                        default_value=actor.__doc__ or 'There has been no description provided for this actor.'),
-        _get_attribute(actor, 'config_schemas', _is_type(Config), required=False,
+        _get_attribute(actor, 'config_schemas', _is_config_sequence, required=False,
                        default_value=actor.__doc__ or 'Description of the configuration used by this actor.'),
         _get_attribute(actor, 'apis', _is_api_tuple, required=False, default_value=())
     ])
