@@ -183,6 +183,7 @@ class ActorDefinition(object):
             'tools': self.tools,
             'files': self.files,
             'libraries': self.libraries,
+            'configs': self.configs,
             'tests': self.tests
         }
 

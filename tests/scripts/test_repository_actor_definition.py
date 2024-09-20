@@ -60,6 +60,7 @@ def test_actor_definition(repository_dir):
                     assert dumped.pop('name') == definition.name
                     assert dumped.pop('files') == ('.',)
                     assert dumped.pop('libraries') == ('.',)
+                    assert dumped.pop('configs') == ('.',)
                     assert dumped.pop('tests') == ('.',)
                     assert dumped.pop('tools') == ('.',)
                     # Assert to ensure we covered all keys
