@@ -465,6 +465,70 @@ class List(Field):
         return result
 
 
+class StringMap(Field):
+    """
+    Map from strings to instances of a given value type.
+    """
+    def __init__(self, value_type, **kwargs):
+        super(StringMap, self).__init__(**kwargs)
+
+        if self._default is not None:
+            self._default = copy.copy(self._default)
+
+        if not isinstance(value_type, Field):
+            raise ModelMisuseError("elem_field must be an instance of a type derived from Field")
+
+        self._value_type = value_type
+
+    def _validate_model_value_using_validator(self, new_map, name, validation_method):
+        list_validator_fn = getattr(super(StringMap, self), validation_method)
+        list_validator_fn(new_map, name)
+
+        if isinstance(new_map, dict):
+            for key in new_map:
+                # Check that the key is trully a string
+                if not isinstance(key, str):
+                    err = 'Expected a key of type `str`, but got a key `{}` of type `{}`'
+                    raise ModelViolationError(err.format(key, type(key).__name__))
+
+                value = new_map[key]  # avoid using .items(), as it creates a list of all items (slow) in py2
+
+                # _value_type's validation will check whether the value has a correct type
+                value_validator_fn = getattr(self._value_type, validation_method)
+                value_validator_fn(value, name='{}[{}]'.format(name, key))
+        elif value is not None:
+            raise ModelViolationError('Expected a dict but got {} for the {} field'.format(type(value).__name__, name))
+
+    def _validate_model_value(self, value, name):
+        self._validate_model_value_using_validator(value, name, '_validate_model_value')
+
+    def _validate_builtin_value(self, value, name):
+        self._validate_model_value_using_validator(value, name, '_validate_builtin_value')
+
+    def _convert_to_model(self, value, name):
+        self._validate_builtin_value(value=value, name=name)
+
+        if value is None:
+            return value
+
+        converter = self._value_type._convert_to_model
+        return {key: converter(value[key], name='{0}["{1}"]'.format(name, key)) for key in value}
+
+    def _convert_from_model(self, value, name):
+        self._validate_model_value(value=value, name=name)
+
+        if value is None:
+            return value
+
+        converter = self._value_type._convert_from_model
+        return {key: converter(value[key], name='{0}["{1}"]'.format(name, key)) for key in value}
+
+    def serialize(self):
+        result = super(StringMap, self).serialize()
+        result['value_type'] = self._value_type.serialize()
+        return result
+
+
 class Model(Field):
     """
     Model is used to use other Models as fields
