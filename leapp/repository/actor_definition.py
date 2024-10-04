@@ -195,7 +195,6 @@ class ActorDefinition(object):
             with self.injected_context():
                 path = os.path.abspath(os.path.join(self._repo_dir, self.directory))
                 for importer, name, is_pkg in pkgutil.iter_modules((path,)):
-                    print("name")
                     if not is_pkg:
                         self._module = load_module(importer, name)
                         break
