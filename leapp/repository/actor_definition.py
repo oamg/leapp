@@ -195,6 +195,7 @@ class ActorDefinition(object):
             with self.injected_context():
                 path = os.path.abspath(os.path.join(self._repo_dir, self.directory))
                 for importer, name, is_pkg in pkgutil.iter_modules((path,)):
+                    print("name")
                     if not is_pkg:
                         self._module = load_module(importer, name)
                         break
@@ -214,7 +215,10 @@ class ActorDefinition(object):
             if p.exitcode != 0:
                 self.log.error("Process inspecting actor in %s failed with %d", self.directory, p.exitcode)
                 raise ActorInspectionFailedError('Inspection of actor in {path} failed'.format(path=self.directory))
-            result = q.get()
+
+            with self.injected_context():
+                result = q.get()
+
             if not result:
                 self.log.error("Process inspecting actor in %s returned no result", self.directory)
                 raise ActorInspectionFailedError(
@@ -310,6 +314,8 @@ class ActorDefinition(object):
         if self.tools:
             os.environ['LEAPP_TOOLS'] = os.path.join(self._repo_dir, self._directory, self.tools[0])
 
+        meta_path_backup = sys.meta_path[:]
+
         sys.meta_path.append(
             LeappLibrariesFinder(
                 module_prefix='leapp.libraries.actor',
@@ -339,6 +345,8 @@ class ActorDefinition(object):
                 os.environ['LEAPP_TOOLS'] = tools_backup
             else:
                 os.environ.pop('LEAPP_TOOLS', None)
+
+            sys.meta_path = meta_path_backup
 
     @property
     def apis(self):
