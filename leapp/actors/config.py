@@ -148,7 +148,7 @@ def normalize_schemas(schemas):
     Merge all schemas into a single dictionary and validate them for errors we can detect.
     """
     added_fields = set()
-    normalized_schema = {}
+    normalized_schema = defaultdict(dict)
     for schema in schemas:
         for field in schema:
             unique_name = (field.section, field.name)
