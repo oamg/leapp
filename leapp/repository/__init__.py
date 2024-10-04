@@ -147,7 +147,7 @@ class Repository(object):
 
             sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.libraries.common', paths=self.libraries))
             sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.workflows.api', paths=self.apis))
-            sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.configs', paths=self.configs))
+            sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.configs.common', paths=self.configs))
 
         if not skip_actors_discovery:
             if not stage or stage is _LoadStage.ACTORS:
