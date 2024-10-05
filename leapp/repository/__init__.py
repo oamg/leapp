@@ -7,6 +7,7 @@ from leapp.compat import load_module
 from leapp.exceptions import RepoItemPathDoesNotExistError, UnsupportedDefinitionKindError
 from leapp.models import get_models, resolve_model_references
 import leapp.libraries.common  # noqa # pylint: disable=unused-import
+import leapp.configs.common  # noqa # pylint: disable=unused-import
 from leapp.repository.actor_definition import ActorDefinition
 from leapp.repository.definition import DefinitionKind
 from leapp.tags import get_tags
