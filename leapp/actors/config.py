@@ -27,6 +27,9 @@ from collections import defaultdict
 import six
 import yaml
 
+from leapp.models.fields import ModelViolationError
+
+
 try:
     # Compiled versions if available, for speed
     from yaml import CSafeLoader as SafeLoader, CSafeDumper as SafeDumper
@@ -175,18 +178,21 @@ def normalize_schemas(schemas):
     return normalized_schema
 
 
-def _validate_field_type(field_type, field_value):
+def _validate_field_type(field_type, field_value, field_path):
     """
     Return False if the field is not of the proper type.
+
+    :param str field_path: Path in the config where the field is placed.
+                           Example: A field 'target_clients' in a section 'rhui' would have a path 'rhui.target_clients'
     """
     # TODO: I took a quick look at the Model code and this is what I came up
     # with.  This might not work right or there might be a much better way.
     try:
-        field_type.create(field_value)
-    except Exception as e:  # pylint: disable=broad-exception-caught,broad-except
+        # the name= parameter is displayed in error messages to let the user know what precisely is wrong
+        field_type._validate_model_value(field_value, name=field_path)
+    except ModelViolationError as e:  # pylint: disable=broad-exception-caught,broad-except
         # Any problems mean that the field did not validate.
-        log.info("Configuration value failed to validate with:"
-                 " %{exc}".format(exc=str(e)))
+        log.info("Configuration value failed to validate with: %s", e)
         return False
     return True
 
@@ -239,9 +245,11 @@ def _normalize_config(actor_config, schema):
                 # May need to deepcopy default if these values are modified.
                 # However, it's probably an error if they are modified and we
                 # should possibly look into disallowing that.
-                value = section[field_name] = field.default
+                value = field.default
+                section[field_name] = value
 
-            if not _validate_field_type(field.type_, value):
+            field_path = '{0}.{1}'.format(section_name, field_name)
+            if not _validate_field_type(field.type_, value, field_path):
                 raise ValidationError("Config value for (Section: {section},"
                                       " Field: {field}) is not of the correct"
                                       " type".format(section=section_name,
