@@ -298,7 +298,7 @@ def retrieve_config(schema):
     for field in schema:
         configuration[field.section][field.name] = _ACTOR_CONFIG[field.section][field.name]
 
-    return configuration
+    return dict(configuration)
 
 #
 # The function after this needs some work to be ready.  It isn't part of the

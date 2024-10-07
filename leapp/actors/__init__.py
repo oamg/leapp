@@ -379,6 +379,17 @@ class Actor(object):
                 actor=self,
                 details=details)
 
+    def retrieve_config(self):
+        """
+        Retrieve the configuration specific to the specified schema.
+
+        :param schema: Configuration schemas
+        :type schema: :py:class:`leapp.models.Model`
+        :return: Dictionary containing requested configuration.
+        :rtype: dict
+        """
+        return retrieve_config(self.config_schema)
+
 
 def _is_type(value_type):
     def validate(actor, name, value):
