@@ -651,10 +651,12 @@ def store_actor_metadata(actor_definition, phase):
         'consumes': sorted(model.__name__ for model in _metadata.get('consumes', ())),
         'produces': sorted(model.__name__ for model in _metadata.get('produces', ())),
         'tags': sorted(tag.__name__ for tag in _metadata.get('tags', ())),
+        'config_schemas': [field.serialize() for field in _metadata.get('config_schemas', ())],
     })
     _metadata['phase'] = phase
 
-    actor_metadata_fields = ('class_name', 'name', 'description', 'phase', 'tags', 'consumes', 'produces', 'path')
+    actor_metadata_fields = ('class_name', 'name', 'description', 'phase',
+                             'tags', 'consumes', 'produces', 'config_schemas', 'path')
     metadata = json.dumps({field: _metadata[field] for field in actor_metadata_fields}, sort_keys=True)
     metadata_hash_id = hashlib.sha256(metadata.encode('utf-8')).hexdigest()
 

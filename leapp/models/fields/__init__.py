@@ -153,7 +153,7 @@ class Field(object):
 
     def serialize(self):
         """
-        :return: Serialized form of the workflow
+        :return: Serialized form of the field
         """
         return {
             'nullable': self._nullable,

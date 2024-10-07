@@ -105,6 +105,20 @@ class Config:
         #   representation[cls.section][cls.name] = cls.type_.get_default()
 
         return representation
+
+    @classmethod
+    def serialize(cls):
+        """
+        :return: Serialized information for the config
+        """
+        return {
+            'class_name': cls.__name__,
+            'section': cls.section,
+            'name': cls.name,
+            'type': cls.type_.serialize(),
+            'description': cls.description,
+            'default': cls.default,
+        }
 # pylint: enable=deprecated-decorator
 
 

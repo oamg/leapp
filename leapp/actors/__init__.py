@@ -10,7 +10,7 @@ except ImportError:
     # Python 2.6 through 3.2
     from collections import Sequence
 
-from leapp.actors.config import Config, retrieve_config
+from leapp.actors.config import Config
 from leapp.compat import string_types
 from leapp.dialogs import Dialog
 from leapp.exceptions import (MissingActorAttributeError, RequestStopAfterPhase, StopActorExecution,
@@ -517,7 +517,7 @@ def get_actor_metadata(actor):
         _get_attribute(actor, 'dialogs', _is_dialog_tuple, required=False, default_value=()),
         _get_attribute(actor, 'description', _is_type(string_types), required=False,
                        default_value=actor.__doc__ or 'There has been no description provided for this actor.'),
-         _get_attribute(actor, 'config_schemas', _is_config_sequence, required=False, default_value=()),
+        _get_attribute(actor, 'config_schemas', _is_config_sequence, required=False, default_value=()),
         _get_attribute(actor, 'apis', _is_api_tuple, required=False, default_value=())
     ])
 
