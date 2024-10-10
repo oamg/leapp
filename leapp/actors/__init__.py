@@ -10,7 +10,7 @@ except ImportError:
     # Python 2.6 through 3.2
     from collections import Sequence
 
-from leapp.actors.config import Config
+from leapp.actors.config import Config, retrieve_config
 from leapp.compat import string_types
 from leapp.dialogs import Dialog
 from leapp.exceptions import (MissingActorAttributeError, RequestStopAfterPhase, StopActorExecution,
