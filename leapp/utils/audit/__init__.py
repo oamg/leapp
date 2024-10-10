@@ -637,7 +637,7 @@ def store_workflow_metadata(workflow):
     ent.store()
 
 
-def store_actor_metadata(actor_definition, phase):
+def store_actor_metadata(actor_definition, phase, config):
     """
     Store the metadata of the given actor given as an ``actor_definition``
     object into the database.
@@ -655,8 +655,11 @@ def store_actor_metadata(actor_definition, phase):
     })
     _metadata['phase'] = phase
 
+    # TODO(dkubek): Is configuration metadata? Does it make sense to include it here?
+    _metadata['config'] = config
+
     actor_metadata_fields = ('class_name', 'name', 'description', 'phase',
-                             'tags', 'consumes', 'produces', 'config_schemas', 'path')
+                             'tags', 'consumes', 'produces', 'config_schemas', 'config', 'path')
     metadata = json.dumps({field: _metadata[field] for field in actor_metadata_fields}, sort_keys=True)
     metadata_hash_id = hashlib.sha256(metadata.encode('utf-8')).hexdigest()
 
