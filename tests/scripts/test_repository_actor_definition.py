@@ -13,6 +13,7 @@ _FAKE_META_DATA = {
     'name': 'fake-actor',
     'path': 'actors/test',
     'tags': (),
+    'config_schemas': (),
     'consumes': (),
     'produces': (),
     'dialogs': (),
@@ -40,6 +41,7 @@ def test_actor_definition(repository_dir):
                     assert definition.consumes == _FAKE_META_DATA['consumes']
                     assert definition.produces == _FAKE_META_DATA['produces']
                     assert definition.tags == _FAKE_META_DATA['tags']
+                    assert definition.config_schemas == _FAKE_META_DATA['config_schemas']
                     assert definition.class_name == _FAKE_META_DATA['class_name']
                     assert definition.dialogs == _FAKE_META_DATA['dialogs']
                     assert definition.name == _FAKE_META_DATA['name']
@@ -52,11 +54,13 @@ def test_actor_definition(repository_dir):
                     assert dumped.pop('produces') == definition.produces
                     assert dumped.pop('apis') == definition.apis
                     assert dumped.pop('tags') == definition.tags
+                    assert dumped.pop('config_schemas') == definition.config_schemas
                     assert dumped.pop('dialogs') == [dialog.serialize() for dialog in definition.dialogs]
                     assert dumped.pop('path') == _FAKE_META_DATA['path']
                     assert dumped.pop('name') == definition.name
                     assert dumped.pop('files') == ('.',)
                     assert dumped.pop('libraries') == ('.',)
+                    assert dumped.pop('configs') == ('.',)
                     assert dumped.pop('tests') == ('.',)
                     assert dumped.pop('tools') == ('.',)
                     # Assert to ensure we covered all keys

@@ -4,6 +4,7 @@ import socket
 import sys
 import uuid
 
+from leapp.actors.config import retrieve_config
 from leapp.dialogs import RawMessageDialog
 from leapp.exceptions import CommandError, MultipleConfigActorsError, WorkflowConfigNotAvailable
 from leapp.messaging.answerstore import AnswerStore
@@ -301,7 +302,8 @@ class Workflow(with_metaclass(WorkflowMeta)):
         for phase in self._phase_actors:
             for stage in phase[1:]:
                 for actor in stage.actors:
-                    store_actor_metadata(actor, phase[0].name)
+                    actor_config = retrieve_config(actor.config_schemas)
+                    store_actor_metadata(actor, phase[0].name, actor_config)
 
         self._stop_after_phase_requested = False
         for phase in self._phase_actors:

@@ -7,6 +7,7 @@ from leapp.compat import load_module
 from leapp.exceptions import RepoItemPathDoesNotExistError, UnsupportedDefinitionKindError
 from leapp.models import get_models, resolve_model_references
 import leapp.libraries.common  # noqa # pylint: disable=unused-import
+import leapp.configs.common  # noqa # pylint: disable=unused-import
 from leapp.repository.actor_definition import ActorDefinition
 from leapp.repository.definition import DefinitionKind
 from leapp.tags import get_tags
@@ -144,8 +145,10 @@ class Repository(object):
             self.log.debug("Extending LEAPP_COMMON_FILES for common file paths")
             self._extend_environ_paths('LEAPP_COMMON_FILES', self.files)
             self.log.debug("Installing repository provided common libraries loader hook")
+
             sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.libraries.common', paths=self.libraries))
             sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.workflows.api', paths=self.apis))
+            sys.meta_path.append(LeappLibrariesFinder(module_prefix='leapp.configs.common', paths=self.configs))
 
         if not skip_actors_discovery:
             if not stage or stage is _LoadStage.ACTORS:
@@ -189,6 +192,15 @@ class Repository(object):
             })
             return data
 
+        # Note: `configs` are not present here because we are not yet making
+        # them globally accessible.  This is to force people to copy the config
+        # schema to their Actors instead of importing them from other Actors.
+        # That copy, in turn, is a good idea so the framework can return an
+        # error if two Actors share the same config but they have different
+        # schemafor it (for instance, if Actor Foo and Bar were sharing the
+        # same config entry but Actor Foo updated the entry in a later version.
+        # We need to error so Actor Bar can either be ported to the new
+        # definition or use a different config entry for it's needs.)
         return {
             'repo_dir': self._repo_dir,
             'actors': [mapped_actor_data(a.serialize()) for a in self.actors],
@@ -199,7 +211,8 @@ class Repository(object):
             'workflows': filtered_serialization(get_workflows, self.workflows),
             'tools': [dict([('path', path)]) for path in self.relative_paths(self.tools)],
             'files': [dict([('path', path)]) for path in self.relative_paths(self.files)],
-            'libraries': [dict([('path', path)]) for path in self.relative_paths(self.libraries)]
+            'libraries': [dict([('path', path)]) for path in self.relative_paths(self.libraries)],
+            'configs': [dict([('path', path)]) for path in self.relative_paths(self.configs)],
         }
 
     def _extend_environ_paths(self, name, paths):
@@ -267,6 +280,13 @@ class Repository(object):
         :return: Tuple of libraries in the repository
         """
         return tuple(self._definitions.get(DefinitionKind.LIBRARIES, ()))
+
+    @property
+    def configs(self):
+        """
+        :return: Tuple of configs in the repository
+        """
+        return tuple(self._definitions.get(DefinitionKind.CONFIGS, ()))
 
     @property
     def files(self):
