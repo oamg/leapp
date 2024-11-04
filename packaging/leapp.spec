@@ -13,11 +13,11 @@
 # This is kind of help for more flexible development of leapp repository,
 # so people do not have to wait for new official release of leapp to ensure
 # it is installed/used the compatible one.
-%global framework_version 5.0
+%global framework_version 6.0
 
 # IMPORTANT: everytime the requirements are changed, increment number by one
 # - same for Provides in deps subpackage
-%global framework_dependencies 5
+%global framework_dependencies 6
 
 # Do not build bindings for python3 for RHEL == 7
 # # Currently Py2 is dead on Fedora and we don't have to support it. As well,
