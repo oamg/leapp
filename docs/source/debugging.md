@@ -26,3 +26,31 @@ It's possible to go minimal and debug actor execution with remote debugger like
 3. In a separate console connect to the debugger via network utility of your choice. The default port is 4444.
 
 ```nc localhost 4444```
+
+
+### Initramfs
+
+One of the biggest debugging challenges is exploring something in initramfs stage, as currently there is no network
+connectivity (this might change soon though).
+
+1. (can be skipped if you already ended up with an emergency console)
+To get access to the emergency console right after leapp execution in initramfs stage has finished you should add an
+`rd.break=leapp-upgrade` argument to the kernel commandline. One way to do this is by changing the code of the
+[addupgradebootentry actor](https://github.com/oamg/leapp-repository/blob/master/repos/system_upgrade/common/actors/addupgradebootentry/libraries/addupgradebootentry.py#L23)
+
+2. (can be skipped if you don't need any extra binaries) [TBD] Information on how to include additional binaries into
+the initramfs
+
+3. To get access to the common binaries change `PATH` accordingly. Setting
+`PATH="$PATH:/sysroot/bin:/sysroot/sbin:/sysroot/usr/bin"` should do the trick.
+If `/sysroot` is not mounted at the time you may need to mount it manually, e.g. with `systemctl start sysroot.mount`.
+
+4. If the binaries are complaining about missing shared libraries, you could either set `LD_LIBRARY_PATH` variable
+to `LD_LIBRARY_PATH=/sysroot/lib64:/lib64` or change root to /sysroot: `chroot /sysroot`
+
+5. If you need to make changes to files on /sysroot, make sure you remount it `mount -o remount,rw /sysroot`
+
+6. [TBD] Put info how to collect the logs
+
+> **_NOTE:_** When working in initramfs stage you will need a serial console. Though openstack machines can provide
+you with a novnc console, unless you need a shared dev environment consider using vagrant/libvirt.
