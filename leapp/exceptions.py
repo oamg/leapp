@@ -4,6 +4,10 @@ class LeappError(Exception):
         self.message = message
 
 
+class FrameworkInitializationError(LeappError):
+    pass
+
+
 class RepositoryConfigurationError(LeappError):
     pass
 
