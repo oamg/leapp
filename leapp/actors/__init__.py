@@ -57,20 +57,23 @@ class Actor(object):
 
     consumes = ()
     """
-    Tuple of :py:class:`leapp.models.Model` derived classes defined in the :ref:`repositories <terminology:repository>`
-    that define :ref:`messages <terminology:message>` the actor consumes.
+    Tuple of :py:class:`leapp.models.Model` derived classes defined in the
+    :ref:`repositories <building-blocks-and-architecture:repository>`
+    that define :ref:`messages <building-blocks-and-architecture:message>` the actor consumes.
     """
 
     produces = ()
     """
-    Tuple of :py:class:`leapp.models.Model` derived classes defined in the :ref:`repositories <terminology:repository>`
-    that define :ref:`messages <terminology:message>` the actor produces.
+    Tuple of :py:class:`leapp.models.Model` derived classes defined in the
+    :ref:`repositories <building-blocks-and-architecture:repository>`
+    that define :ref:`messages <building-blocks-and-architecture:message>` the actor produces.
     """
 
     tags = ()
     """
-    Tuple of :py:class:`leapp.tags.Tag` derived classes by which :ref:`workflow <terminology:workflow>`
-    :ref:`phases <terminology:phase>` select actors for execution.
+    Tuple of :py:class:`leapp.tags.Tag` derived classes by which
+    :ref:`workflow <building-blocks-and-architecture:workflow>`
+    :ref:`phases <building-blocks-and-architecture:phase>` select actors for execution.
     """
 
     dialogs = ()
