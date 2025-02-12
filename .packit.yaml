@@ -417,14 +417,14 @@ jobs:
 # ######################### Individual tests ########################### #
 # ###################################################################### #
 
-# Tests: 8.8 -> 9.2
-- &sanity-88to92
+# Tests: 8.10 -> 9.4
+- &sanity-810to94
   <<: *sanity-abstract-8to9
   trigger: pull_request
   targets:
     epel-8-x86_64:
-      distros: [RHEL-8.8.0-Nightly]
-  identifier: sanity-8.8to9.2
+      distros: [RHEL-8.10.0-Nightly]
+  identifier: sanity-8.10to9.4
   tf_extra_params:
     test:
       tmt:
@@ -440,24 +440,24 @@ jobs:
           order: 40
         tmt:
           context:
-            distro: "rhel-8.8"
-            distro_target: "rhel-9.2"
+            distro: "rhel-8.10"
+            distro_target: "rhel-9.4"
         settings:
           provisioning:
             tags:
               BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
-    SOURCE_RELEASE: "8.8"
-    TARGET_RELEASE: "9.2"
+    SOURCE_RELEASE: "8.10"
+    TARGET_RELEASE: "9.4"
     RHSM_REPOS_EUS: "eus"
 
-- &sanity-88to92-aws
+- &sanity-810to94-aws
   <<: *sanity-abstract-8to9-aws
   trigger: pull_request
   targets:
     epel-8-x86_64:
-      distros: [RHEL-8.8-rhui]
-  identifier: sanity-8.8to9.2-aws
+      distros: [RHEL-8.10-rhui]
+  identifier: sanity-8.10to9.4-aws
   tf_extra_params:
     test:
       tmt:
@@ -473,29 +473,29 @@ jobs:
           order: 40
         tmt:
           context:
-            distro: "rhel-8.8"
-            distro_target: "rhel-9.2"
+            distro: "rhel-8.10"
+            distro_target: "rhel-9.4"
         settings:
           provisioning:
             post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
             tags:
               BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
-    SOURCE_RELEASE: "8.8"
-    TARGET_RELEASE: "9.2"
+    SOURCE_RELEASE: "8.10"
+    TARGET_RELEASE: "9.4"
     RHUI_HYPERSCALER: aws
 
-- &beaker-minimal-88to92
+- &beaker-minimal-810to94
   <<: *beaker-minimal-8to9-abstract-ondemand
   trigger: pull_request
   labels:
     - beaker-minimal
-    - beaker-minimal-8.8to9.2
-    - 8.8to9.2
+    - beaker-minimal-8.10to9.4
+    - 8.10to9.4
   targets:
     epel-8-x86_64:
-      distros: [RHEL-8.8.0-Nightly]
-  identifier: sanity-8.8to9.2-beaker-minimal-ondemand
+      distros: [RHEL-8.10.0-Nightly]
+  identifier: sanity-8.10to9.4-beaker-minimal-ondemand
   tf_extra_params:
     test:
       tmt:
@@ -511,29 +511,29 @@ jobs:
           order: 40
         tmt:
           context:
-            distro: "rhel-8.8"
-            distro_target: "rhel-9.2"
+            distro: "rhel-8.10"
+            distro_target: "rhel-9.4"
         settings:
           provisioning:
             post_install_script: "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"
             tags:
               BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
-    SOURCE_RELEASE: "8.8"
-    TARGET_RELEASE: "9.2"
+    SOURCE_RELEASE: "8.10"
+    TARGET_RELEASE: "9.4"
     RHSM_REPOS_EUS: "eus"
 
-- &kernel-rt-88to92
+- &kernel-rt-810to94
   <<: *kernel-rt-abstract-8to9-ondemand
   trigger: pull_request
   labels:
     - kernel-rt
-    - kernel-rt-8.8to9.2
-    - 8.8to9.2
-  identifier: sanity-8.8to9.2-kernel-rt-ondemand
+    - kernel-rt-8.10to9.4
+    - 8.10to9.4
+  identifier: sanity-8.10to9.4-kernel-rt-ondemand
   targets:
     epel-8-x86_64:
-      distros: [RHEL-8.8.0-Nightly]
+      distros: [RHEL-8.10.0-Nightly]
   tf_extra_params:
     test:
       tmt:
@@ -549,15 +549,15 @@ jobs:
           order: 40
         tmt:
           context:
-            distro: "rhel-8.8"
-            distro_target: "rhel-9.2"
+            distro: "rhel-8.10"
+            distro_target: "rhel-9.4"
         settings:
           provisioning:
             tags:
               BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
-    SOURCE_RELEASE: "8.8"
-    TARGET_RELEASE: "9.2"
+    SOURCE_RELEASE: "8.10"
+    TARGET_RELEASE: "9.4"
     RHSM_REPOS_EUS: "eus"
 
 
