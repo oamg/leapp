@@ -69,62 +69,61 @@ jobs:
       && ! startsWith(github.event.comment.body, '/rerun-sst')
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
-  call_workflow_tests_86to90_integration:
+  call_workflow_tests_810to94_integration:
     needs: call_workflow_copr_build
     uses: ./.github/workflows/reuse-tests-8to9.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*max_sst)"
-      variables: 'SOURCE_RELEASE=8.6;TARGET_RELEASE=9.0;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms;LEAPPDATA_BRANCH=upstream'
-      pull_request_status_name: "8.6to9.0"
+      variables: 'SOURCE_RELEASE=8.10;TARGET_RELEASE=9.4;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms;LEAPPDATA_BRANCH=upstream'
+      pull_request_status_name: "8.10to9.4"
     if: |
       github.event.issue.pull_request
       && ! startsWith(github.event.comment.body, '/rerun-sst')
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
-  call_workflow_tests_88to92_integration:
+  call_workflow_tests_810to96_integration:
     needs: call_workflow_copr_build
     uses: ./.github/workflows/reuse-tests-8to9.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(?!.*max_sst)"
-      variables: 'SOURCE_RELEASE=8.8;TARGET_RELEASE=9.2;LEAPP_DEVEL_TARGET_RELEASE=9.2;RHSM_REPOS=rhel-8-for-x86_64-appstream-beta-rpms,rhel-8-for-x86_64-baseos-beta-rpms;LEAPPDATA_BRANCH=upstream'
-      compose: "RHEL-8.8.0-Nightly"
-      pull_request_status_name: "8.8to9.2"
-      tmt_context: "distro=rhel-8.8"
+      variables: 'SOURCE_RELEASE=8.10;TARGET_RELEASE=9.6;LEAPP_DEVEL_TARGET_RELEASE=9.6;RHSM_REPOS=rhel-8-for-x86_64-appstream-beta-rpms,rhel-8-for-x86_64-baseos-beta-rpms;LEAPPDATA_BRANCH=upstream'
+      pull_request_status_name: "8.8to9.6"
+      tmt_context: "distro=rhel-8.10"
     if: |
       github.event.issue.pull_request
       && ! startsWith(github.event.comment.body, '/rerun-sst')
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
-  call_workflow_tests_86to90_sst:
+  call_workflow_tests_810to94_sst:
     needs: call_workflow_copr_build
     uses: ./.github/workflows/reuse-tests-8to9.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*tier[2-3].*)(.*max_sst.*)"
-      variables: 'SOURCE_RELEASE=8.6;TARGET_RELEASE=9.0;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms;LEAPPDATA_BRANCH=upstream'
-      pull_request_status_name: "8.6to9.0-sst"
+      variables: 'SOURCE_RELEASE=8.10;TARGET_RELEASE=9.4;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms;LEAPPDATA_BRANCH=upstream'
+      pull_request_status_name: "8.10to9.4-sst"
       update_pull_request_status: 'false'
     if: |
       github.event.issue.pull_request
       && startsWith(github.event.comment.body, '/rerun-sst')
       && contains(fromJson('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association)
 
-  call_workflow_tests_86to90_aws:
+  call_workflow_tests_810to94_aws:
     needs: call_workflow_copr_build
     uses: ./.github/workflows/reuse-tests-8to9.yml
     secrets: inherit
     with:
       copr_artifacts: ${{ needs.call_workflow_copr_build.outputs.artifacts }}
       tmt_plan_regex: "^(?!.*upgrade_plugin)(?!.*tier[2-3].*)(?!.*rhsm)(?!.*c2r)(?!.*sap)(?!.*7to8)(.*e2e)"
-      compose: "RHEL-8.6-rhui"
+      compose: "RHEL-8.10-rhui"
       environment_settings: '{"provisioning": {"post_install_script": "#!/bin/sh\nsudo sed -i s/.*ssh-rsa/ssh-rsa/ /root/.ssh/authorized_keys"}}'
       pull_request_status_name: "8to9-aws-e2e"
-      variables: 'SOURCE_RELEASE=8.6;TARGET_RELEASE=9.0;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms;RHUI=aws;LEAPPDATA_BRANCH=upstream'
+      variables: 'SOURCE_RELEASE=8.10;TARGET_RELEASE=9.4;RHSM_REPOS=rhel-8-for-x86_64-appstream-eus-rpms,rhel-8-for-x86_64-baseos-eus-rpms;RHUI=aws;LEAPPDATA_BRANCH=upstream'
     if: |
       github.event.issue.pull_request
       && ! startsWith(github.event.comment.body, '/rerun-sst')
