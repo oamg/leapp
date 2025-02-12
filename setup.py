@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 from distutils.util import convert_path
 
 main_ns = {}
-ver_path = convert_path('leapp/__init__.py')
+ver_path = convert_path('leapp/__version__.py')
 with open(ver_path) as ver_file:
     exec(ver_file.read(), main_ns)
 

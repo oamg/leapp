@@ -1,6 +1,4 @@
 from leapp.utils.workarounds import apply_workarounds
-
-VERSION = "0.18.0"
-FULL_VERSION = VERSION
+from leapp.__version__ import VERSION, FULL_VERSION
 
 apply_workarounds()
