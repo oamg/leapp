@@ -59,7 +59,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Leapp'
-copyright = '2017-2018, Leapp Team'
+copyright = '2025, Leapp Team'
 author = 'Leapp Team'
 
 # The version info for the project you're documenting, acts as replacement for
