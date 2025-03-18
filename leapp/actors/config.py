@@ -146,7 +146,7 @@ def _get_config(config_dir='/etc/leapp/actor_conf.d'):
     # We do not do a recursive walk to maintain Python2 compatibility, but we do
     # not expect rich config hierarchies, so no harm done.
     config_files = glob.glob(os.path.join(config_dir, '*'))
-    config_files = [f for f in config_files if f.endswith('.yml') or f.endswith('.yaml')]
+    config_files = [f for f in config_files if f.endswith('.yaml')]
     config_files.sort()
 
     configuration = {}
