@@ -57,6 +57,9 @@ def create_connection(path):
     :param path: Path to the database
     :return: Connection object
     """
+    db_dir_path = os.path.dirname(path)
+    if not os.path.exists(db_dir_path):
+        os.mkdir(db_dir_path, mode=0o700)
     with _umask(0o177):
         return _initialize_database(sqlite3.connect(path))
 
