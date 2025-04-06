@@ -228,8 +228,8 @@ class Command(object):
         :type metavar: str
         :param choices: range of values that the argument is allowed to take
         :type choices: list
-        :param choices: default value of the argument if nothing is specified
-        :type choices: str
+        :param default: default value of the argument if nothing is specified
+        :type default: any
         :return: self
         """
         name = name.lstrip('-')
@@ -250,7 +250,7 @@ class Command(object):
             kwargs['metavar'] = metavar
         if choices:
             kwargs['choices'] = choices
-        if default:
+        if default is not None:
             kwargs['default'] = default
         self._add_opt(*names, help=help,  # noqa; pylint: disable=redefined-builtin
                       action=action, internal={'wrapped': wrapped, 'inherit': inherit}, **kwargs)
