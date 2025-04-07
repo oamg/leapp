@@ -47,7 +47,7 @@ jobs:
     steps:
       - name: Schedule regression testing for 8to9
         id: run_test_8to9
-        uses: sclorg/testing-farm-as-github-action@v3.1.2
+        uses: sclorg/testing-farm-as-github-action@v4.0.0
         with:
           # required
           api_url: ${{ secrets.TF_ENDPOINT }}
