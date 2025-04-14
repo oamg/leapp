@@ -89,6 +89,26 @@ class Model(with_metaclass(ModelMeta)):
         for field in defined_fields:  # noqa; pylint: disable=consider-using-dict-items
             getattr(defined_fields[field], init_method)(kwargs, field, self)
 
+        # The instance is prepared (fields are recursively populated). Modify the instance so that if we are accessing
+        # a deprecated field we will be triggering deprecation warnings
+        if hasattr(self, '_deprecated_nodes'):
+            # depr_path is of the form ['field1', 'field2', 'field3', ..]. Traverse the path to obtain
+            # x = self.field1.field2...field{N-1}. Add field{N} to x's _deprecation_attributes which
+            # will be checked when accessing its attributes using __getattribute__
+            for depr_path in self._deprecated_nodes:
+                root = self
+                depr_path = list(depr_path)
+
+                while len(depr_path) > 1:
+                    current_field = depr_path.pop(0)
+                    root = getattr(root, current_field)
+
+                # Path has length 1
+                if getattr(root, '_deprecated_attributes', None) is None:
+                    root._deprecated_attributes = []
+
+                root._deprecated_attributes.append(depr_path[0])
+
     topic = None
     """
     `topic` has to be set to a subclass of :py:class:`leapp.topics.Topic`
@@ -112,6 +132,24 @@ class Model(with_metaclass(ModelMeta)):
         :return: Instance of this class
         """
         return cls(init_method='to_model', **data)
+
+    def __getattribute__(self, name):
+        try:
+            depr_attribs = super().__getattribute__('_deprecated_attributes')
+            if name in depr_attribs:
+                raise NotImplementedError('Register a Deprecation warning here.')
+            return  super().__getattribute__(name)
+        except AttributeError:  # There are no _deprecated_attributes, access the fields normally
+            return super().__getattribute__(name)
+
+    def __setattr__(self, name, value):
+        try:
+            depr_attribs = super().__getattribute__('_deprecated_attributes')
+            if name in depr_attribs:
+                raise NotImplementedError('Register a Deprecation warning here.')
+            return super().__setattr__(name, value)
+        except AttributeError:
+            return super().__setattr__(name, value)
 
     def dump(self):
         """
