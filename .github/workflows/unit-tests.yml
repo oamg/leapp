@@ -33,12 +33,6 @@ jobs:
           - name: Run python linters with python 3.6 on el8
             python: python3.6
             container: ubi8-lint
-          - name: Run unit tests with python2.7 on el7
-            python: python2.7
-            container: ubi7
-          - name: Run python linters with python2.7 on el7
-            python: python2.7
-            container: ubi7-lint
 
     steps:
       - name: Checkout code
