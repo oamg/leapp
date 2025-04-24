@@ -42,7 +42,7 @@ def cli(params):
     if params.only_influencing_actor:
         actor_of_interest = repository.lookup_actor(params.only_influencing_actor)
         if not actor_of_interest:
-            raise CommandError('Could not find any workflow named "{}"'.format(params.name))
+            raise CommandError('Could not find given actor named "{}"'.format(params.only_influencing_actor))
 
     workflow_instance = workflow()
 
