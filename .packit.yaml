@@ -199,7 +199,7 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-        plan_filter: 'tag:8to9 & tag:rhui-tier[0] & enabled:true'
+        plan_filter: 'tag:8to9 & tag:rhui-aws-tier0 & enabled:true'
     environments:
       - artifacts: *artifacts-for-rhel8
       - tmt:
@@ -211,7 +211,6 @@ jobs:
               BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
     <<: *env-810to94
-    RHUI_HYPERSCALER: aws
 
 
 # ###################################################################### #
