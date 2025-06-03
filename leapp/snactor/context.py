@@ -10,7 +10,7 @@ def last_snactor_context(connection=None):
     Retrieves the last snactor-run context from the database. It generates a new one if none has been found.
 
     :param connection: Database connection to use instead of the default connection.
-    :returns: String representing the latest snactor-run context uuid.
+    :return: String representing the latest snactor-run context uuid.
     """
     with get_connection(db=connection) as db:
         cursor = db.execute('''
