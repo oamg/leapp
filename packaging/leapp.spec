@@ -39,6 +39,7 @@
   # we have to drop the dependency on python(abi) completely on el8+ because
   # of IPU (python abi is different between systems)
   %global __requires_exclude ^python\\(abi\\) = 3\\..+|/usr/libexec/platform-python|/usr/bin/python.*
+  %global py3_shebang_flags %{py3_shebang_flags}I
 %endif
 
 Name:       leapp
@@ -196,6 +197,7 @@ install -m 0644 etc/leapp/*.conf %{buildroot}%{_sysconfdir}/leapp
 install -m 0644 -p man/leapp.1 %{buildroot}%{_mandir}/man1/
 
 %{leapp_py_install}
+%py3_shebang_fix %{buildroot}%{_bindir}/leapp
 
 
 ##################################################
