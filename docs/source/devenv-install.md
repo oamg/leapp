@@ -10,7 +10,7 @@ Packages are built for EPEL and Fedora.
 * On CentOS/RHEL:
   ```shell
   # yum install -y yum-utils
-  # yum-config-manager --add-repo https://copr.fedorainfracloud.org/coprs/g/oamg/leapp/repo/epel-7/group_oamg-leapp-epel-7.repo
+  # yum-config-manager --add-repo https://copr.fedorainfracloud.org/coprs/g/oamg/leapp/repo/epel-8/group_oamg-leapp-epel-8.repo
   ```
 * On Fedora:
   ```shell
