@@ -46,7 +46,7 @@ to a shared library function. You can introduce it in one of these two places:
 
   Please note that the name of the library module in this case should be unique and contain
   the actor name. For example:
-  `repos/system_upgrade/el7toel8/actors/vimmigrate/libraries/vimmigrate.py`
+`repos/system_upgrade/common/actors/checkrhsmsku/libraries/checkrhsmsku.py`
 
 
 ## Discover standard library functions
@@ -81,13 +81,11 @@ As with the Leapp Standard Library mentioned above, it may be beneficial for you
 place in the [leapp-repository](https://github.com/oamg/leapp-repository). You might be interested in the messages they
 produce, for example:
 
-- [SystemFactsActor](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/el7toel8/actors/systemfacts/actor.py) -
+- [SystemFactsActor](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/common/actors/systemfacts/actor.py) -
   information about kernel modules, yum repos, sysctl variables, users, firewall, SELinux, etc.
-- [OSReleaseCollector](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/el7toel8/actors/osreleasecollector/actor.py) -
-  system release information
-- [RpmScanner](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/el7toel8/actors/rpmscanner/actor.py) -
+- [RpmScanner](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/common/actors/rpmscanner/actor.py) -
   list of installed packages
-- [StorageScanner](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/el7toel8/actors/storagescanner/actor.py) -
+- [StorageScanner](https://github.com/oamg/leapp-repository/blob/main/repos/system_upgrade/common/actors/storagescanner/actor.py) -
   storage information
 
 In case you find any message of the existing actors to be incorrect, incomplete or misleading, we encourage you to

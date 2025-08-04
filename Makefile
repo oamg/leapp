@@ -3,7 +3,7 @@ SHELL=/bin/bash
 
 PYTHON_VENV ?= python
 VENVNAME ?= tut
-DIST_VERSION ?= 7
+DIST_VERSION ?= 8
 CONFDIR=${DESTDIR}/etc/leapp
 LIBDIR=${DESTDIR}/var/lib/leapp
 
@@ -76,13 +76,13 @@ help:
 	@echo "  test_container         runs linter and unit tests in a container"
 	@echo "                         - by default rhel8 container is used"
 	@echo "                         - can be changed by setting TEST_CONTAINER env variable"
-	@echo "                         - available containers are:" rhel{7..10}
+	@echo "                         - available containers are:" rhel{8..10}
 	@echo "  test_container_all     runs linter and tests in all available containers"
 	@echo "  lint                   runs just the linter"
 	@echo "  build                  create the RPM"
 	@echo "  build_container        create the RPM in container"
 	@echo "                         - set BUILD_CONTAINER to select the container"
-	@echo "                         - available containers are:" el{7..9} f{35..40} rawhide
+	@echo "                         - available containers are:" el{8..9} f{35..40} rawhide
 	@echo "                         - this can't be used to build in parallel,"
 	@echo "                           as build containers operate on the same files"
 	@echo "  clean_containers      clean container images used for building"
@@ -93,8 +93,8 @@ help:
 	@echo "  MR=6 <target>"
 	@echo "  PR=7 SUFFIX='my_additional_suffix' make <target>"
 	@echo "  MR=6 COPR_CONFIG='path/to/the/config/copr/file' <target>"
-	@echo "  TEST_CONTAINER=rhel7 make test_container"
-	@echo "  BUILD_CONTAINER=el7 make build_container"
+	@echo "  TEST_CONTAINER=rhel8 make test_container"
+	@echo "  BUILD_CONTAINER=el8 make build_container"
 	@echo "  CONTAINER_TOOL=docker make test_container"
 	@echo ""
 
@@ -151,9 +151,6 @@ build: source
 
 build_container:
 	@case "$$BUILD_CONTAINER" in \
-	el7) \
-		_CONT_FILE="Containerfile.centos7"; \
-		;; \
 	el[8-9]) \
 		_CONT_FILE="Containerfile.ubi"$${BUILD_CONTAINER: -1}; \
 		;; \
@@ -168,7 +165,7 @@ build_container:
 		exit 1; \
 		;; \
 	*) \
-		echo "Available containers are: el{7..9} f{35..40} rawhide"; \
+		echo "Available containers are: el{8..9} f{35..40} rawhide"; \
 		exit 1; \
 		;; \
 	esac && \
@@ -208,10 +205,6 @@ test: lint
 # TODO(pstodulk): create ticket to add rhel10 for testing.... py: 3.12
 test_container:
 	@case $(_TEST_CONTAINER) in \
-		rhel7) \
-			export _VENV=python2.7; \
-			export _CONT_FILE="res/container-tests/Containerfile.ubi7"; \
-			;; \
 		rhel8) \
 			export _VENV=python3.6; \
 			export _CONT_FILE="res/container-tests/Containerfile.ubi8"; \
@@ -226,7 +219,7 @@ test_container:
 			export _CONT_FILE="res/container-tests/Containerfile.ubi10"; \
 			;; \
 		*) \
-			echo "Available test containers are: rhel{7..10}"; \
+			echo "Available test containers are: rhel{8..10}"; \
 			exit 1; \
 			;; \
 	esac; \
@@ -236,12 +229,12 @@ test_container:
 	$(_CONTAINER_TOOL) run --rm -v $${PWD}:/payload:Z -e PYTHON_VENV=$$_VENV $$TEST_IMAGE
 
 test_container_all:
-	@for container in "rhel"{7..10}; do \
+	@for container in "rhel"{8..10}; do \
 		TEST_CONTAINER=$$container $(MAKE) test_container; \
 	done
 
 clean_containers:
-	@for i in "leapp-build-"{el7,el8,el9,f35,f36,rawhide} "leapp-tests-rhel"{7..10}; do \
+	@for i in "leapp-build-"{el8,el9,f35,f36,rawhide} "leapp-tests-rhel"{8..10}; do \
 		[ -z $$($(_CONTAINER_TOOL) images -q "$$i") ] || \
 		$(_CONTAINER_TOOL) rmi "$$i" > /dev/null 2>&1 || :; \
 	done
@@ -254,7 +247,7 @@ lint:
 	echo '===============   Running pylint   ===============' && \
 	echo '==================================================' && \
 	echo '==================================================' && \
-	[[ "$(_PYTHON_VENV)" == "python2.7" ]] && echo "$$LINTABLES" | xargs pylint --py3k || echo "$$LINTABLES" | xargs pylint && echo '===> pylint PASSED' && \
+	[[ "$(_PYTHON_VENV)" == "python3.6" ]] && echo "$$LINTABLES" | xargs pylint --py3k || echo "$$LINTABLES" | xargs pylint && echo '===> pylint PASSED' && \
 	echo '==================================================' && \
 	echo '==================================================' && \
 	echo '===============   Running flake8   ===============' && \
@@ -272,7 +265,7 @@ fast_lint:
 		if [[ "$$LINT_EXIT_CODE" != "0" ]]; then \
 			exit $$LINT_EXIT_CODE; \
 		fi; \
-		if [[ "$(_PYTHON_VENV)" == "python2.7" ]] ; then \
+		if [[ "$(_PYTHON_VENV)" == "python3.6" ]] ; then \
 			pylint --py3k $$FILES_TO_LINT; \
 		fi; \
 	else \
