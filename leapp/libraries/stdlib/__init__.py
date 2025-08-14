@@ -151,7 +151,8 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
     """
     Run a command and return its result as a dict.
 
-    The execution of the program and it's results are captured by the audit.
+    The execution of the command and its result is captured by the audit. The CalledProcessError is raised when
+    the command exits with non-zero code.
 
     :param args: Command to execute
     :type args: list or tuple
