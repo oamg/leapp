@@ -82,7 +82,7 @@ help:
 	@echo "  build                  create the RPM"
 	@echo "  build_container        create the RPM in container"
 	@echo "                         - set BUILD_CONTAINER to select the container"
-	@echo "                         - available containers are:" el{8..9} f{35..40} rawhide
+	@echo "                         - available containers are:" el{8..9} f{41..42} rawhide
 	@echo "                         - this can't be used to build in parallel,"
 	@echo "                           as build containers operate on the same files"
 	@echo "  clean_containers      clean container images used for building"
@@ -154,7 +154,7 @@ build_container:
 	el[8-9]) \
 		_CONT_FILE="Containerfile.ubi"$${BUILD_CONTAINER: -1}; \
 		;; \
-	f3[5-9]|f40|rawhide) \
+	f4[1-2]|rawhide) \
 		[ $$BUILD_CONTAINER = rawhide ] && VERSION=latest || VERSION=$${BUILD_CONTAINER: -2}; \
 		_CONT_FILE=".Containerfile.$${BUILD_CONTAINER}"; \
 		cp res/container-builds/Containerfile.fedora_generic res/container-builds/$$_CONT_FILE && \
@@ -165,7 +165,7 @@ build_container:
 		exit 1; \
 		;; \
 	*) \
-		echo "Available containers are: el{8..9} f{35..40} rawhide"; \
+		echo "Available containers are: el{8..9} f{41..42} rawhide"; \
 		exit 1; \
 		;; \
 	esac && \
@@ -234,7 +234,7 @@ test_container_all:
 	done
 
 clean_containers:
-	@for i in "leapp-build-"{el8,el9,f35,f36,rawhide} "leapp-tests-rhel"{8..10}; do \
+	@for i in leapp-build-el{8,9} leapp-build-f{41..42} leapp-build-rawhide leapp-tests-rhel{8..10}; do \
 		[ -z $$($(_CONTAINER_TOOL) images -q "$$i") ] || \
 		$(_CONTAINER_TOOL) rmi "$$i" > /dev/null 2>&1 || :; \
 	done
