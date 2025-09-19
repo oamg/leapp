@@ -202,9 +202,22 @@ class Command(object):
         internal = kwargs.pop('internal', {})
         self._options.append((args, kwargs, internal))
 
-    def add_option(self, name, short_name='', help='',  # noqa; pylint: disable=redefined-builtin
-                   is_flag=False, inherit=False, value_type=str, wrapped=None, action=None, metavar=None,
-                   choices=None, default=None):
+    def add_option( # noqa; pylint: disable=redefined-builtin, too-many-arguments
+        self,
+        name,
+        short_name="",
+        help="",
+        is_flag=False,
+        inherit=False,
+        value_type=str,
+        wrapped=None,
+        action=None,
+        metavar=None,
+        choices=None,
+        default=None,
+        aliases=None,
+        dest=None,
+    ):
         """
         Add an option
 
@@ -230,16 +243,39 @@ class Command(object):
         :type choices: list
         :param default: default value of the argument if nothing is specified
         :type default: any
+        :param aliases: Aliases for the option, appended after short_name and name in help output
+        :type aliases: list[str]
+        :param dest: The name of the attribute to be added to the parsed args object
+        :type dest: str
         :return: self
         """
         name = name.lstrip('-')
         names = ['--' + name]
         kwargs = {}
         if short_name:
-            short_name = short_name.lstrip('-')
-            if len(short_name) != 1:
-                raise CommandDefinitionError("Short name should be one letter only")
-            names.insert(0, '-' + short_name)
+            stripped = short_name.lstrip('-')
+            if len(stripped) != 1:
+                msg = "Short name option should be one letter only (excluding '-'), but received: {}"
+                raise CommandDefinitionError(msg.format(short_name))
+            names.insert(0, '-' + stripped)
+
+        aliases = aliases or []
+        for alias in aliases:
+            if alias.startswith('--'):
+                names.append('--' + alias.strip('-'))
+            elif alias.startswith('-'):
+                stripped = alias.strip('-')
+                if len(stripped) != 1:
+                    msg = "Short name option should be one letter only (excluding '-'), but received: {}"
+                    raise CommandDefinitionError(msg.format(alias))
+                names.append('-' + stripped)
+            else:
+                # no way to distinguish whether it's a short or long option if no leading dashes,
+                # decide based on length
+                if len(alias) == 1:
+                    names.append('-' + alias)
+                else:
+                    names.append('--' + alias)
         if not action:
             action = 'store'
             if is_flag:
@@ -252,6 +288,9 @@ class Command(object):
             kwargs['choices'] = choices
         if default is not None:
             kwargs['default'] = default
+        if dest:
+            kwargs['dest'] = dest
+
         self._add_opt(*names, help=help,  # noqa; pylint: disable=redefined-builtin
                       action=action, internal={'wrapped': wrapped, 'inherit': inherit}, **kwargs)
         return self
