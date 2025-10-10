@@ -102,7 +102,7 @@ jobs:
       - name: Add comment with copr build url
         # TODO: Create comment when copr build fails.
         id: link_copr
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             github.issues.createComment({
@@ -160,7 +160,7 @@ jobs:
         # TODO: Create comment when copr build fails.
         id: link_copr_leapp_repository
         if: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             github.issues.createComment({
