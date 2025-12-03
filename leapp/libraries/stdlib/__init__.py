@@ -8,12 +8,15 @@ import logging
 import os
 import sys
 import uuid
+from itertools import islice
 
 from leapp.exceptions import LeappError
-from leapp.utils.audit import create_audit_entry
 from leapp.libraries.stdlib import api
-from leapp.libraries.stdlib.call import _call, STDOUT
+from leapp.libraries.stdlib.call import STDOUT, _call
 from leapp.libraries.stdlib.config import is_debug
+from leapp.utils.audit import create_audit_entry
+
+FMT_LIST_SEPARATOR = '\n    - '
 
 
 class CalledProcessError(LeappError):
@@ -214,3 +217,32 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
         )
         api.current_logger().debug('External command has finished: {0}'.format(str(args)))
     return result
+
+
+def format_list(data, sep=FMT_LIST_SEPARATOR, callback_sort=sorted, limit=0):
+    """
+    Format an iterable into a string using a specified separator that is prepended to every item.
+
+    This function can be used to consistently format lists in reports, logs, and error messages.
+
+    :param data: Iterable of items to format.
+    :type data: Iterable
+    :param sep: Separator prepended to each item. Defaults to FMT_LIST_SEPARATOR.
+    :type sep: str
+    :param callback_sort: Callable returning a new list, called before the limit is applied.
+                          Set to None to preserve original order. Defaults to sorted.
+    :type callback_sort: Callable or None
+    :param limit: Maximum number of items to include. Defaults to 0 (no limit).
+    :type limit: int
+    :returns: A string with each item prefixed by the specified separator.
+    :rtype: str
+    """
+    items = data
+    if callback_sort is not None:
+        items = callback_sort(data)
+
+    if limit > 0:
+        items = islice(items, limit)
+
+    res = ['{}{}'.format(sep, item) for item in items]
+    return ''.join(res)
