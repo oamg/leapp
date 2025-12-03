@@ -214,3 +214,14 @@ def run(args, split=False, callback_raw=_console_logging_handler, callback_lineb
         )
         api.current_logger().debug('External command has finished: {0}'.format(str(args)))
     return result
+
+
+def format_list(data, sep=FMT_LIST_SEPARATOR, callback_sort=sorted, limit=0):
+    # NOTE(pstodulk): Teaser O:-> https://issues.redhat.com/browse/RHEL-126447
+    # TODO(pstodulk): add docstring, update documentation, add tests
+    if callback_sort is None:
+        callback_sort = lambda x: x
+    res = ['{}{}'.format(sep, item) for item in callback_sort(data)]
+    if limit:
+        return ''.join(res[:limit])
+    return ''.join(res)
