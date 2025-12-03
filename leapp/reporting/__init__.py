@@ -6,9 +6,12 @@ import os
 import six
 
 from leapp.compat import string_types
+# NOTE(pstodulk): the format_list is imported to provide the function
+# also in this library. Its use is not planned here however.
+from leapp.libraries.stdlib import format_list
+from leapp.libraries.stdlib.api import produce
 from leapp.models import fields, Model, ErrorModel
 from leapp.topics import ReportTopic
-from leapp.libraries.stdlib.api import produce
 from leapp.utils.deprecation import deprecated
 
 

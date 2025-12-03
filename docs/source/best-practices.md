@@ -155,6 +155,23 @@ In case of [StopActorExecutionError](leapp.exceptions.StopActorExecutionError) t
 
 You can also use the [StopActorExecution](leapp.exceptions.StopActorExecution) and [StopActorExecutionError](leapp.exceptions.StopActorExecutionError) exceptions inside a private or shared library.
 
+## Consistent list formatting in reports
+
+When constructing report messages that include lists of items (e.g. package names, file paths), use the `format_list` function to ensure consistent formatting across all reports. The function is available from both `leapp.libraries.stdlib` and `leapp.reporting`. It supports custom sorting, item limits, and configurable separators.
+
+```python
+from leapp.reporting import format_list
+
+pkgs = ['kernel', 'bash', 'glibc']
+msg = 'The following packages will be removed:{}'.format(format_list(pkgs))
+
+# Output:
+#The following packages will be removed:
+#    - bash
+#    - glibc
+#    - kernel
+```
+
 ## Use the LEAPP and LEAPP\_DEVEL prefixes for new envars
 
 In case you need to change a behaviour of actor(s) for testing or development purposes - e.g. be able to skip a functionality in your actor - use environment variables. Such environment variables should start with prefix *LEAPP\_DEVEL*. Such variables are not possible to use on production systems without special *LEAPP\_UNSUPPORTED* variable. This prevents users to break their systems by a mistake.
