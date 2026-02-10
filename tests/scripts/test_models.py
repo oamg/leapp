@@ -1,10 +1,11 @@
 import pytest
 
+from test_topics import UnitTestTopic
+
+from leapp.exceptions import ModelDefinitionError
+from leapp.models.utils import init_from_tuple
 import leapp.models
 import leapp.models.fields
-from leapp.models.utils import init_from_tuple
-from leapp.exceptions import ModelDefinitionError
-from test_topics import UnitTestTopic
 
 
 class UnitTestModel(leapp.models.Model):
