@@ -7,6 +7,7 @@ Tutorials
     create-repository
     first-actor
     messaging
+    inhibiting-the-workflow
     dialogs
     repo-linking
     working-with-workflows
