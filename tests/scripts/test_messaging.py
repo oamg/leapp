@@ -1,12 +1,12 @@
 import pytest
 
-from leapp.messaging.inprocess import InProcessMessaging, BaseMessaging
-from leapp.models.error_severity import ErrorSeverity
-from leapp.models import ErrorModel
-from leapp.exceptions import CannotConsumeErrorMessages
-
 from test_models import UnitTestModel
 from test_tags import TestTag
+
+from leapp.exceptions import CannotConsumeErrorMessages
+from leapp.messaging.inprocess import InProcessMessaging, BaseMessaging
+from leapp.models import ErrorModel
+from leapp.models.error_severity import ErrorSeverity
 
 
 class UnitTestModelUnused(UnitTestModel):
