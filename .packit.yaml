@@ -326,15 +326,6 @@ jobs:
           provisioning:
             tags:
               BusinessUnit: sst_upgrades@leapp_upstream_test
-      - &tmt-env-settings-centos9torhel101
-        tmt:
-          context: &tmt-context-centos9torhel101
-            distro: "centos-9"
-            distro_target: "rhel-10.1"
-        settings:
-          provisioning:
-            tags:
-              BusinessUnit: sst_upgrades@leapp_upstream_test
       - &tmt-env-settings-98to102
         tmt:
           context: &tmt-context-98to102
@@ -520,28 +511,6 @@ jobs:
 # ###################################################################### #
 # ###################### CentOS Stream > RHEL ########################## #
 # ###################################################################### #
-
-# ###################################################################### #
-# ############################ 9 > 10.1 ################################ #
-# ###################################################################### #
-
-- &sanity-centos9torhel101
-  <<: *sanity-abstract-9to10
-  trigger: pull_request
-  identifier: sanity-CentOS9toRHEL10.1
-  targets:
-    epel-9-x86_64:
-      distros: [CentOS-Stream-9]
-  tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:9to10 & tag:tier0 & enabled:true & tag:-rhsm'
-    environments:
-      - artifacts: *artifacts-for-rhel9
-      - *tmt-env-settings-centos9torhel101
-  env: &env-centos9to101
-    SOURCE_RELEASE: "9"
-    TARGET_RELEASE: "10.1"
 
 # ###################################################################### #
 # ############################ 9 > 10.2 ################################ #
