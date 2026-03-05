@@ -49,7 +49,7 @@ jobs:
         # TODO: The correct way to checkout would be to use simmilar approach as in get_commit_by_timestamp function of
         #       the github gluetool module (i.e. do not use HEAD but the last commit before comment).
         id: checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: "refs/pull/${{ steps.pr_nr.outputs.pr_nr }}/head"
 
@@ -121,7 +121,7 @@ jobs:
       - name: Checkout leapp-repository
         id: checkout_leapp_repository
         if: ${{ steps.leapp_repository_pr_regex_match.outputs.match != '' }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: "oamg/leapp-repository"
           ref: "refs/pull/${{ steps.leapp_repository_pr.outputs.leapp_repository_pr }}/head"
