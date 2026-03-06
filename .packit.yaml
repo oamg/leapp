@@ -23,6 +23,7 @@ jobs:
     get-current-version:
     # get version from spec file instead from git tag
     - bash -c "grep -m1 '^Version:' packaging/leapp.spec | grep -om1 '[0-9].[0-9.]**'"
+
 - job: copr_build
   trigger: commit
   metadata:
@@ -103,6 +104,15 @@ jobs:
           context: &tmt-context-810to98
             distro: "rhel-8.10"
             distro_target: "rhel-9.8"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
+      - &tmt-env-settings-810to99
+        tmt:
+          context: &tmt-context-810to99
+            distro: "rhel-8.10"
+            distro_target: "rhel-9.9"
         settings:
           provisioning:
             tags:
@@ -188,7 +198,7 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-         plan_filter: 'tag:8to9 & tag:kernel-rt & enabled:true & tag:-rhsm'
+        plan_filter: 'tag:8to9 & tag:kernel-rt & enabled:true & tag:-rhsm'
     environments:
       - artifacts: *artifacts-for-rhel8
       - *tmt-env-settings-810to96
@@ -216,7 +226,6 @@ jobs:
               BusinessUnit: sst_upgrades@leapp_upstream_test
   env:
     <<: *env-810to96
-
 
 # ###################################################################### #
 # ############################# 8.10 > 9.8 ############################# #
@@ -268,12 +277,69 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-         plan_filter: 'tag:8to9 & tag:kernel-rt & enabled:true'
+        plan_filter: 'tag:8to9 & tag:kernel-rt & enabled:true'
     environments:
       - artifacts: *artifacts-for-rhel8
       - *tmt-env-settings-810to98
   env:
     <<: *env-810to98
+
+# ###################################################################### #
+# ############################# 8.10 > 9.9 ############################# #
+# ###################################################################### #
+
+- &sanity-810to99
+  <<: *sanity-abstract-8to9
+  trigger: pull_request
+  identifier: sanity-8.10to9.9
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:8to9 & tag:tier0 & enabled:true'
+    environments:
+      - artifacts: *artifacts-for-rhel8
+      - *tmt-env-settings-810to99
+  env: &env-810to99
+    SOURCE_RELEASE: "8.10"
+    TARGET_RELEASE: "9.9"
+
+# On-demand minimal beaker tests
+- &beaker-minimal-810to99
+  <<: *beaker-minimal-8to9-abstract-ondemand
+  trigger: pull_request
+  labels:
+    - beaker-minimal
+    - beaker-minimal-8.10to9.9
+    - 8.10to9.9
+  identifier: sanity-8.10to9.9-beaker-minimal-ondemand
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:8to9 & tag:partitioning & enabled:true'
+    environments:
+      - artifacts: *artifacts-for-rhel8
+      - *tmt-env-settings-810to99
+  env:
+    <<: *env-810to99
+
+# On-demand kernel-rt tests
+- &kernel-rt-810to99
+  <<: *kernel-rt-abstract-8to9-ondemand
+  trigger: pull_request
+  labels:
+    - kernel-rt
+    - kernel-rt-8.10to9.9
+    - 8.10to9.9
+  identifier: sanity-8.10to9.9-kernel-rt-ondemand
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:8to9 & tag:kernel-rt & enabled:true'
+    environments:
+      - artifacts: *artifacts-for-rhel8
+      - *tmt-env-settings-810to99
+  env:
+    <<: *env-810to99
 
 # ###################################################################### #
 # ############################## 9 TO 10 ################################ #
@@ -340,6 +406,24 @@ jobs:
           context: &tmt-context-centos9torhel102
             distro: "centos-9"
             distro_target: "rhel-10.2"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
+      - &tmt-env-settings-99to103
+        tmt:
+          context: &tmt-context-99to103
+            distro: "rhel-9.9"
+            distro_target: "rhel-10.3"
+        settings:
+          provisioning:
+            tags:
+              BusinessUnit: sst_upgrades@leapp_upstream_test
+      - &tmt-env-settings-centos9torhel103
+        tmt:
+          context: &tmt-context-centos9torhel103
+            distro: "centos-9"
+            distro_target: "rhel-10.3"
         settings:
           provisioning:
             tags:
@@ -412,7 +496,7 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-        plan_filter: 'tag:8to9 & tag:partitioning & enabled:true & tag:-rhsm'
+        plan_filter: 'tag:9to10 & tag:partitioning & enabled:true & tag:-rhsm'
     environments:
       - artifacts: *artifacts-for-rhel9
       - *tmt-env-settings-96to100
@@ -431,7 +515,7 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-         plan_filter: 'tag:8to9 & tag:kernel-rt & enabled:true & tag:-rhsm'
+        plan_filter: 'tag:9to10 & tag:kernel-rt & enabled:true & tag:-rhsm'
     environments:
       - artifacts: *artifacts-for-rhel9
       - *tmt-env-settings-96to100
@@ -475,7 +559,7 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-        plan_filter: 'tag:8to9 & tag:partitioning & enabled:true & tag:-rhsm'
+        plan_filter: 'tag:9to10 & tag:partitioning & enabled:true & tag:-rhsm'
     environments:
       - artifacts: *artifacts-for-rhel9
       - *tmt-env-settings-98to102
@@ -497,12 +581,78 @@ jobs:
   tf_extra_params:
     test:
       tmt:
-         plan_filter: 'tag:8to9 & tag:kernel-rt & enabled:true & tag:-rhsm'
+        plan_filter: 'tag:9to10 & tag:kernel-rt & enabled:true & tag:-rhsm'
     environments:
       - artifacts: *artifacts-for-rhel9
       - *tmt-env-settings-98to102
   env:
     <<: *env-98to102
+
+# ###################################################################### #
+# ############################# 9.9 > 10.3 ############################# #
+# ###################################################################### #
+
+- &sanity-99to103
+  <<: *sanity-abstract-9to10
+  trigger: pull_request
+  identifier: sanity-9.9to10.3
+  targets:
+    epel-9-x86_64:
+      distros: [RHEL-9.9.0-Nightly]
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:9to10 & tag:tier0 & enabled:true'
+    environments:
+      - artifacts: *artifacts-for-rhel9
+      - *tmt-env-settings-99to103
+  env: &env-99to103
+    SOURCE_RELEASE: "9.9"
+    TARGET_RELEASE: "10.3"
+
+# On-demand minimal beaker tests
+- &beaker-minimal-99to103
+  <<: *beaker-minimal-9to10-abstract-ondemand
+  trigger: pull_request
+  labels:
+    - beaker-minimal
+    - beaker-minimal-9.9to10.3
+    - 9.9to10.3
+  identifier: sanity-9.9to10.3-beaker-minimal-ondemand
+  targets:
+    epel-9-x86_64:
+      distros: [RHEL-9.9-Nightly]
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:9to10 & tag:partitioning & enabled:true'
+    environments:
+      - artifacts: *artifacts-for-rhel9
+      - *tmt-env-settings-99to103
+  env:
+    <<: *env-99to103
+
+# On-demand kernel-rt tests
+- &kernel-rt-99to103
+  <<: *kernel-rt-abstract-9to10-ondemand
+  trigger: pull_request
+  labels:
+    - kernel-rt
+    - kernel-rt-9.9to10.3
+    - 9.9to10.3
+  identifier: sanity-9.9to10.3-kernel-rt-ondemand
+  targets:
+    epel-9-x86_64:
+      distros: [RHEL-9.9-Nightly]
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:9to10 & tag:kernel-rt & enabled:true'
+    environments:
+      - artifacts: *artifacts-for-rhel9
+      - *tmt-env-settings-99to103
+  env:
+    <<: *env-99to103
 
 # ###################################################################### #
 # ########################## CentOS Stream ############################# #
@@ -527,13 +677,34 @@ jobs:
     test:
       tmt:
         plan_filter: 'tag:9to10 & tag:tier0 & enabled:true & tag:-rhsm'
-        name:
     environments:
       - artifacts: *artifacts-for-rhel9
       - *tmt-env-settings-centos9torhel102
   env: &env-centos9torhel102
     SOURCE_RELEASE: "9"
     TARGET_RELEASE: "10.2"
+
+# ###################################################################### #
+# ############################ 9 > 10.3 ################################ #
+# ###################################################################### #
+
+- &sanity-centos9torhel103
+  <<: *sanity-abstract-9to10
+  trigger: pull_request
+  identifier: sanity-CentOS9toRHEL10.3
+  targets:
+    epel-9-x86_64:
+      distros: [CentOS-Stream-9]
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:9to10 & tag:tier0 & enabled:true & tag:-rhsm'
+    environments:
+      - artifacts: *artifacts-for-rhel9
+      - *tmt-env-settings-centos9torhel103
+  env: &env-centos9torhel103
+    SOURCE_RELEASE: "9"
+    TARGET_RELEASE: "10.3"
 
 # ###################################################################### #
 # ################## CentOS Stream > CentOS Stream ##################### #
