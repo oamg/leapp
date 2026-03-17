@@ -14,10 +14,9 @@ from leapp.reporting import (
     create_report_from_deprecation,
     create_report_from_error,
     _create_report_object,
-    Audience, Flags, Groups, Key, RelatedResource, Remediation, Summary, Severity, Tags, Title
+    Audience, Flags, Groups, Key, RelatedResource, Remediation, RemediationCommand, Summary, Severity, Tags, Title
 )
 from leapp.utils.report import generate_report_file
-
 
 ReportPrimitive = namedtuple('ReportPrimitive', ['data', 'path', 'value', 'is_leaf_list'])
 
@@ -101,6 +100,64 @@ def test_report_tags_and_flags():
     assert Tags.REPOSITORY == "repository"
     # make sure you can use a custom flag in pressing need
     assert Flags(["This is a new flag", Groups.INHIBITOR]).value == ["This is a new flag", "inhibitor"]
+
+
+@pytest.mark.parametrize('command, expected_command_form', [
+    (['cmd'], "cmd"),
+    (['cmd', ''], "cmd ''"),
+    (['cmd', 'not_quoted'], "cmd not_quoted"),
+    (['ls', '-la', '/home/user'], "ls -la /home/user"),
+
+    # Quoting ' '
+    (['cmd', 'is quoted'], "cmd 'is quoted'"),
+    (['mv', '/home/user/test file', '/home/user/test_file'], "mv '/home/user/test file' /home/user/test_file"),
+
+    # Quoting '$'
+    # Note: Execution of the first command would fail, but it is the correct conversion.
+    # The second test case should be used to utilize the shell expansion.
+    (['chsh', '-s', '$(which zsh)', '$USER'], "chsh -s '$(which zsh)' '$USER'"),
+    (['bash', '-c', 'chsh -s $(which zsh) $USER'], "bash -c 'chsh -s $(which zsh) $USER'"),
+
+    # Quoting '\'
+    (['echo', '\\'], "echo '\\'"),
+    (['sed', '-i', 's/\\t/ /g', 'file.txt'], "sed -i 's/\\t/ /g' file.txt"),
+
+    # Quoting '"'
+    (['echo', '"'], "echo '\"'"),
+    (['grep', 'key="value"', 'file.txt'], "grep 'key=\"value\"' file.txt"),
+
+    # Quoting '`'
+    (['usermod', '-aG', 'wheel', '`whoami`'], "usermod -aG wheel '`whoami`'"),
+])
+def test_remediation_command_repr_quoting(command, expected_command_form):
+    """Test that RemediationCommand.__repr__ properly quotes arguments with special characters."""
+    remediation_command = RemediationCommand(value=command)
+    assert repr(remediation_command) == f'[command] {expected_command_form}'
+
+
+@pytest.mark.parametrize("report_suffix", ('.json', '.txt'))
+def test_remediation_command_in_report(report_suffix):
+    """Test that commands with spaces in arguments are preserved correctly in reports."""
+    remediation_command_as_list = ["mv", "file with spaces.txt", "file_without_spaces.txt"]
+    remediation_command_as_string = "mv 'file with spaces.txt' file_without_spaces.txt"
+
+    report_entries = [Title('Test title'), Summary('Test summary'), Audience('sysadmin')]
+    remediation = Remediation(commands=[remediation_command_as_list])
+    report_entries.append(remediation)
+
+    report_message = _create_report_object(report_entries).report
+
+    with tempfile.NamedTemporaryFile(suffix=report_suffix) as reportfile:
+        generate_report_file([report_message], 'leapp-run-id', reportfile.name)
+        with open(reportfile.name) as f:
+            content = f.read()
+        if report_suffix == '.txt':
+            assert remediation_command_as_string in content
+        else:
+            report_data = json.loads(content)
+            remediations = report_data['entries'][0]['detail']['remediations']
+            cmd_entry = [r for r in remediations if r['type'] == 'command'][0]
+            assert cmd_entry['context'] == remediation_command_as_list
 
 
 @pytest.mark.parametrize("report_suffix", ('.json', '.txt'))

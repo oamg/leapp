@@ -1,8 +1,9 @@
 import datetime
-import json
 import hashlib
+import json
 import logging
 import os
+import shlex
 import six
 
 from leapp.compat import string_types
@@ -10,7 +11,7 @@ from leapp.compat import string_types
 # also in this library. Its use is not planned here however.
 from leapp.libraries.stdlib import format_list
 from leapp.libraries.stdlib.api import produce
-from leapp.models import fields, Model, ErrorModel
+from leapp.models import ErrorModel, Model, fields
 from leapp.topics import ReportTopic
 from leapp.utils.deprecation import deprecated
 
@@ -281,8 +282,10 @@ class RemediationCommand(BaseRemediation):
     def __repr__(self):
         # NOTE(ivasilev) As the message can contain non-ascii characters let's deal with it properly.
         # As per python practices repr has to return an encoded string
+        # Note(pmocary) Using shlex.join is not possible here due to it being available from Python 3.8,
+        # thus we use the shlex.quote on each argument instead which is the same as shlex.join implementation.
         return "[{}] {}".format(self._value['type'],
-                                ' '.join([_guarantee_encoded_str(c) for c in self._value['context']]))
+                                ' '.join([shlex.quote(_guarantee_encoded_str(c)) for c in self._value['context']]))
 
 
 class RemediationHint(BaseRemediation):
