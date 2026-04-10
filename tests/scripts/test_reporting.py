@@ -23,7 +23,6 @@ from leapp.reporting import (
     Title,
     _add_to_dict,
     _create_report_object,
-    _quote_for_shell,
     create_report_from_deprecation,
     create_report_from_error,
 )
@@ -113,40 +112,6 @@ def test_report_tags_and_flags():
     assert Flags(["This is a new flag", Groups.INHIBITOR]).value == ["This is a new flag", "inhibitor"]
 
 
-@pytest.mark.parametrize('string, expected_quoted', [
-    # No quoting needed
-    ('path/to_the/file-name.txt', 'path/to_the/file-name.txt'),
-    ('user@host', 'user@host'),
-    ('value=123', 'value=123'),
-    ('a:b:c', 'a:b:c'),
-    ('99%', '99%'),
-    ('a+b', 'a+b'),
-
-    # Single-quote style (no single quote in string)
-    ('', "''"),
-    ('file with spaces.txt', "'file with spaces.txt'"),
-    ('$(whoami)', "'$(whoami)'"),
-    ('$USER', "'$USER'"),
-    ('back`tick', "'back`tick'"),
-    ('double"quote', "'double\"quote'"),
-    ('exclaim!', "'exclaim!'"),
-    ('back\\slash', "'back\\slash'"),
-    ('new\nline', "'new\nline'"),
-    ('key="value"', "'key=\"value\"'"),
-
-    # Double-quote style (a single quote in string)
-    ("It's fine", "\"It's fine\""),
-    ("It's `whoami`", "\"It's \\`whoami\\`\""),
-    ("User's home: $HOME", "\"User's home: \\$HOME\""),
-    ("Don't panic!", "\"Don't panic\\!\""),
-    ("s/'/\"/g", "\"s/'/\\\"/g\""),
-    ("sed -i 's/'/\"/g' file.txt", "\"sed -i 's/'/\\\"/g' file.txt\""),
-])
-def test_quote_for_shell(string, expected_quoted):
-    """Test that _quote_for_shell properly quotes strings for shell usage."""
-    assert _quote_for_shell(string) == expected_quoted
-
-
 @pytest.mark.parametrize('command, expected_command_form', [
     (['cmd'], "cmd"),
     (['cmd', ''], "cmd ''"),
@@ -174,12 +139,13 @@ def test_quote_for_shell(string, expected_quoted):
     # Quoting '`'
     (['usermod', '-aG', 'wheel', '`whoami`'], "usermod -aG wheel '`whoami`'"),
 
-    # Double-quote style when single quote is present
-    (['echo', "It's fine"], "echo \"It's fine\""),
-    (['mv', "user's file.txt", 'newfile.txt'], "mv \"user's file.txt\" newfile.txt"),
-    (['sed', '-i', "s/'/\"/g", 'file.txt'], "sed -i \"s/'/\\\"/g\" file.txt"),
-    (['bash', '-c', "echo \"user's home: $HOME\""], "bash -c \"echo \\\"user's home: \\$HOME\\\"\""),
-    (['grep', "can't find", '/var/log/some report.log'], "grep \"can't find\" '/var/log/some report.log'"),
+    # Single quote in argument — shlex.quote uses the '"'"' pattern
+    (['echo', "It's fine"], "echo 'It'\"'\"'s fine'"),
+    (['mv', "user's file.txt", 'newfile.txt'], "mv 'user'\"'\"'s file.txt' newfile.txt"),
+    (['sed', '-i', "s/'/\"/g", 'file.txt'], "sed -i 's/'\"'\"'/\"/g' file.txt"),
+    (['bash', '-c', "echo \"user's home: $HOME\""], "bash -c 'echo \"user'\"'\"'s home: $HOME\"'"),
+    (['grep', "can't find", '/var/log/some report.log'], "grep 'can'\"'\"'t find' '/var/log/some report.log'"),
+    (['echo', "Don't panic!"], "echo 'Don'\"'\"'t panic!'"),
 ])
 def test_remediation_command_repr_quoting(command, expected_command_form):
     """Test that RemediationCommand.__repr__ properly quotes arguments with special characters."""
