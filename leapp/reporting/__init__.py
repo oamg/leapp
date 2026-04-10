@@ -275,32 +275,6 @@ def _guarantee_decoded_str(text, encoding='utf-8'):
         return text
 
 
-def _quote_for_shell(s):
-    """
-    Quote a string for shell usage as a literal.
-
-    This function quotes the given string in single-quotes using the
-    shlex.quote. However, when the single-quote is present in the string it
-    instead uses double-quotes, resulting in cleaner output (e.g. "don't"
-    instead of 'don'"'"'t' that would be produced by shlex.quote).
-
-    :param str s: String to quote for shell usage
-    :return str: Quoted string safe for shell usage
-    """
-
-    if "'" not in s:
-        return shlex.quote(s)
-
-    # The string contains a single-quote, use double-quote style instead.
-    # Escape following characters to make it literal: \ " $ ` !
-    escaped = (s.replace('\\', '\\\\')
-                .replace('"', '\\"')
-                .replace('$', '\\$')
-                .replace('`', '\\`')
-                .replace('!', '\\!'))
-    return '"{}"'.format(escaped)
-
-
 class RemediationCommand(BaseRemediation):
     def __init__(self, value=None):
         if not isinstance(value, list):
@@ -310,7 +284,7 @@ class RemediationCommand(BaseRemediation):
     def __repr__(self):
         # NOTE(ivasilev) As the message can contain non-ascii characters let's deal with it properly.
         # As per python practices repr has to return an encoded string
-        quoted_command_args = [_quote_for_shell(_guarantee_encoded_str(c)) for c in self._value['context']]
+        quoted_command_args = [shlex.quote(_guarantee_encoded_str(c)) for c in self._value['context']]
         return "[{}] {}".format(self._value['type'], ' '.join(quoted_command_args))
 
 
