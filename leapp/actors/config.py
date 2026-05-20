@@ -169,31 +169,35 @@ def _get_config(config_dir='/etc/leapp/actor_conf.d'):
 def normalize_schemas(schemas):
     """
     Merge all schemas into a single dictionary and validate them for errors we can detect.
+
+    :param schemas: List of schemas to normalize
+    :type schemas: Iterable[Iterable[Type[Config]]]
+    :return A dictionary with structure: section -> name -> Config
+    :rtype: DefaultDict[str, Dict[str, Type[Config]]]
     """
-    added_fields = set()
     normalized_schema = defaultdict(dict)
     for schema in schemas:
         for field in schema:
-            unique_name = (field.section, field.name)
-
+            # section and name are the unique key for a config
+            existing_field = normalized_schema[field.section].get(field.name, None)
             # Error if the field has been added by another schema
-            if unique_name in added_fields and added_fields[unique_name] != field:
-                # TODO: Also include information on what Actor contains the
-                # conflicting fields but that information isn't passed into
-                # this function right now.
-                message = ('Two actors added incompatible configuration items'
-                           ' with the same name for Section: {section},'
-                           ' Field: {field}'.format(section=field.section,
-                                                    field=field.name))
-                log.error(message)
-                raise SchemaError(message)
+            if existing_field:
+                if existing_field != field:
+                    # TODO: Also include information on what Actor contains the
+                    # conflicting fields but that information isn't passed into
+                    # this function right now.
+                    message = (
+                        'Two actors added incompatible configuration items with'
+                        ' the same name for Section: {section}, Field: {field}'
+                    ).format(section=field.section, field=field.name)
 
-            # TODO: More validation here.
+                    log.error(message)
+                    raise SchemaError(message)
 
-            # Store the fields from the schema in a way that we can easily look
-            # up while validating
-            added_fields.add(unique_name)
-            normalized_schema[field.section][field.name] = field
+                # TODO: More validation here.
+
+            else:
+                normalized_schema[field.section][field.name] = field
 
     return normalized_schema
 
