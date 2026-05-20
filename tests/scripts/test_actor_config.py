@@ -150,6 +150,22 @@ def test_config_subclass_valid_definition():
     assert cfg.name == "a_setting"
 
 
+def test_config_subclass_cannot_be_instantiated():
+    """
+    Config subclasses act as schema definitions and must not be instantiated.
+    """
+    with pytest.raises(TypeError):
+        _TestConfigA()
+
+
+def test_config_base_class_cannot_be_instantiated():
+    """
+    The Config base class itself must not be instantiated either.
+    """
+    with pytest.raises(TypeError):
+        Config()
+
+
 @pytest.mark.parametrize(
     "missing_field",
     ["section", "name", "description", "type_", "default"],
