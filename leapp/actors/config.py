@@ -25,7 +25,7 @@ from collections import defaultdict
 
 import yaml
 
-from leapp.models.fields import ModelViolationError
+from leapp.models.fields import Field, ModelViolationError
 
 
 try:
@@ -52,6 +52,12 @@ class SchemaError(Exception):
 class ValidationError(Exception):
     """
     Raised when a config file fails to validate against any of the available schemas.
+    """
+
+
+class ConfigDefinitionError(Exception):
+    """
+    Raised when a Config definition is invalid.
     """
 
 
@@ -91,6 +97,42 @@ class Config:
     """
     The default value for the field
     """
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+        required_non_null_fields = [
+            "section",
+            "name",
+            "description",
+            "type_",
+            "default",
+        ]
+
+        for field in required_non_null_fields:
+            if field not in cls.__dict__:
+                raise ConfigDefinitionError(
+                    f"{cls.__name__} must explicitly override {field}"
+                )
+            if cls.__dict__[field] is None:
+                raise ConfigDefinitionError(
+                    f"{cls.__name__}.{field} must not be None"
+                )
+
+        type_ = cls.__dict__["type_"]
+        if not isinstance(type_, Field) or type(type_) is Field:
+            raise ConfigDefinitionError(
+                f"{cls.__name__}.type_ must be an instance of a subclass of leapp.models.Field"
+            )
+
+        # TODO: expose the default publicly in Field
+        if type_._default is not None:
+            # maybe just warn? _lint_warn is private in leapp/actors/__init__.py but could be used
+            # but maybe the best solution would be to just use the default from the field and drop
+            # the default class var altogether
+            raise ConfigDefinitionError(
+                f"{cls.__name__}.type_ is assigned a Field with non-null default=, use 'default' instead."
+            )
 
     @classmethod
     def to_dict(cls):
