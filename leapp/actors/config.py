@@ -98,6 +98,12 @@ class Config:
     The default value for the field
     """
 
+
+    def __new__(cls, *args, **kwargs):
+        raise TypeError(
+            f"Subclasses of {Config.__name__} cannot be instantiated"
+        )
+
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
 
