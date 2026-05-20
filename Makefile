@@ -202,6 +202,10 @@ test: lint
 	@ $(ENTER_VENV) \
 	pytest -vv --cov-report term-missing --cov=leapp tests/scripts
 
+test_no_lint:
+	@ $(ENTER_VENV) \
+	pytest -vv --cov-report term-missing --cov=leapp tests/scripts
+
 # TODO(pstodulk): create ticket to add rhel10 for testing.... py: 3.12
 test_container:
 	@case $(_TEST_CONTAINER) in \
