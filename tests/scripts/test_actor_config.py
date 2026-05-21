@@ -220,3 +220,36 @@ def test_config_subclass_type_with_default():
     attrs["type_"] = fields.String(default="field default")
     with pytest.raises(ConfigDefinitionError):
         _make_config(attrs)
+
+
+def test_retrieve_config(monkeypatch):
+    """
+    retrieve_config picks the values of the given schema out of the loaded
+    actor configuration, grouped by section and name.
+    """
+    loaded = {
+        "test": {"a_setting": "value a"},
+        "other_section": {"other_setting": "value b"},
+    }
+    monkeypatch.setattr(config_module, "_ACTOR_CONFIG", loaded)
+
+    result = retrieve_config((_TestConfigA, _TestConfigB))
+    assert result == {
+        "test": {"a_setting": "value a"},
+        "other_section": {"other_setting": "value b"},
+    }
+
+
+def test_retrieve_config_subset():
+    """
+    retrieve_config only returns the fields requested in the schema.
+    """
+    config_module._ACTOR_CONFIG = {
+        "test": {"a_setting": "value a"},
+        "other_section": {"other_setting": "value b"},
+    }
+    try:
+        result = retrieve_config((_TestConfigA,))
+        assert result == {"test": {"a_setting": "value a"}}
+    finally:
+        config_module._ACTOR_CONFIG = None
