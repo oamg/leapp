@@ -389,7 +389,7 @@ class Actor(object):
         :return: Dictionary containing requested configuration.
         :rtype: dict
         """
-        return retrieve_config(self.config_schema)
+        return retrieve_config(self.config_schemas)
 
 
 def _is_type(value_type):

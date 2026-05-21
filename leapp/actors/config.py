@@ -18,16 +18,14 @@ Config files are any yaml files in /etc/leapp/actor_config.d/
 """
 __metaclass__ = type
 
-import abc
 import glob
 import logging
 import os.path
 from collections import defaultdict
 
-import six
 import yaml
 
-from leapp.models.fields import ModelViolationError
+from leapp.models.fields import Field, ModelViolationError
 
 
 try:
@@ -57,10 +55,12 @@ class ValidationError(Exception):
     """
 
 
-# pylint: disable=deprecated-decorator
-# @abc.abstractproperty is deprecated in newer Python3 versions but it's
-# necessary for Python <= 3.3 (including 2.7)
-@six.add_metaclass(abc.ABCMeta)
+class ConfigDefinitionError(Exception):
+    """
+    Raised when a Config definition is invalid.
+    """
+
+
 class Config:
     """
     An Actor config schema looks like this.
@@ -69,29 +69,76 @@ class Config:
         class RHUIConfig(Config):
             section = "rhui"
             name = "file_map"
-            type_ = fields.Map(fields.String())
+            type_ = fields.StringMap(fields.String())
             description = 'Description here'
             default = {"repo": "url"}
     """
-    @abc.abstractproperty
-    def section(self):
-        pass
+    section = None
+    """
+    Name of the section this field belongs to (str)
+    """
 
-    @abc.abstractproperty
-    def name(self):
-        pass
+    name = None
+    """
+    Name of the config field (the setting) (str)
+    """
 
-    @abc.abstractproperty
-    def type_(self):
-        pass
+    type_ = None
+    """
+    The type that values for this field must be of. Must be a subclass of :py:class:`leapp.models.fields.Field`.
+    """
 
-    @abc.abstractproperty
-    def description(self):
-        pass
+    description = None
+    """
+    A description of the field (str)
+    """
 
-    @abc.abstractproperty
-    def default(self):
-        pass
+    default = None
+    """
+    The default value for the field
+    """
+
+
+    def __new__(cls, *args, **kwargs):
+        raise TypeError(
+            f"Subclasses of {Config.__name__} cannot be instantiated"
+        )
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+        required_non_null_fields = [
+            "section",
+            "name",
+            "description",
+            "type_",
+            "default",
+        ]
+
+        for field in required_non_null_fields:
+            if field not in cls.__dict__:
+                raise ConfigDefinitionError(
+                    f"{cls.__name__} must explicitly override {field}"
+                )
+            if cls.__dict__[field] is None:
+                raise ConfigDefinitionError(
+                    f"{cls.__name__}.{field} must not be None"
+                )
+
+        type_ = cls.__dict__["type_"]
+        if not isinstance(type_, Field) or type(type_) is Field:
+            raise ConfigDefinitionError(
+                f"{cls.__name__}.type_ must be an instance of a subclass of leapp.models.Field"
+            )
+
+        # TODO: expose the default publicly in Field
+        if type_._default is not None:
+            # maybe just warn? _lint_warn is private in leapp/actors/__init__.py but could be used
+            # but maybe the best solution would be to just use the default from the field and drop
+            # the default class var altogether
+            raise ConfigDefinitionError(
+                f"{cls.__name__}.type_ is assigned a Field with non-null default=, use 'default' instead."
+            )
 
     @classmethod
     def to_dict(cls):
@@ -123,7 +170,6 @@ class Config:
             'description': cls.description,
             'default': cls.default,
         }
-# pylint: enable=deprecated-decorator
 
 
 def _merge_config(configuration, new_config):
