@@ -7,7 +7,7 @@ class PhaseActors(object):
         self._actors = actors
         self._consumes = set()
         self._produces = set()
-        self._messages = {}
+        self._messages = {}  # Information about message producers for topoplogical sorting
 
         for actor in self._actors:
             self._consumes.update(actor.consumes)
@@ -22,21 +22,26 @@ class PhaseActors(object):
 
     @property
     def initial(self):
+        """ Tuple of messages that are not consumed by any actor. """
         return tuple(self._initial)
 
     @property
     def actors(self):
+        """ Tuple of actors in the execution order. """
         return tuple(self._actors)
 
     @property
     def consumes(self):
+        """ Tuple containing all messages consumed by some actor. """
         return tuple(self._consumes)
 
     @property
     def produces(self):
+        """ Tuple containing all messages produced by some actor. """
         return tuple(self._produces)
 
     def _sort(self):
+        """ Perform topological sort of the actor dependency graph for this phase, producing execution order. """
         actors, self._actors = list(self._actors), ()
         while actors:
             scheduled = []
