@@ -107,6 +107,20 @@ _:
               distro: "rhel-9.8"
               distro_target: "rhel-10.2"
           settings: *default-provisioning-settings
+        - &tmt-env-settings-almalinux-9_8-to-rhel-10_2
+          artifacts: *artifacts-for-rhel9
+          tmt:
+            context: &tmt-context-almalinux-9_8-to-rhel-10_2
+              distro: "alma-9.8"
+              distro_target: "rhel-10.2"
+          settings: *default-provisioning-settings
+        - &tmt-env-settings-rockylinux-9_8-to-rhel-10_2
+          artifacts: *artifacts-for-rhel9
+          tmt:
+            context: &tmt-context-rockylinux-9_8-to-rhel-10_2
+              distro: "rocky-9.8"
+              distro_target: "rhel-10.2"
+          settings: *default-provisioning-settings
         - &tmt-env-settings-centos-9-to-rhel-10_2
           artifacts: *artifacts-for-rhel9
           tmt:
@@ -599,3 +613,53 @@ jobs:
     SOURCE_RELEASE: "9"
     TARGET_RELEASE: "10"
     TARGET_OS: "centos"
+
+# ###################################################################### #
+# ##################### Alma Linux > RHEL ############################## #
+# ###################################################################### #
+
+# ###################################################################### #
+# ############################ 9.8 > 10.2 ################################ #
+# ###################################################################### #
+
+- &sanity-almalinux-9_8-to-rhel-10_2
+  <<: *sanity-abstract-9to10
+  identifier: sanity-AlmaLinux_9.8_to_RHEL_10.2
+  targets:
+    epel-9-x86_64:
+      distros: ['AlmaLinux OS 9.8.20260526 x86_64']
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:9to10 & tag:tier0 & enabled:true & tag:-rhsm'
+    environments:
+      - *tmt-env-settings-almalinux-9_8-to-rhel-10_2
+  env: &env-almalinux-9_8-to-rhel-10_2
+    SOURCE_RELEASE: "9.8"
+    TARGET_RELEASE: "10.2"
+    LEAPP_UNSUPPORTED: 1 # 9.8 is defined as unsupported ATM, will be superseded by 9.9
+    LEAPP_DEVEL_SKIP_CHECK_OS_RELEASE: 1 # 9.8 is defined as unsupported ATM, will be superseded by 9.9
+
+# ###################################################################### #
+# ##################### Rocky Linux > RHEL ############################# #
+# ###################################################################### #
+
+# ###################################################################### #
+# ############################ 9.8 > 10.2 ################################ #
+# ###################################################################### #
+
+- &sanity-rockylinux-9_8-to-rhel-10_2
+  <<: *sanity-abstract-9to10
+  identifier: sanity-RockyLinux_9.8_to_RHEL_10.2
+  targets:
+    epel-9-x86_64:
+      distros: ['Rocky-9-EC2-Base-9.8-20260525.0.x86_64']
+  tf_extra_params:
+    test:
+      tmt:
+        plan_filter: 'tag:9to10 & tag:tier0 & enabled:true & tag:-rhsm'
+    environments:
+      - *tmt-env-settings-rockylinux-9_8-to-rhel-10_2
+  env: &env-rockylinux-9_8-to-rhel-10_2
+    SOURCE_RELEASE: "9.8"
+    TARGET_RELEASE: "10.2"
