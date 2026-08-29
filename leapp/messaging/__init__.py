@@ -229,7 +229,7 @@ class BaseMessaging(object):
             'type': type(model).__name__,
             'actor': type(actor).name if not isinstance(actor, str) else actor,
             'topic': model.topic.name,
-            'stamp': datetime.datetime.utcnow().isoformat() + 'Z',
+            'stamp': datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
             'phase': os.environ.get('LEAPP_CURRENT_PHASE', 'NON-WORKFLOW-EXECUTION'),
             'context': os.environ.get('LEAPP_EXECUTION_ID', 'TESTING-CONTEXT'),
             'hostname': os.environ['LEAPP_HOSTNAME'],

@@ -125,7 +125,7 @@ class Execution(Storable):
         :type stamp: str
         """
         super(Execution, self).__init__()
-        self.stamp = stamp or datetime.datetime.utcnow().isoformat() + 'Z'
+        self.stamp = stamp or datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         if not isinstance(configuration, string_types):
             configuration = json.dumps(configuration, sort_keys=True)
         self.configuration = configuration
@@ -374,7 +374,7 @@ class Message(DataSource):
         :type hostname: str
         """
         super(Message, self).__init__(actor=actor, phase=phase, hostname=hostname, context=context)
-        self.stamp = stamp or datetime.datetime.utcnow().isoformat() + 'Z'
+        self.stamp = stamp or datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         self.msg_type = msg_type
         self.topic = topic
         self.data = data
@@ -515,7 +515,7 @@ class Audit(DataSource):
         """
         super(Audit, self).__init__(actor=actor, phase=phase, hostname=hostname, context=context)
         self.event = event
-        self.stamp = stamp or datetime.datetime.utcnow().isoformat() + 'Z'
+        self.stamp = stamp or datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         self.message = message
         self.data = data
         self._audit_id = None

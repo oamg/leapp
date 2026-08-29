@@ -25,7 +25,7 @@ class LeappAuditHandler(logging.Handler):
         log_data = {
             'event': 'log-message',
             'context': os.environ.get('LEAPP_EXECUTION_ID', 'TESTING-CONTEXT'),
-            'stamp': datetime.datetime.utcnow().isoformat() + 'Z',
+            'stamp': datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
             'hostname': os.environ.get('LEAPP_HOSTNAME', 'localhost'),
             'actor': os.environ.get('LEAPP_CURRENT_ACTOR', ''),
             'phase': os.environ.get('LEAPP_CURRENT_PHASE', ''),
