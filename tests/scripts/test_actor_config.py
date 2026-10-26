@@ -1,7 +1,9 @@
 from collections import defaultdict
+from unittest import  mock
+
 import pytest
 
-from leapp.actors.config import Config, SchemaError, normalize_schemas
+from leapp.actors.config import Config, SchemaError, _warn_about_unknown_config, normalize_schemas
 from leapp.models import fields
 
 
@@ -112,3 +114,61 @@ def test_normalize_schemas_inter_conflict(schemas):
 
 def test_normalize_schemas_empty():
     assert normalize_schemas([]) == defaultdict(dict)
+
+
+def _warnings(actor_config):
+    schema = normalize_schemas([(_TestConfigA, _TestConfigB)])
+    with mock.patch('leapp.actors.config.log') as log_mock:
+        _warn_about_unknown_config(actor_config, schema)
+    return [args[0] for args, _kwargs in log_mock.warning.call_args_list]
+
+
+def test_warn_about_unknown_config_valid():
+    """A config matching the schema produces no warnings."""
+    actor_config = {
+        "test": {"a_setting": "value"},
+        "other_section": {"other_setting": "value"},
+    }
+    assert _warnings(actor_config) == []
+
+
+def test_warn_about_unknown_config_unknown_section():
+    """
+    An unknown section is reported.
+    """
+    actor_config = {"bogus_section": {"a_setting": "value"}}
+    warnings = _warnings(actor_config)
+    assert any(
+        "A config file contained an unknown section:" in w and "bogus_section" in w
+        for w in warnings
+    )
+
+
+def test_warn_about_unknown_config_unknown_field():
+    """
+    An unknown field within a known section is reported.
+    """
+    actor_config = {"test": {"a_setting": "value", "bogus_field": "value"}}
+    warnings = _warnings(actor_config)
+    assert any(
+        "A config file contained an unknown field:" in w and "bogus_field" in w
+        for w in warnings
+    )
+
+
+def test_warn_about_unknown_config_known_field_no_warning():
+    """
+    A known field within a known section is not reported as unknown.
+    """
+    actor_config = {"test": {"a_setting": "value"}}
+    warnings = _warnings(actor_config)
+    assert not any("unknown field" in w for w in warnings)
+
+
+def test_warn_about_unknown_config_reserved_field():
+    """
+    Reserved fields ending in '__' are not reported as unknown.
+    """
+    actor_config = {"test": {"a_setting": "value", "a_setting__": "docs"}}
+    warnings = _warnings(actor_config)
+    assert not any("unknown field" in w for w in warnings)
