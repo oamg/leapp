@@ -13,7 +13,7 @@ _:
     trigger: pull_request
     fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
     fmf_ref: "next"
-    use_internal_tf: True
+    use_internal_tf: true
     labels:
       - sanity
     targets:
@@ -21,7 +21,7 @@ _:
         distros: [RHEL-8.10.0-Nightly]
     tf_extra_params:
       environments:
-        - &tmt-env-settings-8_10-to-9_6
+        - &tmt-env-settings-8_10-to-9_8
           artifacts: &artifacts-for-rhel8
             - type: "repository"
               id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
@@ -31,26 +31,26 @@ _:
                 - python3-leapp
               order: 40
           tmt:
-            context: &tmt-context-8_10-to-9_6
+            context: &tmt-context-8_10-to-9_8
               distro: "rhel-8.10"
-              distro_target: "rhel-9.6"
+              distro_target: "rhel-9.8"
           settings: &default-provisioning-settings
             provisioning:
               tags:
                 BusinessUnit: sst_upgrades@leapp_upstream_test
-        - &tmt-env-settings-8_10-to-9_8
-          artifacts: *artifacts-for-rhel8
-          tmt:
-            context: &tmt-context-8_10-to-9_8
-              distro: "rhel-8.10"
-              distro_target: "rhel-9.8"
-          settings: *default-provisioning-settings
         - &tmt-env-settings-8_10-to-9_9
           artifacts: *artifacts-for-rhel8
           tmt:
             context: &tmt-context-8_10-to-9_9
               distro: "rhel-8.10"
               distro_target: "rhel-9.9"
+          settings: *default-provisioning-settings
+        - &tmt-env-settings-8_10-to-9_10
+          artifacts: *artifacts-for-rhel8
+          tmt:
+            context: &tmt-context-8_10-to-9_10
+              distro: "rhel-8.10"
+              distro_target: "rhel-9.10"
           settings: *default-provisioning-settings
 
   sanity-abstract-8to9-aws: &sanity-abstract-8to9-aws
@@ -76,7 +76,7 @@ _:
       - sanity
     targets:
       epel-9-x86_64:
-        distros: [RHEL-9.9.0-Nightly]
+        distros: [RHEL-9.10.0-Nightly]
     tf_extra_params:
       environments:
         - &tmt-env-settings-centos-9-to-10
@@ -92,13 +92,6 @@ _:
             context: &tmt-context-centos-9-to-10
               distro: "centos-9"
               distro_target: "centos-10"
-          settings: *default-provisioning-settings
-        - &tmt-env-settings-9_6-to-10_0
-          artifacts: *artifacts-for-rhel9
-          tmt:
-            context: &tmt-context-9_6-to-10_0
-              distro: "rhel-9.6"
-              distro_target: "rhel-10.0"
           settings: *default-provisioning-settings
         - &tmt-env-settings-9_8-to-10_2
           artifacts: *artifacts-for-rhel9
@@ -121,13 +114,6 @@ _:
               distro: "rocky-9.8"
               distro_target: "rhel-10.2"
           settings: *default-provisioning-settings
-        - &tmt-env-settings-centos-9-to-rhel-10_2
-          artifacts: *artifacts-for-rhel9
-          tmt:
-            context: &tmt-context-centos-9-to-rhel-10_2
-              distro: "centos-9"
-              distro_target: "rhel-10.2"
-          settings: *default-provisioning-settings
         - &tmt-env-settings-9_9-to-10_3
           artifacts: *artifacts-for-rhel9
           tmt:
@@ -141,6 +127,20 @@ _:
             context: &tmt-context-centos-9-to-rhel-10_3
               distro: "centos-9"
               distro_target: "rhel-10.3"
+          settings: *default-provisioning-settings
+        - &tmt-env-settings-9_10-to-10_4
+          artifacts: *artifacts-for-rhel9
+          tmt:
+            context: &tmt-context-9_10-to-10_4
+              distro: "rhel-9.10"
+              distro_target: "rhel-10.4"
+          settings: *default-provisioning-settings
+        - &tmt-env-settings-centos-9-to-rhel-10_4
+          artifacts: *artifacts-for-rhel9
+          tmt:
+            context: &tmt-context-centos-9-to-rhel-10_4
+              distro: "centos-9"
+              distro_target: "rhel-10.4"
           settings: *default-provisioning-settings
 
   sanity-abstract-9to10-aws: &sanity-abstract-9to10-aws
@@ -220,57 +220,6 @@ jobs:
 # ###################################################################### #
 
 # ###################################################################### #
-# ############################# 8.10 > 9.6 ############################# #
-# ###################################################################### #
-
-- &sanity-8_10-to-9_6
-  <<: *sanity-abstract-8to9
-  identifier: sanity-8.10_to_9.6
-  tf_extra_params:
-    test: &plan-filter-8to9-tier0
-      tmt:
-        plan_filter: 'tag:8to9 & tag:tier0 & enabled:true & tag:-rhsm'
-    environments:
-      - *tmt-env-settings-8_10-to-9_6
-  env: &env-8_10-to-9_6
-    SOURCE_RELEASE: "8.10"
-    TARGET_RELEASE: "9.6"
-
-# On-demand minimal beaker tests
-- &beaker-minimal-8_10-to-9_6-ondemand
-  <<: *ondemand-8to9-abstract
-  labels:
-    - beaker-minimal
-    - beaker-minimal-8.10to9.6
-    - 8.10to9.6
-  identifier: on-demand-8.10_to_9.6-beaker-minimal
-  tf_extra_params:
-    test: &plan-filter-8to9-beaker-minimal
-      tmt:
-        plan_filter: 'tag:8to9 & tag:partitioning & enabled:true & tag:-rhsm'
-    environments:
-      - *tmt-env-settings-8_10-to-9_6
-  env:
-    <<: *env-8_10-to-9_6
-
-# On-demand kernel-rt tests
-- &kernel-rt-8_10-to-9_6-ondemand
-  <<: *ondemand-8to9-abstract
-  labels:
-    - kernel-rt
-    - kernel-rt-8.10to9.6
-    - 8.10to9.6
-  identifier: on-demand-8.10_to_9.6-kernel-rt
-  tf_extra_params:
-    test: &plan-filter-8to9-kernel-rt
-      tmt:
-        plan_filter: 'tag:8to9 & tag:kernel-rt & enabled:true & tag:-rhsm'
-    environments:
-      - *tmt-env-settings-8_10-to-9_6
-  env:
-    <<: *env-8_10-to-9_6
-
-# ###################################################################### #
 # ############################# 8.10 > 9.8 ############################# #
 # ###################################################################### #
 
@@ -278,7 +227,9 @@ jobs:
   <<: *sanity-abstract-8to9
   identifier: sanity-8.10_to_9.8
   tf_extra_params:
-    test: *plan-filter-8to9-tier0
+    test: &plan-filter-8to9-tier0
+      tmt:
+        plan_filter: 'tag:8to9 & tag:tier0 & enabled:true & tag:-rhsm'
     environments:
       - *tmt-env-settings-8_10-to-9_8
   env: &env-8_10-to-9_8
@@ -294,7 +245,9 @@ jobs:
     - 8.10to9.8
   identifier: on-demand-8.10_to_9.8-beaker-minimal
   tf_extra_params:
-    test: *plan-filter-8to9-beaker-minimal
+    test: &plan-filter-8to9-beaker-minimal
+      tmt:
+        plan_filter: 'tag:8to9 & tag:partitioning & tag:tier0 & enabled:true & tag:-rhsm'
     environments:
       - *tmt-env-settings-8_10-to-9_8
   env:
@@ -309,7 +262,9 @@ jobs:
     - 8.10to9.8
   identifier: on-demand-8.10_to_9.8-kernel-rt
   tf_extra_params:
-    test: *plan-filter-8to9-kernel-rt
+    test: &plan-filter-8to9-kernel-rt
+      tmt:
+        plan_filter: 'tag:8to9 & tag:kernel-rt & tag:tier0 & enabled:true & tag:-rhsm'
     environments:
       - *tmt-env-settings-8_10-to-9_8
   env:
@@ -373,6 +328,52 @@ jobs:
     <<: *env-8_10-to-9_9
 
 # ###################################################################### #
+# ############################# 8.10 > 9.10 ############################ #
+# ###################################################################### #
+
+- &sanity-8_10-to-9_10
+  <<: *sanity-abstract-8to9
+  identifier: sanity-8.10_to_9.10
+  tf_extra_params:
+    test: *plan-filter-8to9-tier0
+    environments:
+      - *tmt-env-settings-8_10-to-9_10
+  env: &env-8_10-to-9_10
+    SOURCE_RELEASE: "8.10"
+    TARGET_RELEASE: "9.10"
+
+# On-demand minimal beaker tests
+- &beaker-minimal-8_10-to-9_10-ondemand
+  <<: *ondemand-8to9-abstract
+  labels:
+    - beaker-minimal
+    - beaker-minimal-8.10to9.10
+    - 8.10to9.10
+  identifier: on-demand-8.10_to_9.10-beaker-minimal
+  tf_extra_params:
+    test: *plan-filter-8to9-beaker-minimal
+    environments:
+      - *tmt-env-settings-8_10-to-9_10
+  env:
+    <<: *env-8_10-to-9_10
+
+# On-demand kernel-rt tests
+- &kernel-rt-8_10-to-9_10-ondemand
+  <<: *ondemand-8to9-abstract
+  labels:
+    - kernel-rt
+    - kernel-rt-8.10to9.10
+    - 8.10to9.10
+  identifier: on-demand-8.10_to_9.10-kernel-rt
+  tf_extra_params:
+    test: *plan-filter-8to9-kernel-rt
+    environments:
+      - *tmt-env-settings-8_10-to-9_10
+  env:
+    <<: *env-8_10-to-9_10
+
+
+# ###################################################################### #
 # ############################## 9 TO 10 ################################ #
 # ###################################################################### #
 
@@ -389,62 +390,6 @@ jobs:
 # ###################################################################### #
 
 # ###################################################################### #
-# ############################# 9.6 > 10.0 ############################# #
-# ###################################################################### #
-
-- &sanity-9_6-to-10_0
-  <<: *sanity-abstract-9to10
-  identifier: sanity-9.6_to_10.0
-  targets: &targets-9_6-to-10_0
-    epel-9-x86_64:
-      distros: [RHEL-9.6.0-Nightly]
-  tf_extra_params:
-    test: &plan-filter-9to10-tier0
-      tmt:
-        plan_filter: 'tag:9to10 & tag:tier0 & enabled:true & tag:-rhsm'
-    environments:
-      - *tmt-env-settings-9_6-to-10_0
-  env: &env-9_6-to-10_0
-    SOURCE_RELEASE: "9.6"
-    TARGET_RELEASE: "10.0"
-
-# On-demand minimal beaker tests
-- &beaker-minimal-9_6-to-10_0-ondemand
-  <<: *ondemand-9to10-abstract
-  labels:
-    - beaker-minimal
-    - beaker-minimal-9.6to10.0
-    - 9.6to10.0
-  identifier: on-demand-9.6_to_10.0-beaker-minimal
-  targets: *targets-9_6-to-10_0
-  tf_extra_params:
-    test: &plan-filter-9to10-beaker-minimal
-      tmt:
-        plan_filter: 'tag:9to10 & tag:partitioning & enabled:true & tag:-rhsm'
-    environments:
-      - *tmt-env-settings-9_6-to-10_0
-  env:
-    <<: *env-9_6-to-10_0
-
-# On-demand kernel-rt tests
-- &kernel-rt-9_6-to-10_0-ondemand
-  <<: *ondemand-9to10-abstract
-  labels:
-    - kernel-rt
-    - kernel-rt-9.6to10.0
-    - 9.6to10.0
-  identifier: on-demand-9.6_to_10.0-kernel-rt
-  targets: *targets-9_6-to-10_0
-  tf_extra_params:
-    test: &plan-filter-9to10-kernel-rt
-      tmt:
-        plan_filter: 'tag:9to10 & tag:kernel-rt & enabled:true & tag:-rhsm'
-    environments:
-      - *tmt-env-settings-9_6-to-10_0
-  env:
-    <<: *env-9_6-to-10_0
-
-# ###################################################################### #
 # ############################# 9.8 > 10.2 ############################# #
 # ###################################################################### #
 
@@ -455,7 +400,9 @@ jobs:
     epel-9-x86_64:
       distros: [RHEL-9.8.0-Nightly]
   tf_extra_params:
-    test: *plan-filter-9to10-tier0
+    test: &plan-filter-9to10-tier0
+      tmt:
+        plan_filter: 'tag:9to10 & tag:tier0 & enabled:true & tag:-rhsm'
     environments:
       - *tmt-env-settings-9_8-to-10_2
   env: &env-9_8-to-10_2
@@ -472,7 +419,9 @@ jobs:
   identifier: on-demand-9.8_to_10.2-beaker-minimal
   targets: *targets-9_8-to-10_2
   tf_extra_params:
-    test: *plan-filter-9to10-beaker-minimal
+    test: &plan-filter-9to10-beaker-minimal
+      tmt:
+        plan_filter: 'tag:9to10 & tag:partitioning & enabled:true & tag:-rhsm'
     environments:
       - *tmt-env-settings-9_8-to-10_2
   env:
@@ -488,7 +437,9 @@ jobs:
   identifier: on-demand-9.8_to_10.2-kernel-rt
   targets: *targets-9_8-to-10_2
   tf_extra_params:
-    test: *plan-filter-9to10-kernel-rt
+    test: &plan-filter-9to10-kernel-rt
+      tmt:
+        plan_filter: 'tag:9to10 & tag:kernel-rt & enabled:true & tag:-rhsm'
     environments:
       - *tmt-env-settings-9_8-to-10_2
   env:
@@ -513,6 +464,9 @@ jobs:
 - &sanity-9_9-to-10_3
   <<: *sanity-abstract-9to10
   identifier: sanity-9.9_to_10.3
+  targets: &targets-9_9-to-10_3
+    epel-9-x86_64:
+      distros: [RHEL-9.9.0-Nightly]
   tf_extra_params:
     test: *plan-filter-9to10-tier0
     environments:
@@ -529,6 +483,7 @@ jobs:
     - beaker-minimal-9.9to10.3
     - 9.9to10.3
   identifier: on-demand-9.9_to_10.3-beaker-minimal
+  targets: *targets-9_9-to-10_3
   tf_extra_params:
     test: *plan-filter-9to10-beaker-minimal
     environments:
@@ -544,12 +499,58 @@ jobs:
     - kernel-rt-9.9to10.3
     - 9.9to10.3
   identifier: on-demand-9.9_to_10.3-kernel-rt
+  targets: *targets-9_9-to-10_3
   tf_extra_params:
     test: *plan-filter-9to10-kernel-rt
     environments:
       - *tmt-env-settings-9_9-to-10_3
   env:
     <<: *env-9_9-to-10_3
+
+# ###################################################################### #
+# ############################# 9.10 > 10.4 ############################ #
+# ###################################################################### #
+
+- &sanity-9_10-to-10_4
+  <<: *sanity-abstract-9to10
+  identifier: sanity-9.10_to_10.4
+  tf_extra_params:
+    test: *plan-filter-9to10-tier0
+    environments:
+      - *tmt-env-settings-9_10-to-10_4
+  env: &env-9_10-to-10_4
+    SOURCE_RELEASE: "9.10"
+    TARGET_RELEASE: "10.4"
+
+# On-demand minimal beaker tests
+- &beaker-minimal-9_10-to-10_4-ondemand
+  <<: *ondemand-9to10-abstract
+  labels:
+    - beaker-minimal
+    - beaker-minimal-9.10to10.4
+    - 9.10to10.4
+  identifier: on-demand-9.10_to_10.4-beaker-minimal
+  tf_extra_params:
+    test: *plan-filter-9to10-beaker-minimal
+    environments:
+      - *tmt-env-settings-9_10-to-10_4
+  env:
+    <<: *env-9_10-to-10_4
+
+# On-demand kernel-rt tests
+- &kernel-rt-9_10-to-10_4-ondemand
+  <<: *ondemand-9to10-abstract
+  labels:
+    - kernel-rt
+    - kernel-rt-9.10to10.4
+    - 9.10to10.4
+  identifier: on-demand-9.10_to_10.4-kernel-rt
+  tf_extra_params:
+    test: *plan-filter-9to10-kernel-rt
+    environments:
+      - *tmt-env-settings-9_10-to-10_4
+  env:
+    <<: *env-9_10-to-10_4
 
 # ###################################################################### #
 # ########################## CentOS Stream ############################# #
@@ -560,31 +561,15 @@ jobs:
 # ###################################################################### #
 
 # ###################################################################### #
-# ############################ 9 > 10.2 ################################ #
-# ###################################################################### #
-
-- &sanity-centos-9-to-rhel-10_2
-  <<: *sanity-abstract-9to10
-  identifier: sanity-CentOS_9_to_RHEL_10.2
-  targets: &targets-centos-9
-    epel-9-x86_64:
-      distros: [CentOS-Stream-9]
-  tf_extra_params:
-    test: *plan-filter-9to10-tier0
-    environments:
-      - *tmt-env-settings-centos-9-to-rhel-10_2
-  env: &env-centos-9-to-rhel-10_2
-    SOURCE_RELEASE: "9"
-    TARGET_RELEASE: "10.2"
-
-# ###################################################################### #
 # ############################ 9 > 10.3 ################################ #
 # ###################################################################### #
 
 - &sanity-centos-9-to-rhel-10_3
   <<: *sanity-abstract-9to10
   identifier: sanity-CentOS_9_to_RHEL_10.3
-  targets: *targets-centos-9
+  targets: &targets-centos-9
+    epel-9-x86_64:
+      distros: [CentOS-Stream-9]
   tf_extra_params:
     test: *plan-filter-9to10-tier0
     environments:
@@ -592,6 +577,22 @@ jobs:
   env: &env-centos-9-to-rhel-10_3
     SOURCE_RELEASE: "9"
     TARGET_RELEASE: "10.3"
+
+# ###################################################################### #
+# ############################ 9 > 10.4 ################################ #
+# ###################################################################### #
+
+- &sanity-centos-9-to-rhel-10_4
+  <<: *sanity-abstract-9to10
+  identifier: sanity-CentOS_9_to_RHEL_10.4
+  targets: *targets-centos-9
+  tf_extra_params:
+    test: *plan-filter-9to10-tier0
+    environments:
+      - *tmt-env-settings-centos-9-to-rhel-10_4
+  env: &env-centos-9-to-rhel-10_4
+    SOURCE_RELEASE: "9"
+    TARGET_RELEASE: "10.4"
 
 # ###################################################################### #
 # ################## CentOS Stream > CentOS Stream ##################### #
