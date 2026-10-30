@@ -1,3 +1,6 @@
+# See the documentation for more information:
+# https://packit.dev/docs/configuration/
+
 specfile_path: packaging/leapp.spec
 
 upstream_project_url: https://github.com/oamg/leapp
@@ -7,8 +10,111 @@ srpm_build_deps: []
 
 osh_diff_scan_after_copr_build: false
 
+# ====================================================================== #
+# Anchor library                                                         #
+# ---------------------------------------------------------------------- #
+# Packit drops the top-level `_` key before validating (it is declared in #
+# packit's own schema as "YAML anchor placeholders"), so everything below #
+# is purely a place to define YAML anchors. Nothing here runs on its own; #
+# only `jobs:` does.                                                      #
+#                                                                        #
+# IMPORTANT: `<<:` is a *shallow* merge, and packit's own merge of        #
+# `tf_extra_params` into the Testing Farm payload silently drops any      #
+# subtree whose type does not match (dict vs list). `test:` must stay a   #
+# mapping -- a one-item list there is discarded without any error and the #
+# plan filter never reaches Testing Farm.                                 #
+# ====================================================================== #
 _:
-  sanity-abstract-8to9: &sanity-abstract-8to9
+
+  # -------------------------------------------------------------------- #
+  # copr_build                                                            #
+  # -------------------------------------------------------------------- #
+  copr-actions-pr: &copr-actions-pr
+    post-upstream-clone:
+      # builds from PRs should have lower NVR than those from main branch
+      - sed -i "s/1%{?dist}/0%{?dist}/g" packaging/leapp.spec
+    get-current-version:
+      # get version from spec file instead from git tag
+      - bash -c "grep -m1 '^Version:' packaging/leapp.spec | grep -om1 '[0-9].[0-9.]**'"
+
+  copr-actions-main: &copr-actions-main
+    <<: *copr-actions-pr
+    post-upstream-clone:
+      # builds from main branch should have the highest NVR
+      - sed -i "s/1%{?dist}/100%{?dist}/g" packaging/leapp.spec
+
+  copr-build-base: &copr-build-base
+    job: copr_build
+    owner: "@oamg"
+    project: leapp
+    targets:
+      - epel-8-x86_64
+      - epel-9-x86_64
+      - fedora-all-aarch64
+      - fedora-all-x86_64
+
+  # -------------------------------------------------------------------- #
+  # Testing Farm provisioning and artifacts                               #
+  # -------------------------------------------------------------------- #
+  provisioning-settings: &provisioning-settings
+    provisioning:
+      tags:
+        BusinessUnit: sst_upgrades@leapp_upstream_test
+
+  artifacts-rhel8: &artifacts-rhel8
+    - type: "repository"
+      id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
+      packages:
+        - leapp-upgrade-el8toel9
+        - leapp-upgrade-el8toel9-deps
+        - python3-leapp
+      order: 40
+
+  artifacts-rhel9: &artifacts-rhel9
+    - type: "repository"
+      id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-9-x86_64/"
+      packages:
+        - leapp-upgrade-el9toel10
+        - leapp-upgrade-el9toel10-deps
+        - python3-leapp
+      order: 40
+
+  # -------------------------------------------------------------------- #
+  # tmt plan filters                                                      #
+  # -------------------------------------------------------------------- #
+  filter-8to9-tier0: &filter-8to9-tier0
+    tmt:
+      plan_filter: 'tag:8to9 & tag:tier0 & enabled:true & tag:-rhsm'
+  filter-8to9-partitioning: &filter-8to9-partitioning
+    tmt:
+      plan_filter: 'tag:8to9 & tag:partitioning & tag:tier0 & enabled:true & tag:-rhsm'
+  filter-8to9-kernel-rt: &filter-8to9-kernel-rt
+    tmt:
+      plan_filter: 'tag:8to9 & tag:kernel-rt & tag:tier0 & enabled:true & tag:-rhsm'
+  filter-8to9-aws: &filter-8to9-aws
+    tmt:
+      plan_filter: 'tag:8to9 & tag:rhui-aws-tier0 & enabled:true & tag:-rhsm'
+
+  filter-9to10-tier0: &filter-9to10-tier0
+    tmt:
+      plan_filter: 'tag:9to10 & tag:tier0 & enabled:true & tag:-rhsm'
+  filter-9to10-partitioning: &filter-9to10-partitioning
+    tmt:
+      plan_filter: 'tag:9to10 & tag:partitioning & enabled:true & tag:-rhsm'
+  filter-9to10-kernel-rt: &filter-9to10-kernel-rt
+    tmt:
+      plan_filter: 'tag:9to10 & tag:kernel-rt & enabled:true & tag:-rhsm'
+  filter-9to10-aws: &filter-9to10-aws
+    tmt:
+      plan_filter: 'tag:9to10 & tag:rhui-aws-tier0 & enabled:true & tag:-rhsm'
+
+  # -------------------------------------------------------------------- #
+  # Job templates                                                         #
+  # -------------------------------------------------------------------- #
+  # NOTE(pstodulk): default values in abstract jobs start from 8.10, as
+  # this is the last RHEL 8 release and all new future tests will start
+  # from this one release.
+  tests-base: &tests-base
     job: tests
     trigger: pull_request
     fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
@@ -16,45 +122,14 @@ _:
     use_internal_tf: true
     labels:
       - sanity
-    targets:
-      epel-8-x86_64:
-        distros: [RHEL-8.10.0-Nightly]
-    tf_extra_params:
-      environments:
-        - &tmt-env-settings-8_10-to-9_8
-          artifacts: &artifacts-for-rhel8
-            - type: "repository"
-              id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-8-x86_64/"
-              packages:
-                - leapp-upgrade-el8toel9
-                - leapp-upgrade-el8toel9-deps
-                - python3-leapp
-              order: 40
-          tmt:
-            context: &tmt-context-8_10-to-9_8
-              distro: "rhel-8.10"
-              distro_target: "rhel-9.8"
-          settings: &default-provisioning-settings
-            provisioning:
-              tags:
-                BusinessUnit: sst_upgrades@leapp_upstream_test
-        - &tmt-env-settings-8_10-to-9_9
-          artifacts: *artifacts-for-rhel8
-          tmt:
-            context: &tmt-context-8_10-to-9_9
-              distro: "rhel-8.10"
-              distro_target: "rhel-9.9"
-          settings: *default-provisioning-settings
-        - &tmt-env-settings-8_10-to-9_10
-          artifacts: *artifacts-for-rhel8
-          tmt:
-            context: &tmt-context-8_10-to-9_10
-              distro: "rhel-8.10"
-              distro_target: "rhel-9.10"
-          settings: *default-provisioning-settings
 
-  sanity-abstract-8to9-aws: &sanity-abstract-8to9-aws
-    <<: *sanity-abstract-8to9
+  sanity-8to9: &sanity-8to9
+    <<: *tests-base
+  ondemand-8to9: &ondemand-8to9
+    <<: *tests-base
+    manual_trigger: True
+  sanity-8to9-aws: &sanity-8to9-aws
+    <<: *tests-base
     labels:
       - sanity
       - aws
@@ -62,89 +137,13 @@ _:
       epel-8-x86_64:
         distros: [RHEL-8-rhui]
 
-  ondemand-8to9-abstract: &ondemand-8to9-abstract
-    <<: *sanity-abstract-8to9
+  sanity-9to10: &sanity-9to10
+    <<: *tests-base
+  ondemand-9to10: &ondemand-9to10
+    <<: *tests-base
     manual_trigger: True
-
-  sanity-abstract-9to10: &sanity-abstract-9to10
-    job: tests
-    trigger: pull_request
-    fmf_url: "https://gitlab.cee.redhat.com/oamg/leapp-tests"
-    fmf_ref: "next"
-    use_internal_tf: True
-    labels:
-      - sanity
-    targets:
-      epel-9-x86_64:
-        distros: [RHEL-9.10.0-Nightly]
-    tf_extra_params:
-      environments:
-        - &tmt-env-settings-centos-9-to-10
-          artifacts: &artifacts-for-rhel9
-            - type: "repository"
-              id: "https://download.copr.fedorainfracloud.org/results/@oamg/leapp/epel-9-x86_64/"
-              packages:
-                - leapp-upgrade-el9toel10
-                - leapp-upgrade-el9toel10-deps
-                - python3-leapp
-              order: 40
-          tmt:
-            context: &tmt-context-centos-9-to-10
-              distro: "centos-9"
-              distro_target: "centos-10"
-          settings: *default-provisioning-settings
-        - &tmt-env-settings-9_8-to-10_2
-          artifacts: *artifacts-for-rhel9
-          tmt:
-            context: &tmt-context-9_8-to-10_2
-              distro: "rhel-9.8"
-              distro_target: "rhel-10.2"
-          settings: *default-provisioning-settings
-        - &tmt-env-settings-almalinux-9_8-to-rhel-10_2
-          artifacts: *artifacts-for-rhel9
-          tmt:
-            context: &tmt-context-almalinux-9_8-to-rhel-10_2
-              distro: "alma-9.8"
-              distro_target: "rhel-10.2"
-          settings: *default-provisioning-settings
-        - &tmt-env-settings-rockylinux-9_8-to-rhel-10_2
-          artifacts: *artifacts-for-rhel9
-          tmt:
-            context: &tmt-context-rockylinux-9_8-to-rhel-10_2
-              distro: "rocky-9.8"
-              distro_target: "rhel-10.2"
-          settings: *default-provisioning-settings
-        - &tmt-env-settings-9_9-to-10_3
-          artifacts: *artifacts-for-rhel9
-          tmt:
-            context: &tmt-context-9_9-to-10_3
-              distro: "rhel-9.9"
-              distro_target: "rhel-10.3"
-          settings: *default-provisioning-settings
-        - &tmt-env-settings-centos-9-to-rhel-10_3
-          artifacts: *artifacts-for-rhel9
-          tmt:
-            context: &tmt-context-centos-9-to-rhel-10_3
-              distro: "centos-9"
-              distro_target: "rhel-10.3"
-          settings: *default-provisioning-settings
-        - &tmt-env-settings-9_10-to-10_4
-          artifacts: *artifacts-for-rhel9
-          tmt:
-            context: &tmt-context-9_10-to-10_4
-              distro: "rhel-9.10"
-              distro_target: "rhel-10.4"
-          settings: *default-provisioning-settings
-        - &tmt-env-settings-centos-9-to-rhel-10_4
-          artifacts: *artifacts-for-rhel9
-          tmt:
-            context: &tmt-context-centos-9-to-rhel-10_4
-              distro: "centos-9"
-              distro_target: "rhel-10.4"
-          settings: *default-provisioning-settings
-
-  sanity-abstract-9to10-aws: &sanity-abstract-9to10-aws
-    <<: *sanity-abstract-9to10
+  sanity-9to10-aws: &sanity-9to10-aws
+    <<: *tests-base
     labels:
       - sanity
       - aws
@@ -152,515 +151,494 @@ _:
       epel-9-x86_64:
         distros: [RHEL-9-rhui]
 
-  ondemand-9to10-abstract: &ondemand-9to10-abstract
-    <<: *sanity-abstract-9to10
-    manual_trigger: True
+  # -------------------------------------------------------------------- #
+  # Upgrade paths                                                         #
+  # -------------------------------------------------------------------- #
+  # Each path has exactly two anchors and they are the only place its
+  # version numbers appear:
+  #   path-*  -> what the job runs on   (targets + SOURCE/TARGET_RELEASE)
+  #   tfenv-* -> the Testing Farm environment (artifacts + tmt context)
+  # Add a new upgrade path by adding one pair here, then the jobs below.
+  # -------------------------------------------------------------------- #
 
+  # --- RHEL 8 -> RHEL 9 ------------------------------------------------ #
+  path-rhel8_10-to-rhel9_8: &path-rhel8_10-to-rhel9_8
+    targets:
+      epel-8-x86_64:
+        distros: [RHEL-8.10.0-Nightly]
+    env:
+      SOURCE_RELEASE: "8.10"
+      TARGET_RELEASE: "9.8"
+  tfenv-rhel8_10-to-rhel9_8: &tfenv-rhel8_10-to-rhel9_8
+    artifacts: *artifacts-rhel8
+    tmt:
+      context:
+        distro: "rhel-8.10"
+        distro_target: "rhel-9.8"
+    settings: *provisioning-settings
+
+  path-rhel8_10-to-rhel9_9: &path-rhel8_10-to-rhel9_9
+    targets:
+      epel-8-x86_64:
+        distros: [RHEL-8.10.0-Nightly]
+    env:
+      SOURCE_RELEASE: "8.10"
+      TARGET_RELEASE: "9.9"
+  tfenv-rhel8_10-to-rhel9_9: &tfenv-rhel8_10-to-rhel9_9
+    artifacts: *artifacts-rhel8
+    tmt:
+      context:
+        distro: "rhel-8.10"
+        distro_target: "rhel-9.9"
+    settings: *provisioning-settings
+
+  path-rhel8_10-to-rhel9_10: &path-rhel8_10-to-rhel9_10
+    targets:
+      epel-8-x86_64:
+        distros: [RHEL-8.10.0-Nightly]
+    env:
+      SOURCE_RELEASE: "8.10"
+      TARGET_RELEASE: "9.10"
+  tfenv-rhel8_10-to-rhel9_10: &tfenv-rhel8_10-to-rhel9_10
+    artifacts: *artifacts-rhel8
+    tmt:
+      context:
+        distro: "rhel-8.10"
+        distro_target: "rhel-9.10"
+    settings: *provisioning-settings
+
+  # --- RHEL 9 -> RHEL 10 ----------------------------------------------- #
+  path-rhel9_8-to-rhel10_2: &path-rhel9_8-to-rhel10_2
+    targets:
+      epel-9-x86_64:
+        distros: [RHEL-9.8.0-Nightly]
+    env:
+      SOURCE_RELEASE: "9.8"
+      TARGET_RELEASE: "10.2"
+  tfenv-rhel9_8-to-rhel10_2: &tfenv-rhel9_8-to-rhel10_2
+    artifacts: *artifacts-rhel9
+    tmt:
+      context:
+        distro: "rhel-9.8"
+        distro_target: "rhel-10.2"
+    settings: *provisioning-settings
+
+  path-rhel9_9-to-rhel10_3: &path-rhel9_9-to-rhel10_3
+    targets:
+      epel-9-x86_64:
+        distros: [RHEL-9.9.0-Nightly]
+    env:
+      SOURCE_RELEASE: "9.9"
+      TARGET_RELEASE: "10.3"
+  tfenv-rhel9_9-to-rhel10_3: &tfenv-rhel9_9-to-rhel10_3
+    artifacts: *artifacts-rhel9
+    tmt:
+      context:
+        distro: "rhel-9.9"
+        distro_target: "rhel-10.3"
+    settings: *provisioning-settings
+
+  path-rhel9_10-to-rhel10_4: &path-rhel9_10-to-rhel10_4
+    targets:
+      epel-9-x86_64:
+        distros: [RHEL-9.10.0-Nightly]
+    env:
+      SOURCE_RELEASE: "9.10"
+      TARGET_RELEASE: "10.4"
+  tfenv-rhel9_10-to-rhel10_4: &tfenv-rhel9_10-to-rhel10_4
+    artifacts: *artifacts-rhel9
+    tmt:
+      context:
+        distro: "rhel-9.10"
+        distro_target: "rhel-10.4"
+    settings: *provisioning-settings
+
+  # --- CentOS Stream 9 -> RHEL 10 / CentOS Stream 10 ------------------- #
+  path-centos9-to-rhel10_3: &path-centos9-to-rhel10_3
+    targets:
+      epel-9-x86_64:
+        distros: [CentOS-Stream-9]
+    env:
+      SOURCE_RELEASE: "9"
+      TARGET_RELEASE: "10.3"
+  tfenv-centos9-to-rhel10_3: &tfenv-centos9-to-rhel10_3
+    artifacts: *artifacts-rhel9
+    tmt:
+      context:
+        distro: "centos-9"
+        distro_target: "rhel-10.3"
+    settings: *provisioning-settings
+
+  path-centos9-to-rhel10_4: &path-centos9-to-rhel10_4
+    targets:
+      epel-9-x86_64:
+        distros: [CentOS-Stream-9]
+    env:
+      SOURCE_RELEASE: "9"
+      TARGET_RELEASE: "10.4"
+  tfenv-centos9-to-rhel10_4: &tfenv-centos9-to-rhel10_4
+    artifacts: *artifacts-rhel9
+    tmt:
+      context:
+        distro: "centos-9"
+        distro_target: "rhel-10.4"
+    settings: *provisioning-settings
+
+  path-centos9-to-centos10: &path-centos9-to-centos10
+    targets:
+      epel-9-x86_64:
+        distros: [CentOS-Stream-9]
+    env:
+      SOURCE_RELEASE: "9"
+      TARGET_RELEASE: "10"
+      TARGET_OS: "centos"
+  tfenv-centos9-to-centos10: &tfenv-centos9-to-centos10
+    artifacts: *artifacts-rhel9
+    tmt:
+      context:
+        distro: "centos-9"
+        distro_target: "centos-10"
+    settings: *provisioning-settings
+
+  # --- AlmaLinux / Rocky Linux / Oracle Linux 9.8 -> RHEL 10.2 --------- #
+  path-alma9_8-to-rhel10_2: &path-alma9_8-to-rhel10_2
+    targets:
+      epel-9-x86_64:
+        distros: ['AlmaLinux OS 9.8.20260526 x86_64']
+    env:
+      SOURCE_RELEASE: "9.8"
+      TARGET_RELEASE: "10.2"
+      LEAPP_UNSUPPORTED: 1 # 9.8 is defined as unsupported ATM, will be superseded by 9.9
+      LEAPP_DEVEL_SKIP_CHECK_OS_RELEASE: 1 # 9.8 is defined as unsupported ATM, will be superseded by 9.9
+  tfenv-alma9_8-to-rhel10_2: &tfenv-alma9_8-to-rhel10_2
+    artifacts: *artifacts-rhel9
+    tmt:
+      context:
+        distro: "alma-9.8"
+        distro_target: "rhel-10.2"
+    settings: *provisioning-settings
+
+  path-rocky9_8-to-rhel10_2: &path-rocky9_8-to-rhel10_2
+    targets:
+      epel-9-x86_64:
+        distros: ['Rocky-9-EC2-Base-9.8-20260525.0.x86_64']
+    env:
+      SOURCE_RELEASE: "9.8"
+      TARGET_RELEASE: "10.2"
+  tfenv-rocky9_8-to-rhel10_2: &tfenv-rocky9_8-to-rhel10_2
+    artifacts: *artifacts-rhel9
+    tmt:
+      context:
+        distro: "rocky-9.8"
+        distro_target: "rhel-10.2"
+    settings: *provisioning-settings
+
+  path-oracle9_8-to-rhel10_2: &path-oracle9_8-to-rhel10_2
+    targets:
+      epel-9-x86_64:
+        distros: ['Oracle:Oracle-Linux:ol98-lvm:9.8.2']
+    env:
+      SOURCE_RELEASE: "9.8"
+      TARGET_RELEASE: "10.2"
+  tfenv-oracle9_8-to-rhel10_2: &tfenv-oracle9_8-to-rhel10_2
+    artifacts: *artifacts-rhel9
+    tmt:
+      context:
+        distro: "oracle-9.8"
+        distro_target: "rhel-10.2"
+    settings: *provisioning-settings
+    # Oracle Linux images are only available from the Azure pool
+    pool: "azure-oamg"
+
+# ====================================================================== #
+# Jobs                                                                   #
+# ---------------------------------------------------------------------- #
+# `<<: [*template, *path]` merges both; keys written directly in the job  #
+# always win over either. Earlier anchors in the list win over later ones #
+# (that is how the RHUI AWS jobs keep their own `targets`).               #
+# ====================================================================== #
 jobs:
-- job: copr_build
-  trigger: pull_request
-  owner: "@oamg"
-  project: leapp
-  targets:
-  - epel-8-x86_64
-  - epel-9-x86_64
-  - fedora-all-aarch64
-  - fedora-all-x86_64
-  actions:
-    post-upstream-clone:
-    # builds from PRs should have lower NVR than those from main branch
-    - sed -i "s/1%{?dist}/0%{?dist}/g" packaging/leapp.spec
-    get-current-version:
-    # get version from spec file instead from git tag
-    - bash -c "grep -m1 '^Version:' packaging/leapp.spec | grep -om1 '[0-9].[0-9.]**'"
 
-- job: copr_build
+# ---------------------------------------------------------------------- #
+# copr builds                                                            #
+# ---------------------------------------------------------------------- #
+- <<: *copr-build-base
+  trigger: pull_request
+  actions: *copr-actions-pr
+
+- <<: *copr-build-base
   trigger: commit
   branch: main
-  owner: "@oamg"
-  project: leapp
-  targets:
-  - epel-8-x86_64
-  - epel-9-x86_64
-  - fedora-all-aarch64
-  - fedora-all-x86_64
-  actions:
-    post-upstream-clone:
-    # builds from main branch should have the highest NVR
-    - sed -i "s/1%{?dist}/100%{?dist}/g" packaging/leapp.spec
-    get-current-version:
-    # get version from spec file instead from git tag
-    - bash -c "grep -m1 '^Version:' packaging/leapp.spec | grep -om1 '[0-9].[0-9.]**'"
+  actions: *copr-actions-main
 
-# NOTE: to see what envars, targets, .. can be set in tests, see
-# the configuration of tests here:
-#  7toX path https://gitlab.cee.redhat.com/oamg/leapp-tests/-/blob/rhel7/config.yaml
-# >7tox path https://gitlab.cee.redhat.com/oamg/leapp-tests/-/blob/main/config.yaml
-# Available only to RH Employees.
-
-
-# ###################################################################### #
-# ############################## 8 TO 9 ################################ #
-# ###################################################################### #
-
-# ###################################################################### #
-# ### Abstract job definitions to make individual tests/jobs smaller ### #
-# ###################################################################### #
-
-#NOTE(pstodulk) putting default values in abstract jobs as from 8.10, as this
-# is the last RHEL 8 release and all new future tests will start from this
-# one release.
-
-# NOTE: shared 8-to-9 abstract test definitions now live under the
-# top-level `_:` placeholder above (see packit docs: 'yaml anchors'),
-# so they don't need a dummy `trigger: ignore` job entry here anymore.
-
-# ###################################################################### #
-# ######################### Individual tests ########################### #
-# ###################################################################### #
-
-# ###################################################################### #
-# ############################# 8.10 > 9.8 ############################# #
-# ###################################################################### #
-
-- &sanity-8_10-to-9_8
-  <<: *sanity-abstract-8to9
+# ---------------------------------------------------------------------- #
+# RHEL 8.10 -> RHEL 9.8                                                  #
+# ---------------------------------------------------------------------- #
+- <<: [*sanity-8to9, *path-rhel8_10-to-rhel9_8]
   identifier: sanity-8.10_to_9.8
   tf_extra_params:
-    test: &plan-filter-8to9-tier0
-      tmt:
-        plan_filter: 'tag:8to9 & tag:tier0 & enabled:true & tag:-rhsm'
+    test: *filter-8to9-tier0
     environments:
-      - *tmt-env-settings-8_10-to-9_8
-  env: &env-8_10-to-9_8
-    SOURCE_RELEASE: "8.10"
-    TARGET_RELEASE: "9.8"
+      - *tfenv-rhel8_10-to-rhel9_8
 
-# On-demand minimal beaker tests
-- &beaker-minimal-8_10-to-9_8-ondemand
-  <<: *ondemand-8to9-abstract
+# On-demand partitioning (beaker-minimal) tests
+- <<: [*ondemand-8to9, *path-rhel8_10-to-rhel9_8]
+  identifier: on-demand-8.10_to_9.8-partitioning
   labels:
+    - partitioning
     - beaker-minimal
     - beaker-minimal-8.10to9.8
     - 8.10to9.8
-  identifier: on-demand-8.10_to_9.8-beaker-minimal
   tf_extra_params:
-    test: &plan-filter-8to9-beaker-minimal
-      tmt:
-        plan_filter: 'tag:8to9 & tag:partitioning & tag:tier0 & enabled:true & tag:-rhsm'
+    test: *filter-8to9-partitioning
     environments:
-      - *tmt-env-settings-8_10-to-9_8
-  env:
-    <<: *env-8_10-to-9_8
+      - *tfenv-rhel8_10-to-rhel9_8
 
 # On-demand kernel-rt tests
-- &kernel-rt-8_10-to-9_8-ondemand
-  <<: *ondemand-8to9-abstract
+- <<: [*ondemand-8to9, *path-rhel8_10-to-rhel9_8]
+  identifier: on-demand-8.10_to_9.8-kernel-rt
   labels:
     - kernel-rt
     - kernel-rt-8.10to9.8
     - 8.10to9.8
-  identifier: on-demand-8.10_to_9.8-kernel-rt
   tf_extra_params:
-    test: &plan-filter-8to9-kernel-rt
-      tmt:
-        plan_filter: 'tag:8to9 & tag:kernel-rt & tag:tier0 & enabled:true & tag:-rhsm'
+    test: *filter-8to9-kernel-rt
     environments:
-      - *tmt-env-settings-8_10-to-9_8
-  env:
-    <<: *env-8_10-to-9_8
+      - *tfenv-rhel8_10-to-rhel9_8
 
-- &sanity-8_10-to-9_8-aws
-  <<: *sanity-abstract-8to9-aws
+- <<: [*sanity-8to9-aws, *path-rhel8_10-to-rhel9_8]
   identifier: sanity-RHUI_AWS_8.10_to_9.8
   tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:8to9 & tag:rhui-aws-tier0 & enabled:true & tag:-rhsm'
+    test: *filter-8to9-aws
     environments:
-      - *tmt-env-settings-8_10-to-9_8
-  env:
-    <<: *env-8_10-to-9_8
+      - *tfenv-rhel8_10-to-rhel9_8
 
-# ###################################################################### #
-# ############################# 8.10 > 9.9 ############################# #
-# ###################################################################### #
-
-- &sanity-8_10-to-9_9
-  <<: *sanity-abstract-8to9
+# ---------------------------------------------------------------------- #
+# RHEL 8.10 -> RHEL 9.9                                                  #
+# ---------------------------------------------------------------------- #
+- <<: [*sanity-8to9, *path-rhel8_10-to-rhel9_9]
   identifier: sanity-8.10_to_9.9
   tf_extra_params:
-    test: *plan-filter-8to9-tier0
+    test: *filter-8to9-tier0
     environments:
-      - *tmt-env-settings-8_10-to-9_9
-  env: &env-8_10-to-9_9
-    SOURCE_RELEASE: "8.10"
-    TARGET_RELEASE: "9.9"
+      - *tfenv-rhel8_10-to-rhel9_9
 
-# On-demand minimal beaker tests
-- &beaker-minimal-8_10-to-9_9-ondemand
-  <<: *ondemand-8to9-abstract
+# On-demand partitioning (beaker-minimal) tests
+- <<: [*ondemand-8to9, *path-rhel8_10-to-rhel9_9]
+  identifier: on-demand-8.10_to_9.9-partitioning
   labels:
+    - partitioning
     - beaker-minimal
     - beaker-minimal-8.10to9.9
     - 8.10to9.9
-  identifier: on-demand-8.10_to_9.9-beaker-minimal
   tf_extra_params:
-    test: *plan-filter-8to9-beaker-minimal
+    test: *filter-8to9-partitioning
     environments:
-      - *tmt-env-settings-8_10-to-9_9
-  env:
-    <<: *env-8_10-to-9_9
+      - *tfenv-rhel8_10-to-rhel9_9
 
 # On-demand kernel-rt tests
-- &kernel-rt-8_10-to-9_9-ondemand
-  <<: *ondemand-8to9-abstract
+- <<: [*ondemand-8to9, *path-rhel8_10-to-rhel9_9]
+  identifier: on-demand-8.10_to_9.9-kernel-rt
   labels:
     - kernel-rt
     - kernel-rt-8.10to9.9
     - 8.10to9.9
-  identifier: on-demand-8.10_to_9.9-kernel-rt
   tf_extra_params:
-    test: *plan-filter-8to9-kernel-rt
+    test: *filter-8to9-kernel-rt
     environments:
-      - *tmt-env-settings-8_10-to-9_9
-  env:
-    <<: *env-8_10-to-9_9
+      - *tfenv-rhel8_10-to-rhel9_9
 
-# ###################################################################### #
-# ############################# 8.10 > 9.10 ############################ #
-# ###################################################################### #
-
-- &sanity-8_10-to-9_10
-  <<: *sanity-abstract-8to9
+# ---------------------------------------------------------------------- #
+# RHEL 8.10 -> RHEL 9.10                                                 #
+# ---------------------------------------------------------------------- #
+- <<: [*sanity-8to9, *path-rhel8_10-to-rhel9_10]
   identifier: sanity-8.10_to_9.10
   tf_extra_params:
-    test: *plan-filter-8to9-tier0
+    test: *filter-8to9-tier0
     environments:
-      - *tmt-env-settings-8_10-to-9_10
-  env: &env-8_10-to-9_10
-    SOURCE_RELEASE: "8.10"
-    TARGET_RELEASE: "9.10"
+      - *tfenv-rhel8_10-to-rhel9_10
 
-# On-demand minimal beaker tests
-- &beaker-minimal-8_10-to-9_10-ondemand
-  <<: *ondemand-8to9-abstract
+# On-demand partitioning (beaker-minimal) tests
+- <<: [*ondemand-8to9, *path-rhel8_10-to-rhel9_10]
+  identifier: on-demand-8.10_to_9.10-partitioning
   labels:
+    - partitioning
     - beaker-minimal
     - beaker-minimal-8.10to9.10
     - 8.10to9.10
-  identifier: on-demand-8.10_to_9.10-beaker-minimal
   tf_extra_params:
-    test: *plan-filter-8to9-beaker-minimal
+    test: *filter-8to9-partitioning
     environments:
-      - *tmt-env-settings-8_10-to-9_10
-  env:
-    <<: *env-8_10-to-9_10
+      - *tfenv-rhel8_10-to-rhel9_10
 
 # On-demand kernel-rt tests
-- &kernel-rt-8_10-to-9_10-ondemand
-  <<: *ondemand-8to9-abstract
+- <<: [*ondemand-8to9, *path-rhel8_10-to-rhel9_10]
+  identifier: on-demand-8.10_to_9.10-kernel-rt
   labels:
     - kernel-rt
     - kernel-rt-8.10to9.10
     - 8.10to9.10
-  identifier: on-demand-8.10_to_9.10-kernel-rt
   tf_extra_params:
-    test: *plan-filter-8to9-kernel-rt
+    test: *filter-8to9-kernel-rt
     environments:
-      - *tmt-env-settings-8_10-to-9_10
-  env:
-    <<: *env-8_10-to-9_10
+      - *tfenv-rhel8_10-to-rhel9_10
 
-
-# ###################################################################### #
-# ############################## 9 TO 10 ################################ #
-# ###################################################################### #
-
-# ###################################################################### #
-# ### Abstract job definitions to make individual tests/jobs smaller ### #
-# ###################################################################### #
-
-# NOTE: shared 9-to-10 abstract test definitions now live under the
-# top-level `_:` placeholder above (see packit docs: 'yaml anchors'),
-# so they no longer need a dummy `trigger: ignore` job entry here.
-
-# ###################################################################### #
-# ######################### Individual tests ########################### #
-# ###################################################################### #
-
-# ###################################################################### #
-# ############################# 9.8 > 10.2 ############################# #
-# ###################################################################### #
-
-- &sanity-9_8-to-10_2
-  <<: *sanity-abstract-9to10
+# ---------------------------------------------------------------------- #
+# RHEL 9.8 -> RHEL 10.2                                                  #
+# ---------------------------------------------------------------------- #
+- <<: [*sanity-9to10, *path-rhel9_8-to-rhel10_2]
   identifier: sanity-9.8_to_10.2
-  targets: &targets-9_8-to-10_2
-    epel-9-x86_64:
-      distros: [RHEL-9.8.0-Nightly]
   tf_extra_params:
-    test: &plan-filter-9to10-tier0
-      tmt:
-        plan_filter: 'tag:9to10 & tag:tier0 & enabled:true & tag:-rhsm'
+    test: *filter-9to10-tier0
     environments:
-      - *tmt-env-settings-9_8-to-10_2
-  env: &env-9_8-to-10_2
-    SOURCE_RELEASE: "9.8"
-    TARGET_RELEASE: "10.2"
+      - *tfenv-rhel9_8-to-rhel10_2
 
-# On-demand minimal beaker tests
-- &beaker-minimal-9_8-to-10_2-ondemand
-  <<: *ondemand-9to10-abstract
+# On-demand partitioning (beaker-minimal) tests
+- <<: [*ondemand-9to10, *path-rhel9_8-to-rhel10_2]
+  identifier: on-demand-9.8_to_10.2-partitioning
   labels:
+    - partitioning
     - beaker-minimal
     - beaker-minimal-9.8to10.2
     - 9.8to10.2
-  identifier: on-demand-9.8_to_10.2-beaker-minimal
-  targets: *targets-9_8-to-10_2
   tf_extra_params:
-    test: &plan-filter-9to10-beaker-minimal
-      tmt:
-        plan_filter: 'tag:9to10 & tag:partitioning & enabled:true & tag:-rhsm'
+    test: *filter-9to10-partitioning
     environments:
-      - *tmt-env-settings-9_8-to-10_2
-  env:
-    <<: *env-9_8-to-10_2
+      - *tfenv-rhel9_8-to-rhel10_2
 
 # On-demand kernel-rt tests
-- &kernel-rt-9_8-to-10_2-ondemand
-  <<: *ondemand-9to10-abstract
+- <<: [*ondemand-9to10, *path-rhel9_8-to-rhel10_2]
+  identifier: on-demand-9.8_to_10.2-kernel-rt
   labels:
     - kernel-rt
     - kernel-rt-9.8to10.2
     - 9.8to10.2
-  identifier: on-demand-9.8_to_10.2-kernel-rt
-  targets: *targets-9_8-to-10_2
   tf_extra_params:
-    test: &plan-filter-9to10-kernel-rt
-      tmt:
-        plan_filter: 'tag:9to10 & tag:kernel-rt & enabled:true & tag:-rhsm'
+    test: *filter-9to10-kernel-rt
     environments:
-      - *tmt-env-settings-9_8-to-10_2
-  env:
-    <<: *env-9_8-to-10_2
+      - *tfenv-rhel9_8-to-rhel10_2
 
-- &sanity-9_8-to-10_2-aws
-  <<: *sanity-abstract-9to10-aws
+- <<: [*sanity-9to10-aws, *path-rhel9_8-to-rhel10_2]
   identifier: sanity-RHUI_AWS_9.8_to_10.2
   tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:9to10 & tag:rhui-aws-tier0 & enabled:true & tag:-rhsm'
+    test: *filter-9to10-aws
     environments:
-      - *tmt-env-settings-9_8-to-10_2
-  env:
-    <<: *env-9_8-to-10_2
+      - *tfenv-rhel9_8-to-rhel10_2
 
-# ###################################################################### #
-# ############################# 9.9 > 10.3 ############################# #
-# ###################################################################### #
-
-- &sanity-9_9-to-10_3
-  <<: *sanity-abstract-9to10
+# ---------------------------------------------------------------------- #
+# RHEL 9.9 -> RHEL 10.3                                                  #
+# ---------------------------------------------------------------------- #
+- <<: [*sanity-9to10, *path-rhel9_9-to-rhel10_3]
   identifier: sanity-9.9_to_10.3
-  targets: &targets-9_9-to-10_3
-    epel-9-x86_64:
-      distros: [RHEL-9.9.0-Nightly]
   tf_extra_params:
-    test: *plan-filter-9to10-tier0
+    test: *filter-9to10-tier0
     environments:
-      - *tmt-env-settings-9_9-to-10_3
-  env: &env-9_9-to-10_3
-    SOURCE_RELEASE: "9.9"
-    TARGET_RELEASE: "10.3"
+      - *tfenv-rhel9_9-to-rhel10_3
 
-# On-demand minimal beaker tests
-- &beaker-minimal-9_9-to-10_3-ondemand
-  <<: *ondemand-9to10-abstract
+# On-demand partitioning (beaker-minimal) tests
+- <<: [*ondemand-9to10, *path-rhel9_9-to-rhel10_3]
+  identifier: on-demand-9.9_to_10.3-partitioning
   labels:
+    - partitioning
     - beaker-minimal
     - beaker-minimal-9.9to10.3
     - 9.9to10.3
-  identifier: on-demand-9.9_to_10.3-beaker-minimal
-  targets: *targets-9_9-to-10_3
   tf_extra_params:
-    test: *plan-filter-9to10-beaker-minimal
+    test: *filter-9to10-partitioning
     environments:
-      - *tmt-env-settings-9_9-to-10_3
-  env:
-    <<: *env-9_9-to-10_3
+      - *tfenv-rhel9_9-to-rhel10_3
 
 # On-demand kernel-rt tests
-- &kernel-rt-9_9-to-10_3-ondemand
-  <<: *ondemand-9to10-abstract
+- <<: [*ondemand-9to10, *path-rhel9_9-to-rhel10_3]
+  identifier: on-demand-9.9_to_10.3-kernel-rt
   labels:
     - kernel-rt
     - kernel-rt-9.9to10.3
     - 9.9to10.3
-  identifier: on-demand-9.9_to_10.3-kernel-rt
-  targets: *targets-9_9-to-10_3
   tf_extra_params:
-    test: *plan-filter-9to10-kernel-rt
+    test: *filter-9to10-kernel-rt
     environments:
-      - *tmt-env-settings-9_9-to-10_3
-  env:
-    <<: *env-9_9-to-10_3
+      - *tfenv-rhel9_9-to-rhel10_3
 
-# ###################################################################### #
-# ############################# 9.10 > 10.4 ############################ #
-# ###################################################################### #
-
-- &sanity-9_10-to-10_4
-  <<: *sanity-abstract-9to10
+# ---------------------------------------------------------------------- #
+# RHEL 9.10 -> RHEL 10.4                                                  #
+# ---------------------------------------------------------------------- #
+- <<: [*sanity-9to10, *path-rhel9_10-to-rhel10_4]
   identifier: sanity-9.10_to_10.4
   tf_extra_params:
-    test: *plan-filter-9to10-tier0
+    test: *filter-9to10-tier0
     environments:
-      - *tmt-env-settings-9_10-to-10_4
-  env: &env-9_10-to-10_4
-    SOURCE_RELEASE: "9.10"
-    TARGET_RELEASE: "10.4"
+      - *tfenv-rhel9_10-to-rhel10_4
 
-# On-demand minimal beaker tests
-- &beaker-minimal-9_10-to-10_4-ondemand
-  <<: *ondemand-9to10-abstract
+# On-demand partitioning (beaker-minimal) tests
+- <<: [*ondemand-9to10, *path-rhel9_10-to-rhel10_4]
+  identifier: on-demand-9.10_to_10.4-partitioning
   labels:
+    - partitioning
     - beaker-minimal
     - beaker-minimal-9.10to10.4
     - 9.10to10.4
-  identifier: on-demand-9.10_to_10.4-beaker-minimal
   tf_extra_params:
-    test: *plan-filter-9to10-beaker-minimal
+    test: *filter-9to10-partitioning
     environments:
-      - *tmt-env-settings-9_10-to-10_4
-  env:
-    <<: *env-9_10-to-10_4
+      - *tfenv-rhel9_10-to-rhel10_4
 
 # On-demand kernel-rt tests
-- &kernel-rt-9_10-to-10_4-ondemand
-  <<: *ondemand-9to10-abstract
+- <<: [*ondemand-9to10, *path-rhel9_10-to-rhel10_4]
+  identifier: on-demand-9.10_to_10.4-kernel-rt
   labels:
     - kernel-rt
     - kernel-rt-9.10to10.4
     - 9.10to10.4
-  identifier: on-demand-9.10_to_10.4-kernel-rt
   tf_extra_params:
-    test: *plan-filter-9to10-kernel-rt
+    test: *filter-9to10-kernel-rt
     environments:
-      - *tmt-env-settings-9_10-to-10_4
-  env:
-    <<: *env-9_10-to-10_4
+      - *tfenv-rhel9_10-to-rhel10_4
 
-# ###################################################################### #
-# ########################## CentOS Stream ############################# #
-# ###################################################################### #
-
-# ###################################################################### #
-# ###################### CentOS Stream > RHEL ########################## #
-# ###################################################################### #
-
-# ###################################################################### #
-# ############################ 9 > 10.3 ################################ #
-# ###################################################################### #
-
-- &sanity-centos-9-to-rhel-10_3
-  <<: *sanity-abstract-9to10
+# ---------------------------------------------------------------------- #
+# CentOS Stream 9 -> RHEL 10.3 / RHEL 10.4 / CentOS Stream 10            #
+# ---------------------------------------------------------------------- #
+- <<: [*sanity-9to10, *path-centos9-to-rhel10_3]
   identifier: sanity-CentOS_9_to_RHEL_10.3
-  targets: &targets-centos-9
-    epel-9-x86_64:
-      distros: [CentOS-Stream-9]
   tf_extra_params:
-    test: *plan-filter-9to10-tier0
+    test: *filter-9to10-tier0
     environments:
-      - *tmt-env-settings-centos-9-to-rhel-10_3
-  env: &env-centos-9-to-rhel-10_3
-    SOURCE_RELEASE: "9"
-    TARGET_RELEASE: "10.3"
+      - *tfenv-centos9-to-rhel10_3
 
-# ###################################################################### #
-# ############################ 9 > 10.4 ################################ #
-# ###################################################################### #
-
-- &sanity-centos-9-to-rhel-10_4
-  <<: *sanity-abstract-9to10
+- <<: [*sanity-9to10, *path-centos9-to-rhel10_4]
   identifier: sanity-CentOS_9_to_RHEL_10.4
-  targets: *targets-centos-9
   tf_extra_params:
-    test: *plan-filter-9to10-tier0
+    test: *filter-9to10-tier0
     environments:
-      - *tmt-env-settings-centos-9-to-rhel-10_4
-  env: &env-centos-9-to-rhel-10_4
-    SOURCE_RELEASE: "9"
-    TARGET_RELEASE: "10.4"
+      - *tfenv-centos9-to-rhel10_4
 
-# ###################################################################### #
-# ################## CentOS Stream > CentOS Stream ##################### #
-# ###################################################################### #
-
-# ###################################################################### #
-# ############################## 9 > 10 ################################ #
-# ###################################################################### #
-
-- &sanity-centos-9to10
-  <<: *sanity-abstract-9to10
+- <<: [*sanity-9to10, *path-centos9-to-centos10]
   identifier: sanity-CentOS_9_to_10
-  targets: *targets-centos-9
   tf_extra_params:
-    test: *plan-filter-9to10-tier0
+    test: *filter-9to10-tier0
     environments:
-      - *tmt-env-settings-centos-9-to-10
-  env: &env-centos-9-to-10
-    SOURCE_RELEASE: "9"
-    TARGET_RELEASE: "10"
-    TARGET_OS: "centos"
+      - *tfenv-centos9-to-centos10
 
-# ###################################################################### #
-# ##################### Alma Linux > RHEL ############################## #
-# ###################################################################### #
-
-# ###################################################################### #
-# ############################ 9.8 > 10.2 ################################ #
-# ###################################################################### #
-
-- &sanity-almalinux-9_8-to-rhel-10_2
-  <<: *sanity-abstract-9to10
+# ---------------------------------------------------------------------- #
+# AlmaLinux / Rocky Linux / Oracle Linux 9.8 -> RHEL 10.2                #
+# ---------------------------------------------------------------------- #
+- <<: [*sanity-9to10, *path-alma9_8-to-rhel10_2]
   identifier: sanity-AlmaLinux_9.8_to_RHEL_10.2
-  targets:
-    epel-9-x86_64:
-      distros: ['AlmaLinux OS 9.8.20260526 x86_64']
   tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:9to10 & tag:tier0 & enabled:true & tag:-rhsm'
+    test: *filter-9to10-tier0
     environments:
-      - *tmt-env-settings-almalinux-9_8-to-rhel-10_2
-  env: &env-almalinux-9_8-to-rhel-10_2
-    SOURCE_RELEASE: "9.8"
-    TARGET_RELEASE: "10.2"
-    LEAPP_UNSUPPORTED: 1 # 9.8 is defined as unsupported ATM, will be superseded by 9.9
-    LEAPP_DEVEL_SKIP_CHECK_OS_RELEASE: 1 # 9.8 is defined as unsupported ATM, will be superseded by 9.9
+      - *tfenv-alma9_8-to-rhel10_2
 
-# ###################################################################### #
-# ##################### Rocky Linux > RHEL ############################# #
-# ###################################################################### #
-
-# ###################################################################### #
-# ############################ 9.8 > 10.2 ################################ #
-# ###################################################################### #
-
-- &sanity-rockylinux-9_8-to-rhel-10_2
-  <<: *sanity-abstract-9to10
+- <<: [*sanity-9to10, *path-rocky9_8-to-rhel10_2]
   identifier: sanity-RockyLinux_9.8_to_RHEL_10.2
-  targets:
-    epel-9-x86_64:
-      distros: ['Rocky-9-EC2-Base-9.8-20260525.0.x86_64']
   tf_extra_params:
-    test:
-      tmt:
-        plan_filter: 'tag:9to10 & tag:tier0 & enabled:true & tag:-rhsm'
+    test: *filter-9to10-tier0
     environments:
-      - *tmt-env-settings-rockylinux-9_8-to-rhel-10_2
-  env: &env-rockylinux-9_8-to-rhel-10_2
-    SOURCE_RELEASE: "9.8"
-    TARGET_RELEASE: "10.2"
+      - *tfenv-rocky9_8-to-rhel10_2
+
+- <<: [*sanity-9to10, *path-oracle9_8-to-rhel10_2]
+  identifier: sanity-OracleLinux_9.8_to_RHEL_10.2
+  tf_extra_params:
+    test: *filter-9to10-tier0
+    environments:
+      - *tfenv-oracle9_8-to-rhel10_2
