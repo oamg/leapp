@@ -219,16 +219,16 @@ def _validate_field_type(field_type, field_value, field_path):
     return True
 
 
-def _normalize_config(actor_config, schema):
-    # Go through the config and log warnings about unexpected sections/fields.
+def _warn_about_unknown_config(actor_config, schema):
+    """
+    Log warnings about unexpected sections/fields in the config.
+    """
     for section_name, section in actor_config.items():
         if section_name not in schema:
-            # TODO: Also have information about which config file contains the unknown field.
-            message = "A config file contained an unknown section: {section}".format(section=section_name)
-            log.warning(message)
+            log.warning("A config file contained an unknown section: %s", section_name)
             continue
 
-        for field_name in actor_config:
+        for field_name in section:
             # Any field names which end in "__" are reserved for LEAPP to use
             # for its purposes.  In particular, it places documentation of
             # a field's value into these reserved field names.
@@ -236,12 +236,15 @@ def _normalize_config(actor_config, schema):
                 continue
 
             if field_name not in schema[section_name]:
-                # TODO: Also have information about which config file contains the unknown field.
-                message = ("A config file contained an unknown field: (Section:"
-                           " {section}, Field: {field})".format(
-                               section=section_name, field=field_name)
-                           )
-                log.warning(message)
+                log.warning(
+                    "A config file contained an unknown field: (Section: %s, Field: %s)",
+                    section_name,
+                    field_name,
+                )
+
+
+def _normalize_config(actor_config, schema):
+    _warn_about_unknown_config(actor_config, schema)
 
     # Do several things:
     # * Validate that the config values are of the proper types.
@@ -269,13 +272,12 @@ def _normalize_config(actor_config, schema):
                 value = field.default
                 section[field_name] = value
 
-            field_path = '{0}.{1}'.format(section_name, field_name)
+            field_path = f'{section_name}.{field_name}'
             if not _validate_field_type(field.type_, value, field_path):
-                raise ValidationError("Config value for (Section: {section},"
-                                      " Field: {field}) is not of the correct"
-                                      " type".format(section=section_name,
-                                                     field=field_name)
-                                      )
+                raise ValidationError(
+                    f"Config value for (Section: {section_name}, Field: {field_name})"
+                    " is not of the correct type"
+                )
 
             normalized_section = normalized_actor_config.get(section_name, {})
             normalized_section[field_name] = value
